@@ -1,0 +1,71 @@
+{
+  // ─── Editor ───────────────────────────────────────────────────────────────
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.tabSize": 2,
+  "editor.rulers": [100],
+  "editor.wordWrap": "off",
+  "editor.suggestSelection": "first",
+  "editor.linkedEditing": true,
+
+  // ─── Files ────────────────────────────────────────────────────────────────
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/dist": true,
+    "**/.git": true
+  },
+
+  // ─── TypeScript ───────────────────────────────────────────────────────────
+  "typescript.tsdk": "server/node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+
+  // ─── ESLint ───────────────────────────────────────────────────────────────
+  "eslint.workingDirectories": ["./server", "./client"],
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+
+  // ─── Prettier ─────────────────────────────────────────────────────────────
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.wordWrap": "on"
+  },
+
+  // ─── Search ───────────────────────────────────────────────────────────────
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/dist": true,
+    "**/build": true
+  },
+
+  // ─── Git ──────────────────────────────────────────────────────────────────
+  "git.autofetch": true,
+  "git.confirmSync": false,
+
+  // ─── Misc ─────────────────────────────────────────────────────────────────
+  "breadcrumbs.enabled": true,
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "*.ts": "${capture}.js, ${capture}.d.ts, ${capture}.test.ts, ${capture}.spec.ts",
+    "tsconfig.json": "tsconfig.*.json",
+    "package.json": "package-lock.json, .npmrc, .nvmrc"
+  }
+}

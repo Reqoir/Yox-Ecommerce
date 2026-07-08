@@ -1,0 +1,60 @@
+{
+  "compilerOptions": {
+    /* ── Language & Environment ── */
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+
+    /* ── Output ── */
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "removeComments": false,
+
+    /* ── Strict Type Checks ── */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+
+    /* ── Additional Checks ── */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": false,
+    "exactOptionalPropertyTypes": false,
+
+    /* ── Module Resolution ── */
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+
+    /* ── Path Aliases ── */
+    "baseUrl": ".",
+    "paths": {
+      "@core/*": ["src/core/*"],
+      "@shared/*": ["src/shared/*"],
+      "@presentation/*": ["src/presentation/*"],
+      "@modules/*": ["src/modules/*"],
+      "@config/*": ["src/core/infrastructure/config/*"]
+    },
+
+    /* ── Experimental ── */
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    /* ── Skip ── */
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "coverage", "**/*.spec.ts", "**/*.test.ts"]
+}

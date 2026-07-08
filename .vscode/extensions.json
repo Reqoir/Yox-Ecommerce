@@ -1,0 +1,36 @@
+{
+  "recommendations": [
+    // ─── Essential ──────────────────────────────────────────────────────────
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "editorconfig.editorconfig",
+
+    // ─── TypeScript / JavaScript ────────────────────────────────────────────
+    "ms-vscode.vscode-typescript-next",
+    "christian-kohler.npm-intellisense",
+    "christian-kohler.path-intellisense",
+
+    // ─── React / Next.js ────────────────────────────────────────────────────
+    "dsznajder.es7-react-js-snippets",
+    "bradlc.vscode-tailwindcss",
+
+    // ─── Git ────────────────────────────────────────────────────────────────
+    "eamodio.gitlens",
+    "mhutchie.git-graph",
+
+    // ─── API / REST ─────────────────────────────────────────────────────────
+    "humao.rest-client",
+
+    // ─── Docker ─────────────────────────────────────────────────────────────
+    "ms-azuretools.vscode-docker",
+
+    // ─── Utilities ──────────────────────────────────────────────────────────
+    "streetsidesoftware.code-spell-checker",
+    "usernamehw.errorlens",
+    "mikestead.dotenv",
+    "wayou.vscode-todo-highlight",
+    "gruntfuggly.todo-tree",
+    "pkief.material-icon-theme",
+    "ms-vscode-remote.remote-containers"
+  ]
+}
