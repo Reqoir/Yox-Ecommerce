@@ -12,6 +12,7 @@
  */
 
 import { Router, type Request, type Response } from 'express';
+import authRouter from '../../../modules/auth/presentation/routes/auth.routes';
 
 import { getMongooseState } from '../../../core/infrastructure/database/mongoose/connection';
 import { isRedisConnected } from '../../../core/infrastructure/database/redis/connection';
@@ -37,3 +38,5 @@ rootRouter.get('/health', (_req: Request, res: Response) => {
     },
   });
 });
+
+rootRouter.use('/auth', authRouter);
