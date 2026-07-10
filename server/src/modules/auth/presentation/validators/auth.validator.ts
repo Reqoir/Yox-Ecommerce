@@ -1,0 +1,22 @@
+/**
+ * @file auth.validator.ts
+ * @layer Presentation › Validators
+ * 
+ * Zod schemas for validating Auth-related incoming requests.
+ */
+
+import { z } from 'zod';
+
+export const registerSchema = z.object({
+  fullName: z.string().min(2, 'Full name must be at least 2 characters').max(100),
+  email: z.string().email('Invalid email address').max(255),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(128)
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/,
+      'Password must contain uppercase, lowercase, number and special character'
+    ),
+  phone: z.string().min(5).max(20).optional(),
+});
