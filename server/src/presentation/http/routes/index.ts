@@ -13,6 +13,7 @@
 
 import { Router, type Request, type Response } from 'express';
 import authRouter from '../../../modules/auth/presentation/routes/auth.routes';
+import { productRoutes } from '../../../modules/products/presentation/routes/product.routes';
 
 import { getMongooseState } from '../../../core/infrastructure/database/mongoose/connection';
 import { isRedisConnected } from '../../../core/infrastructure/database/redis/connection';
@@ -43,3 +44,4 @@ import userRouter from '../../../modules/users/presentation/routes/user.routes';
 
 rootRouter.use('/auth', authRouter);
 rootRouter.use('/users', userRouter);
+rootRouter.use('/products', productRoutes);
