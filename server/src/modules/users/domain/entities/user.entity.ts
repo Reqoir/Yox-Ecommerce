@@ -41,8 +41,11 @@ export class User extends BaseEntity<UserProps> {
   get status(): UserStatus { return this._props.status; }
   get isEmailVerified(): boolean { return this._props.isEmailVerified; }
   
-  // Phone getter if needed
   get phone(): string | null | undefined { return this._props.phone; }
+  get profileImage(): string | null | undefined { return this._props.profileImage; }
+  get isPhoneVerified(): boolean { return this._props.isPhoneVerified; }
+  get lastLogin(): Date | null | undefined { return this._props.lastLogin; }
+  get deletedAt(): Date | null | undefined { return this._props.deletedAt; }
 
   /**
    * Factory method to create a NEW user (from registration).
@@ -83,5 +86,16 @@ export class User extends BaseEntity<UserProps> {
    */
   public canLogin(): boolean {
     return this._props.status === UserStatus.ACTIVE && !this._props.deletedAt;
+  }
+
+  /**
+   * Updates user profile fields safely.
+   */
+  public updateProfile(data: { fullName?: string; phone?: string; profileImage?: string }): void {
+    if (data.fullName) this._props.fullName = data.fullName;
+    if (data.phone !== undefined) this._props.phone = data.phone;
+    if (data.profileImage !== undefined) this._props.profileImage = data.profileImage;
+    
+    this._props.updatedAt = new Date();
   }
 }

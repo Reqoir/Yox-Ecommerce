@@ -40,5 +40,8 @@ rootRouter.get('/health', (_req: Request, res: Response) => {
   });
 });
 
+import userRouter from '../../../modules/users/presentation/routes/user.routes';
+
 rootRouter.use('/auth', authRouter);
+rootRouter.use('/users', userRouter);
 rootRouter.use('/products', productRoutes);
