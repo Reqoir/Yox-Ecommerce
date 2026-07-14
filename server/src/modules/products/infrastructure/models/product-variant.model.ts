@@ -50,8 +50,6 @@ const productVariantSchema = new Schema<IProductVariantDocument>(
   }
 );
 
-productVariantSchema.index({ productId: 1 });
-productVariantSchema.index({ sku: 1 });
 productVariantSchema.index({ isActive: 1 });
 
 export const ProductVariantModel = model<IProductVariantDocument>('ProductVariant', productVariantSchema);

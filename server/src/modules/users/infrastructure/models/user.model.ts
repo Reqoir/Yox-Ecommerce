@@ -38,7 +38,6 @@ const userSchema = new Schema<IUserDocument>(
       unique: true,
       lowercase: true,
       trim: true,
-      index: true,
     },
     phone: {
       type: String,
@@ -87,7 +86,6 @@ const userSchema = new Schema<IUserDocument>(
 );
 
 // Indexes
-userSchema.index({ email: 1 });
 userSchema.index({ phone: 1 });
 userSchema.index({ status: 1 });
 
