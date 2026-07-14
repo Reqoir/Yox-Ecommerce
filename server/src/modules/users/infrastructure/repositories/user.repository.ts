@@ -23,7 +23,7 @@ export class UserRepository
    * Maps a Mongoose document to a Domain Entity
    */
   protected toDomain(doc: IUserDocument): User {
-    return new User({
+    return User.reconstitute({
       id: doc.id,
       fullName: doc.fullName,
       email: doc.email,

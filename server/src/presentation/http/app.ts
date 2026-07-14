@@ -13,6 +13,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import pinoHttp from 'pino-http';
+import cookieParser from 'cookie-parser';
 
 import { env } from '../../core/infrastructure/config/env';
 import { rootRouter } from './routes/index';
@@ -55,9 +56,10 @@ export const createApp = (): Application => {
     }),
   );
 
-  // ── Body Parsing ──────────────────────────────────────────────────────────
+  // ── Body Parsing & Cookies ────────────────────────────────────────────────
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  app.use(cookieParser());
 
   // ── Compression ───────────────────────────────────────────────────────────
   app.use(compression());

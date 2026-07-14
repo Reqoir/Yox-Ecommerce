@@ -20,3 +20,8 @@ export const registerSchema = z.object({
     ),
   phone: z.string().min(5).max(20).optional(),
 });
+
+export const loginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
