@@ -42,8 +42,10 @@ rootRouter.get('/health', (_req: Request, res: Response) => {
 
 import userRouter from '../../../modules/users/presentation/routes/user.routes';
 import { categoryRoutes } from '../../../modules/categories/presentation/routes/category.routes';
+import { brandRoutes } from '../../../modules/brands/presentation/routes/brand.routes';
 
 rootRouter.use('/auth', authRouter);
 rootRouter.use('/users', userRouter);
 rootRouter.use('/products', productRoutes);
 rootRouter.use('/categories', categoryRoutes);
+rootRouter.use('/brands', brandRoutes);
