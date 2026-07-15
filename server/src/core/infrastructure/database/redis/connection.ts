@@ -24,8 +24,8 @@ export const connectRedis = async (): Promise<void> => {
     }
     logger.info('Redis connected successfully');
   } catch (error) {
-    logger.fatal({ error }, 'Redis connection failed');
-    process.exit(1);
+    logger.warn({ error }, 'Redis connection failed. Running without Redis.');
+    // process.exit(1);
   }
 };
 
