@@ -45,3 +45,17 @@ export class UnauthorizedError extends ApplicationError {
     this.name = 'UnauthorizedError';
   }
 }
+
+export class NotFoundError extends ApplicationError {
+  constructor(message: string, context?: Record<string, unknown>) {
+    super(message, 'NOT_FOUND', context);
+    this.name = 'NotFoundError';
+  }
+}
+
+export class ValidationError extends ApplicationError {
+  constructor(message: string, context?: Record<string, unknown>) {
+    super(message, 'VALIDATION_ERROR', context);
+    this.name = 'ValidationError';
+  }
+}

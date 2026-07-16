@@ -1,18 +1,36 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, Tag, Settings, LogOut } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { LayoutDashboard, Package, Tag, Settings, LogOut, Shield, Users } from 'lucide-react';
+import { authApi } from '@/api/auth';
+import { useAuthStore } from '@/store/useAuthStore';
+import { toast } from 'sonner';
 
 const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { name: 'Users', href: '/admin/user', icon: Users },
   { name: 'Products', href: '/admin/product', icon: Package },
   { name: 'Brands', href: '/admin/brand', icon: Tag },
+  { name: 'Roles', href: '/admin/role', icon: Shield },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const logoutUser = useAuthStore((state) => state.logoutUser);
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+      logoutUser();
+      toast.success('Logged out successfully');
+      router.push('/admin-login');
+    } catch (error) {
+      toast.error('Failed to logout');
+    }
+  };
 
   return (
     <aside className="w-64 border-r bg-card min-h-screen flex flex-col transition-all">
@@ -41,7 +59,10 @@ export function AdminSidebar() {
         })}
       </nav>
       <div className="p-4 border-t">
-        <button className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive transition-colors hover:bg-destructive/10">
+        <button 
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+        >
           <LogOut className="h-5 w-5" />
           Logout
         </button>

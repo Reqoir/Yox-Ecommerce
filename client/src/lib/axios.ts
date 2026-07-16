@@ -37,8 +37,23 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    // Token refresh logic will be handled here when auth module is implemented
-    // if (error.response?.status === 401) { ... refresh token ... }
+    if (error.response?.status === 401) {
+      // Import the store dynamically to avoid circular dependencies if any
+      const { useAuthStore } = await import('../store/useAuthStore');
+      
+      // Only redirect if we are not already on a login page
+      const currentPath = window.location.pathname;
+      if (typeof window !== 'undefined' && !currentPath.includes('/login')) {
+        useAuthStore.getState().logoutUser();
+        
+        // If they were in the admin section, send to admin-login
+        if (currentPath.startsWith('/admin')) {
+          window.location.href = '/admin-login';
+        } else {
+          window.location.href = '/login';
+        }
+      }
+    }
     return Promise.reject(error);
   },
 );

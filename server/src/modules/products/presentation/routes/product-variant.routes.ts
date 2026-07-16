@@ -14,6 +14,8 @@ import {
   GetProductVariantByIdUseCase, 
   GetAllProductVariantsUseCase 
 } from '../../application/use-cases/product-variant.use-cases';
+import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
+import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
 
 const router = Router();
 
@@ -30,8 +32,10 @@ const variantController = new ProductVariantController(
 
 router.get('/', variantController.getAll); 
 router.get('/:id', variantController.getById);
-router.post('/', variantController.create);
-router.patch('/:id', variantController.update);
-router.delete('/:id', variantController.delete);
+
+// Protected Admin Routes
+router.post('/', requireAuth, requirePermission('manage_products'), variantController.create);
+router.patch('/:id', requireAuth, requirePermission('manage_products'), variantController.update);
+router.delete('/:id', requireAuth, requirePermission('manage_products'), variantController.delete);
 
 export const productVariantRoutes = router;

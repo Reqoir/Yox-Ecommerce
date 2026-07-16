@@ -8,11 +8,17 @@ import { GetProfileUseCase } from '../../application/use-cases/get-profile.use-c
 import { UpdateProfileUseCase } from '../../application/use-cases/update-profile.use-case';
 import { ApiResponse } from '@shared/utils/api-response.util';
 import { HttpStatus } from '@shared/constants/http-status.constants';
+import { GetAllUsersUseCase } from '../../application/use-cases/get-all-users.use-case';
+import { UpdateUserRoleUseCase } from '../../application/use-cases/update-user-role.use-case';
+import { validateRequest } from '@shared/utils/validation.helper';
+import { updateUserRoleSchema } from '../validators/user.validator';
 
 export class UserController {
   constructor(
     private readonly getProfileUseCase: GetProfileUseCase,
-    private readonly updateProfileUseCase: UpdateProfileUseCase
+    private readonly updateProfileUseCase: UpdateProfileUseCase,
+    private readonly getAllUsersUseCase: GetAllUsersUseCase,
+    private readonly updateUserRoleUseCase: UpdateUserRoleUseCase
   ) {}
 
   public getProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -58,6 +64,31 @@ export class UserController {
       };
 
       ApiResponse.success(res, result, 'Profile updated successfully', HttpStatus.OK);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const result = await this.getAllUsersUseCase.execute(req.query);
+      ApiResponse.success(res, result.users, 'Users retrieved successfully', HttpStatus.OK, result.meta);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public updateRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const validBody = validateRequest(req, updateUserRoleSchema, 'body');
+
+      const result = await this.updateUserRoleUseCase.execute({
+        userId: id,
+        roleId: validBody.roleId,
+      });
+
+      ApiResponse.success(res, result, 'User role updated successfully', HttpStatus.OK);
     } catch (error) {
       next(error);
     }

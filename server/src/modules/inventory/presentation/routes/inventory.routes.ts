@@ -14,6 +14,8 @@ import {
 } from '../../application/use-cases/inventory.use-cases';
 import { InventoryRepository } from '../../infrastructure/repositories/inventory.repository';
 import { StockLogRepository } from '../../infrastructure/repositories/stock-log.repository';
+import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
+import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
 
 const router = Router();
 
@@ -40,8 +42,10 @@ const inventoryController = new InventoryController(
 // Define Routes
 router.get('/', inventoryController.getAll);
 router.get('/:id', inventoryController.getById);
-router.patch('/:id', inventoryController.update);
-router.post('/:id/adjust', inventoryController.adjustStock);
-router.get('/:id/logs', inventoryController.getLogs);
+
+// Protected Admin Routes
+router.patch('/:id', requireAuth, requirePermission('manage_inventory'), inventoryController.update);
+router.post('/:id/adjust', requireAuth, requirePermission('manage_inventory'), inventoryController.adjustStock);
+router.get('/:id/logs', requireAuth, requirePermission('manage_inventory'), inventoryController.getLogs);
 
 export { router as inventoryRouter };

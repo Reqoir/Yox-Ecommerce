@@ -14,7 +14,7 @@ import { HttpStatus } from '@shared/constants/http-status.constants';
 
 import { LoginUseCase } from '../../application/use-cases/login.use-case';
 import { loginSchema } from '../validators/auth.validator';
-import { setAuthCookies } from '@shared/utils/cookie.helper';
+import { setAuthCookies, clearAuthCookies } from '@shared/utils/cookie.helper';
 
 export class AuthController {
   constructor(
@@ -76,9 +76,6 @@ export class AuthController {
    */
   public logout = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // Dynamic import to avoid circular dependencies or simply use regular import.
-      // Since it's a utility, regular import is fine. Let's just use it directly.
-      const { clearAuthCookies } = await import('@shared/utils/cookie.helper');
       clearAuthCookies(res);
       ApiResponse.success(res, null, 'Logged out successfully', HttpStatus.OK);
     } catch (error) {
