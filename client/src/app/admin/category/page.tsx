@@ -30,21 +30,29 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useBrands } from '@/hooks/admin/useBrands';
-import { Brand } from '@/api/admin/brands';
+import { useCategories } from '@/hooks/admin/useCategories';
+import { Category } from '@/api/admin/categories';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-export default function AdminBrandPage() {
-  const { brands, isLoading, createBrand, updateBrand, deleteBrand, isCreating, isUpdating, isDeleting } = useBrands();
+export default function AdminCategoryPage() {
+  const { categories, isLoading, createCategory, updateCategory, deleteCategory, isCreating, isUpdating, isDeleting } = useCategories();
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [editBrand, setEditBrand] = useState<Brand | null>(null);
+  const [editCategory, setEditCategory] = useState<Category | null>(null);
   const [activeTab, setActiveTab] = useState("general");
 
   const defaultForm = {
     name: '',
     slug: '',
     description: '',
-    website: '',
-    logo: '',
+    image: '',
+    icon: '',
+    parentCategoryId: 'none', // using 'none' for no parent in select
     displayOrder: 0,
     isActive: true,
     seoTitle: '',
@@ -55,24 +63,25 @@ export default function AdminBrandPage() {
 
   const handleOpenAdd = () => {
     setFormData(defaultForm);
-    setEditBrand(null);
+    setEditCategory(null);
     setActiveTab("general");
     setIsAddOpen(true);
   };
 
-  const handleOpenEdit = (brand: Brand) => {
+  const handleOpenEdit = (category: Category) => {
     setFormData({
-      name: brand.name,
-      slug: brand.slug,
-      description: brand.description || '',
-      website: brand.website || '',
-      logo: brand.logo || '',
-      displayOrder: brand.displayOrder || 0,
-      isActive: brand.isActive,
-      seoTitle: brand.seoTitle || '',
-      seoDescription: brand.seoDescription || '',
+      name: category.name,
+      slug: category.slug,
+      description: category.description || '',
+      image: category.image || '',
+      icon: category.icon || '',
+      parentCategoryId: category.parentCategoryId || 'none',
+      displayOrder: category.sortOrder || 0,
+      isActive: category.isActive,
+      seoTitle: category.seoTitle || '',
+      seoDescription: category.seoDescription || '',
     });
-    setEditBrand(brand);
+    setEditCategory(category);
     setActiveTab("general");
     setIsAddOpen(true);
   };
@@ -83,36 +92,51 @@ export default function AdminBrandPage() {
     // Prepare payload, converting empty strings to null for optional fields
     const payload = {
       ...formData,
+      sortOrder: formData.displayOrder,
+      parentCategoryId: formData.parentCategoryId === 'none' ? null : formData.parentCategoryId,
       description: formData.description || null,
-      website: formData.website || null,
-      logo: formData.logo || null,
+      image: formData.image || null,
+      icon: formData.icon || null,
       seoTitle: formData.seoTitle || null,
       seoDescription: formData.seoDescription || null,
     };
+    
+    // Remove temporary displayOrder property used for form
+    const { displayOrder, ...finalPayload } = payload;
 
-    if (editBrand) {
-      updateBrand({ id: editBrand.id, data: payload }, {
+    if (editCategory) {
+      updateCategory({ id: editCategory.id, data: finalPayload }, {
         onSuccess: () => setIsAddOpen(false)
       });
     } else {
-      createBrand(payload, {
+      createCategory(finalPayload, {
         onSuccess: () => setIsAddOpen(false)
       });
     }
   };
 
+  // Helper to find parent name
+  const getParentName = (parentId?: string | null) => {
+    if (!parentId) return '-';
+    const parent = categories.find(c => c.id === parentId);
+    return parent ? parent.name : 'Unknown';
+  };
+
+  // Prevent selecting itself or its children as a parent
+  const availableParents = categories.filter(c => !editCategory || c.id !== editCategory.id);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Brands</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
           <p className="text-muted-foreground mt-1">
-            Manage product brands and their details.
+            Manage product categories and subcategories.
           </p>
         </div>
         <Button className="gap-2" onClick={handleOpenAdd}>
           <Plus className="h-4 w-4" />
-          Add Brand
+          Add Category
         </Button>
       </div>
 
@@ -122,7 +146,7 @@ export default function AdminBrandPage() {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Slug</TableHead>
-              <TableHead>Website</TableHead>
+              <TableHead>Parent Category</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-[100px]"></TableHead>
             </TableRow>
@@ -134,30 +158,40 @@ export default function AdminBrandPage() {
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : brands.length === 0 ? (
+            ) : categories.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  No brands found.
+                  No categories found.
                 </TableCell>
               </TableRow>
             ) : (
-              brands.map((brand: Brand) => (
-                <TableRow key={brand.id}>
+              categories.map((category: Category) => (
+                <TableRow key={category.id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
-                      {brand.logo && (
-                        <div className="h-8 w-8 rounded-full border bg-muted overflow-hidden flex items-center justify-center">
-                          <img src={brand.logo} alt={brand.name} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                      {category.icon ? (
+                        <div className="h-8 w-8 rounded bg-muted flex items-center justify-center text-xl">
+                          {category.icon}
                         </div>
-                      )}
-                      {brand.name}
+                      ) : category.image ? (
+                        <div className="h-8 w-8 rounded border bg-muted overflow-hidden flex items-center justify-center">
+                          <img src={category.image} alt={category.name} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        </div>
+                      ) : null}
+                      {category.name}
                     </div>
                   </TableCell>
-                  <TableCell>{brand.slug}</TableCell>
-                  <TableCell>{brand.website || '-'}</TableCell>
+                  <TableCell>{category.slug}</TableCell>
                   <TableCell>
-                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${brand.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                      {brand.isActive ? 'Active' : 'Inactive'}
+                    {category.parentCategoryId ? (
+                       <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                         {getParentName(category.parentCategoryId)}
+                       </span>
+                    ) : '-'}
+                  </TableCell>
+                  <TableCell>
+                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${category.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                      {category.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -167,15 +201,15 @@ export default function AdminBrandPage() {
                         <MoreHorizontal className="h-4 w-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleOpenEdit(brand)}>
+                        <DropdownMenuItem onClick={() => handleOpenEdit(category)}>
                           <Pencil className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           className="text-destructive focus:text-destructive"
                           onClick={() => {
-                            if (window.confirm('Are you sure you want to delete this brand?')) {
-                              deleteBrand(brand.id);
+                            if (window.confirm('Are you sure you want to delete this category?')) {
+                              deleteCategory(category.id);
                             }
                           }}
                         >
@@ -195,9 +229,9 @@ export default function AdminBrandPage() {
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-2">
-            <DialogTitle>{editBrand ? 'Edit Brand' : 'Add Brand'}</DialogTitle>
+            <DialogTitle>{editCategory ? 'Edit Category' : 'Add Category'}</DialogTitle>
             <DialogDescription>
-              {editBrand ? 'Update the details of the brand.' : 'Add a new brand to your store.'}
+              {editCategory ? 'Update the details of the category.' : 'Add a new category to your store.'}
             </DialogDescription>
           </DialogHeader>
           
@@ -216,13 +250,13 @@ export default function AdminBrandPage() {
                 <TabsContent value="general" className="space-y-4 m-0">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="name">Brand Name <span className="text-red-500">*</span></Label>
+                      <Label htmlFor="name">Category Name <span className="text-red-500">*</span></Label>
                       <Input 
                         id="name" 
                         value={formData.name}
                         onChange={(e) => setFormData({...formData, name: e.target.value})}
                         required 
-                        placeholder="e.g. Nike"
+                        placeholder="e.g. Men's Clothing"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -232,20 +266,32 @@ export default function AdminBrandPage() {
                         value={formData.slug}
                         onChange={(e) => setFormData({...formData, slug: e.target.value})}
                         required 
-                        placeholder="e.g. nike"
+                        placeholder="e.g. mens-clothing"
                       />
                     </div>
                   </div>
+                  
                   <div className="grid gap-2">
-                    <Label htmlFor="website">Website URL</Label>
-                    <Input 
-                      id="website" 
-                      type="url"
-                      value={formData.website}
-                      onChange={(e) => setFormData({...formData, website: e.target.value})}
-                      placeholder="https://example.com"
-                    />
+                    <Label htmlFor="parentCategory">Parent Category (Optional)</Label>
+                    <Select 
+                      value={formData.parentCategoryId} 
+                      onValueChange={(val) => setFormData({...formData, parentCategoryId: val || 'none'})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a parent category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None (Main Category)</SelectItem>
+                        {availableParents.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">Select an existing category to make this a subcategory.</p>
                   </div>
+                  
                   <div className="grid gap-2">
                     <Label htmlFor="description">Description</Label>
                     <Textarea 
@@ -253,26 +299,37 @@ export default function AdminBrandPage() {
                       rows={4}
                       value={formData.description}
                       onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      placeholder="Write a brief description about the brand..."
+                      placeholder="Write a brief description about the category..."
                     />
                   </div>
                 </TabsContent>
 
                 <TabsContent value="media" className="space-y-4 m-0">
                   <div className="grid gap-2">
-                    <Label htmlFor="logo">Logo URL</Label>
+                    <Label htmlFor="image">Image URL</Label>
                     <Input 
-                      id="logo" 
+                      id="image" 
                       type="url"
-                      value={formData.logo}
-                      onChange={(e) => setFormData({...formData, logo: e.target.value})}
-                      placeholder="https://example.com/logo.png"
+                      value={formData.image}
+                      onChange={(e) => setFormData({...formData, image: e.target.value})}
+                      placeholder="https://example.com/category-image.png"
                     />
-                    <p className="text-xs text-muted-foreground">Provide an image URL for the brand logo.</p>
+                    <p className="text-xs text-muted-foreground">Provide a cover image URL for the category.</p>
                   </div>
-                  {formData.logo && (
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="icon">Icon (Emoji or URL)</Label>
+                    <Input 
+                      id="icon" 
+                      value={formData.icon}
+                      onChange={(e) => setFormData({...formData, icon: e.target.value})}
+                      placeholder="👕"
+                    />
+                  </div>
+
+                  {formData.image && (
                     <div className="mt-4 border rounded-lg p-4 flex items-center justify-center bg-muted/30">
-                      <img src={formData.logo} alt="Logo preview" className="max-h-[120px] object-contain" onError={(e) => { e.currentTarget.src = 'https://placehold.co/200x100?text=Invalid+Image'; }} />
+                      <img src={formData.image} alt="Category preview" className="max-h-[120px] object-contain" onError={(e) => { e.currentTarget.src = 'https://placehold.co/200x100?text=Invalid+Image'; }} />
                     </div>
                   )}
                 </TabsContent>
@@ -282,7 +339,7 @@ export default function AdminBrandPage() {
                     <div className="space-y-0.5">
                       <Label className="text-base">Active Status</Label>
                       <p className="text-sm text-muted-foreground">
-                        Determine if this brand is visible on the store.
+                        Determine if this category is visible on the store.
                       </p>
                     </div>
                     <Switch
@@ -292,7 +349,7 @@ export default function AdminBrandPage() {
                   </div>
                   
                   <div className="grid gap-2">
-                    <Label htmlFor="displayOrder">Display Order</Label>
+                    <Label htmlFor="displayOrder">Sort Order</Label>
                     <Input 
                       id="displayOrder" 
                       type="number"
@@ -332,7 +389,7 @@ export default function AdminBrandPage() {
                 Cancel
               </Button>
               <Button type="submit" disabled={isCreating || isUpdating}>
-                {isCreating || isUpdating ? 'Saving...' : 'Save Brand'}
+                {isCreating || isUpdating ? 'Saving...' : 'Save Category'}
               </Button>
             </div>
           </form>

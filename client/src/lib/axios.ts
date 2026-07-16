@@ -37,6 +37,11 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
+    // Log backend validation errors for easier debugging
+    if (error.response?.data) {
+      console.error('API Error Response:', error.response.data);
+    }
+    
     // Token refresh logic will be handled here when auth module is implemented
     // if (error.response?.status === 401) { ... refresh token ... }
     return Promise.reject(error);
