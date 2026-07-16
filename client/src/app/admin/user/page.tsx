@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { userApi, User } from '@/api/users';
-import { roleApi, Role } from '@/api/roles';
+import { userApi, User } from '@/api/admin/users';
+import { roleApi, Role } from '@/api/admin/roles';
 import { toast } from 'sonner';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
