@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Package, Tag, Settings, LogOut, Shield, Users } from 'lucide-react';
+import { LayoutDashboard, Package, Tag, Settings, LogOut, Shield, Users, FolderTree } from 'lucide-react';
 import { authApi } from '@/api/auth';
 import { useAuthStore } from '@/store/useAuthStore';
 import { toast } from 'sonner';
@@ -11,6 +11,7 @@ const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Users', href: '/admin/user', icon: Users },
   { name: 'Products', href: '/admin/product', icon: Package },
+  { name: 'Categories', href: '/admin/category', icon: FolderTree },
   { name: 'Brands', href: '/admin/brand', icon: Tag },
   { name: 'Roles', href: '/admin/role', icon: Shield },
   { name: 'Settings', href: '/admin/settings', icon: Settings },

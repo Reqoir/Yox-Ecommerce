@@ -37,6 +37,11 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
+    // Log backend validation errors for easier debugging
+    if (error.response?.data) {
+      console.error('API Error Response:', error.response.data);
+    }
+
     if (error.response?.status === 401) {
       // Import the store dynamically to avoid circular dependencies if any
       const { useAuthStore } = await import('../store/useAuthStore');

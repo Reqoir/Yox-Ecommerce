@@ -15,6 +15,7 @@ export interface ProductVariant {
   images?: string[];
   isDefault?: boolean;
   isActive?: boolean;
+  size?: string | null;
 }
 
 export interface Product {
