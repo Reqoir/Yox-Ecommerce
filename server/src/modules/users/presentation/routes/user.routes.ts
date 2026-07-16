@@ -13,13 +13,16 @@ import { requirePermission } from '../../../../presentation/http/middleware/requ
 import { GetAllUsersUseCase } from '../../application/use-cases/get-all-users.use-case';
 import { UpdateUserRoleUseCase } from '../../application/use-cases/update-user-role.use-case';
 
+import { RoleRepository } from '../../../roles/infrastructure/repositories/role.repository';
+
 const router = Router();
 
 const userRepository = new UserRepository();
+const roleRepository = new RoleRepository();
 const getProfileUseCase = new GetProfileUseCase(userRepository);
 const updateProfileUseCase = new UpdateProfileUseCase(userRepository);
 const getAllUsersUseCase = new GetAllUsersUseCase(userRepository);
-const updateUserRoleUseCase = new UpdateUserRoleUseCase(userRepository);
+const updateUserRoleUseCase = new UpdateUserRoleUseCase(userRepository, roleRepository);
 const userController = new UserController(
   getProfileUseCase, 
   updateProfileUseCase,
