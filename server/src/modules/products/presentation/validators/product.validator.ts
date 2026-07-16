@@ -21,6 +21,7 @@ export const productVariantSchema = z.object({
   images: z.array(z.string().url('Image must be a valid URL')).optional(),
   isDefault: z.boolean().optional(),
   isActive: z.boolean().optional(),
+  size: z.string().optional().nullable(),
 });
 
 export const createProductSchema = z.object({

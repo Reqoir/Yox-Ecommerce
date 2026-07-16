@@ -30,6 +30,7 @@ export class ProductVariantRepository implements IProductVariantRepository {
       images: data.images,
       isDefault: data.isDefault,
       isActive: data.isActive,
+      size: data.size,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
     });
@@ -83,6 +84,26 @@ export class ProductVariantRepository implements IProductVariantRepository {
     if (!Types.ObjectId.isValid(id)) return null;
     const doc = await ProductVariantModel.findById(id).exec();
     return doc ? this.mapToDomain(doc) : null;
+  }
+
+  async findAll(query: any = {}): Promise<{ data: ProductVariant[]; total: number }> {
+    const filter: any = {};
+    if (query.productId) filter.productId = query.productId;
+    if (query.isActive !== undefined) filter.isActive = query.isActive;
+    
+    const limit = parseInt(query.limit) || 10;
+    const page = parseInt(query.page) || 1;
+    const skip = (page - 1) * limit;
+
+    const [docs, total] = await Promise.all([
+      ProductVariantModel.find(filter).skip(skip).limit(limit).exec(),
+      ProductVariantModel.countDocuments(filter).exec(),
+    ]);
+
+    return {
+      data: docs.map(doc => this.mapToDomain(doc)),
+      total,
+    };
   }
 
   async delete(id: string): Promise<boolean> {

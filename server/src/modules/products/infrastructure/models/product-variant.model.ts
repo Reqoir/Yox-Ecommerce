@@ -23,6 +23,7 @@ export interface IProductVariantDocument extends Document {
   images: string[];
   isDefault: boolean;
   isActive: boolean;
+  size?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,6 +44,7 @@ const productVariantSchema = new Schema<IProductVariantDocument>(
     images: { type: [String], default: [] },
     isDefault: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
+    size: { type: String, default: null, trim: true },
   },
   {
     ...(baseSchemaOptions as any),

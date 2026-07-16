@@ -14,6 +14,7 @@
 import { Router, type Request, type Response } from 'express';
 import authRouter from '../../../modules/auth/presentation/routes/auth.routes';
 import { productRoutes } from '../../../modules/products/presentation/routes/product.routes';
+import { productVariantRoutes } from '../../../modules/products/presentation/routes/product-variant.routes';
 
 import { getMongooseState } from '../../../core/infrastructure/database/mongoose/connection';
 import { isRedisConnected } from '../../../core/infrastructure/database/redis/connection';
@@ -46,4 +47,5 @@ import { categoryRoutes } from '../../../modules/categories/presentation/routes/
 rootRouter.use('/auth', authRouter);
 rootRouter.use('/users', userRouter);
 rootRouter.use('/products', productRoutes);
+rootRouter.use('/product-variants', productVariantRoutes);
 rootRouter.use('/categories', categoryRoutes);

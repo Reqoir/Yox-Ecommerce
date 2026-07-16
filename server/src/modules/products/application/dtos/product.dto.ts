@@ -30,6 +30,7 @@ export interface CreateProductRequestDTO {
     images?: string[];
     isDefault?: boolean;
     isActive?: boolean;
+    size?: string | null;
   }[];
 }
 
