@@ -22,6 +22,7 @@ export interface ProductVariantProps extends EntityProps {
   images: string[];
   isDefault: boolean;
   isActive: boolean;
+  size?: string | null;
 }
 
 export class ProductVariant extends BaseEntity<ProductVariantProps> {
@@ -36,6 +37,7 @@ export class ProductVariant extends BaseEntity<ProductVariantProps> {
   get stock(): number { return this._props.stock; }
   get isDefault(): boolean { return this._props.isDefault; }
   get isActive(): boolean { return this._props.isActive; }
+  get size(): string | null | undefined { return this._props.size; }
 
   public static create(props: Omit<ProductVariantProps, 'id' | 'createdAt' | 'updatedAt'>): ProductVariant {
     return new ProductVariant({

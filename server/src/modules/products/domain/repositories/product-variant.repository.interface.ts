@@ -12,6 +12,7 @@ export interface IProductVariantRepository {
   saveMany(variants: ProductVariant[]): Promise<ProductVariant[]>;
   findByProductId(productId: string): Promise<ProductVariant[]>;
   findById(id: string): Promise<ProductVariant | null>;
+  findAll(query?: any): Promise<{ data: ProductVariant[]; total: number }>;
   delete(id: string): Promise<boolean>;
   deleteByProductId(productId: string): Promise<boolean>;
 }
