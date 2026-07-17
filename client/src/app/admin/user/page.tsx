@@ -7,12 +7,27 @@ import { toast } from 'sonner';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Search, Plus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Pagination } from '@/components/ui/pagination';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState<string | null>(null); // Track which user is being updated
+  const [isUpdating, setIsUpdating] = useState<string | null>(null);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [newUser, setNewUser] = useState({ fullName: '', email: '', password: '', roleId: '' });
+  const [isCreating, setIsCreating] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -49,18 +64,92 @@ export default function UsersPage() {
     }
   };
 
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUser.roleId) {
+      toast.error('Please select a role for the user');
+      return;
+    }
+    
+    try {
+      setIsCreating(true);
+      const created = await userApi.createUser(newUser);
+      setUsers([created, ...users]);
+      setIsAddOpen(false);
+      setNewUser({ fullName: '', email: '', password: '', roleId: '' });
+      toast.success('User created successfully');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to create user');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch = user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          user.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesRole = roleFilter === 'all' || user.roleId === roleFilter;
+    return matchesSearch && matchesRole;
+  });
+
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Users</h1>
-        <p className="text-muted-foreground">
-          Manage users and assign roles.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Users & Staff</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage users, add staff members, and assign roles.
+          </p>
+        </div>
+        <Button className="gap-2" onClick={() => setIsAddOpen(true)}>
+          <Plus className="h-4 w-4" />
+          Add User
+        </Button>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Search by name or email..." 
+            className="pl-9"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
+        <div className="w-full sm:w-[250px]">
+          <Select 
+            value={roleFilter} 
+            onValueChange={(val) => {
+              setRoleFilter(val);
+              setCurrentPage(1);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Roles</SelectItem>
+              {roles.map(r => (
+                <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>All Registered Users</CardTitle>
+        <CardHeader className="py-4">
+          <CardTitle className="text-lg">All Registered Users</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -79,14 +168,14 @@ export default function UsersPage() {
                     Loading users...
                   </TableCell>
                 </TableRow>
-              ) : users.length === 0 ? (
+              ) : filteredUsers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                    No users found.
+                    No users found. {searchQuery || roleFilter !== 'all' ? 'Try adjusting your filters.' : ''}
                   </TableCell>
                 </TableRow>
               ) : (
-                users.map((user) => (
+                paginatedUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.fullName}</TableCell>
                     <TableCell>{user.email}</TableCell>
@@ -118,6 +207,75 @@ export default function UsersPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {filteredUsers.length > itemsPerPage && (
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
+
+      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add New User / Staff</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreateUser} className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input 
+                id="fullName" 
+                value={newUser.fullName} 
+                onChange={e => setNewUser({...newUser, fullName: e.target.value})} 
+                required 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                value={newUser.email} 
+                onChange={e => setNewUser({...newUser, email: e.target.value})} 
+                required 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Temporary Password</Label>
+              <Input 
+                id="password" 
+                type="text" 
+                value={newUser.password} 
+                onChange={e => setNewUser({...newUser, password: e.target.value})} 
+                placeholder="Leave blank for auto-generated password"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Select 
+                value={newUser.roleId} 
+                onValueChange={val => setNewUser({...newUser, roleId: val})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map(r => (
+                    <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={isCreating}>
+                {isCreating ? 'Creating...' : 'Create User'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

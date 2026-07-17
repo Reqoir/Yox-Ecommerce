@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, MoreHorizontal, Pencil, Trash, X, Image as ImageIcon } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash, X, Image as ImageIcon, Loader2, Eye, Search } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Table,
@@ -31,10 +31,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Pagination } from '@/components/ui/pagination';
 import { useProducts } from '@/hooks/admin/useProducts';
 import { productApi, Product, ProductVariant } from '@/api/admin/products';
 import { useBrands } from '@/hooks/admin/useBrands';
 import { useCategories } from '@/hooks/admin/useCategories';
+import { uploadApi } from '@/api/admin/upload';
 
 type SizeVariant = {
   id: string;
@@ -66,7 +68,16 @@ export default function AdminProductPage() {
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [activeTab, setActiveTab] = useState("general");
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [viewProduct, setViewProduct] = useState<Product | null>(null);
+
   const [selectedMediaColorId, setSelectedMediaColorId] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
 
   const defaultForm = {
     name: '',
@@ -143,12 +154,40 @@ export default function AdminProductPage() {
     );
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, callback: (url: string) => void) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      const url = await uploadApi.uploadImage(file);
+      callback(url);
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setIsUploading(false);
+      // Reset input so the same file can be selected again if needed
+      e.target.value = '';
+    }
+  };
+
   const handleOpenAdd = () => {
     setFormData(defaultForm);
     setEditProduct(null);
     setActiveTab("general");
     setSelectedMediaColorId('');
     setIsAddOpen(true);
+  };
+
+  const handleOpenView = async (product: Product) => {
+    try {
+      const fullProduct = await productApi.getById(product.id);
+      setViewProduct(fullProduct);
+      setIsViewOpen(true);
+    } catch (error) {
+      console.error("Failed to fetch full product details:", error);
+    }
   };
 
   const handleOpenEdit = async (product: Product) => {
@@ -346,6 +385,22 @@ export default function AdminProductPage() {
 
   const selectedColorGroup = formData.colorGroups.find(g => g.id === selectedMediaColorId);
 
+  // Filtering and Pagination
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          product.slug.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' 
+                          || (statusFilter === 'active' && product.isActive)
+                          || (statusFilter === 'draft' && !product.isActive);
+    return matchesSearch && matchesStatus;
+  });
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -359,6 +414,39 @@ export default function AdminProductPage() {
           <Plus className="h-4 w-4" />
           Add Product
         </Button>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Search products..." 
+            className="pl-9"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1); // Reset to page 1 on search
+            }}
+          />
+        </div>
+        <div className="w-full sm:w-[200px]">
+          <Select 
+            value={statusFilter} 
+            onValueChange={(val) => {
+              setStatusFilter(val);
+              setCurrentPage(1); // Reset to page 1 on filter
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
@@ -378,15 +466,15 @@ export default function AdminProductPage() {
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">Loading...</TableCell>
               </TableRow>
-            ) : products.length === 0 ? (
+            ) : filteredProducts.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                  No products found. Add your first product!
+                  No products found. {searchQuery || statusFilter !== 'all' ? 'Try adjusting your filters.' : 'Add your first product!'}
                 </TableCell>
               </TableRow>
             ) : (
-              products.map((product: Product) => (
-                <TableRow key={product.id}>
+              paginatedProducts.map((product: Product) => (
+                <TableRow key={product.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleOpenView(product)}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
                       {product.thumbnail ? (
@@ -412,20 +500,25 @@ export default function AdminProductPage() {
                       {product.isActive ? 'Active' : 'Draft'}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger className={buttonVariants({ variant: "ghost", className: "h-8 w-8 p-0" })}>
                         <span className="sr-only">Open menu</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleOpenEdit(product)}>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleOpenView(product); }}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleOpenEdit(product); }}>
                           <Pencil className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             if (window.confirm('Are you sure you want to delete this product?')) {
                               deleteProduct(product.id);
                             }
@@ -443,6 +536,146 @@ export default function AdminProductPage() {
           </TableBody>
         </Table>
       </div>
+
+      {filteredProducts.length > itemsPerPage && (
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
+
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b">
+            <DialogTitle>Product Details</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-[60vh] px-6 py-4">
+            {viewProduct && (
+              <div className="space-y-6">
+                <div className="flex gap-6">
+                  {viewProduct.thumbnail ? (
+                    <div className="w-40 h-40 shrink-0 border rounded-xl overflow-hidden bg-muted">
+                      <img src={viewProduct.thumbnail} alt={viewProduct.name} className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="w-40 h-40 shrink-0 border rounded-xl bg-muted flex items-center justify-center text-muted-foreground">
+                      No Image
+                    </div>
+                  )}
+                  <div className="flex-1 space-y-2">
+                    <h2 className="text-2xl font-bold">{viewProduct.name}</h2>
+                    <div className="flex gap-4 text-sm text-muted-foreground">
+                      <span>Slug: {viewProduct.slug}</span>
+                      <span>Brand: {brands.find(b => b.id === viewProduct.brandId)?.name || 'None'}</span>
+                      <span>Category: {categories.find(c => c.id === viewProduct.categoryId)?.name || 'None'}</span>
+                    </div>
+                    <div className="pt-2">
+                      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${viewProduct.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                        {viewProduct.isActive ? 'Active' : 'Draft'}
+                      </span>
+                      {viewProduct.isFeatured && (
+                        <span className="ml-2 inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700">
+                          Featured
+                        </span>
+                      )}
+                    </div>
+                    <p className="pt-2 text-sm">{viewProduct.shortDescription || 'No short description provided.'}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Description</h3>
+                  <div className="text-sm bg-muted/20 p-4 rounded-lg border whitespace-pre-wrap">
+                    {viewProduct.description || 'No description provided.'}
+                  </div>
+                </div>
+
+                {viewProduct.variants && viewProduct.variants.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Variants</h3>
+                    <div className="border rounded-lg overflow-hidden">
+                      <Table>
+                        <TableHeader className="bg-muted/50">
+                          <TableRow>
+                            <TableHead>SKU</TableHead>
+                            <TableHead>Color</TableHead>
+                            <TableHead>Size</TableHead>
+                            <TableHead>Cost Price</TableHead>
+                            <TableHead>Price</TableHead>
+                            <TableHead>Stock</TableHead>
+                            <TableHead>Images</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {viewProduct.variants.map((v, idx) => (
+                            <TableRow key={idx}>
+                              <TableCell className="font-medium text-xs">{v.sku}</TableCell>
+                              <TableCell>{v.color}</TableCell>
+                              <TableCell>{v.size || '-'}</TableCell>
+                              <TableCell>{v.costPrice ? `₹${v.costPrice}` : '-'}</TableCell>
+                              <TableCell>₹{v.price}</TableCell>
+                              <TableCell>{v.stock}</TableCell>
+                              <TableCell>
+                                {v.images && v.images.length > 0 ? (
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="outline" size="sm" className="h-7 text-xs">
+                                        View ({v.images.length})
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="p-2 w-64">
+                                      <div className="grid grid-cols-2 gap-2">
+                                        {v.images.map((img, i) => (
+                                          <div key={i} className="aspect-square rounded-md overflow-hidden bg-muted border">
+                                            <img src={img} alt={`${v.color} - ${i}`} className="w-full h-full object-cover" />
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                ) : (
+                                  <span className="text-muted-foreground">-</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold mb-2 text-sm text-muted-foreground">SEO Information</h3>
+                    <div className="bg-muted/20 p-3 rounded-lg border space-y-2 text-sm">
+                      <div><span className="font-medium">Title:</span> {viewProduct.seoTitle || '-'}</div>
+                      <div><span className="font-medium">Description:</span> {viewProduct.seoDescription || '-'}</div>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2 text-sm text-muted-foreground">System Info</h3>
+                    <div className="bg-muted/20 p-3 rounded-lg border space-y-2 text-sm">
+                      <div><span className="font-medium">Created:</span> {new Date(viewProduct.createdAt).toLocaleDateString()}</div>
+                      <div><span className="font-medium">Sales Count:</span> {viewProduct.salesCount}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </ScrollArea>
+          <div className="flex justify-end gap-2 p-4 border-t bg-muted/10">
+            <Button variant="outline" onClick={() => setIsViewOpen(false)}>Close</Button>
+            <Button onClick={() => {
+              setIsViewOpen(false);
+              if (viewProduct) handleOpenEdit(viewProduct);
+            }}>
+              <Pencil className="mr-2 h-4 w-4" /> Edit Product
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="sm:max-w-[900px] p-0 overflow-hidden">
@@ -534,15 +767,18 @@ export default function AdminProductPage() {
                       <p className="text-xs text-muted-foreground">Applied to all variants automatically.</p>
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="thumbnail">Thumbnail Image URL</Label>
-                      <Input
-                        id="thumbnail"
-                        type="url"
-                        value={formData.thumbnail}
-                        onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
-                        placeholder="https://example.com/image.png"
-                      />
-                      <p className="text-xs text-muted-foreground">Primary image shown on product listings.</p>
+                      <Label htmlFor="thumbnail">Thumbnail Image</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="thumbnail"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageUpload(e, (url) => setFormData({ ...formData, thumbnail: url }))}
+                          disabled={isUploading}
+                        />
+                        {isUploading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Upload a primary image for product listings.</p>
                     </div>
                   </div>
 
@@ -782,12 +1018,21 @@ export default function AdminProductPage() {
                                     <ImageIcon className="h-4 w-4 text-muted-foreground" />
                                   )}
                                 </div>
-                                <Input
-                                  placeholder="https://example.com/image.jpg"
-                                  value={img}
-                                  onChange={(e) => updateImageInGroup(selectedColorGroup.id, index, e.target.value)}
-                                  className="flex-1"
-                                />
+                                <div className="flex-1 flex gap-2">
+                                  <Input
+                                    placeholder="https://example.com/image.jpg"
+                                    value={img}
+                                    onChange={(e) => updateImageInGroup(selectedColorGroup.id, index, e.target.value)}
+                                    className="flex-1"
+                                  />
+                                  <Input
+                                    type="file"
+                                    accept="image/*"
+                                    className="w-[110px] text-xs file:text-xs file:py-1 file:px-2 file:border-0 file:bg-muted file:rounded"
+                                    onChange={(e) => handleImageUpload(e, (url) => updateImageInGroup(selectedColorGroup.id, index, url))}
+                                    disabled={isUploading}
+                                  />
+                                </div>
                                 <Button
                                   type="button"
                                   variant="ghost"
@@ -807,7 +1052,7 @@ export default function AdminProductPage() {
                                 onClick={() => addImageToGroup(selectedColorGroup.id)}
                                 className="w-full border-dashed"
                               >
-                                <Plus className="h-4 w-4 mr-2" /> Add Image URL
+                                <Plus className="h-4 w-4 mr-2" /> Add Image
                               </Button>
                             )}
                           </div>

@@ -9,18 +9,19 @@ import { toast } from 'sonner';
 
 const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { name: 'Users', href: '/admin/user', icon: Users },
-  { name: 'Products', href: '/admin/product', icon: Package },
-  { name: 'Categories', href: '/admin/category', icon: FolderTree },
-  { name: 'Brands', href: '/admin/brand', icon: Tag },
-  { name: 'Roles', href: '/admin/role', icon: Shield },
+  { name: 'Users', href: '/admin/user', icon: Users, permission: 'manage_users' },
+  { name: 'Products', href: '/admin/product', icon: Package, permission: 'manage_products' },
+  { name: 'Categories', href: '/admin/category', icon: FolderTree, permission: 'manage_categories' },
+  { name: 'Brands', href: '/admin/brand', icon: Tag, permission: 'manage_brands' },
+  { name: 'Roles', href: '/admin/role', icon: Shield, permission: 'manage_roles' },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 
 export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const logoutUser = useAuthStore((state) => state.logoutUser);
+  const { logoutUser, user } = useAuthStore();
+  const userPermissions = user?.permissions || [];
 
   const handleLogout = async () => {
     try {
@@ -40,6 +41,10 @@ export function AdminSidebar() {
       </div>
       <nav className="flex-1 p-4 space-y-1">
         {navItems.map((item) => {
+          if (item.permission && !userPermissions.includes(item.permission)) {
+            return null;
+          }
+
           const isActive = pathname === item.href || (pathname.startsWith(item.href + '/') && item.href !== '/admin');
           const Icon = item.icon;
           

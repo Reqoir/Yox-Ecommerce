@@ -66,6 +66,20 @@ export class UserRepository
     return this.toDomain(doc);
   }
 
+  public async update(id: string, data: Partial<User>): Promise<User | null> {
+    const rawData = data instanceof User ? this.toPersistence(data) : data;
+    const doc = await this.model
+      .findByIdAndUpdate(
+        id,
+        rawData as any,
+        { new: true, runValidators: true }
+      )
+      .exec();
+      
+    if (!doc) return null;
+    return this.toDomain(doc);
+  }
+
   public async findByEmail(email: string): Promise<User | null> {
     const doc = await this.model.findOne({ email } as FilterQuery<IUserDocument>).exec();
     return doc ? this.toDomain(doc) : null;

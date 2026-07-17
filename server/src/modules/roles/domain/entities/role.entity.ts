@@ -32,7 +32,7 @@ export class Role extends BaseEntity<RoleProps> {
       id: '',
       createdAt: new Date(),
       updatedAt: new Date(),
-      name: props.name.toUpperCase().trim(),
+      name: props.name.trim(),
       description: props.description || null,
       permissions: props.permissions || [],
       isSystem: false,

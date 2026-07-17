@@ -11,14 +11,16 @@ import { HttpStatus } from '@shared/constants/http-status.constants';
 import { GetAllUsersUseCase } from '../../application/use-cases/get-all-users.use-case';
 import { UpdateUserRoleUseCase } from '../../application/use-cases/update-user-role.use-case';
 import { validateRequest } from '@shared/utils/validation.helper';
-import { updateUserRoleSchema } from '../validators/user.validator';
+import { updateUserRoleSchema, createUserSchema } from '../validators/user.validator';
+import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
 
 export class UserController {
   constructor(
     private readonly getProfileUseCase: GetProfileUseCase,
     private readonly updateProfileUseCase: UpdateProfileUseCase,
     private readonly getAllUsersUseCase: GetAllUsersUseCase,
-    private readonly updateUserRoleUseCase: UpdateUserRoleUseCase
+    private readonly updateUserRoleUseCase: UpdateUserRoleUseCase,
+    private readonly createUserUseCase: CreateUserUseCase
   ) {}
 
   public getProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -26,7 +28,7 @@ export class UserController {
       // req.user is guaranteed to exist because of requireAuth middleware
       const userId = req.user!.id;
       
-      const user = await this.getProfileUseCase.execute(userId);
+      const { user, permissions } = await this.getProfileUseCase.execute(userId);
 
       // Return user without password
       const result = {
@@ -36,6 +38,7 @@ export class UserController {
         phone: user.phone,
         profileImage: user.profileImage,
         roleId: user.roleId,
+        permissions,
         isEmailVerified: user.isEmailVerified,
         isPhoneVerified: user.isPhoneVerified,
         status: user.status,
@@ -89,6 +92,18 @@ export class UserController {
       });
 
       ApiResponse.success(res, result, 'User role updated successfully', HttpStatus.OK);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const validBody = validateRequest(req, createUserSchema, 'body');
+      
+      const result = await this.createUserUseCase.execute(validBody);
+      
+      ApiResponse.success(res, result, 'User created successfully', HttpStatus.CREATED);
     } catch (error) {
       next(error);
     }

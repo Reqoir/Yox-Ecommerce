@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, MoreHorizontal, Pencil, Trash } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash, Loader2, Search } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Table,
@@ -32,6 +32,7 @@ import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCategories } from '@/hooks/admin/useCategories';
 import { Category } from '@/api/admin/categories';
+import { Pagination } from '@/components/ui/pagination';
 import {
   Select,
   SelectContent,
@@ -45,6 +46,12 @@ export default function AdminCategoryPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editCategory, setEditCategory] = useState<Category | null>(null);
   const [activeTab, setActiveTab] = useState("general");
+  const [isUploading, setIsUploading] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const defaultForm = {
     name: '',
@@ -60,6 +67,23 @@ export default function AdminCategoryPage() {
   };
 
   const [formData, setFormData] = useState(defaultForm);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, callback: (url: string) => void) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      const url = await uploadApi.uploadImage(file);
+      callback(url);
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
+  };
 
   const handleOpenAdd = () => {
     setFormData(defaultForm);
@@ -125,6 +149,21 @@ export default function AdminCategoryPage() {
   // Prevent selecting itself or its children as a parent
   const availableParents = categories.filter(c => !editCategory || c.id !== editCategory.id);
 
+  const filteredCategories = categories.filter((category) => {
+    const matchesSearch = category.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          category.slug.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' 
+                          || (statusFilter === 'active' && category.isActive)
+                          || (statusFilter === 'draft' && !category.isActive);
+    return matchesSearch && matchesStatus;
+  });
+
+  const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
+  const paginatedCategories = filteredCategories.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -140,7 +179,40 @@ export default function AdminCategoryPage() {
         </Button>
       </div>
 
-      <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Search categories..." 
+            className="pl-9"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
+        <div className="w-full sm:w-[200px]">
+          <Select 
+            value={statusFilter} 
+            onValueChange={(val) => {
+              setStatusFilter(val);
+              setCurrentPage(1);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="draft">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden mb-4">
         <Table>
           <TableHeader>
             <TableRow>
@@ -158,14 +230,14 @@ export default function AdminCategoryPage() {
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : categories.length === 0 ? (
+            ) : filteredCategories.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  No categories found.
+                  No categories found. {searchQuery || statusFilter !== 'all' ? 'Try adjusting your filters.' : ''}
                 </TableCell>
               </TableRow>
             ) : (
-              categories.map((category: Category) => (
+              paginatedCategories.map((category: Category) => (
                 <TableRow key={category.id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
@@ -225,6 +297,14 @@ export default function AdminCategoryPage() {
           </TableBody>
         </Table>
       </div>
+
+      {filteredCategories.length > itemsPerPage && (
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
 
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden">
@@ -306,15 +386,18 @@ export default function AdminCategoryPage() {
 
                 <TabsContent value="media" className="space-y-4 m-0">
                   <div className="grid gap-2">
-                    <Label htmlFor="image">Image URL</Label>
-                    <Input 
-                      id="image" 
-                      type="url"
-                      value={formData.image}
-                      onChange={(e) => setFormData({...formData, image: e.target.value})}
-                      placeholder="https://example.com/category-image.png"
-                    />
-                    <p className="text-xs text-muted-foreground">Provide a cover image URL for the category.</p>
+                    <Label htmlFor="image">Category Image</Label>
+                    <div className="flex items-center gap-2">
+                      <Input 
+                        id="image" 
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, (url) => setFormData({...formData, image: url}))}
+                        disabled={isUploading}
+                      />
+                      {isUploading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Upload a cover image for the category.</p>
                   </div>
                   
                   <div className="grid gap-2">

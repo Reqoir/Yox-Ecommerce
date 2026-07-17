@@ -38,6 +38,26 @@ export class RoleRepository
     };
   }
 
+  public async create(entity: Role): Promise<Role> {
+    const rawData = this.toPersistence(entity);
+    const doc = await this.model.create(rawData);
+    return this.toDomain(doc);
+  }
+
+  public async update(id: string, data: Partial<Role>): Promise<Role | null> {
+    const rawData = data instanceof Role ? this.toPersistence(data) : data;
+    const doc = await this.model
+      .findByIdAndUpdate(
+        id,
+        rawData as any,
+        { new: true, runValidators: true }
+      )
+      .exec();
+      
+    if (!doc) return null;
+    return this.toDomain(doc);
+  }
+
   public async findByName(name: string): Promise<Role | null> {
     const doc = await this.model.findOne({ name } as FilterQuery<IRoleDocument>).exec();
     return doc ? this.toDomain(doc) : null;

@@ -12,16 +12,18 @@ import { RegisterUserUseCase } from '../../application/use-cases/register.use-ca
 import { UserRepository } from '../../../users/infrastructure/repositories/user.repository';
 
 import { LoginUseCase } from '../../application/use-cases/login.use-case';
+import { RoleRepository } from '../../../roles/infrastructure/repositories/role.repository';
 
 const router = Router();
 
 // --- Dependency Injection Setup ---
 // 1. Repositories (Infrastructure)
 const userRepository = new UserRepository();
+const roleRepository = new RoleRepository();
 
 // 2. Use Cases (Application)
 const registerUseCase = new RegisterUserUseCase(userRepository);
-const loginUseCase = new LoginUseCase(userRepository);
+const loginUseCase = new LoginUseCase(userRepository, roleRepository);
 
 // 3. Controllers (Presentation)
 const authController = new AuthController(registerUseCase, loginUseCase);

@@ -18,4 +18,9 @@ export const userApi = {
     const response = await apiClient.patch<{ data: User }>(`/users/${userId}/role`, { roleId });
     return response.data.data;
   },
+
+  createUser: async (data: { fullName: string, email: string, password?: string, roleId: string }): Promise<User> => {
+    const response = await apiClient.post<{ data: User }>('/users', data);
+    return response.data.data;
+  },
 };
