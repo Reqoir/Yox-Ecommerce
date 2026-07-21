@@ -6,6 +6,9 @@
 
 import type { ReactNode } from 'react';
 
+import { TopBar } from '@/components/layout/top-bar';
+import { Navbar } from '@/components/layout/navbar';
+
 interface RootLayoutProps {
   children: ReactNode;
 }
@@ -13,7 +16,8 @@ interface RootLayoutProps {
 export default function CommonLayout({ children }: RootLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col">
-      {/* TODO: Add <Header /> component when implemented */}
+      <TopBar />
+      <Navbar />
       <main className="flex-1">{children}</main>
       {/* TODO: Add <Footer /> component when implemented */}
     </div>
