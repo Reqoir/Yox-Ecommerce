@@ -10,7 +10,7 @@ export function Navbar() {
         {/* Left Side: Logo & Search */}
         <div className="flex items-center gap-2">
           {/* Logo */}
-          <Link href="/" className="flex-shrink-0 h-11 w-32 relative overflow-hidden rounded-[2px] flex items-center justify-center">
+          <Link href="/" className="flex-shrink-0 h-11 w-24 relative overflow-hidden rounded-[2px] flex items-center justify-center">
             <img 
               src="/images/chatgpt-logo.png" 
               alt="YOX" 
