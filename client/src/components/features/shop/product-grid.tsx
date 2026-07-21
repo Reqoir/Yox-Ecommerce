@@ -61,10 +61,10 @@ const MOCK_PRODUCTS = [
 
 export function ProductGrid() {
   return (
-    <div className="w-full pl-6 border-l border-gray-100">
+    <div className="w-full lg:pl-6 lg:border-l border-gray-100 pb-16 lg:pb-0">
       
-      {/* Top Meta Area */}
-      <div className="mb-6">
+      {/* Top Meta Area (Desktop Only) */}
+      <div className="hidden lg:block mb-6">
         {/* Breadcrumbs */}
         <div className="flex items-center gap-2 text-xs text-gray-500 mb-4">
           <Link href="/" className="hover:text-gray-900">Home</Link>
@@ -98,8 +98,13 @@ export function ProductGrid() {
         </div>
       </div>
 
+      {/* Mobile Meta Area */}
+      <div className="lg:hidden w-full bg-gray-50/50 py-2 px-4 mb-2 border-b border-gray-100 flex items-center">
+        <span className="text-[13px] text-gray-500 font-medium">1180 Products</span>
+      </div>
+
       {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-1 lg:gap-6 px-1 lg:px-0">
         {MOCK_PRODUCTS.map((product) => (
           <div key={product.id} className="flex flex-col group cursor-pointer">
             {/* Image Box */}
@@ -124,19 +129,21 @@ export function ProductGrid() {
             </div>
 
             {/* Product Details */}
-            <h3 className="text-sm text-gray-500 mb-1 truncate" title={product.name}>
-              {product.name}
-            </h3>
-            
-            <div className="flex items-baseline gap-2 mb-1">
-              <span className="text-sm font-bold text-gray-900">₹{product.price}</span>
-              {product.originalPrice && (
-                <span className="text-xs text-gray-400 line-through">₹{product.originalPrice}</span>
-              )}
-            </div>
-            
-            <div className="text-xs text-green-600">
-              Best price <span className="font-semibold">₹{product.bestPrice}</span>
+            <div className="px-2 pb-3 lg:px-0 lg:pb-0">
+              <h3 className="text-xs lg:text-sm text-gray-500 mb-1 truncate" title={product.name}>
+                {product.name}
+              </h3>
+              
+              <div className="flex items-baseline gap-2 mb-1">
+                <span className="text-sm lg:text-base font-bold text-gray-900">₹{product.price}</span>
+                {product.originalPrice && (
+                  <span className="text-[10px] lg:text-xs text-gray-400 line-through">₹{product.originalPrice}</span>
+                )}
+              </div>
+              
+              <div className="text-[10px] lg:text-xs text-green-600">
+                Best price <span className="font-semibold">₹{product.bestPrice}</span>
+              </div>
             </div>
           </div>
         ))}

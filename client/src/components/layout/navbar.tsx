@@ -1,16 +1,16 @@
 import React from 'react';
 import Link from 'next/link';
-import { Search, Heart, ShoppingBag, User } from 'lucide-react';
+import { Search, Heart, ShoppingBag, User, Menu } from 'lucide-react';
 
 export function Navbar() {
   return (
     <nav className="w-full border-b bg-[#F7F8F7]">
-      <div className="w-[75%] mx-auto h-16 flex items-center justify-between">
+      <div className="w-full px-4 lg:px-0 lg:w-[75%] mx-auto h-16 flex items-center justify-between">
         
         {/* Left Side: Logo & Search */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3 md:gap-2">
           {/* Logo */}
-          <Link href="/" className="flex-shrink-0 h-11 w-24 relative overflow-hidden rounded-[2px] flex items-center justify-center">
+          <Link href="/" className="flex-shrink-0 h-11 w-20 md:w-24 relative overflow-hidden rounded-[2px] flex items-center justify-center">
             <img 
               src="/images/chatgpt-logo.png" 
               alt="YOX" 
@@ -30,23 +30,33 @@ export function Navbar() {
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 md:gap-6">
           <button className="hidden lg:block bg-[#1A2E4C] text-white text-xs font-semibold tracking-wide py-2.5 px-6 rounded-[2px] hover:bg-[#233f68] transition-colors">
             SIGN UP / SIGN IN
           </button>
 
-          <div className="flex items-center gap-5 text-black">
-            <button className="flex flex-col items-center gap-1 hover:text-gray-700 transition-colors">
+          <div className="flex items-center gap-4 md:gap-5 text-black">
+            {/* Mobile Search Icon */}
+            <button className="md:hidden flex flex-col items-center gap-1 hover:text-gray-700 transition-colors">
+              <Search size={22} strokeWidth={2} />
+            </button>
+
+            <button className="hidden md:flex flex-col items-center gap-1 hover:text-gray-700 transition-colors">
               <Heart size={20} strokeWidth={2} />
               <span className="text-xs font-medium">Favourites</span>
             </button>
-            <button className="flex flex-col items-center gap-1 hover:text-gray-700 transition-colors">
-              <ShoppingBag size={20} strokeWidth={2} />
-              <span className="text-xs font-medium">Cart</span>
+            <button className="flex md:flex-col items-center gap-1 hover:text-gray-700 transition-colors">
+              <ShoppingBag size={22} strokeWidth={2} />
+              <span className="hidden md:inline text-xs font-medium">Cart</span>
             </button>
-            <button className="flex flex-col items-center gap-1 hover:text-gray-700 transition-colors">
+            <button className="hidden md:flex flex-col items-center gap-1 hover:text-gray-700 transition-colors">
               <User size={20} strokeWidth={2} />
               <span className="text-xs font-medium">Profile</span>
+            </button>
+
+            {/* Mobile Hamburger Menu */}
+            <button className="md:hidden flex items-center hover:text-gray-700 transition-colors ml-1">
+              <Menu size={26} strokeWidth={2} />
             </button>
           </div>
         </div>
