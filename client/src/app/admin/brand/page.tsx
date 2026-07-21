@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, MoreHorizontal, Pencil, Trash } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Plus, MoreHorizontal, Pencil, Trash, Loader2, Search } from 'lucide-react';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -30,14 +30,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useBrands } from '@/hooks/useBrands';
-import { Brand } from '@/api/brands';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Pagination } from '@/components/ui/pagination';
+import { useBrands } from '@/hooks/admin/useBrands';
+import { Brand } from '@/api/admin/brands';
+import { uploadApi } from '@/api/admin/upload';
 
 export default function AdminBrandPage() {
   const { brands, isLoading, createBrand, updateBrand, deleteBrand, isCreating, isUpdating, isDeleting } = useBrands();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editBrand, setEditBrand] = useState<Brand | null>(null);
   const [activeTab, setActiveTab] = useState("general");
+  const [isUploading, setIsUploading] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const defaultForm = {
     name: '',
@@ -52,6 +61,23 @@ export default function AdminBrandPage() {
   };
 
   const [formData, setFormData] = useState(defaultForm);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, callback: (url: string) => void) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      const url = await uploadApi.uploadImage(file);
+      callback(url);
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
+  };
 
   const handleOpenAdd = () => {
     setFormData(defaultForm);
@@ -79,16 +105,42 @@ export default function AdminBrandPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prepare payload, converting empty strings to null for optional fields
+    const payload = {
+      ...formData,
+      description: formData.description || null,
+      website: formData.website || null,
+      logo: formData.logo || null,
+      seoTitle: formData.seoTitle || null,
+      seoDescription: formData.seoDescription || null,
+    };
+
     if (editBrand) {
-      updateBrand({ id: editBrand.id, data: formData }, {
+      updateBrand({ id: editBrand.id, data: payload }, {
         onSuccess: () => setIsAddOpen(false)
       });
     } else {
-      createBrand(formData, {
+      createBrand(payload, {
         onSuccess: () => setIsAddOpen(false)
       });
     }
   };
+
+  const filteredBrands = brands.filter((brand) => {
+    const matchesSearch = brand.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          brand.slug.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' 
+                          || (statusFilter === 'active' && brand.isActive)
+                          || (statusFilter === 'draft' && !brand.isActive);
+    return matchesSearch && matchesStatus;
+  });
+
+  const totalPages = Math.ceil(filteredBrands.length / itemsPerPage);
+  const paginatedBrands = filteredBrands.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <div className="space-y-6">
@@ -105,7 +157,40 @@ export default function AdminBrandPage() {
         </Button>
       </div>
 
-      <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Search brands..." 
+            className="pl-9"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
+        <div className="w-full sm:w-[200px]">
+          <Select 
+            value={statusFilter} 
+            onValueChange={(val) => {
+              setStatusFilter(val);
+              setCurrentPage(1);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="draft">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden mb-4">
         <Table>
           <TableHeader>
             <TableRow>
@@ -123,14 +208,14 @@ export default function AdminBrandPage() {
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : brands.length === 0 ? (
+            ) : filteredBrands.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  No brands found.
+                  No brands found. {searchQuery || statusFilter !== 'all' ? 'Try adjusting your filters.' : ''}
                 </TableCell>
               </TableRow>
             ) : (
-              brands.map((brand: Brand) => (
+              paginatedBrands.map((brand: Brand) => (
                 <TableRow key={brand.id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
@@ -151,11 +236,9 @@ export default function AdminBrandPage() {
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
+                      <DropdownMenuTrigger className={buttonVariants({ variant: "ghost", className: "h-8 w-8 p-0" })}>
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleOpenEdit(brand)}>
@@ -182,6 +265,14 @@ export default function AdminBrandPage() {
           </TableBody>
         </Table>
       </div>
+
+      {filteredBrands.length > itemsPerPage && (
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
 
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden">
@@ -251,15 +342,18 @@ export default function AdminBrandPage() {
 
                 <TabsContent value="media" className="space-y-4 m-0">
                   <div className="grid gap-2">
-                    <Label htmlFor="logo">Logo URL</Label>
-                    <Input 
-                      id="logo" 
-                      type="url"
-                      value={formData.logo}
-                      onChange={(e) => setFormData({...formData, logo: e.target.value})}
-                      placeholder="https://example.com/logo.png"
-                    />
-                    <p className="text-xs text-muted-foreground">Provide an image URL for the brand logo.</p>
+                    <Label htmlFor="logo">Logo Image</Label>
+                    <div className="flex items-center gap-2">
+                      <Input 
+                        id="logo" 
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, (url) => setFormData({...formData, logo: url}))}
+                        disabled={isUploading}
+                      />
+                      {isUploading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Upload an image for the brand logo.</p>
                   </div>
                   {formData.logo && (
                     <div className="mt-4 border rounded-lg p-4 flex items-center justify-center bg-muted/30">

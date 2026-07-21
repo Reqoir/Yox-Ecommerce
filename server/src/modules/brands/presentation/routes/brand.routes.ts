@@ -13,9 +13,8 @@ import { GetAllBrandsUseCase } from '../../application/use-cases/get-all-brands.
 import { UpdateBrandUseCase } from '../../application/use-cases/update-brand.use-case';
 import { DeleteBrandUseCase } from '../../application/use-cases/delete-brand.use-case';
 import { BrandRepository } from '../../infrastructure/repositories/brand.repository';
-// import { authMiddleware } from '@shared/middlewares/auth.middleware';
-// import { authorizeRole } from '@shared/middlewares/role.middleware';
-// import { UserRole } from '@shared/constants/roles.constants';
+import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
+import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
 
 const router = Router();
 
@@ -43,26 +42,25 @@ router.get('/:id', brandController.getById);
 
 /**
  * Protected Routes (Admin only)
- * Uncomment middlewares when ready to enforce authorization
  */
 router.post(
   '/',
-  // authMiddleware,
-  // authorizeRole([UserRole.ADMIN]),
+  requireAuth,
+  requirePermission('manage_brands'),
   brandController.create,
 );
 
 router.patch(
   '/:id',
-  // authMiddleware,
-  // authorizeRole([UserRole.ADMIN]),
+  requireAuth,
+  requirePermission('manage_brands'),
   brandController.update,
 );
 
 router.delete(
   '/:id',
-  // authMiddleware,
-  // authorizeRole([UserRole.ADMIN]),
+  requireAuth,
+  requirePermission('manage_brands'),
   brandController.delete,
 );
 

@@ -98,4 +98,12 @@ export class User extends BaseEntity<UserProps> {
     
     this._props.updatedAt = new Date();
   }
+
+  /**
+   * Updates user role safely.
+   */
+  public updateRole(roleId: string): void {
+    this._props.roleId = roleId;
+    this._props.updatedAt = new Date();
+  }
 }

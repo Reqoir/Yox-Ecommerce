@@ -76,11 +76,11 @@ export class CreateProductUseCase implements IUseCase<CreateProductRequestDTO, P
         costPrice: v.costPrice,
         stock: v.stock,
         lowStockThreshold: v.lowStockThreshold || 10,
-        weight: v.weight,
         barcode: v.barcode,
         images: v.images || [],
         isDefault: v.isDefault || false,
         isActive: v.isActive !== undefined ? v.isActive : true,
+        size: v.size,
       }));
       savedVariants = await this.variantRepo.saveMany(variantEntities);
     }
@@ -109,8 +109,29 @@ export class UpdateProductUseCase implements IUseCase<{ id: string; data: Update
     const updatedProduct = Product.reconstitute(updatedProps);
     const savedProduct = await this.productRepo.save(updatedProduct);
 
-    // Simplification: We don't handle deep variant updates in this basic PATCH unless requested.
-    // If we wanted to, we would process input.data.variants here.
+    if (input.data.variants) {
+      await this.variantRepo.deleteByProductId(savedProduct.id);
+      
+      const variantEntities = input.data.variants.map(v => ProductVariant.create({
+        productId: savedProduct.id,
+        sku: v.sku,
+        title: v.title,
+        color: v.color,
+        price: v.price,
+        comparePrice: v.comparePrice,
+        costPrice: v.costPrice,
+        stock: v.stock,
+        lowStockThreshold: v.lowStockThreshold || 10,
+        weight: v.weight,
+        barcode: v.barcode,
+        images: v.images || [],
+        isDefault: v.isDefault || false,
+        isActive: v.isActive !== undefined ? v.isActive : true,
+        size: v.size,
+      }));
+      await this.variantRepo.saveMany(variantEntities);
+    }
+
     const variants = await this.variantRepo.findByProductId(savedProduct.id);
 
     return mapToResponseDTO(savedProduct, variants);

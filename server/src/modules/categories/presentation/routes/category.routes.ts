@@ -35,11 +35,16 @@ const categoryController = new CategoryController(
   getAllCategoriesUseCase
 );
 
+import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
+import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
+
 // Routes
-router.post('/', categoryController.create);
 router.get('/', categoryController.getAll);
 router.get('/:id', categoryController.getById);
-router.patch('/:id', categoryController.update);
-router.delete('/:id', categoryController.delete);
+
+// Protected Admin Routes
+router.post('/', requireAuth, requirePermission('manage_categories'), categoryController.create);
+router.patch('/:id', requireAuth, requirePermission('manage_categories'), categoryController.update);
+router.delete('/:id', requireAuth, requirePermission('manage_categories'), categoryController.delete);
 
 export { router as categoryRoutes };

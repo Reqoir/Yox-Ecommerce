@@ -1,8 +1,6 @@
 /**
  * @module Inventory
- * @description Inventory feature module — placeholder.
- *
- * Implementation will be added via a separate prompt.
+ * @description Inventory feature module
  */
 
-// export { inventoryRouter } from './presentation/routes/inventory.routes';
+export { inventoryRouter } from './presentation/routes/inventory.routes';

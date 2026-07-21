@@ -45,10 +45,15 @@ router.get('/featured', productController.getFeatured);
 router.get('/latest', productController.getLatest);
 router.get('/best-selling', productController.getBestSelling);
 
+import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
+import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
+
 // Standard CRUD
 router.get('/:id', productController.getById);
-router.post('/', productController.create);
-router.patch('/:id', productController.update);
-router.delete('/:id', productController.delete);
+
+// Protected Admin Routes
+router.post('/', requireAuth, requirePermission('manage_products'), productController.create);
+router.patch('/:id', requireAuth, requirePermission('manage_products'), productController.update);
+router.delete('/:id', requireAuth, requirePermission('manage_products'), productController.delete);
 
 export const productRoutes = router;

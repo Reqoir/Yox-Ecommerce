@@ -44,6 +44,9 @@ rootRouter.get('/health', (_req: Request, res: Response) => {
 import userRouter from '../../../modules/users/presentation/routes/user.routes';
 import { categoryRoutes } from '../../../modules/categories/presentation/routes/category.routes';
 import { brandRoutes } from '../../../modules/brands/presentation/routes/brand.routes';
+import { inventoryRouter } from '../../../modules/inventory/presentation/routes/inventory.routes';
+import { roleRoutes } from '../../../modules/roles/presentation/routes/role.routes';
+import { uploadRouter } from '../../../modules/upload/presentation/routes/upload.routes';
 
 rootRouter.use('/auth', authRouter);
 rootRouter.use('/users', userRouter);
@@ -51,3 +54,8 @@ rootRouter.use('/products', productRoutes);
 rootRouter.use('/product-variants', productVariantRoutes);
 rootRouter.use('/categories', categoryRoutes);
 rootRouter.use('/brands', brandRoutes);
+rootRouter.use('/inventory', inventoryRouter);
+rootRouter.use('/roles', roleRoutes);
+
+rootRouter.use('/upload', uploadRouter);
+

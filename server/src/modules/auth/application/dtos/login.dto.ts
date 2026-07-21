@@ -16,6 +16,7 @@ export interface LoginResponseDTO {
     fullName: string;
     email: string;
     roleId: string;
+    permissions: string[];
   };
   accessToken: string;
   refreshToken: string;

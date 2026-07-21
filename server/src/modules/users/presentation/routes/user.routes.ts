@@ -9,18 +9,39 @@ import { GetProfileUseCase } from '../../application/use-cases/get-profile.use-c
 import { UpdateProfileUseCase } from '../../application/use-cases/update-profile.use-case';
 import { UserRepository } from '../../infrastructure/repositories/user.repository';
 import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
+import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
+import { GetAllUsersUseCase } from '../../application/use-cases/get-all-users.use-case';
+import { UpdateUserRoleUseCase } from '../../application/use-cases/update-user-role.use-case';
+import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
+
+import { RoleRepository } from '../../../roles/infrastructure/repositories/role.repository';
 
 const router = Router();
 
 const userRepository = new UserRepository();
-const getProfileUseCase = new GetProfileUseCase(userRepository);
+const roleRepository = new RoleRepository();
+const getProfileUseCase = new GetProfileUseCase(userRepository, roleRepository);
 const updateProfileUseCase = new UpdateProfileUseCase(userRepository);
-const userController = new UserController(getProfileUseCase, updateProfileUseCase);
+const getAllUsersUseCase = new GetAllUsersUseCase(userRepository);
+const updateUserRoleUseCase = new UpdateUserRoleUseCase(userRepository, roleRepository);
+const createUserUseCase = new CreateUserUseCase(userRepository);
+const userController = new UserController(
+  getProfileUseCase, 
+  updateProfileUseCase,
+  getAllUsersUseCase,
+  updateUserRoleUseCase,
+  createUserUseCase
+);
 
 // Apply auth middleware to all user routes
 router.use(requireAuth);
 
 router.get('/me', userController.getProfile);
 router.patch('/me', userController.updateProfile);
+
+// Admin routes
+router.get('/', requirePermission('manage_users'), userController.getAll);
+router.post('/', requirePermission('manage_users'), userController.create);
+router.patch('/:id/role', requirePermission('manage_users'), userController.updateRole);
 
 export default router;
