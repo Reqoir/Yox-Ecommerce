@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Plus, Minus, ChevronRight } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
 
 const FILTER_CATEGORIES = [
   'Size', 'Promotions', 'Color', 'Discount', 'Design', 'Gender', 
@@ -10,6 +11,7 @@ const FILTER_CATEGORIES = [
 
 export function FilterSidebar() {
   const [expandedSection, setExpandedSection] = useState<string | null>('Price');
+  const [priceRange, setPriceRange] = useState([174, 1438]);
 
   const toggleSection = (section: string) => {
     if (expandedSection === section) {
@@ -17,6 +19,20 @@ export function FilterSidebar() {
     } else {
       setExpandedSection(section);
     }
+  };
+
+  const handlePriceChange = (newValues: number[]) => {
+    setPriceRange(newValues);
+  };
+
+  const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseInt(e.target.value) || 0;
+    setPriceRange([val, priceRange[1]]);
+  };
+
+  const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseInt(e.target.value) || 0;
+    setPriceRange([priceRange[0], val]);
   };
 
   return (
@@ -28,7 +44,7 @@ export function FilterSidebar() {
       </div>
 
       <div className="py-2">
-        {/* Price Section (Custom) */}
+        {/* Price Section */}
         <div className="py-4 border-b border-gray-100">
           <button 
             className="w-full flex items-center justify-between group"
@@ -39,13 +55,16 @@ export function FilterSidebar() {
           </button>
           
           {expandedSection === 'Price' && (
-            <div className="mt-4 pt-2">
-              {/* Fake Slider */}
-              <div className="relative w-full h-1 bg-gray-200 rounded my-4">
-                <div className="absolute top-0 left-0 h-full bg-[#D2925D] w-full rounded"></div>
-                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-[#D2925D] shadow cursor-pointer"></div>
-                <div className="absolute top-1/2 right-0 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-[#D2925D] shadow cursor-pointer"></div>
-              </div>
+            <div className="mt-4 pt-2 px-1">
+              {/* Working Slider */}
+              <Slider 
+                value={priceRange} 
+                min={0} 
+                max={5000} 
+                step={1} 
+                onValueChange={handlePriceChange}
+                className="my-4"
+              />
               
               {/* Min/Max Inputs */}
               <div className="flex items-end justify-between gap-2 mt-6">
@@ -54,9 +73,10 @@ export function FilterSidebar() {
                   <div className="relative">
                     <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">₹</span>
                     <input 
-                      type="text" 
-                      defaultValue="174" 
-                      className="w-full border border-gray-300 rounded-[2px] py-1.5 pl-6 pr-2 text-sm text-gray-800 outline-none focus:border-[#D2925D]"
+                      type="number" 
+                      value={priceRange[0]} 
+                      onChange={handleMinChange}
+                      className="w-full border border-gray-300 rounded-[2px] py-1.5 pl-6 pr-2 text-xs text-gray-800 outline-none focus:border-[#D2925D] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </div>
                 </div>
@@ -65,9 +85,10 @@ export function FilterSidebar() {
                   <div className="relative">
                     <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">₹</span>
                     <input 
-                      type="text" 
-                      defaultValue="1438" 
-                      className="w-full border border-gray-300 rounded-[2px] py-1.5 pl-6 pr-2 text-sm text-gray-800 outline-none focus:border-[#D2925D]"
+                      type="number" 
+                      value={priceRange[1]} 
+                      onChange={handleMaxChange}
+                      className="w-full border border-gray-300 rounded-[2px] py-1.5 pl-6 pr-2 text-xs text-gray-800 outline-none focus:border-[#D2925D] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </div>
                 </div>
