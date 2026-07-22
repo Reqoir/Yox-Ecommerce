@@ -23,10 +23,13 @@ export interface Product {
   name: string;
   slug: string;
   categoryId?: string | null;
+  subCategoryId?: string | null;
   brandId?: string | null;
   shortDescription?: string | null;
   description?: string | null;
   thumbnail?: string | null;
+  fit?: string | null;
+  tag?: string | null;
   isFeatured: boolean;
   isActive: boolean;
   salesCount: number;
@@ -41,10 +44,13 @@ export interface CreateProductDTO {
   name: string;
   slug: string;
   categoryId?: string | null;
+  subCategoryId?: string | null;
   brandId?: string | null;
   shortDescription?: string | null;
   description?: string | null;
   thumbnail?: string | null;
+  fit?: string | null;
+  tag?: string | null;
   isFeatured?: boolean;
   isActive?: boolean;
   seoTitle?: string | null;
@@ -57,7 +63,6 @@ export interface UpdateProductDTO extends Partial<CreateProductDTO> {}
 export const productApi = {
   getAll: async (params?: Record<string, any>) => {
     const response = await apiClient.get<{ data: { data: Product[]; total: number } }>('/products', { params });
-    // The backend returns { data: { data: Product[], total: number } } inside its ApiResponse
     return response.data.data.data || [];
   },
   

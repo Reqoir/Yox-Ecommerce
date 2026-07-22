@@ -7,10 +7,13 @@ export interface CreateProductRequestDTO {
   name: string;
   slug: string;
   categoryId?: string | null;
+  subCategoryId?: string | null;
   brandId?: string | null;
   shortDescription?: string | null;
   description?: string | null;
   thumbnail?: string | null;
+  fit?: string | null;
+  tag?: string | null;
   isFeatured?: boolean;
   isActive?: boolean;
   seoTitle?: string | null;
@@ -41,10 +44,13 @@ export interface ProductResponseDTO {
   name: string;
   slug: string;
   categoryId?: string | null;
+  subCategoryId?: string | null;
   brandId?: string | null;
   shortDescription?: string | null;
   description?: string | null;
   thumbnail?: string | null;
+  fit?: string | null;
+  tag?: string | null;
   isFeatured: boolean;
   isActive: boolean;
   salesCount: number;

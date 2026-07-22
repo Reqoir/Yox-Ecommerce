@@ -31,7 +31,7 @@ const productController = new ProductController(
   new UpdateProductUseCase(productRepo, variantRepo),
   new DeleteProductUseCase(productRepo, variantRepo),
   new GetProductByIdUseCase(productRepo, variantRepo),
-  new GetAllProductsUseCase(productRepo),
+  new GetAllProductsUseCase(productRepo, variantRepo),
   new GetFeaturedProductsUseCase(productRepo),
   new GetLatestProductsUseCase(productRepo),
   new GetBestSellingProductsUseCase(productRepo)

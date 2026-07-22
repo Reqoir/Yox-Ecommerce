@@ -19,10 +19,13 @@ function mapToResponseDTO(product: Product, variants: ProductVariant[] = []): Pr
     name: product.name,
     slug: product.slug,
     categoryId: product.categoryId,
+    subCategoryId: product.subCategoryId,
     brandId: product.brandId,
     shortDescription: product.shortDescription,
     description: product.description,
     thumbnail: product.thumbnail,
+    fit: product.fit,
+    tag: product.tag,
     isFeatured: product.isFeatured,
     isActive: product.isActive,
     salesCount: product.salesCount,
@@ -52,10 +55,13 @@ export class CreateProductUseCase implements IUseCase<CreateProductRequestDTO, P
       name: input.name,
       slug: input.slug,
       categoryId: input.categoryId,
+      subCategoryId: input.subCategoryId,
       brandId: input.brandId,
       shortDescription: input.shortDescription,
       description: input.description,
       thumbnail: input.thumbnail,
+      fit: input.fit,
+      tag: input.tag,
       isFeatured: input.isFeatured || false,
       isActive: input.isActive !== undefined ? input.isActive : true,
       seoTitle: input.seoTitle,
@@ -168,12 +174,21 @@ export class GetProductByIdUseCase implements IUseCase<string, ProductResponseDT
 }
 
 export class GetAllProductsUseCase implements IUseCase<any, { data: ProductResponseDTO[]; total: number }> {
-  constructor(private readonly productRepo: IProductRepository) {}
+  constructor(
+    private readonly productRepo: IProductRepository,
+    private readonly variantRepo?: IProductVariantRepository
+  ) {}
 
   async execute(query: any): Promise<{ data: ProductResponseDTO[]; total: number }> {
     const result = await this.productRepo.findAll(query);
+    const dataWithVariants = await Promise.all(
+      result.data.map(async (p) => {
+        const variants = this.variantRepo ? await this.variantRepo.findByProductId(p.id) : [];
+        return mapToResponseDTO(p, variants);
+      })
+    );
     return {
-      data: result.data.map(p => mapToResponseDTO(p)), // Simplified, variants not loaded for list usually
+      data: dataWithVariants,
       total: result.total,
     };
   }
