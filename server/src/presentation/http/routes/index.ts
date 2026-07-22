@@ -47,6 +47,7 @@ import { brandRoutes } from '../../../modules/brands/presentation/routes/brand.r
 import { inventoryRouter } from '../../../modules/inventory/presentation/routes/inventory.routes';
 import { roleRoutes } from '../../../modules/roles/presentation/routes/role.routes';
 import { uploadRouter } from '../../../modules/upload/presentation/routes/upload.routes';
+import { addressRouter } from '../../../modules/addresses/presentation/routes/address.routes';
 
 rootRouter.use('/auth', authRouter);
 rootRouter.use('/users', userRouter);
@@ -56,6 +57,7 @@ rootRouter.use('/categories', categoryRoutes);
 rootRouter.use('/brands', brandRoutes);
 rootRouter.use('/inventory', inventoryRouter);
 rootRouter.use('/roles', roleRoutes);
+rootRouter.use('/addresses', addressRouter);
 
 rootRouter.use('/upload', uploadRouter);
 
