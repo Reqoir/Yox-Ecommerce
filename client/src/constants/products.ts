@@ -7,6 +7,7 @@ export const MOCK_PRODUCTS: Product[] = [
     category: 'T-Shirts',
     subCategory: 'Polo T-Shirts',
     image: '/images/product-1.jpeg',
+    images: ['/images/product-1.jpeg', '/images/product-2.jpeg', '/images/product-3.jpeg', '/images/product-4.jpeg'],
     price: 799,
     originalPrice: 999,
     bestPrice: 699,

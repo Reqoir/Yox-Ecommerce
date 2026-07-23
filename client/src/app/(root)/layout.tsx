@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 import { Suspense } from 'react';
 import { TopBar } from '@/components/layout/top-bar';
 import { Navbar } from '@/components/layout/navbar';
+import { CategoryNav } from '@/components/layout/category-nav';
 
 interface RootLayoutProps {
   children: ReactNode;
@@ -21,6 +22,7 @@ export default function CommonLayout({ children }: RootLayoutProps) {
       }>
         <Navbar />
       </Suspense>
+      <CategoryNav />
       <main className="flex-1">{children}</main>
     </div>
   );

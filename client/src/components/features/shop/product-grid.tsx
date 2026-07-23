@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useProductFilters } from '@/hooks/useProductFilters';
 import { SORT_OPTIONS_LIST } from '@/constants/products';
 import { SortOption, ProductSize, ProductFit, ProductTag } from '@/types/product';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function ProductGrid() {
   const {
@@ -82,17 +83,19 @@ export function ProductGrid() {
           
           <div className="flex items-center gap-3">
             <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">Sort By</span>
-            <div className="relative">
-              <select 
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="appearance-none border border-gray-300 rounded-[2px] py-2 pl-4 pr-10 text-xs font-semibold text-gray-800 outline-none focus:border-[#1A2E4C] bg-white cursor-pointer"
-              >
-                {SORT_OPTIONS_LIST.map((option) => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+            <div className="w-[180px]">
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+                <SelectTrigger className="border-gray-300 rounded-[2px] h-9 text-xs font-semibold text-gray-800 bg-white focus:ring-0 focus:ring-offset-0 focus:border-[#1A2E4C]">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200">
+                  {SORT_OPTIONS_LIST.map((option) => (
+                    <SelectItem key={option} value={option} className="text-xs font-medium text-gray-900 cursor-pointer data-[highlighted]:bg-gray-100 data-[highlighted]:text-gray-900 transition-colors">
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
@@ -200,7 +203,7 @@ export function ProductGrid() {
       {filteredProducts.length > 0 ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-6 px-1 lg:px-0">
           {filteredProducts.map((product) => (
-            <div key={product.id} className="flex flex-col group cursor-pointer border border-transparent hover:border-gray-200 p-2 rounded transition-all">
+            <Link href={`/product/${product.id}`} key={product.id} className="flex flex-col group cursor-pointer border border-transparent hover:border-gray-200 p-2 rounded transition-all">
               {/* Image Box */}
               <div className="relative w-full aspect-[3/4] bg-gray-100 overflow-hidden mb-3 rounded-[2px]">
                 <img 
@@ -213,6 +216,7 @@ export function ProductGrid() {
                 <button 
                   className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-sm hover:bg-white text-gray-600 hover:text-red-500 transition-colors"
                   aria-label="Add to Wishlist"
+                  onClick={(e) => e.preventDefault()} // Prevent routing when clicking wishlist
                 >
                   <Heart size={16} strokeWidth={2} />
                 </button>
@@ -249,7 +253,7 @@ export function ProductGrid() {
                   Best price <span className="font-semibold">₹{product.bestPrice}</span>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       ) : (

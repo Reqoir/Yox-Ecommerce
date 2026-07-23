@@ -21,6 +21,7 @@ export interface Product {
   category: ProductCategory;
   subCategory?: string;
   image: string;
+  images?: string[];
   price: number;
   originalPrice?: number | null;
   bestPrice: number;
