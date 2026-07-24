@@ -47,6 +47,7 @@ import { brandRoutes } from '../../../modules/brands/presentation/routes/brand.r
 import { inventoryRouter } from '../../../modules/inventory/presentation/routes/inventory.routes';
 import { roleRoutes } from '../../../modules/roles/presentation/routes/role.routes';
 import { uploadRouter } from '../../../modules/upload/presentation/routes/upload.routes';
+import { cartRouter } from '../../../modules/cart/presentation/routes/cart.routes';
 
 rootRouter.use('/auth', authRouter);
 rootRouter.use('/users', userRouter);
@@ -58,4 +59,4 @@ rootRouter.use('/inventory', inventoryRouter);
 rootRouter.use('/roles', roleRoutes);
 
 rootRouter.use('/upload', uploadRouter);
-
+rootRouter.use('/cart', cartRouter);

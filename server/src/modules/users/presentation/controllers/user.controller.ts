@@ -75,7 +75,7 @@ export class UserController {
   public getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const result = await this.getAllUsersUseCase.execute(req.query);
-      ApiResponse.success(res, result.users, 'Users retrieved successfully', HttpStatus.OK, result.meta);
+      ApiResponse.success(res, result.users, 'Users retrieved successfully', HttpStatus.OK, result.meta as unknown as Record<string, unknown>);
     } catch (error) {
       next(error);
     }

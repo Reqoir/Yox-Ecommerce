@@ -28,6 +28,9 @@ export class UpdateUserRoleUseCase {
     user.updateRole(dto.roleId);
 
     const updatedUser = await this.userRepository.update(user.id, user);
+    if (!updatedUser) {
+      throw new Error('Failed to update user');
+    }
 
     const userJson = updatedUser.toJSON();
     delete (userJson as any).password;
