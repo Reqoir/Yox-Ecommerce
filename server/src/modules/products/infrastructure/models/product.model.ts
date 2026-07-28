@@ -12,10 +12,13 @@ export interface IProductDocument extends Document {
   name: string;
   slug: string;
   categoryId?: string | null;
+  subCategoryId?: string | null;
   brandId?: string | null;
   shortDescription?: string | null;
   description?: string | null;
   thumbnail?: string | null;
+  fit?: string | null;
+  tag?: string | null;
   isFeatured: boolean;
   isActive: boolean;
   seoTitle?: string | null;
@@ -32,10 +35,13 @@ const productSchema = new Schema<IProductDocument>(
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, unique: true, trim: true, index: true },
     categoryId: { type: String, default: null },
+    subCategoryId: { type: String, default: null },
     brandId: { type: String, default: null },
     shortDescription: { type: String, default: null },
     description: { type: String, default: null },
     thumbnail: { type: String, default: null },
+    fit: { type: String, default: null },
+    tag: { type: String, default: null },
     isFeatured: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
     seoTitle: { type: String, default: null },
@@ -53,7 +59,10 @@ const productSchema = new Schema<IProductDocument>(
 // Indexes for searching and sorting
 productSchema.index({ name: 'text', shortDescription: 'text', description: 'text' });
 productSchema.index({ categoryId: 1 });
+productSchema.index({ subCategoryId: 1 });
 productSchema.index({ brandId: 1 });
+productSchema.index({ fit: 1 });
+productSchema.index({ tag: 1 });
 productSchema.index({ isFeatured: 1 });
 productSchema.index({ isActive: 1 });
 productSchema.index({ salesCount: -1 });

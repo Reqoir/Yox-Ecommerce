@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, MoreHorizontal, Pencil, Trash, X, Image as ImageIcon, Loader2, Eye, Search } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
@@ -79,11 +79,19 @@ export default function AdminProductPage() {
   const [selectedMediaColorId, setSelectedMediaColorId] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
 
+  // Separate categories into Parent Categories (no parentCategoryId) and Subcategories
+  const parentCategories = useMemo(() => {
+    return categories.filter(c => !(c as any).parentCategoryId);
+  }, [categories]);
+
   const defaultForm = {
     name: '',
     slug: '',
     categoryId: 'none',
+    subCategoryId: 'none',
     brandId: 'none',
+    fit: 'none',
+    tag: 'none',
     shortDescription: '',
     description: '',
     thumbnail: '',
@@ -96,6 +104,12 @@ export default function AdminProductPage() {
   };
 
   const [formData, setFormData] = useState(defaultForm);
+
+  // Available subcategories based on selected parent categoryId
+  const availableSubCategories = useMemo(() => {
+    if (formData.categoryId === 'none') return [];
+    return categories.filter(c => (c as any).parentCategoryId === formData.categoryId);
+  }, [categories, formData.categoryId]);
 
   // Group flat variants into ColorGroups
   const groupByColor = (variants: Omit<ProductVariant, 'id'>[]): ColorGroup[] => {
@@ -146,7 +160,7 @@ export default function AdminProductPage() {
         lowStockThreshold: size.lowStockThreshold,
         weight: size.weight,
         images: group.images.filter(img => img.trim() !== ''),
-        isDefault: group.isDefault && index === 0, // Mark first size of default color as default
+        isDefault: group.isDefault && index === 0,
         isActive: size.isActive,
         size: size.size?.trim() || null,
         barcode: globalBarcode?.trim() || null,
@@ -167,7 +181,6 @@ export default function AdminProductPage() {
       alert('Failed to upload image. Please try again.');
     } finally {
       setIsUploading(false);
-      // Reset input so the same file can be selected again if needed
       e.target.value = '';
     }
   };
@@ -192,16 +205,17 @@ export default function AdminProductPage() {
 
   const handleOpenEdit = async (product: Product) => {
     try {
-      // Fetch full product details including variants
       const fullProduct = await productApi.getById(product.id);
-
       const grouped = fullProduct.variants ? groupByColor(fullProduct.variants) : [];
 
       setFormData({
         name: fullProduct.name,
         slug: fullProduct.slug,
         categoryId: fullProduct.categoryId || 'none',
+        subCategoryId: fullProduct.subCategoryId || 'none',
         brandId: fullProduct.brandId || 'none',
+        fit: fullProduct.fit || 'none',
+        tag: fullProduct.tag || 'none',
         shortDescription: fullProduct.shortDescription || '',
         description: fullProduct.description || '',
         thumbnail: fullProduct.thumbnail || '',
@@ -230,6 +244,9 @@ export default function AdminProductPage() {
       ...formData,
       brandId: formData.brandId === 'none' ? null : formData.brandId,
       categoryId: formData.categoryId === 'none' ? null : formData.categoryId,
+      subCategoryId: formData.subCategoryId === 'none' ? null : formData.subCategoryId,
+      fit: formData.fit === 'none' ? null : formData.fit,
+      tag: formData.tag === 'none' ? null : formData.tag,
       thumbnail: formData.thumbnail?.trim() || null,
       shortDescription: formData.shortDescription?.trim() || null,
       description: formData.description?.trim() || null,
@@ -407,7 +424,7 @@ export default function AdminProductPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Products</h1>
           <p className="text-muted-foreground mt-1">
-            Manage your store's apparel, variants, pricing, and inventory.
+            Manage your store&apos;s apparel, variants, pricing, media, and inventory.
           </p>
         </div>
         <Button className="gap-2" onClick={handleOpenAdd}>
@@ -425,7 +442,7 @@ export default function AdminProductPage() {
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
-              setCurrentPage(1); // Reset to page 1 on search
+              setCurrentPage(1);
             }}
           />
         </div>
@@ -433,8 +450,8 @@ export default function AdminProductPage() {
           <Select 
             value={statusFilter} 
             onValueChange={(val) => {
-              setStatusFilter(val);
-              setCurrentPage(1); // Reset to page 1 on filter
+              if (val) setStatusFilter(val);
+              setCurrentPage(1);
             }}
           >
             <SelectTrigger>
@@ -454,7 +471,7 @@ export default function AdminProductPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Product</TableHead>
-              <TableHead>Slug</TableHead>
+              <TableHead>Fit / Tag</TableHead>
               <TableHead>Brand</TableHead>
               <TableHead>Sales</TableHead>
               <TableHead>Status</TableHead>
@@ -490,7 +507,13 @@ export default function AdminProductPage() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{product.slug}</TableCell>
+                  <TableCell>
+                    <div className="text-xs space-y-1">
+                      {product.fit && <span className="inline-block bg-gray-100 text-gray-800 px-2 py-0.5 rounded mr-1 font-semibold">{product.fit}</span>}
+                      {product.tag && <span className="inline-block bg-[#D2925D] text-white px-2 py-0.5 rounded font-bold uppercase">{product.tag}</span>}
+                      {!product.fit && !product.tag && <span className="text-muted-foreground">-</span>}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     {brands.find(b => b.id === product.brandId)?.name || '-'}
                   </TableCell>
@@ -545,6 +568,7 @@ export default function AdminProductPage() {
         />
       )}
 
+      {/* VIEW PRODUCT DETAILS DIALOG */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-4 border-b">
@@ -565,17 +589,28 @@ export default function AdminProductPage() {
                   )}
                   <div className="flex-1 space-y-2">
                     <h2 className="text-2xl font-bold">{viewProduct.name}</h2>
-                    <div className="flex gap-4 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                       <span>Slug: {viewProduct.slug}</span>
                       <span>Brand: {brands.find(b => b.id === viewProduct.brandId)?.name || 'None'}</span>
                       <span>Category: {categories.find(c => c.id === viewProduct.categoryId)?.name || 'None'}</span>
+                      <span>SubCategory: {categories.find(c => c.id === viewProduct.subCategoryId)?.name || 'None'}</span>
                     </div>
-                    <div className="pt-2">
-                      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${viewProduct.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                    <div className="flex items-center gap-2 pt-2">
+                      {viewProduct.fit && (
+                        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-gray-100 text-gray-800 border">
+                          Fit: {viewProduct.fit}
+                        </span>
+                      )}
+                      {viewProduct.tag && (
+                        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold bg-[#D2925D] text-white">
+                          Tag: {viewProduct.tag}
+                        </span>
+                      )}
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${viewProduct.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
                         {viewProduct.isActive ? 'Active' : 'Draft'}
                       </span>
                       {viewProduct.isFeatured && (
-                        <span className="ml-2 inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700">
+                        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-700">
                           Featured
                         </span>
                       )}
@@ -593,7 +628,7 @@ export default function AdminProductPage() {
 
                 {viewProduct.variants && viewProduct.variants.length > 0 && (
                   <div>
-                    <h3 className="font-semibold mb-2">Variants</h3>
+                    <h3 className="font-semibold mb-2">Variants ({viewProduct.variants.length})</h3>
                     <div className="border rounded-lg overflow-hidden">
                       <Table>
                         <TableHeader className="bg-muted/50">
@@ -619,10 +654,8 @@ export default function AdminProductPage() {
                               <TableCell>
                                 {v.images && v.images.length > 0 ? (
                                   <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="outline" size="sm" className="h-7 text-xs">
-                                        View ({v.images.length})
-                                      </Button>
+                                    <DropdownMenuTrigger className={buttonVariants({ variant: "outline", size: "sm", className: "h-7 text-xs" })}>
+                                      View ({v.images.length})
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end" className="p-2 w-64">
                                       <div className="grid grid-cols-2 gap-2">
@@ -645,23 +678,6 @@ export default function AdminProductPage() {
                     </div>
                   </div>
                 )}
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="font-semibold mb-2 text-sm text-muted-foreground">SEO Information</h3>
-                    <div className="bg-muted/20 p-3 rounded-lg border space-y-2 text-sm">
-                      <div><span className="font-medium">Title:</span> {viewProduct.seoTitle || '-'}</div>
-                      <div><span className="font-medium">Description:</span> {viewProduct.seoDescription || '-'}</div>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-2 text-sm text-muted-foreground">System Info</h3>
-                    <div className="bg-muted/20 p-3 rounded-lg border space-y-2 text-sm">
-                      <div><span className="font-medium">Created:</span> {new Date(viewProduct.createdAt).toLocaleDateString()}</div>
-                      <div><span className="font-medium">Sales Count:</span> {viewProduct.salesCount}</div>
-                    </div>
-                  </div>
-                </div>
               </div>
             )}
           </ScrollArea>
@@ -677,12 +693,13 @@ export default function AdminProductPage() {
         </DialogContent>
       </Dialog>
 
+      {/* ADD / EDIT PRODUCT FORM DIALOG WITH ALL TABS */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="sm:max-w-[900px] p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-2">
             <DialogTitle>{editProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
             <DialogDescription>
-              {editProduct ? 'Update product details and variants.' : 'Create a new apparel product for your store.'}
+              {editProduct ? 'Update product details, fit type, tags, variants, and media.' : 'Create a new apparel product for your store.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -691,6 +708,7 @@ export default function AdminProductPage() {
               <div className="px-6 border-b flex flex-wrap gap-2">
                 <TabsList className="w-full justify-start rounded-none border-b-0 bg-transparent p-0 overflow-x-auto">
                   <TabsTrigger value="general" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2">General</TabsTrigger>
+                  <TabsTrigger value="attributes" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2">Fit & Promotion</TabsTrigger>
                   <TabsTrigger value="variants" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2">Variants (Colors & Sizes)</TabsTrigger>
                   <TabsTrigger value="media" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2">Media</TabsTrigger>
                   <TabsTrigger value="settings" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2">Settings</TabsTrigger>
@@ -698,7 +716,7 @@ export default function AdminProductPage() {
                 </TabsList>
               </div>
 
-              <ScrollArea className="h-[500px] px-6 py-4">
+              <ScrollArea className="h-[480px] px-6 py-4">
                 {/* GENERAL TAB */}
                 <TabsContent value="general" className="space-y-4 m-0">
                   <div className="grid grid-cols-2 gap-4">
@@ -724,12 +742,12 @@ export default function AdminProductPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="brandId">Brand</Label>
                       <Select value={formData.brandId} onValueChange={(val) => setFormData({ ...formData, brandId: val || 'none' })}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a brand" />
+                          <SelectValue placeholder="Select brand" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">No Brand</SelectItem>
@@ -739,15 +757,38 @@ export default function AdminProductPage() {
                         </SelectContent>
                       </Select>
                     </div>
+
                     <div className="grid gap-2">
-                      <Label htmlFor="categoryId">Category</Label>
-                      <Select value={formData.categoryId} onValueChange={(val) => setFormData({ ...formData, categoryId: val || 'none' })}>
+                      <Label htmlFor="categoryId">Main Category</Label>
+                      <Select 
+                        value={formData.categoryId} 
+                        onValueChange={(val) => setFormData({ ...formData, categoryId: val || 'none', subCategoryId: 'none' })}
+                      >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
+                          <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">No Category</SelectItem>
-                          {categories.map(cat => (
+                          {(parentCategories.length > 0 ? parentCategories : categories).map(cat => (
+                            <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="subCategoryId">SubCategory</Label>
+                      <Select 
+                        value={formData.subCategoryId} 
+                        onValueChange={(val) => setFormData({ ...formData, subCategoryId: val || 'none' })}
+                        disabled={formData.categoryId === 'none' || availableSubCategories.length === 0}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={availableSubCategories.length ? "Select subcategory" : "No subcategories"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {availableSubCategories.map(cat => (
                             <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                           ))}
                         </SelectContent>
@@ -798,165 +839,200 @@ export default function AdminProductPage() {
                       rows={2}
                     />
                   </div>
+
                   <div className="grid gap-2">
                     <Label htmlFor="description">Full Description</Label>
                     <Textarea
                       id="description"
-                      rows={5}
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Detailed product information..."
+                      placeholder="Detailed product information, specifications, fabric details..."
+                      rows={4}
                     />
                   </div>
                 </TabsContent>
 
-                {/* VARIANTS TAB */}
-                <TabsContent value="variants" className="space-y-6 m-0">
-                  <div className="flex justify-between items-center pb-2 border-b">
-                    <div>
-                      <h3 className="text-sm font-medium">Color & Size Variants</h3>
-                      <p className="text-xs text-muted-foreground">Add colors, and set specific stock and prices per size.</p>
+                {/* ATTRIBUTES TAB (FIT & PROMOTIONS) */}
+                <TabsContent value="attributes" className="space-y-4 m-0">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="fit">Apparel Fit Type</Label>
+                      <Input
+                        id="fit"
+                        list="fit-suggestions"
+                        value={formData.fit === 'none' ? '' : formData.fit}
+                        onChange={(e) => setFormData({ ...formData, fit: e.target.value })}
+                        placeholder="e.g. Slim Fit, Oversized, Athletic Fit..."
+                      />
+                      <datalist id="fit-suggestions">
+                        <option value="Slim Fit" />
+                        <option value="Regular Fit" />
+                        <option value="Oversized" />
+                        <option value="Relaxed Fit" />
+                        <option value="Skinny Fit" />
+                        <option value="Athletic Fit" />
+                        <option value="Boxy Fit" />
+                        <option value="Tailored Fit" />
+                      </datalist>
+                      <p className="text-[11px] text-muted-foreground">Type custom fit or choose from suggestions.</p>
                     </div>
-                    <Button type="button" variant="outline" size="sm" onClick={addColorGroup} className="gap-2">
-                      <Plus className="h-4 w-4" /> Add Color
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="tag">Promotion Tag / Badge</Label>
+                      <Select value={formData.tag} onValueChange={(val) => setFormData({ ...formData, tag: val || 'none' })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select promotion tag" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No Tag</SelectItem>
+                          <SelectItem value="NEW">NEW</SelectItem>
+                          <SelectItem value="LIMITED">LIMITED</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* VARIANTS TAB (COLORS & SIZES) */}
+                <TabsContent value="variants" className="space-y-6 m-0">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-sm">Product Color Variants</h3>
+                      <p className="text-xs text-muted-foreground">Add colors first, then assign sizes, SKUs, prices, and stock per color.</p>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={addColorGroup}>
+                      <Plus className="h-4 w-4 mr-2" /> Add Color Group
                     </Button>
                   </div>
 
                   {formData.colorGroups.length === 0 ? (
                     <div className="text-center py-12 border border-dashed rounded-lg bg-muted/20">
-                      <p className="text-sm text-muted-foreground mb-4">No variants added yet.</p>
-                      <Button type="button" variant="secondary" onClick={addColorGroup}>Add First Color</Button>
+                      <p className="text-sm text-muted-foreground mb-4">No color variants added yet.</p>
+                      <Button type="button" variant="outline" onClick={addColorGroup}>Add First Color</Button>
                     </div>
                   ) : (
-                    <div className="space-y-8">
-                      {formData.colorGroups.map((group, groupIndex) => (
-                        <div key={group.id} className="border rounded-lg bg-card p-4 shadow-sm relative">
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            className="absolute -top-3 -right-3 h-6 w-6 rounded-full shadow-sm"
-                            onClick={() => removeColorGroup(group.id)}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-
-                          <div className="grid grid-cols-[1fr_auto] gap-4 mb-4 items-end">
-                            <div className="grid gap-2">
-                              <Label className="text-sm font-bold text-primary">Color Name <span className="text-red-500">*</span></Label>
+                    <div className="space-y-6">
+                      {formData.colorGroups.map((group) => (
+                        <div key={group.id} className="border rounded-xl p-4 bg-card space-y-4">
+                          <div className="flex items-center justify-between border-b pb-3">
+                            <div className="flex items-center gap-3">
                               <Input
+                                placeholder="Color name (e.g. Navy Blue, Black, Olive)"
                                 value={group.color}
                                 onChange={(e) => updateColorGroup(group.id, 'color', e.target.value)}
-                                placeholder="e.g. Navy Blue, Solid Black"
-                                required
-                                className="font-semibold max-w-xs"
+                                className="w-64 font-semibold"
                               />
-                            </div>
-                            <div className="flex items-center mb-2">
-                              <Label className="text-xs font-normal cursor-pointer flex items-center gap-2">
-                                <Switch
+                              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                                <input
+                                  type="radio"
+                                  name="defaultColor"
                                   checked={group.isDefault}
-                                  onCheckedChange={(val) => updateColorGroup(group.id, 'isDefault', val)}
+                                  onChange={() => updateColorGroup(group.id, 'isDefault', true)}
                                 />
                                 Default Color
-                              </Label>
+                              </label>
                             </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:bg-destructive/10"
+                              onClick={() => removeColorGroup(group.id)}
+                            >
+                              <Trash className="h-4 w-4 mr-1" /> Remove Color
+                            </Button>
                           </div>
 
-                          <div className="bg-muted/30 p-3 rounded-lg border border-border/50">
-                            <div className="flex justify-between items-center mb-3">
-                              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Sizes for {group.color || 'this color'}</h4>
-                              <Button type="button" variant="outline" size="xs" onClick={() => addSize(group.id)} className="h-6 text-xs gap-1">
-                                <Plus className="h-3 w-3" /> Add Size
+                          {/* Sizes Table */}
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Sizes & Inventory for {group.color || 'Color'}</h4>
+                              <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => addSize(group.id)}>
+                                <Plus className="h-3 w-3 mr-1" /> Add Size
                               </Button>
                             </div>
 
                             {group.sizes.length === 0 ? (
-                              <p className="text-xs text-center text-muted-foreground py-4 italic">No sizes added. Click "Add Size".</p>
+                              <p className="text-xs text-muted-foreground italic">No sizes added for this color yet.</p>
                             ) : (
-                              <div className="space-y-3">
-                                {group.sizes.map((size, sizeIndex) => (
-                                  <div key={size.id} className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-3 items-start bg-background p-3 rounded-md border shadow-sm">
-                                    <div className="grid gap-1.5">
-                                      <Label className="text-[10px] uppercase text-muted-foreground">Size</Label>
-                                      <Input
-                                        value={size.size}
-                                        onChange={(e) => updateSize(group.id, size.id, 'size', e.target.value)}
-                                        placeholder="e.g. S, 32"
-                                        className="h-8 text-sm"
-                                        required
-                                      />
-                                      <div className="flex flex-wrap gap-1 mt-0.5">
-                                        {['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'].map(s => (
-                                          <span
-                                            key={s}
-                                            onClick={() => updateSize(group.id, size.id, 'size', s)}
-                                            className="text-[9px] border rounded px-1 py-0.5 cursor-pointer hover:bg-muted text-muted-foreground transition-colors"
+                              <div className="border rounded-lg overflow-x-auto">
+                                <Table>
+                                  <TableHeader className="bg-muted/50">
+                                    <TableRow className="text-xs">
+                                      <TableHead className="w-[100px]">Size</TableHead>
+                                      <TableHead className="w-[120px]">Price (₹)</TableHead>
+                                      <TableHead className="w-[120px]">Compare Price</TableHead>
+                                      <TableHead className="w-[120px]">Cost Price</TableHead>
+                                      <TableHead className="w-[100px]">Stock</TableHead>
+                                      <TableHead className="w-[140px]">SKU</TableHead>
+                                      <TableHead className="w-[50px]"></TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {group.sizes.map((s) => (
+                                      <TableRow key={s.id}>
+                                        <TableCell>
+                                          <Input
+                                            value={s.size}
+                                            onChange={(e) => updateSize(group.id, s.id, 'size', e.target.value)}
+                                            placeholder="S, 32, etc."
+                                            className="h-8 text-xs"
+                                          />
+                                        </TableCell>
+                                        <TableCell>
+                                          <Input
+                                            type="number"
+                                            value={s.price || ''}
+                                            onChange={(e) => updateSize(group.id, s.id, 'price', parseFloat(e.target.value) || 0)}
+                                            className="h-8 text-xs"
+                                          />
+                                        </TableCell>
+                                        <TableCell>
+                                          <Input
+                                            type="number"
+                                            value={s.comparePrice || ''}
+                                            onChange={(e) => updateSize(group.id, s.id, 'comparePrice', parseFloat(e.target.value) || null)}
+                                            className="h-8 text-xs"
+                                          />
+                                        </TableCell>
+                                        <TableCell>
+                                          <Input
+                                            type="number"
+                                            value={s.costPrice || ''}
+                                            onChange={(e) => updateSize(group.id, s.id, 'costPrice', parseFloat(e.target.value) || null)}
+                                            className="h-8 text-xs"
+                                          />
+                                        </TableCell>
+                                        <TableCell>
+                                          <Input
+                                            type="number"
+                                            value={s.stock || ''}
+                                            onChange={(e) => updateSize(group.id, s.id, 'stock', parseInt(e.target.value) || 0)}
+                                            className="h-8 text-xs"
+                                          />
+                                        </TableCell>
+                                        <TableCell>
+                                          <Input
+                                            value={s.sku}
+                                            onChange={(e) => updateSize(group.id, s.id, 'sku', e.target.value)}
+                                            className="h-8 text-xs"
+                                          />
+                                        </TableCell>
+                                        <TableCell>
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 text-destructive"
+                                            onClick={() => removeSize(group.id, s.id)}
                                           >
-                                            {s}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                    <div className="grid gap-1.5">
-                                      <Label className="text-[10px] uppercase text-muted-foreground">SKU</Label>
-                                      <Input
-                                        value={size.sku}
-                                        onChange={(e) => updateSize(group.id, size.id, 'sku', e.target.value)}
-                                        className="h-8 text-sm"
-                                        required
-                                      />
-                                    </div>
-                                    <div className="grid gap-1.5">
-                                      <Label className="text-[10px] uppercase text-muted-foreground">Price (₹)</Label>
-                                      <Input
-                                        type="number"
-                                        value={size.price}
-                                        onChange={(e) => updateSize(group.id, size.id, 'price', parseFloat(e.target.value) || 0)}
-                                        className="h-8 text-sm"
-                                        required
-                                      />
-                                    </div>
-                                    <div className="grid gap-1.5">
-                                      <Label className="text-[10px] uppercase text-muted-foreground">Cost Price</Label>
-                                      <Input
-                                        type="number"
-                                        value={size.costPrice || ''}
-                                        onChange={(e) => updateSize(group.id, size.id, 'costPrice', parseFloat(e.target.value) || null)}
-                                        className="h-8 text-sm"
-                                      />
-                                    </div>
-                                    <div className="grid gap-1.5">
-                                      <Label className="text-[10px] uppercase text-muted-foreground">Stock</Label>
-                                      <Input
-                                        type="number"
-                                        value={size.stock}
-                                        onChange={(e) => updateSize(group.id, size.id, 'stock', parseInt(e.target.value) || 0)}
-                                        className="h-8 text-sm"
-                                      />
-                                    </div>
-                                    <div className="grid gap-1.5">
-                                      <Label className="text-[10px] uppercase text-muted-foreground">Low Stock At</Label>
-                                      <Input
-                                        type="number"
-                                        value={size.lowStockThreshold}
-                                        onChange={(e) => updateSize(group.id, size.id, 'lowStockThreshold', parseInt(e.target.value) || 0)}
-                                        className="h-8 text-sm"
-                                      />
-                                    </div>
-                                    <div className="flex items-center pt-5">
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                                        onClick={() => removeSize(group.id, size.id)}
-                                      >
-                                        <Trash className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ))}
+                                            <X className="h-3 w-3" />
+                                          </Button>
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
                               </div>
                             )}
                           </div>
@@ -966,12 +1042,12 @@ export default function AdminProductPage() {
                   )}
                 </TabsContent>
 
-                {/* MEDIA TAB */}
-                <TabsContent value="media" className="space-y-6 m-0">
-                  <div className="flex justify-between items-center pb-2 border-b">
+                {/* MEDIA TAB (IMAGE UPLOADS PER COLOR) */}
+                <TabsContent value="media" className="space-y-4 m-0">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-medium">Variant Images</h3>
-                      <p className="text-xs text-muted-foreground">Upload up to 10 images per color variant.</p>
+                      <h3 className="font-semibold text-sm">Color Variant Images</h3>
+                      <p className="text-xs text-muted-foreground">Select a color to manage its image gallery (up to 10 images per color).</p>
                     </div>
                   </div>
 
@@ -1115,16 +1191,16 @@ export default function AdminProductPage() {
                   </div>
                 </TabsContent>
               </ScrollArea>
-            </Tabs>
 
-            <div className="flex justify-end gap-3 px-6 py-4 border-t bg-muted/20">
-              <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isCreating || isUpdating}>
-                {isCreating || isUpdating ? 'Saving...' : 'Save Product'}
-              </Button>
-            </div>
+              <div className="flex justify-end gap-3 px-6 py-4 border-t bg-muted/20">
+                <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isCreating || isUpdating}>
+                  {isCreating || isUpdating ? 'Saving...' : 'Save Product'}
+                </Button>
+              </div>
+            </Tabs>
           </form>
         </DialogContent>
       </Dialog>

@@ -19,10 +19,13 @@ export class ProductRepository implements IProductRepository {
       name: data.name,
       slug: data.slug,
       categoryId: data.categoryId,
+      subCategoryId: data.subCategoryId,
       brandId: data.brandId,
       shortDescription: data.shortDescription,
       description: data.description,
       thumbnail: data.thumbnail,
+      fit: data.fit,
+      tag: data.tag,
       isFeatured: data.isFeatured,
       isActive: data.isActive,
       seoTitle: data.seoTitle,
@@ -65,7 +68,10 @@ export class ProductRepository implements IProductRepository {
     const filter: any = {};
     if (query.isActive !== undefined) filter.isActive = query.isActive;
     if (query.categoryId) filter.categoryId = query.categoryId;
+    if (query.subCategoryId) filter.subCategoryId = query.subCategoryId;
     if (query.brandId) filter.brandId = query.brandId;
+    if (query.fit) filter.fit = query.fit;
+    if (query.tag) filter.tag = query.tag;
     if (query.search) {
       filter.$text = { $search: query.search };
     }

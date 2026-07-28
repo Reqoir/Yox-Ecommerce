@@ -12,10 +12,13 @@ export interface ProductProps extends EntityProps {
   name: string;
   slug: string;
   categoryId?: string | null;
+  subCategoryId?: string | null;
   brandId?: string | null;
   shortDescription?: string | null;
   description?: string | null;
   thumbnail?: string | null;
+  fit?: string | null;
+  tag?: string | null;
   isFeatured: boolean;
   isActive: boolean;
   seoTitle?: string | null;
@@ -36,10 +39,13 @@ export class Product extends BaseEntity<ProductProps> {
   get name(): string { return this._props.name; }
   get slug(): string { return this._props.slug; }
   get categoryId(): string | null | undefined { return this._props.categoryId; }
+  get subCategoryId(): string | null | undefined { return this._props.subCategoryId; }
   get brandId(): string | null | undefined { return this._props.brandId; }
   get shortDescription(): string | null | undefined { return this._props.shortDescription; }
   get description(): string | null | undefined { return this._props.description; }
   get thumbnail(): string | null | undefined { return this._props.thumbnail; }
+  get fit(): string | null | undefined { return this._props.fit; }
+  get tag(): string | null | undefined { return this._props.tag; }
   get isFeatured(): boolean { return this._props.isFeatured; }
   get isActive(): boolean { return this._props.isActive; }
   get salesCount(): number { return this._props.salesCount; }
