@@ -8,7 +8,7 @@ import { baseSchemaOptions } from '@core/infrastructure/database/mongoose/base.s
 
 export interface IStockLogDocument extends Document {
   inventoryId: string;
-  type: 'IN' | 'OUT' | 'ADJUSTMENT';
+  type: 'IN' | 'OUT' | 'ADJUSTMENT' | 'RESERVE' | 'RELEASE';
   amount: number;
   previousStock: number;
   newStock: number;
@@ -21,7 +21,7 @@ export interface IStockLogDocument extends Document {
 const stockLogSchema = new Schema<IStockLogDocument>(
   {
     inventoryId: { type: String, required: true, index: true },
-    type: { type: String, enum: ['IN', 'OUT', 'ADJUSTMENT'], required: true },
+    type: { type: String, enum: ['IN', 'OUT', 'ADJUSTMENT', 'RESERVE', 'RELEASE'], required: true },
     amount: { type: Number, required: true },
     previousStock: { type: Number, required: true },
     newStock: { type: Number, required: true },
@@ -37,3 +37,4 @@ const stockLogSchema = new Schema<IStockLogDocument>(
 stockLogSchema.index({ createdAt: -1 });
 
 export const StockLogModel = model<IStockLogDocument>('StockLog', stockLogSchema);
+

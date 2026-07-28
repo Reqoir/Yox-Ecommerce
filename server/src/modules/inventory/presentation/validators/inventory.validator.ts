@@ -10,12 +10,24 @@ export const updateInventorySchema = z.object({
   reservedStock: z.number().min(0).optional(),
   damagedStock: z.number().min(0).optional(),
   warehouseLocation: z.string().optional().nullable(),
+  lowStockThreshold: z.number().int().min(0).optional(),
 });
 
 export const adjustStockSchema = z.object({
   type: z.enum(['IN', 'OUT', 'ADJUSTMENT']),
-  amount: z.number().min(0, "Amount must be a non-negative number. For ADJUSTMENT, if you want to decrease, use OUT type, or if you support negative adjustment amounts, update the validation accordingly. Assuming positive amounts for all types."),
+  amount: z.number().min(0),
   reason: z.string().optional(),
+  reference: z.string().optional(),
+});
+
+export const reserveStockSchema = z.object({
+  quantity: z.number().int().min(1, 'Quantity must be at least 1'),
+  reference: z.string().optional(),
+});
+
+export const releaseStockSchema = z.object({
+  quantity: z.number().int().min(1, 'Quantity must be at least 1'),
+  action: z.enum(['CANCEL', 'FULFILL']),
   reference: z.string().optional(),
 });
 
@@ -26,6 +38,11 @@ export const inventoryListQuerySchema = z.object({
 });
 
 export const stockLogListQuerySchema = z.object({
+  page: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
+});
+
+export const lowStockQuerySchema = z.object({
   page: z.string().regex(/^\d+$/).optional(),
   limit: z.string().regex(/^\d+$/).optional(),
 });

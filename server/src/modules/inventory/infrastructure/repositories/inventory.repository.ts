@@ -19,6 +19,7 @@ export class InventoryRepository implements IInventoryRepository {
       reservedStock: data.reservedStock,
       damagedStock: data.damagedStock,
       warehouseLocation: data.warehouseLocation,
+      lowStockThreshold: data.lowStockThreshold ?? 10,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
     });
@@ -68,4 +69,27 @@ export class InventoryRepository implements IInventoryRepository {
       total,
     };
   }
+
+  /**
+   * Finds all inventory records where availableStock <= lowStockThreshold.
+   * Uses $expr to compare two document fields directly — leverages the compound index.
+   */
+  async findLowStock(query: any): Promise<{ data: Inventory[]; total: number }> {
+    const filter: any = { $expr: { $lte: ['$availableStock', '$lowStockThreshold'] } };
+
+    const limit = parseInt(query.limit) || 20;
+    const page = parseInt(query.page) || 1;
+    const skip = (page - 1) * limit;
+
+    const [docs, total] = await Promise.all([
+      InventoryModel.find(filter).sort({ availableStock: 1 }).skip(skip).limit(limit).exec(),
+      InventoryModel.countDocuments(filter).exec(),
+    ]);
+
+    return {
+      data: docs.map(doc => this.mapToDomain(doc)),
+      total,
+    };
+  }
 }
+

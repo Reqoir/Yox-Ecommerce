@@ -1,8 +1,7 @@
 /**
  * @module Notifications
- * @description Notifications feature module — placeholder.
- *
- * Implementation will be added via a separate prompt.
+ * @description Notifications feature module — fully implemented.
  */
 
-// export { notificationsRouter } from './presentation/routes/notifications.routes';
+export { notificationsRouter } from './presentation/routes/notification.routes';
+

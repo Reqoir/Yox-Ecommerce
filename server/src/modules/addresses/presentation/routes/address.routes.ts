@@ -11,7 +11,7 @@ import { UpdateAddressUseCase } from '../../application/use-cases/update-address
 import { DeleteAddressUseCase } from '../../application/use-cases/delete-address.use-case';
 import { GetUserAddressesUseCase } from '../../application/use-cases/get-user-addresses.use-case';
 import { SetDefaultAddressUseCase } from '../../application/use-cases/set-default-address.use-case';
-import { requireAuth } from '@shared/middlewares/auth.middleware';
+import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
 
 const addressRouter = Router();
 

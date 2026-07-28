@@ -7,7 +7,14 @@ import { BaseEntity, EntityProps } from '@core/domain/entities/base.entity';
 
 export interface StockLogProps extends EntityProps {
   inventoryId: string;
-  type: 'IN' | 'OUT' | 'ADJUSTMENT';
+  /** 
+   * IN        = stock received (purchase, return from customer)
+   * OUT       = stock consumed (sale, damaged write-off)
+   * ADJUSTMENT = manual correction 
+   * RESERVE   = stock locked for a pending order
+   * RELEASE   = reserved stock returned to available (order cancelled)
+   */
+  type: 'IN' | 'OUT' | 'ADJUSTMENT' | 'RESERVE' | 'RELEASE';
   amount: number;
   previousStock: number;
   newStock: number;
@@ -21,7 +28,7 @@ export class StockLog extends BaseEntity<StockLogProps> {
   }
 
   get inventoryId(): string { return this._props.inventoryId; }
-  get type(): 'IN' | 'OUT' | 'ADJUSTMENT' { return this._props.type; }
+  get type(): 'IN' | 'OUT' | 'ADJUSTMENT' | 'RESERVE' | 'RELEASE' { return this._props.type; }
   get amount(): number { return this._props.amount; }
   get previousStock(): number { return this._props.previousStock; }
   get newStock(): number { return this._props.newStock; }

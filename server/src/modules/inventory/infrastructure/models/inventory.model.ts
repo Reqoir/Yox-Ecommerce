@@ -12,6 +12,7 @@ export interface IInventoryDocument extends Document {
   reservedStock: number;
   damagedStock: number;
   warehouseLocation?: string | null;
+  lowStockThreshold: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +24,8 @@ const inventorySchema = new Schema<IInventoryDocument>(
     reservedStock: { type: Number, default: 0 },
     damagedStock: { type: Number, default: 0 },
     warehouseLocation: { type: String, default: null },
+    /** Alert fires when availableStock <= lowStockThreshold */
+    lowStockThreshold: { type: Number, default: 10 },
   },
   {
     ...(baseSchemaOptions as any),
@@ -31,5 +34,8 @@ const inventorySchema = new Schema<IInventoryDocument>(
 );
 
 inventorySchema.index({ createdAt: -1 });
+// Compound index to quickly query low-stock items
+inventorySchema.index({ availableStock: 1, lowStockThreshold: 1 });
 
 export const InventoryModel = model<IInventoryDocument>('Inventory', inventorySchema);
+
