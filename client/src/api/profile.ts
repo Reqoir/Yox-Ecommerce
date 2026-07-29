@@ -1,4 +1,4 @@
-import api from './axios';
+import api from '../lib/axios';
 import { User } from '@/store/useAuthStore';
 
 export interface UpdateProfileDto {
