@@ -36,9 +36,16 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
           router.push('/login');
         }
       } else {
+        // Check baseline access to admin panel
+        const userPermissions = user.permissions || [];
+        if (pathname.startsWith('/admin') && userPermissions.length === 0) {
+          toast.error('You do not have permission to access the admin panel.');
+          router.push('/');
+          return;
+        }
+
         // Check if the current route requires specific permissions
         let hasAccess = true;
-        const userPermissions = user.permissions || [];
 
         for (const [route, requiredPermission] of Object.entries(ROUTE_PERMISSIONS)) {
           if (pathname === route || pathname.startsWith(route + '/')) {
