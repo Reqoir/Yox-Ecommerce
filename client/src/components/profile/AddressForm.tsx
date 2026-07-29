@@ -3,17 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 
-interface Address {
-  _id: string;
-  fullName: string;
-  phone: string;
-  street: string;
-  city: string;
-  state: string;
-  country: string;
-  zipCode: string;
-  isDefault: boolean;
-}
+import { Address } from '@/api/addresses';
 
 interface AddressFormProps {
   isOpen: boolean;

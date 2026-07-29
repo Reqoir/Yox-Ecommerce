@@ -3,10 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { toast } from 'sonner';
+import { profileApi, UpdateProfileDto } from '@/api/profile';
 
 export default function PersonalInfoPage() {
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   // We'll use a local state for the form so we don't mutate the store directly
   const [formData, setFormData] = useState({
@@ -31,13 +33,23 @@ export default function PersonalInfoPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
-      // In a real app, this would dispatch an update profile action
-      // await updateProfile(formData);
+      const updateData: UpdateProfileDto = {
+        fullName: formData.fullName,
+        phone: formData.phone,
+      };
+      const updatedUser = await profileApi.updateProfile(updateData);
+      
+      // Update global store so UI updates everywhere instantly
+      setUser(updatedUser);
+
       toast.success('Profile updated successfully');
       setIsEditing(false);
-    } catch (error) {
-      toast.error('Failed to update profile');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -130,9 +142,10 @@ export default function PersonalInfoPage() {
             </button>
             <button 
               type="submit"
-              className="px-6 py-2.5 bg-black text-white dark:bg-white dark:text-black font-medium rounded-xl hover:opacity-90 transition-opacity"
+              disabled={isLoading}
+              className="px-6 py-2.5 bg-black text-white dark:bg-white dark:text-black font-medium rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              Save Changes
+              {isLoading ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         )}

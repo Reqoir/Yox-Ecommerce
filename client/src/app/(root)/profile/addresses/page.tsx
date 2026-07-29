@@ -5,18 +5,7 @@ import { Plus, Edit2, Trash2, MapPin, CheckCircle2 } from 'lucide-react';
 import { AddressForm } from '@/components/profile/AddressForm';
 import { toast } from 'sonner';
 
-// Mock data type, replace with real API call later
-interface Address {
-  _id: string;
-  fullName: string;
-  phone: string;
-  street: string;
-  city: string;
-  state: string;
-  country: string;
-  zipCode: string;
-  isDefault: boolean;
-}
+import { addressApi, Address, CreateAddressDto, UpdateAddressDto } from '@/api/addresses';
 
 export default function AddressesPage() {
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -24,25 +13,20 @@ export default function AddressesPage() {
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // In a real app, this would fetch from your API
-  useEffect(() => {
-    // Mock fetch
-    setTimeout(() => {
-      setAddresses([
-        {
-          _id: '1',
-          fullName: 'John Doe',
-          phone: '+1 234 567 8900',
-          street: '123 Main St, Apt 4B',
-          city: 'New York',
-          state: 'NY',
-          country: 'United States',
-          zipCode: '10001',
-          isDefault: true,
-        },
-      ]);
+  const fetchAddresses = async () => {
+    try {
+      setIsLoading(true);
+      const data = await addressApi.getAddresses();
+      setAddresses(data);
+    } catch (error) {
+      toast.error('Failed to load addresses');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
+  };
+
+  useEffect(() => {
+    fetchAddresses();
   }, []);
 
   const handleAddNew = () => {
@@ -55,49 +39,55 @@ export default function AddressesPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    // Implement delete API call
-    setAddresses(addresses.filter(a => a._id !== id));
-    toast.success('Address deleted successfully');
-  };
-
-  const handleSetDefault = (id: string) => {
-    // Implement set default API call
-    setAddresses(addresses.map(a => ({
-      ...a,
-      isDefault: a._id === id
-    })));
-    toast.success('Default address updated');
-  };
-
-  const handleFormSubmit = (data: Partial<Address>) => {
-    if (editingAddress) {
-      // Update logic
-      setAddresses(addresses.map(a => {
-        if (a._id === editingAddress._id) {
-          return { ...a, ...data } as Address;
-        }
-        if (data.isDefault) {
-          return { ...a, isDefault: false }; // Unset other defaults
-        }
-        return a;
-      }));
-      toast.success('Address updated successfully');
-    } else {
-      // Create logic
-      const newAddress = {
-        ...data,
-        _id: Math.random().toString(), // Mock ID
-      } as Address;
-      
-      let newAddresses = [...addresses, newAddress];
-      if (newAddress.isDefault) {
-        newAddresses = newAddresses.map(a => a._id === newAddress._id ? a : { ...a, isDefault: false });
-      }
-      setAddresses(newAddresses);
-      toast.success('Address added successfully');
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this address?')) return;
+    try {
+      await addressApi.deleteAddress(id);
+      setAddresses(addresses.filter(a => a._id !== id));
+      toast.success('Address deleted successfully');
+    } catch (error) {
+      toast.error('Failed to delete address');
     }
-    setIsFormOpen(false);
+  };
+
+  const handleSetDefault = async (id: string) => {
+    try {
+      const updatedAddress = await addressApi.setDefaultAddress(id);
+      setAddresses(addresses.map(a => ({
+        ...a,
+        isDefault: a._id === updatedAddress._id
+      })));
+      toast.success('Default address updated');
+    } catch (error) {
+      toast.error('Failed to set default address');
+    }
+  };
+
+  const handleFormSubmit = async (data: Partial<Address>) => {
+    try {
+      if (editingAddress) {
+        // Update logic
+        const updated = await addressApi.updateAddress(editingAddress._id, data as UpdateAddressDto);
+        setAddresses(addresses.map(a => {
+          if (a._id === updated._id) return updated;
+          if (updated.isDefault) return { ...a, isDefault: false }; // Unset other defaults if this is new default
+          return a;
+        }));
+        toast.success('Address updated successfully');
+      } else {
+        // Create logic
+        const newAddress = await addressApi.addAddress(data as CreateAddressDto);
+        let newAddresses = [...addresses, newAddress];
+        if (newAddress.isDefault) {
+          newAddresses = newAddresses.map(a => a._id === newAddress._id ? a : { ...a, isDefault: false });
+        }
+        setAddresses(newAddresses);
+        toast.success('Address added successfully');
+      }
+      setIsFormOpen(false);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to save address');
+    }
   };
 
   return (
