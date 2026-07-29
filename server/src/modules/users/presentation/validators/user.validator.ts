@@ -14,3 +14,11 @@ export const createUserSchema = z.object({
   phone: z.string().optional(),
   roleId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid Role ID format'),
 });
+
+export const updateUserStatusSchema = z.object({
+  status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED'], {
+    required_error: 'Status is required',
+    invalid_type_error: 'Status must be ACTIVE, INACTIVE, or SUSPENDED',
+  }),
+});
+

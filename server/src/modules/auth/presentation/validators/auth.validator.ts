@@ -15,10 +15,10 @@ export const registerSchema = z.object({
     .min(8, 'Password must be at least 8 characters')
     .max(128)
     .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/,
-      'Password must contain uppercase, lowercase, number and special character'
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).*$/,
+      'Password must contain an uppercase letter, a lowercase letter, a number, and a special character'
     ),
-  phone: z.string().min(5).max(20).optional(),
+  phone: z.string().min(5, 'Phone must be at least 5 characters').max(20).optional(),
 });
 
 export const loginSchema = z.object({

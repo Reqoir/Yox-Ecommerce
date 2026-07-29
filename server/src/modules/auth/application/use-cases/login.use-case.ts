@@ -31,6 +31,10 @@ export class LoginUseCase {
       throw ApiError.unauthorized('Invalid email or password');
     }
 
+    if (!user.canLogin()) {
+      throw ApiError.unauthorized('Your account has been deactivated or suspended. Please contact support.');
+    }
+
     // 3. Generate tokens
     const tokenPayload = {
       sub: user.id,

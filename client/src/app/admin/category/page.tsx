@@ -32,6 +32,7 @@ import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCategories } from '@/hooks/admin/useCategories';
 import { Category } from '@/api/admin/categories';
+import { uploadApi } from '@/api/admin/upload';
 import { Pagination } from '@/components/ui/pagination';
 import {
   Select,
@@ -196,7 +197,7 @@ export default function AdminCategoryPage() {
           <Select 
             value={statusFilter} 
             onValueChange={(val) => {
-              setStatusFilter(val);
+              setStatusFilter(val || 'all');
               setCurrentPage(1);
             }}
           >

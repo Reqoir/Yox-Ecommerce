@@ -174,7 +174,7 @@ export default function AdminBrandPage() {
           <Select 
             value={statusFilter} 
             onValueChange={(val) => {
-              setStatusFilter(val);
+              setStatusFilter(val || 'all');
               setCurrentPage(1);
             }}
           >

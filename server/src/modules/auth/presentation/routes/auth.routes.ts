@@ -22,7 +22,7 @@ const userRepository = new UserRepository();
 const roleRepository = new RoleRepository();
 
 // 2. Use Cases (Application)
-const registerUseCase = new RegisterUserUseCase(userRepository);
+const registerUseCase = new RegisterUserUseCase(userRepository, roleRepository);
 const loginUseCase = new LoginUseCase(userRepository, roleRepository);
 
 // 3. Controllers (Presentation)

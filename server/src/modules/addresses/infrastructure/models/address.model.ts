@@ -3,7 +3,7 @@
  * @layer Infrastructure › Models
  */
 
-import { Schema, model, Document, Types } from 'mongoose';
+import { Schema, model, Document } from 'mongoose';
 import { baseSchemaOptions } from '@core/infrastructure/database/mongoose/base.schema';
 
 export interface IAddressDocument extends Document {

@@ -6,13 +6,17 @@
  */
 
 import { IUseCase } from '@core/application/use-cases/base.use-case.interface';
-import { ConflictError } from '@core/application/errors/application.error';
+import { ConflictError, NotFoundError } from '@core/application/errors/application.error';
 import { IUserRepository } from '../../../users/domain/repositories/user.repository.interface';
+import { IRoleRepository } from '../../../roles/domain/repositories/role.repository.interface';
 import { User } from '../../../users/domain/entities/user.entity';
 import { RegisterUserRequestDTO, RegisterUserResponseDTO } from '../dtos/register.dto';
 
 export class RegisterUserUseCase implements IUseCase<RegisterUserRequestDTO, RegisterUserResponseDTO> {
-  constructor(private readonly userRepository: IUserRepository) {}
+  constructor(
+    private readonly userRepository: IUserRepository,
+    private readonly roleRepository: IRoleRepository
+  ) {}
 
   async execute(input: RegisterUserRequestDTO): Promise<RegisterUserResponseDTO> {
     // 1. Check if email is already taken
@@ -21,13 +25,19 @@ export class RegisterUserUseCase implements IUseCase<RegisterUserRequestDTO, Reg
       throw new ConflictError(`User with email ${input.email} already exists`);
     }
 
+    // 1.5 Get default Customer role
+    const customerRole = await this.roleRepository.findByName('CUSTOMER');
+    if (!customerRole) {
+      throw new NotFoundError('Default customer role not found in the system');
+    }
+
     // 2. Create the Domain Entity (applies business rules & hashes password)
     const userEntity = await User.create({
       fullName: input.fullName,
       email: input.email,
       password: input.password,
       phone: input.phone, // Optional
-      roleId: 'CUSTOMER_ROLE_ID', // Hardcoded default role for now
+      roleId: customerRole.id,
     });
 
     // 3. Persist to Infrastructure (Database)

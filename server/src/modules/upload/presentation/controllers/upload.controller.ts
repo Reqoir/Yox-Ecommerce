@@ -11,14 +11,15 @@ cloudinary.config({
 export class UploadController {
   public uploadImage = async (req: Request, res: Response): Promise<void> => {
     try {
-      if (!req.file) {
+      const file = (req as any).file;
+      if (!file) {
         ApiResponse.error(res, 'No image file provided.', 400);
         return;
       }
 
       // Convert buffer to base64 for Cloudinary
-      const b64 = Buffer.from(req.file.buffer).toString('base64');
-      const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+      const b64 = Buffer.from(file.buffer).toString('base64');
+      const dataURI = `data:${file.mimetype};base64,${b64}`;
 
       const result = await cloudinary.uploader.upload(dataURI, {
         folder: 'yox_ecommerce_products',

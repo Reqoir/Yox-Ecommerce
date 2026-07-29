@@ -106,4 +106,21 @@ export class User extends BaseEntity<UserProps> {
     this._props.roleId = roleId;
     this._props.updatedAt = new Date();
   }
+
+  /**
+   * Updates user status safely (e.g. banning or suspending a user).
+   */
+  public updateStatus(status: UserStatus): void {
+    this._props.status = status;
+    this._props.updatedAt = new Date();
+  }
+
+  /**
+   * Soft deletes / deactivates the user account.
+   */
+  public deactivate(): void {
+    this._props.status = UserStatus.INACTIVE;
+    this._props.deletedAt = new Date();
+    this._props.updatedAt = new Date();
+  }
 }

@@ -28,7 +28,11 @@ export default function CustomerLoginPage() {
       toast.success('Welcome back!');
       router.push('/'); // Redirect to the storefront
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Invalid email or password');
+      if (error.response?.data?.errors && error.response.data.errors.length > 0) {
+        toast.error(error.response.data.errors[0].message);
+      } else {
+        toast.error(error.response?.data?.message || 'Invalid email or password');
+      }
     } finally {
       setIsLoading(false);
     }

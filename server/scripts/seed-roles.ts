@@ -18,13 +18,13 @@ const Role = mongoose.model('Role', roleSchema);
 
 const rolesToSeed = [
   {
-    name: 'Customer',
+    name: 'CUSTOMER',
     description: 'Standard store customer',
     permissions: [],
     isSystem: true,
   },
   {
-    name: 'Manager',
+    name: 'MANAGER',
     description: 'Store manager',
     permissions: [
       'manage_brands', 
@@ -36,7 +36,7 @@ const rolesToSeed = [
     isSystem: true,
   },
   {
-    name: 'Editor',
+    name: 'EDITOR',
     description: 'Content editor',
     permissions: [
       'manage_brands', 

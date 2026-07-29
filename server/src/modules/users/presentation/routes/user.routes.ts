@@ -13,6 +13,9 @@ import { requirePermission } from '../../../../presentation/http/middleware/requ
 import { GetAllUsersUseCase } from '../../application/use-cases/get-all-users.use-case';
 import { UpdateUserRoleUseCase } from '../../application/use-cases/update-user-role.use-case';
 import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
+import { UpdateUserStatusUseCase } from '../../application/use-cases/update-user-status.use-case';
+import { DeleteUserUseCase } from '../../application/use-cases/delete-user.use-case';
+import { GetUserByIdUseCase } from '../../application/use-cases/get-user-by-id.use-case';
 
 import { RoleRepository } from '../../../roles/infrastructure/repositories/role.repository';
 
@@ -25,12 +28,19 @@ const updateProfileUseCase = new UpdateProfileUseCase(userRepository);
 const getAllUsersUseCase = new GetAllUsersUseCase(userRepository);
 const updateUserRoleUseCase = new UpdateUserRoleUseCase(userRepository, roleRepository);
 const createUserUseCase = new CreateUserUseCase(userRepository);
+const updateUserStatusUseCase = new UpdateUserStatusUseCase(userRepository);
+const deleteUserUseCase = new DeleteUserUseCase(userRepository);
+const getUserByIdUseCase = new GetUserByIdUseCase(userRepository, roleRepository);
+
 const userController = new UserController(
   getProfileUseCase, 
   updateProfileUseCase,
   getAllUsersUseCase,
   updateUserRoleUseCase,
-  createUserUseCase
+  createUserUseCase,
+  updateUserStatusUseCase,
+  deleteUserUseCase,
+  getUserByIdUseCase
 );
 
 // Apply auth middleware to all user routes
@@ -42,6 +52,9 @@ router.patch('/me', userController.updateProfile);
 // Admin routes
 router.get('/', requirePermission('manage_users'), userController.getAll);
 router.post('/', requirePermission('manage_users'), userController.create);
+router.get('/:id', requirePermission('manage_users'), userController.getById);
 router.patch('/:id/role', requirePermission('manage_users'), userController.updateRole);
+router.patch('/:id/status', requirePermission('manage_users'), userController.updateStatus);
+router.delete('/:id', requirePermission('manage_users'), userController.delete);
 
 export default router;

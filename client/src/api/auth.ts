@@ -6,6 +6,10 @@ export interface User {
   email: string;
   roleId: string;
   permissions: string[];
+  phone?: string;
+  avatar?: string;
+  status?: string;
+  createdAt?: string;
 }
 
 export interface LoginCredentials {
@@ -17,7 +21,18 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface RegisterCredentials {
+  fullName: string;
+  email: string;
+  password: string;
+  phone?: string;
+}
+
 export const authApi = {
+  register: async (credentials: RegisterCredentials): Promise<User> => {
+    const response = await apiClient.post<{ data: AuthResponse }>('/auth/register', credentials);
+    return response.data.data.user;
+  },
   login: async (credentials: LoginCredentials): Promise<User> => {
     // The backend login endpoint returns: { status: 'success', data: { user: {...} }, message: '...' }
     const response = await apiClient.post<{ data: AuthResponse }>('/auth/login', credentials);

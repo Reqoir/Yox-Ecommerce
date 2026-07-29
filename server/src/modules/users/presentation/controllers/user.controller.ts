@@ -10,8 +10,11 @@ import { ApiResponse } from '@shared/utils/api-response.util';
 import { HttpStatus } from '@shared/constants/http-status.constants';
 import { GetAllUsersUseCase } from '../../application/use-cases/get-all-users.use-case';
 import { UpdateUserRoleUseCase } from '../../application/use-cases/update-user-role.use-case';
+import { UpdateUserStatusUseCase } from '../../application/use-cases/update-user-status.use-case';
+import { DeleteUserUseCase } from '../../application/use-cases/delete-user.use-case';
+import { GetUserByIdUseCase } from '../../application/use-cases/get-user-by-id.use-case';
 import { validateRequest } from '@shared/utils/validation.helper';
-import { updateUserRoleSchema, createUserSchema } from '../validators/user.validator';
+import { updateUserRoleSchema, createUserSchema, updateUserStatusSchema } from '../validators/user.validator';
 import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
 
 export class UserController {
@@ -20,7 +23,10 @@ export class UserController {
     private readonly updateProfileUseCase: UpdateProfileUseCase,
     private readonly getAllUsersUseCase: GetAllUsersUseCase,
     private readonly updateUserRoleUseCase: UpdateUserRoleUseCase,
-    private readonly createUserUseCase: CreateUserUseCase
+    private readonly createUserUseCase: CreateUserUseCase,
+    private readonly updateUserStatusUseCase: UpdateUserStatusUseCase,
+    private readonly deleteUserUseCase: DeleteUserUseCase,
+    private readonly getUserByIdUseCase: GetUserByIdUseCase
   ) {}
 
   public getProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -104,6 +110,42 @@ export class UserController {
       const result = await this.createUserUseCase.execute(validBody);
       
       ApiResponse.success(res, result, 'User created successfully', HttpStatus.CREATED);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const result = await this.getUserByIdUseCase.execute(id);
+      ApiResponse.success(res, result, 'User retrieved successfully', HttpStatus.OK);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public updateStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const validBody = validateRequest(req, updateUserStatusSchema, 'body');
+
+      const result = await this.updateUserStatusUseCase.execute({
+        userId: id,
+        status: validBody.status as any,
+      });
+
+      ApiResponse.success(res, result, 'User status updated successfully', HttpStatus.OK);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public delete = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const result = await this.deleteUserUseCase.execute({ userId: id });
+      ApiResponse.success(res, result, result.message, HttpStatus.OK);
     } catch (error) {
       next(error);
     }

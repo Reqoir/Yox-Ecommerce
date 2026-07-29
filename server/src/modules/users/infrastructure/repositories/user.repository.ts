@@ -10,6 +10,7 @@ import { User } from '../../domain/entities/user.entity';
 import { IUserRepository } from '../../domain/repositories/user.repository.interface';
 import { IUserDocument, UserModel } from '../models/user.model';
 import { FilterQuery } from 'mongoose';
+import { PaginatedResult } from '@shared/types/common.types';
 
 export class UserRepository
   extends BaseRepository<User, IUserDocument>
@@ -17,6 +18,51 @@ export class UserRepository
 {
   constructor() {
     super(UserModel);
+  }
+
+  protected buildSearchFilter(search: string): FilterQuery<IUserDocument> {
+    const regex = new RegExp(search, 'i');
+    return {
+      $or: [
+        { fullName: { $regex: regex } },
+        { email: { $regex: regex } },
+      ],
+    } as FilterQuery<IUserDocument>;
+  }
+
+  public async findAll(query: any = {}): Promise<PaginatedResult<User>> {
+    const { page = 1, limit = 10, sort = 'createdAt', order = 'desc', search, roleId, status } = query;
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const sortOrder = order === 'asc' ? 1 : -1;
+    const sortQuery: Record<string, 1 | -1> = { [sort]: sortOrder };
+
+    const filter: FilterQuery<IUserDocument> = search ? this.buildSearchFilter(search) : {};
+
+    if (roleId && roleId !== 'all') {
+      filter.roleId = roleId;
+    }
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+
+    const [docs, totalItems] = await Promise.all([
+      this.model.find(filter).sort(sortQuery).skip(skip).limit(Number(limit)).exec(),
+      this.model.countDocuments(filter).exec(),
+    ]);
+
+    const totalPages = Math.ceil(totalItems / Number(limit));
+
+    const meta = {
+      currentPage: Number(page),
+      totalPages,
+      totalItems,
+      itemsPerPage: Number(limit),
+      hasNextPage: Number(page) < totalPages,
+      hasPreviousPage: Number(page) > 1,
+    };
+
+    return { data: docs.map((doc) => this.toDomain(doc)), meta };
   }
 
   /**
