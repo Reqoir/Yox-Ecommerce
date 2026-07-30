@@ -83,9 +83,17 @@ export default function AdminInventoryPage() {
   const { data: logsData, isLoading: isLoadingLogs } = useStockLogs(logsItem?.id ?? null);
   const logs = (logsData?.data ?? []) as StockLog[];
 
-  const displayedItems = (filter === 'low-stock' ? lowStockItems : inventory).filter((item) =>
-    item.variantId.toLowerCase().includes(search.toLowerCase())
-  );
+  const displayedItems = (filter === 'low-stock' ? lowStockItems : inventory).filter((item) => {
+    const query = search.toLowerCase();
+    return (
+      item.variantId.toLowerCase().includes(query) ||
+      (item.productName && item.productName.toLowerCase().includes(query)) ||
+      (item.sku && item.sku.toLowerCase().includes(query)) ||
+      (item.variantTitle && item.variantTitle.toLowerCase().includes(query)) ||
+      (item.color && item.color.toLowerCase().includes(query)) ||
+      (item.size && item.size.toLowerCase().includes(query))
+    );
+  });
 
   // Open edit modal
   const handleOpenEdit = (item: InventoryItem) => {
@@ -226,7 +234,7 @@ export default function AdminInventoryPage() {
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by variant ID..."
+            placeholder="Search product, SKU, variant..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -239,7 +247,8 @@ export default function AdminInventoryPage() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead>Variant ID</TableHead>
+              <TableHead className="min-w-[220px]">Product & Variant</TableHead>
+              <TableHead>SKU / Details</TableHead>
               <TableHead className="text-center">Available</TableHead>
               <TableHead className="text-center">Reserved</TableHead>
               <TableHead className="text-center">Damaged</TableHead>
@@ -252,13 +261,13 @@ export default function AdminInventoryPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-16">
+                <TableCell colSpan={9} className="text-center py-16">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                 </TableCell>
               </TableRow>
             ) : displayedItems.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-16 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-16 text-muted-foreground">
                   {filter === 'low-stock' ? '✅ No low-stock items!' : 'No inventory records found.'}
                 </TableCell>
               </TableRow>
@@ -268,8 +277,40 @@ export default function AdminInventoryPage() {
                   key={item.id}
                   className={item.isLowStock ? 'bg-rose-500/5 hover:bg-rose-500/10' : ''}
                 >
-                  <TableCell className="font-mono text-xs max-w-[180px] truncate">
-                    {item.variantId}
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-muted border overflow-hidden flex-shrink-0 flex items-center justify-center">
+                        {item.productImage ? (
+                          <img
+                            src={item.productImage}
+                            alt={item.productName || 'Product'}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <Package className="h-5 w-5 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-medium text-sm text-foreground truncate max-w-[200px]" title={item.productName || undefined}>
+                          {item.productName || 'Unnamed Product'}
+                        </span>
+                        <span className="text-xs text-muted-foreground font-mono truncate max-w-[160px]" title={item.variantId}>
+                          ID: {item.variantId.slice(-8)}
+                        </span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      {item.sku ? (
+                        <span className="font-mono text-xs font-semibold text-foreground">{item.sku}</span>
+                      ) : (
+                        <span className="text-xs italic text-muted-foreground">No SKU</span>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {[item.variantTitle, item.color, item.size].filter(Boolean).join(' • ') || 'Default Variant'}
+                      </span>
+                    </div>
                   </TableCell>
                   <TableCell className="text-center font-semibold">{item.availableStock}</TableCell>
                   <TableCell className="text-center text-blue-600">{item.reservedStock}</TableCell>
@@ -340,6 +381,15 @@ export default function AdminInventoryPage() {
             <DialogDescription>
               Update warehouse location and low-stock alert threshold.
             </DialogDescription>
+            {editItem && (
+              <div className="mt-2 p-2.5 rounded-lg bg-muted/60 text-xs border flex items-center gap-2">
+                <Package className="h-4 w-4 text-primary shrink-0" />
+                <div>
+                  <span className="font-semibold">{editItem.productName || 'Product'}</span>
+                  {editItem.sku && <span className="ml-2 font-mono text-muted-foreground">({editItem.sku})</span>}
+                </div>
+              </div>
+            )}
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div className="space-y-1.5">
@@ -391,6 +441,15 @@ export default function AdminInventoryPage() {
             <DialogDescription>
               Manually correct the stock level for this inventory item. All adjustments are logged.
             </DialogDescription>
+            {adjustItem && (
+              <div className="mt-2 p-2.5 rounded-lg bg-muted/60 text-xs border flex items-center gap-2">
+                <Package className="h-4 w-4 text-primary shrink-0" />
+                <div>
+                  <span className="font-semibold">{adjustItem.productName || 'Product'}</span>
+                  {adjustItem.sku && <span className="ml-2 font-mono text-muted-foreground">({adjustItem.sku})</span>}
+                </div>
+              </div>
+            )}
           </DialogHeader>
           {adjustItem && (
             <div className="space-y-4 pt-2">
@@ -498,8 +557,8 @@ export default function AdminInventoryPage() {
               <ClipboardList className="h-5 w-5" />
               Stock Audit Log
             </DialogTitle>
-            <DialogDescription className="font-mono text-xs break-all">
-              Variant: {logsItem?.variantId}
+            <DialogDescription className="text-xs">
+              {logsItem?.productName || 'Product'} {logsItem?.sku ? `(${logsItem.sku})` : ''} • ID: {logsItem?.variantId}
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-96 overflow-y-auto">

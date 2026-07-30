@@ -41,6 +41,12 @@ function mapToInventoryResponseDTO(inventory: Inventory): InventoryResponseDTO {
     warehouseLocation: inventory.warehouseLocation,
     lowStockThreshold: inventory.lowStockThreshold,
     isLowStock: inventory.isLowStock(),
+    productName: inventory.productName,
+    productImage: inventory.productImage,
+    sku: inventory.sku,
+    variantTitle: inventory.variantTitle,
+    color: inventory.color,
+    size: inventory.size,
     createdAt: inventory.createdAt,
     updatedAt: inventory.updatedAt,
   };

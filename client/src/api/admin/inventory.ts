@@ -11,6 +11,12 @@ export interface InventoryItem {
   warehouseLocation: string | null;
   lowStockThreshold: number;
   isLowStock: boolean;
+  productName?: string | null;
+  productImage?: string | null;
+  sku?: string | null;
+  variantTitle?: string | null;
+  color?: string | null;
+  size?: string | null;
   createdAt: string;
   updatedAt: string;
 }
