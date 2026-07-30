@@ -16,6 +16,7 @@ describe('Inventory Domain Entity Unit Tests', () => {
         reservedStock: 10,
         damagedStock: 2,
         warehouseLocation: 'Aisle-4-B',
+        lowStockThreshold: 10,
       };
 
       const inventory = Inventory.create(input);
@@ -26,6 +27,7 @@ describe('Inventory Domain Entity Unit Tests', () => {
       expect(inventory.reservedStock).toBe(10);
       expect(inventory.damagedStock).toBe(2);
       expect(inventory.warehouseLocation).toBe('Aisle-4-B');
+      expect(inventory.lowStockThreshold).toBe(10);
       
       // Verify default values from BaseEntity are set
       expect(inventory.createdAt).toBeInstanceOf(Date);
@@ -43,6 +45,7 @@ describe('Inventory Domain Entity Unit Tests', () => {
         reservedStock: 5,
         damagedStock: 0,
         warehouseLocation: 'Warehouse-1',
+        lowStockThreshold: 10,
         createdAt: new Date('2026-01-01'),
         updatedAt: new Date('2026-01-02'),
       };
@@ -64,6 +67,7 @@ describe('Inventory Domain Entity Unit Tests', () => {
         availableStock: 100,
         reservedStock: 0,
         damagedStock: 0,
+        lowStockThreshold: 10,
       });
 
       expect(inventory.availableStock).toBe(100);
@@ -78,12 +82,37 @@ describe('Inventory Domain Entity Unit Tests', () => {
         availableStock: 100,
         reservedStock: 0,
         damagedStock: 0,
+        lowStockThreshold: 10,
       });
 
       expect(inventory.availableStock).toBe(100);
       
       inventory.adjustStock(-30);
       expect(inventory.availableStock).toBe(70);
+    });
+  });
+
+  describe('isLowStock()', () => {
+    it('should return true when availableStock <= lowStockThreshold', () => {
+      const inventory = Inventory.create({
+        variantId: 'var-123',
+        availableStock: 5,
+        reservedStock: 0,
+        damagedStock: 0,
+        lowStockThreshold: 10,
+      });
+      expect(inventory.isLowStock()).toBe(true);
+    });
+
+    it('should return false when availableStock > lowStockThreshold', () => {
+      const inventory = Inventory.create({
+        variantId: 'var-123',
+        availableStock: 50,
+        reservedStock: 0,
+        damagedStock: 0,
+        lowStockThreshold: 10,
+      });
+      expect(inventory.isLowStock()).toBe(false);
     });
   });
 });

@@ -2,9 +2,21 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Package, Tag, Settings, LogOut, Shield, Users, FolderTree } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Package,
+  Tag,
+  Settings,
+  LogOut,
+  Shield,
+  Users,
+  FolderTree,
+  Warehouse,
+  Bell,
+} from 'lucide-react';
 import { authApi } from '@/api/auth';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useNotifications } from '@/hooks/admin/useNotifications';
 import { toast } from 'sonner';
 
 const navItems = [
@@ -13,7 +25,9 @@ const navItems = [
   { name: 'Products', href: '/admin/product', icon: Package, permission: 'manage_products' },
   { name: 'Categories', href: '/admin/category', icon: FolderTree, permission: 'manage_categories' },
   { name: 'Brands', href: '/admin/brand', icon: Tag, permission: 'manage_brands' },
+  { name: 'Inventory', href: '/admin/inventory', icon: Warehouse, permission: 'manage_inventory' },
   { name: 'Roles', href: '/admin/role', icon: Shield, permission: 'manage_roles' },
+  { name: 'Notifications', href: '/admin/notifications', icon: Bell },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 
@@ -22,6 +36,7 @@ export function AdminSidebar() {
   const router = useRouter();
   const { logoutUser, user } = useAuthStore();
   const userPermissions = user?.permissions || [];
+  const { unreadCount } = useNotifications();
 
   const handleLogout = async () => {
     try {
@@ -59,7 +74,12 @@ export function AdminSidebar() {
               }`}
             >
               <Icon className="h-5 w-5" />
-              {item.name}
+              <span className="flex-1">{item.name}</span>
+              {item.name === 'Notifications' && unreadCount > 0 && (
+                <span className="min-w-[1.25rem] h-5 flex items-center justify-center rounded-full bg-rose-500 text-white text-xs font-bold px-1">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -76,3 +96,4 @@ export function AdminSidebar() {
     </aside>
   );
 }
+
