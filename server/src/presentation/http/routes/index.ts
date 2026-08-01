@@ -51,6 +51,7 @@ import { addressRouter } from '../../../modules/addresses/presentation/routes/ad
 import { cartRouter } from '../../../modules/cart/presentation/routes/cart.routes';
 import { checkoutRouter } from '../../../modules/checkout/presentation/routes/checkout.routes';
 import { notificationsRouter } from '../../../modules/notifications/presentation/routes/notification.routes';
+import { ordersRouter } from '../../../modules/orders/presentation/routes/orders.routes';
 
 rootRouter.use('/auth', authRouter);
 rootRouter.use('/users', userRouter);
@@ -65,4 +66,5 @@ rootRouter.use('/upload', uploadRouter);
 rootRouter.use('/cart', cartRouter);
 rootRouter.use('/checkout', checkoutRouter);
 rootRouter.use('/notifications', notificationsRouter);
+rootRouter.use('/orders', ordersRouter);
 

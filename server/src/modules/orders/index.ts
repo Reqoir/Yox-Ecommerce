@@ -5,4 +5,4 @@
  * Implementation will be added via a separate prompt.
  */
 
-// export { ordersRouter } from './presentation/routes/orders.routes';
+export { ordersRouter } from './presentation/routes/orders.routes';

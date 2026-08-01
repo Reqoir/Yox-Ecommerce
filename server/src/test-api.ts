@@ -1,4 +1,6 @@
-async function test() {
+export {};
+
+async function runApiTest() {
   try {
     const baseURL = 'http://localhost:5001/api/v1';
     
@@ -16,7 +18,7 @@ async function test() {
     const usersRes = await fetch(`${baseURL}/users`, {
       headers: { Cookie: cookies.join(';') }
     });
-    const usersData = await usersRes.json();
+    const usersData = (await usersRes.json()) as any;
     console.log('usersRes:', usersRes.status, usersData);
     console.log('Users:', usersData.data.map((u: any) => ({ id: u.id, email: u.email })));
     
@@ -44,4 +46,4 @@ async function test() {
   }
 }
 
-test();
+runApiTest();

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { ShieldCheck, Lock, CreditCard, Banknote, ArrowRight } from 'lucide-react';
 import { useCartStore } from '@/store/useCartStore';
 import { useCheckoutStore } from '@/store/useCheckoutStore';
+import { ordersApi } from '@/lib/api/orders';
 import { toast } from 'sonner';
 
 export function CheckoutSummaryPanel() {
@@ -27,7 +28,7 @@ export function CheckoutSummaryPanel() {
 
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!selectedAddress) {
       toast.error('Please select or add a delivery address first');
       return;
@@ -40,10 +41,21 @@ export function CheckoutSummaryPanel() {
 
     setIsProcessing(true);
 
-    // Simulate order placement API call (COD or Razorpay SDK execution)
-    setTimeout(() => {
-      const orderId = `YOX-${Math.floor(100000 + Math.random() * 900000)}`;
-      
+    try {
+      const order = await ordersApi.placeOrder({
+        shippingAddress: {
+          fullName: selectedAddress.fullName,
+          phone: selectedAddress.phone,
+          streetAddress: `${selectedAddress.streetAddress}${selectedAddress.landmark ? `, ${selectedAddress.landmark}` : ''}`,
+          landmark: selectedAddress.landmark || '',
+          city: selectedAddress.city,
+          state: selectedAddress.state,
+          country: 'India',
+          postalCode: selectedAddress.pincode || '400001',
+        },
+        paymentMethod: paymentMethod,
+      });
+
       // Delivery date estimation (3-5 business days)
       const deliveryDate = new Date();
       deliveryDate.setDate(deliveryDate.getDate() + 4);
@@ -53,20 +65,26 @@ export function CheckoutSummaryPanel() {
         day: 'numeric',
       });
 
-      // Clear cart
+      // Clear cart in state
       clearCart();
 
-      // Set order success details
+      // Set order success details with authoritative backend values
       setOrderSuccess(true, {
-        orderId,
-        total: grandTotal,
-        paymentMethod,
+        orderId: order?.orderNumber || `YOX-${Math.floor(100000 + Math.random() * 900000)}`,
+        total: order?.totalAmount || grandTotal,
+        paymentMethod: paymentMethod,
         deliveryDate: formattedDate,
-        itemCount,
+        itemCount: order?.items?.length || itemCount,
       });
 
+      toast.success('Order placed successfully!');
+    } catch (error: any) {
+      console.error('Order placement failed:', error);
+      const msg = error?.response?.data?.message || error?.response?.data?.error || 'Failed to complete order placement. Please check your login status or try again.';
+      toast.error(msg);
+    } finally {
       setIsProcessing(false);
-    }, 1200);
+    }
   };
 
   return (

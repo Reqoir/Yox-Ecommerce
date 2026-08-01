@@ -13,6 +13,7 @@ import {
   FolderTree,
   Warehouse,
   Bell,
+  ShoppingBag,
 } from 'lucide-react';
 import { authApi } from '@/api/auth';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -21,6 +22,7 @@ import { toast } from 'sonner';
 
 const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { name: 'Orders', href: '/admin/order', icon: ShoppingBag },
   { name: 'Users', href: '/admin/user', icon: Users, permission: 'manage_users' },
   { name: 'Products', href: '/admin/product', icon: Package, permission: 'manage_products' },
   { name: 'Categories', href: '/admin/category', icon: FolderTree, permission: 'manage_categories' },
