@@ -22,8 +22,16 @@ export type UpdateCartItemDTO = z.infer<typeof UpdateCartItemSchema>;
 
 export interface CartItemResponseDTO {
   variantId: string;
-  quantity: number;
+  productId?: string;
+  name?: string;
+  slug?: string;
+  image?: string;
+  color?: string;
+  size?: string;
+  stock?: number;
   price: number;
+  comparePrice?: number | null;
+  quantity: number;
   subtotal: number;
 }
 

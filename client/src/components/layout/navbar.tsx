@@ -31,6 +31,13 @@ export function Navbar() {
     setInputValue(searchQuery);
   }, [searchQuery]);
 
+  // Sync cart with backend when user is authenticated
+  useEffect(() => {
+    if (user) {
+      useCartStore.getState().syncWithServer();
+    }
+  }, [user]);
+
   // Handle outside click to close autocomplete and dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

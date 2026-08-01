@@ -33,8 +33,11 @@ export class ProductVariant extends BaseEntity<ProductVariantProps> {
   get productId(): string { return this._props.productId; }
   get sku(): string { return this._props.sku; }
   get title(): string { return this._props.title; }
+  get color(): string { return this._props.color; }
   get price(): number { return this._props.price; }
+  get comparePrice(): number | null | undefined { return this._props.comparePrice; }
   get stock(): number { return this._props.stock; }
+  get images(): string[] { return this._props.images ? [...this._props.images] : []; }
   get isDefault(): boolean { return this._props.isDefault; }
   get isActive(): boolean { return this._props.isActive; }
   get size(): string | null | undefined { return this._props.size; }

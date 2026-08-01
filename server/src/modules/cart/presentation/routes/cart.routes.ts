@@ -9,6 +9,7 @@ import { Router } from 'express';
 import { CartController } from '../controllers/cart.controller';
 import { CartRepository } from '../../infrastructure/repositories/cart.repository';
 import { ProductVariantRepository } from '../../../products/infrastructure/repositories/product-variant.repository';
+import { ProductRepository } from '../../../products/infrastructure/repositories/product.repository';
 import { 
   GetCartUseCase, 
   AddItemToCartUseCase, 
@@ -23,12 +24,13 @@ export const cartRouter = Router();
 // --- Dependency Injection ---
 const cartRepository = new CartRepository();
 const variantRepository = new ProductVariantRepository();
+const productRepository = new ProductRepository();
 
-const getCartUseCase = new GetCartUseCase(cartRepository);
-const addItemToCartUseCase = new AddItemToCartUseCase(cartRepository, variantRepository);
-const updateCartItemUseCase = new UpdateCartItemUseCase(cartRepository);
-const removeCartItemUseCase = new RemoveCartItemUseCase(cartRepository);
-const clearCartUseCase = new ClearCartUseCase(cartRepository);
+const getCartUseCase = new GetCartUseCase(cartRepository, variantRepository, productRepository);
+const addItemToCartUseCase = new AddItemToCartUseCase(cartRepository, variantRepository, productRepository);
+const updateCartItemUseCase = new UpdateCartItemUseCase(cartRepository, variantRepository, productRepository);
+const removeCartItemUseCase = new RemoveCartItemUseCase(cartRepository, variantRepository, productRepository);
+const clearCartUseCase = new ClearCartUseCase(cartRepository, variantRepository, productRepository);
 
 const cartController = new CartController(
   getCartUseCase,

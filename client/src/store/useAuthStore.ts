@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User } from '../api/auth';
 
+export type { User };
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -10,6 +12,7 @@ interface AuthState {
   logout: () => void;
   setAuthData: (user: User, token?: string) => void;
   updateUser: (data: Partial<User>) => void;
+  setUser: (user: User | null) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -24,6 +27,7 @@ export const useAuthStore = create<AuthState>()(
       updateUser: (data) => set((state) => ({
         user: state.user ? { ...state.user, ...data } : null
       })),
+      setUser: (user) => set({ user, isAuthenticated: !!user }),
     }),
     {
       name: 'auth-storage',

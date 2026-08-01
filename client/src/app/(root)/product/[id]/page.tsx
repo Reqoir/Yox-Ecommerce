@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { Heart, Share2, Tag, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { productsApi } from '@/lib/api/products';
+import { useCartStore } from '@/store/useCartStore';
+import { toast } from 'sonner';
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -18,6 +20,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const addItem = useCartStore((state) => state.addItem);
+  const cartItems = useCartStore((state) => state.items);
 
   // Initialize selected variants when data loads
   useEffect(() => {
@@ -70,6 +74,36 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const discountPercentage = originalPrice 
     ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100) 
     : 0;
+
+  const handleAddToBasket = () => {
+    if (!activeVariant || !activeVariant.stock || activeVariant.stock <= 0) {
+      toast.error("This product variant is out of stock!");
+      return;
+    }
+
+    const existingItem = cartItems.find(
+      (i) => i.variantId === activeVariant.id || i.id === activeVariant.id
+    );
+    if (existingItem && existingItem.quantity >= activeVariant.stock) {
+      toast.error(`You have already added the maximum available stock (${activeVariant.stock}) to your basket.`);
+      return;
+    }
+
+    addItem({
+      variantId: activeVariant.id,
+      productId: product.id,
+      name: `${product.name} - ${activeVariant.color}`,
+      image: images[0] || product.thumbnail,
+      color: activeVariant.color || 'Default',
+      size: activeVariant.size || 'Standard',
+      price: activeVariant.price,
+      comparePrice: activeVariant.comparePrice || undefined,
+      quantity: 1,
+      stock: activeVariant.stock,
+    });
+
+    toast.success(`Added ${product.name} (${activeVariant.size || 'Standard'}, ${activeVariant.color || 'Default'}) to your cart!`);
+  };
 
   const renderOffers = (className: string) => (
     <div className={`bg-[#EAF5F0] rounded-sm p-4 ${className}`}>
@@ -284,7 +318,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
             {/* Desktop Actions */}
             <div className="hidden lg:flex flex-col gap-4 mt-8 border-t border-gray-100 pt-6">
-              <button className="w-full bg-[#1A2E4C] hover:bg-[#132238] text-white font-bold tracking-wide py-4 transition-colors shadow-sm text-sm disabled:opacity-50">
+              <button 
+                onClick={handleAddToBasket}
+                disabled={!activeVariant?.stock || activeVariant.stock <= 0}
+                className="w-full bg-[#1A2E4C] hover:bg-[#132238] text-white font-bold tracking-wide py-4 transition-colors shadow-sm text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 {activeVariant?.stock && activeVariant.stock > 0 ? 'ADD TO BASKET' : 'OUT OF STOCK'}
               </button>
               
@@ -320,7 +358,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             <div className="text-[9px] text-gray-400 mt-0.5">Inclusive of all taxes</div>
           </div>
           
-          <button className="flex-1 bg-[#1A2E4C] hover:bg-[#132238] text-white font-bold tracking-wide py-3.5 px-2 transition-colors shadow-sm text-xs disabled:opacity-50">
+          <button 
+            onClick={handleAddToBasket}
+            disabled={!activeVariant?.stock || activeVariant.stock <= 0}
+            className="flex-1 bg-[#1A2E4C] hover:bg-[#132238] text-white font-bold tracking-wide py-3.5 px-2 transition-colors shadow-sm text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+          >
              {activeVariant?.stock && activeVariant.stock > 0 ? 'ADD TO BASKET' : 'OUT OF STOCK'}
           </button>
         </div>

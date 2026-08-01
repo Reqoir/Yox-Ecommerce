@@ -84,6 +84,11 @@ export function CartItemsList({ items }: CartItemsListProps) {
                     </>
                   )}
                 </div>
+                {item.stock !== undefined && item.quantity >= item.stock && (
+                  <div className="text-[11px] font-semibold text-amber-600 mb-2">
+                    ⚠️ Maximum available stock reached ({item.stock})
+                  </div>
+                )}
               </div>
 
               {/* Controls & Actions */}
@@ -101,8 +106,15 @@ export function CartItemsList({ items }: CartItemsListProps) {
                     {item.quantity}
                   </span>
                   <button
-                    onClick={() => updateQuantity(item.id, 1)}
-                    className="p-1.5 text-gray-500 hover:text-gray-900 transition-colors"
+                    onClick={() => {
+                      if (item.stock !== undefined && item.quantity >= item.stock) {
+                        toast.error(`Cannot add more. Maximum available stock is ${item.stock}.`);
+                        return;
+                      }
+                      updateQuantity(item.id, 1);
+                    }}
+                    disabled={item.stock !== undefined && item.quantity >= item.stock}
+                    className="p-1.5 text-gray-500 hover:text-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     aria-label="Increase quantity"
                   >
                     <Plus size={14} />
