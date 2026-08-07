@@ -214,7 +214,7 @@ export const useCartStore = create<CartState>()(
               variantId: si.variantId,
               productId: si.productId || si.variantId,
               name: si.name || `Product Variant`,
-              image: si.image || '/images/default-product.png',
+              image: si.image || '/images/product-1.jpeg',
               color: si.color || 'Default',
               size: si.size || 'Standard',
               price: si.price,

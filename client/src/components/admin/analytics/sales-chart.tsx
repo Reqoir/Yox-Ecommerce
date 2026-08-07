@@ -64,7 +64,7 @@ export function SalesChart({ data }: SalesChartProps) {
           />
           <Tooltip 
             contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-            formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
+            formatter={(value: any) => [`$${Number(value || 0).toFixed(2)}`, 'Revenue']}
             labelStyle={{ color: '#374151', fontWeight: 500, marginBottom: '4px' }}
           />
           <Line

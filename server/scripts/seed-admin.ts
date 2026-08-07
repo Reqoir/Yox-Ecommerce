@@ -43,7 +43,8 @@ async function seed() {
           'manage_categories',
           'manage_orders',
           'manage_settings',
-          'view_analytics'
+          'view_analytics',
+          'view_reports'
         ],
         isSystem: true,
       });
@@ -59,7 +60,8 @@ async function seed() {
           'manage_categories',
           'manage_orders',
           'manage_settings',
-          'view_analytics'
+          'view_analytics',
+          'view_reports'
         ];
         await adminRole.save();
         console.log('Updated existing Admin role with all permissions');

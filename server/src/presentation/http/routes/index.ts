@@ -53,6 +53,7 @@ import { checkoutRouter } from '../../../modules/checkout/presentation/routes/ch
 import { notificationsRouter } from '../../../modules/notifications/presentation/routes/notification.routes';
 import { ordersRouter } from '../../../modules/orders/presentation/routes/orders.routes';
 import { analyticsRouter } from '../../../modules/analytics/presentation/routes/analytics.routes';
+import { reportsRouter } from '../../../modules/reports/presentation/routes/reports.routes';
 
 rootRouter.use('/auth', authRouter);
 rootRouter.use('/users', userRouter);
@@ -69,3 +70,5 @@ rootRouter.use('/checkout', checkoutRouter);
 rootRouter.use('/notifications', notificationsRouter);
 rootRouter.use('/orders', ordersRouter);
 rootRouter.use('/analytics', analyticsRouter);
+rootRouter.use('/reports', reportsRouter);
+

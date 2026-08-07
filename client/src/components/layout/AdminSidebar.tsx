@@ -14,6 +14,7 @@ import {
   Warehouse,
   Bell,
   ShoppingBag,
+  BarChart3,
 } from 'lucide-react';
 import { authApi } from '@/api/auth';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -22,6 +23,7 @@ import { toast } from 'sonner';
 
 const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { name: 'Reports', href: '/admin/reports', icon: BarChart3, permission: 'view_reports' },
   { name: 'Orders', href: '/admin/order', icon: ShoppingBag },
   { name: 'Users', href: '/admin/user', icon: Users, permission: 'manage_users' },
   { name: 'Products', href: '/admin/product', icon: Package, permission: 'manage_products' },

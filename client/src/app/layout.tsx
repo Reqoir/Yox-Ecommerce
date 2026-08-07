@@ -21,6 +21,11 @@ export const metadata: Metadata = {
     'YOX — A modern, fast, and reliable ecommerce platform.',
   keywords: ['ecommerce', 'shopping', 'YOX'],
   authors: [{ name: 'YOX Team' }],
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
+  },
   robots: {
     index: true,
     follow: true,

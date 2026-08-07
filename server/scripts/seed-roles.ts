@@ -31,7 +31,8 @@ const rolesToSeed = [
       'manage_inventory', 
       'manage_products', 
       'manage_categories',
-      'manage_orders'
+      'manage_orders',
+      'view_reports'
     ],
     isSystem: true,
   },

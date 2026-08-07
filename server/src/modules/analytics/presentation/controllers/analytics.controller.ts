@@ -8,7 +8,7 @@ export class AnalyticsController {
     private readonly getSalesChartUseCase: GetSalesChartUseCase
   ) {}
 
-  getDashboardStats = async (req: Request, res: Response, next: NextFunction) => {
+  getDashboardStats = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const stats = await this.getDashboardStatsUseCase.execute();
       res.status(200).json({
