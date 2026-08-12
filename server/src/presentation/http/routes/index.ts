@@ -55,6 +55,10 @@ import { ordersRouter } from '../../../modules/orders/presentation/routes/orders
 import { analyticsRouter } from '../../../modules/analytics/presentation/routes/analytics.routes';
 import { reportsRouter } from '../../../modules/reports/presentation/routes/reports.routes';
 
+import { shipmentRouter } from '../../../modules/shipments/presentation/routes/shipment.routes';
+import { returnRouter } from '../../../modules/returns/presentation/routes/return.routes';
+import { paymentRouter } from '../../../modules/payments/presentation/routes/payment.routes';
+
 rootRouter.use('/auth', authRouter);
 rootRouter.use('/users', userRouter);
 rootRouter.use('/products', productRoutes);
@@ -71,4 +75,8 @@ rootRouter.use('/notifications', notificationsRouter);
 rootRouter.use('/orders', ordersRouter);
 rootRouter.use('/analytics', analyticsRouter);
 rootRouter.use('/reports', reportsRouter);
+rootRouter.use('/shipments', shipmentRouter);
+rootRouter.use('/returns', returnRouter);
+rootRouter.use('/payments', paymentRouter);
+
 

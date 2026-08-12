@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { ordersApi, BackendOrder, OrderStatus } from '@/lib/api/orders';
+import { ordersApi, BackendOrder } from '@/lib/api/orders';
+import { returnsApi, BackendReturn, InspectionResult } from '@/lib/api/returns';
+import { shipmentsApi, BackendShipment } from '@/lib/api/shipments';
 import {
   ShoppingBag,
   Search,
@@ -15,11 +17,12 @@ import {
   AlertCircle,
   Loader2,
   ArrowRight,
-  ShieldAlert,
   MapPin,
   CreditCard,
-  User,
-  ExternalLink,
+  RotateCcw,
+  RefreshCw,
+  Check,
+  ShieldAlert,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -46,12 +49,19 @@ const STATUS_CONFIG: Record<string, { label: string; badge: string; icon: any }>
 };
 
 export default function AdminOrdersPage() {
+  const [activeTab, setActiveTab] = useState<'orders' | 'returns'>('orders');
+
+  // Orders State
   const [orders, setOrders] = useState<BackendOrder[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<BackendOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<BackendOrder | null>(null);
+
+  // Returns State
+  const [returns, setReturns] = useState<BackendReturn[]>([]);
+  const [loadingReturns, setLoadingReturns] = useState(false);
 
   // Ship Order Modal State
   const [shippingOrder, setShippingOrder] = useState<BackendOrder | null>(null);
@@ -73,11 +83,24 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const fetchAllReturns = async () => {
+    try {
+      setLoadingReturns(true);
+      const res = await returnsApi.getAllReturnsAdmin(1, 100);
+      setReturns(res.data);
+    } catch (error: any) {
+      console.error('Failed to fetch admin returns:', error);
+    } finally {
+      setLoadingReturns(false);
+    }
+  };
+
   useEffect(() => {
     fetchAllOrders();
+    fetchAllReturns();
   }, []);
 
-  // Handle local searching & status filter
+  // Handle local searching & status filter for orders
   useEffect(() => {
     let res = [...orders];
     if (statusFilter !== 'all') {
@@ -95,7 +118,7 @@ export default function AdminOrdersPage() {
     setFilteredOrders(res);
   }, [orders, statusFilter, searchQuery]);
 
-  // State Transition Handlers
+  // State Transition Handlers for Orders
   const advanceOrder = async (id: string, currentStatus: string) => {
     try {
       setIsUpdating(true);
@@ -109,7 +132,6 @@ export default function AdminOrdersPage() {
         updated = await ordersApi.packOrder(id);
         msg = 'Order marked as PACKED & Ready for pickup';
       } else if (currentStatus === 'PACKED') {
-        // Open shipping modal instead
         const target = orders.find((o) => o.id === id);
         if (target) setShippingOrder(target);
         setIsUpdating(false);
@@ -119,7 +141,7 @@ export default function AdminOrdersPage() {
         msg = 'Order marked OUT_FOR_DELIVERY';
       } else if (currentStatus === 'OUT_FOR_DELIVERY') {
         updated = await ordersApi.deliverOrder(id);
-        msg = 'Order DELIVERED successfully! Payment confirmed & stock finalized.';
+        msg = 'Order DELIVERED successfully!';
       }
 
       if (updated) {
@@ -143,6 +165,14 @@ export default function AdminOrdersPage() {
     try {
       setIsUpdating(true);
       const updated = await ordersApi.shipOrder(shippingOrder.id, trackingNumber, deliveryPartner);
+      
+      // Auto-create shipment record
+      try {
+        await shipmentsApi.updateShipmentStatus(shippingOrder.id, 'SHIPPED', `Tracking: ${trackingNumber}`);
+      } catch (e) {
+        // non-blocking fallback
+      }
+
       toast.success(`Order shipped successfully with tracking #${trackingNumber}`);
       setOrders((prev) => prev.map((o) => (o.id === shippingOrder.id ? updated : o)));
       setShippingOrder(null);
@@ -169,6 +199,60 @@ export default function AdminOrdersPage() {
     }
   };
 
+  // Return Management Handlers
+  const handleApproveReturn = async (id: string) => {
+    try {
+      const updated = await returnsApi.approveReturn(id);
+      toast.success('Return request approved');
+      setReturns((prev) => prev.map((r) => (r.id === id ? updated : r)));
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to approve return');
+    }
+  };
+
+  const handleRejectReturn = async (id: string) => {
+    const reason = window.prompt('Enter reason for rejecting return request:');
+    if (!reason) return;
+    try {
+      const updated = await returnsApi.rejectReturn(id, reason);
+      toast.success('Return request rejected');
+      setReturns((prev) => prev.map((r) => (r.id === id ? updated : r)));
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to reject return');
+    }
+  };
+
+  const handleReceiveReturn = async (id: string) => {
+    try {
+      const updated = await returnsApi.receiveReturn(id);
+      toast.success('Return marked as received at warehouse');
+      setReturns((prev) => prev.map((r) => (r.id === id ? updated : r)));
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to mark received');
+    }
+  };
+
+  const handleInspectReturn = async (id: string, condition: InspectionResult) => {
+    try {
+      const updated = await returnsApi.inspectReturn(id, condition);
+      toast.success(`Return inspected as ${condition}. Inventory updated!`);
+      setReturns((prev) => prev.map((r) => (r.id === id ? updated : r)));
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to record inspection');
+    }
+  };
+
+  const handleProcessRefund = async (returnId: string) => {
+    try {
+      const refund = await returnsApi.processRefund(returnId);
+      toast.success(`Refund of ₹${refund.amount} processed successfully!`);
+      fetchAllReturns();
+      fetchAllOrders();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to process refund');
+    }
+  };
+
   return (
     <div className="flex-1 p-8 bg-background max-w-7xl mx-auto space-y-6">
       {/* Header */}
@@ -176,175 +260,300 @@ export default function AdminOrdersPage() {
         <div>
           <div className="flex items-center gap-2">
             <ShoppingBag className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-bold tracking-tight">Fulfillment & Orders</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Fulfillment, Returns & Refunds</h1>
           </div>
           <p className="text-muted-foreground mt-1 text-sm">
-            Manage customer logistics, advance state machine funnels, and audit order snapshots.
+            Manage logistics, advance state machine funnels, audit returns, and issue refunds.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={fetchAllOrders} disabled={isLoading}>
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+          <Button variant="outline" size="sm" onClick={() => { fetchAllOrders(); fetchAllReturns(); }} disabled={isLoading}>
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw size={14} className="mr-2" />}
             Refresh Funnel
           </Button>
         </div>
       </div>
 
-      {/* Filters and Search */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-card border rounded-xl p-4 shadow-2xs">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
-          <Input
-            placeholder="Search by Order #, Customer Name, or User ID..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-background"
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          <span className="text-muted-foreground font-semibold flex items-center gap-1 mr-2">
-            <Filter size={14} /> Filter:
-          </span>
-          {['all', 'PLACED', 'CONFIRMED', 'PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'].map((st) => (
-            <button
-              key={st}
-              onClick={() => setStatusFilter(st)}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-all capitalize ${
-                statusFilter === st
-                  ? 'bg-primary text-primary-foreground shadow'
-                  : 'bg-muted/60 text-muted-foreground hover:bg-muted'
-              }`}
-            >
-              {st === 'all' ? 'All Orders' : st.toLowerCase().replace(/_/g, ' ')}
-            </button>
-          ))}
-        </div>
+      {/* Tabs Switcher */}
+      <div className="flex items-center gap-4 border-b">
+        <button
+          onClick={() => setActiveTab('orders')}
+          className={`pb-3 text-sm font-bold border-b-2 transition-colors ${
+            activeTab === 'orders'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Orders ({orders.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('returns')}
+          className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
+            activeTab === 'returns'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <RotateCcw size={14} /> Returns & Refunds ({returns.length})
+        </button>
       </div>
 
-      {/* Orders Table */}
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center min-h-[400px] border rounded-2xl bg-card p-12">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
-          <p className="text-sm text-muted-foreground">Synchronizing fulfillment queues...</p>
-        </div>
-      ) : filteredOrders.length === 0 ? (
-        <div className="border rounded-2xl bg-card p-16 text-center max-w-lg mx-auto shadow-2xs">
-          <ShoppingBag className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-          <h3 className="text-lg font-bold">No orders found</h3>
-          <p className="text-xs text-muted-foreground mt-1">
-            No customer orders matched your search or active filtering criteria.
-          </p>
-        </div>
-      ) : (
-        <div className="border rounded-xl bg-card overflow-hidden shadow-2xs">
-          <table className="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50 text-xs text-muted-foreground uppercase tracking-wider font-semibold">
-                <th className="p-4">Order Number</th>
-                <th className="p-4">Customer</th>
-                <th className="p-4">Payment</th>
-                <th className="p-4">Total Amount</th>
-                <th className="p-4">Current Status</th>
-                <th className="p-4">Date Placed</th>
-                <th className="p-4 text-right">State Machine Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {filteredOrders.map((order) => {
-                const cfg = STATUS_CONFIG[order.orderStatus] || STATUS_CONFIG.PLACED;
-                const StatusIcon = cfg.icon;
-                const nextActions: Record<string, string> = {
-                  PLACED: 'Confirm Order',
-                  CONFIRMED: 'Pack Items',
-                  PACKED: 'Ship Package',
-                  SHIPPED: 'Out For Delivery',
-                  OUT_FOR_DELIVERY: 'Mark Delivered',
-                };
-                const actionLabel = nextActions[order.orderStatus];
+      {activeTab === 'orders' ? (
+        <>
+          {/* Filters and Search */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-card border rounded-xl p-4 shadow-2xs">
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+              <Input
+                placeholder="Search by Order #, Customer Name, or User ID..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-background"
+              />
+            </div>
 
-                return (
-                  <tr key={order.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="p-4 font-mono font-bold text-primary flex items-center gap-2">
-                      <button
-                        onClick={() => setSelectedOrder(order)}
-                        className="hover:underline flex items-center gap-1 text-sm"
-                      >
-                        {order.orderNumber}
-                        <Eye size={14} className="text-muted-foreground opacity-70" />
-                      </button>
-                    </td>
+            <div className="flex flex-wrap items-center gap-1.5 text-xs">
+              <span className="text-muted-foreground font-semibold flex items-center gap-1 mr-2">
+                <Filter size={14} /> Filter:
+              </span>
+              {['all', 'PLACED', 'CONFIRMED', 'PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'].map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setStatusFilter(st)}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all capitalize ${
+                    statusFilter === st
+                      ? 'bg-primary text-primary-foreground shadow'
+                      : 'bg-muted/60 text-muted-foreground hover:bg-muted'
+                  }`}
+                >
+                  {st === 'all' ? 'All Orders' : st.toLowerCase().replace(/_/g, ' ')}
+                </button>
+              ))}
+            </div>
+          </div>
 
-                    <td className="p-4">
-                      <div className="font-medium text-foreground text-xs">
-                        {order.shippingAddress?.fullName || 'Customer'}
-                      </div>
-                      <div className="text-[11px] text-muted-foreground">{order.shippingAddress?.phone}</div>
-                    </td>
-
-                    <td className="p-4 text-xs">
-                      <div className="font-bold">{order.paymentMethod}</div>
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold mt-0.5 ${
-                          order.paymentStatus === 'PAID'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : order.paymentStatus === 'REFUNDED'
-                            ? 'bg-purple-100 text-purple-800'
-                            : 'bg-amber-100 text-amber-800'
-                        }`}
-                      >
-                        {order.paymentStatus}
-                      </span>
-                    </td>
-
-                    <td className="p-4 font-bold text-foreground">₹{order.totalAmount}</td>
-
-                    <td className="p-4">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${cfg.badge}`}>
-                        <StatusIcon size={12} strokeWidth={2.5} />
-                        <span>{cfg.label}</span>
-                      </span>
-                    </td>
-
-                    <td className="p-4 text-xs text-muted-foreground">
-                      {new Date(order.placedAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </td>
-
-                    <td className="p-4 text-right space-x-2">
-                      {actionLabel && (
-                        <Button
-                          size="sm"
-                          disabled={isUpdating}
-                          onClick={() => advanceOrder(order.id, order.orderStatus)}
-                          className="bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-bold h-8"
-                        >
-                          <span>{actionLabel}</span>
-                          <ArrowRight size={12} className="ml-1" />
-                        </Button>
-                      )}
-                      {order.orderStatus !== 'CANCELLED' && order.orderStatus !== 'DELIVERED' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={isUpdating}
-                          onClick={() => handleAdminCancel(order.id)}
-                          className="text-rose-600 hover:bg-rose-50 border-rose-200 h-8 text-xs font-semibold"
-                        >
-                          Cancel
-                        </Button>
-                      )}
-                    </td>
+          {/* Orders Table */}
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center min-h-[400px] border rounded-2xl bg-card p-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+              <p className="text-sm text-muted-foreground">Synchronizing fulfillment queues...</p>
+            </div>
+          ) : filteredOrders.length === 0 ? (
+            <div className="border rounded-2xl bg-card p-16 text-center max-w-lg mx-auto shadow-2xs">
+              <ShoppingBag className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+              <h3 className="text-lg font-bold">No orders found</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                No customer orders matched your search or active filtering criteria.
+              </p>
+            </div>
+          ) : (
+            <div className="border rounded-xl bg-card overflow-hidden shadow-2xs">
+              <table className="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/50 text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                    <th className="p-4">Order Number</th>
+                    <th className="p-4">Customer</th>
+                    <th className="p-4">Payment</th>
+                    <th className="p-4">Total Amount</th>
+                    <th className="p-4">Current Status</th>
+                    <th className="p-4">Date Placed</th>
+                    <th className="p-4 text-right">State Machine Action</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {filteredOrders.map((order) => {
+                    const cfg = STATUS_CONFIG[order.orderStatus] || STATUS_CONFIG.PLACED;
+                    const StatusIcon = cfg.icon;
+                    const nextActions: Record<string, string> = {
+                      PLACED: 'Confirm Order',
+                      CONFIRMED: 'Pack Items',
+                      PACKED: 'Ship Package',
+                      SHIPPED: 'Out For Delivery',
+                      OUT_FOR_DELIVERY: 'Mark Delivered',
+                    };
+                    const actionLabel = nextActions[order.orderStatus];
+
+                    return (
+                      <tr key={order.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="p-4 font-mono font-bold text-primary flex items-center gap-2">
+                          <button
+                            onClick={() => setSelectedOrder(order)}
+                            className="hover:underline flex items-center gap-1 text-sm"
+                          >
+                            {order.orderNumber}
+                            <Eye size={14} className="text-muted-foreground opacity-70" />
+                          </button>
+                        </td>
+
+                        <td className="p-4">
+                          <div className="font-medium text-foreground text-xs">
+                            {order.shippingAddress?.fullName || 'Customer'}
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">{order.shippingAddress?.phone}</div>
+                        </td>
+
+                        <td className="p-4 text-xs">
+                          <div className="font-bold">{order.paymentMethod}</div>
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold mt-0.5 ${
+                              order.paymentStatus === 'PAID'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : order.paymentStatus === 'REFUNDED'
+                                ? 'bg-purple-100 text-purple-800'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {order.paymentStatus}
+                          </span>
+                        </td>
+
+                        <td className="p-4 font-bold text-foreground">₹{order.totalAmount}</td>
+
+                        <td className="p-4">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${cfg.badge}`}>
+                            <StatusIcon size={12} strokeWidth={2.5} />
+                            <span>{cfg.label}</span>
+                          </span>
+                        </td>
+
+                        <td className="p-4 text-xs text-muted-foreground">
+                          {new Date(order.placedAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </td>
+
+                        <td className="p-4 text-right space-x-2">
+                          {actionLabel && (
+                            <Button
+                              size="sm"
+                              disabled={isUpdating}
+                              onClick={() => advanceOrder(order.id, order.orderStatus)}
+                              className="bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-bold h-8"
+                            >
+                              <span>{actionLabel}</span>
+                              <ArrowRight size={12} className="ml-1" />
+                            </Button>
+                          )}
+                          {order.orderStatus !== 'CANCELLED' && order.orderStatus !== 'DELIVERED' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={isUpdating}
+                              onClick={() => handleAdminCancel(order.id)}
+                              className="text-rose-600 hover:bg-rose-50 border-rose-200 h-8 text-xs font-semibold"
+                            >
+                              Cancel
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      ) : (
+        /* Returns Management Tab */
+        <div className="space-y-4">
+          {loadingReturns ? (
+            <div className="flex flex-col items-center justify-center min-h-[300px] border rounded-2xl bg-card p-8">
+              <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
+              <p className="text-xs text-muted-foreground">Loading customer returns...</p>
+            </div>
+          ) : returns.length === 0 ? (
+            <div className="border rounded-2xl bg-card p-12 text-center max-w-md mx-auto">
+              <RotateCcw className="w-10 h-10 text-muted-foreground mx-auto mb-2 opacity-50" />
+              <h3 className="text-base font-bold">No return requests</h3>
+              <p className="text-xs text-muted-foreground mt-1">There are no customer return requests to review.</p>
+            </div>
+          ) : (
+            <div className="border rounded-xl bg-card overflow-hidden">
+              <table className="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/50 text-xs text-muted-foreground uppercase font-semibold">
+                    <th className="p-4">Return ID</th>
+                    <th className="p-4">Order ID</th>
+                    <th className="p-4">Quantity & Reason</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4">Inspection</th>
+                    <th className="p-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {returns.map((ret) => (
+                    <tr key={ret.id} className="hover:bg-muted/30 text-xs">
+                      <td className="p-4 font-mono font-bold">{ret.id.substring(0, 8)}...</td>
+                      <td className="p-4 font-mono text-primary font-bold">{ret.orderId}</td>
+                      <td className="p-4">
+                        <div className="font-bold text-foreground">Qty: {ret.quantity}</div>
+                        <div className="text-muted-foreground text-[11px]">Reason: {ret.reason}</div>
+                        {ret.customerNote && <div className="italic text-gray-500 text-[10px]">"{ret.customerNote}"</div>}
+                      </td>
+                      <td className="p-4">
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">
+                          {ret.status.replace(/_/g, ' ')}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        {ret.inspectionResult ? (
+                          <span className={`font-bold text-[11px] ${ret.inspectionResult === 'RESELLABLE' ? 'text-emerald-700' : 'text-rose-600'}`}>
+                            {ret.inspectionResult}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground italic text-[11px]">Pending</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-right space-x-1.5">
+                        {ret.status === 'REQUESTED' && (
+                          <>
+                            <Button size="sm" onClick={() => handleApproveReturn(ret.id)} className="bg-emerald-700 hover:bg-emerald-800 text-white h-7 text-xs">
+                              Approve
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => handleRejectReturn(ret.id)} className="text-rose-600 border-rose-200 h-7 text-xs">
+                              Reject
+                            </Button>
+                          </>
+                        )}
+
+                        {ret.status === 'APPROVED' && (
+                          <Button size="sm" onClick={() => handleReceiveReturn(ret.id)} className="bg-indigo-700 hover:bg-indigo-800 text-white h-7 text-xs">
+                            Mark Received
+                          </Button>
+                        )}
+
+                        {ret.status === 'RECEIVED' && (
+                          <div className="inline-flex gap-1">
+                            <Button size="sm" onClick={() => handleInspectReturn(ret.id, 'RESELLABLE')} className="bg-emerald-700 hover:bg-emerald-800 text-white h-7 text-xs">
+                              Pass (Resellable)
+                            </Button>
+                            <Button size="sm" onClick={() => handleInspectReturn(ret.id, 'DAMAGED')} className="bg-amber-700 hover:bg-amber-800 text-white h-7 text-xs">
+                              Fail (Damaged)
+                            </Button>
+                          </div>
+                        )}
+
+                        {(ret.status === 'REFUND_PENDING' || ret.status === 'INSPECTED') && (
+                          <Button size="sm" onClick={() => handleProcessRefund(ret.id)} className="bg-purple-700 hover:bg-purple-800 text-white h-7 text-xs font-bold">
+                            Process Refund
+                          </Button>
+                        )}
+
+                        {ret.status === 'REFUNDED' && (
+                          <span className="text-emerald-700 font-bold flex items-center gap-1 justify-end text-[11px]">
+                            <Check size={14} /> Refunded (₹{ret.refundAmount || 0})
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -389,94 +598,6 @@ export default function AdminOrdersPage() {
             </Button>
             <Button onClick={handleConfirmShipment} disabled={isUpdating} className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold">
               {isUpdating ? 'Confirming...' : 'Confirm & Mark Shipped'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Complete Order Snapshot Detail Modal */}
-      <Dialog open={!!selectedOrder} onOpenChange={(val) => !val && setSelectedOrder(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold flex items-center justify-between pr-4">
-              <span>Order Snapshot: <span className="font-mono text-primary">{selectedOrder?.orderNumber}</span></span>
-            </DialogTitle>
-            <DialogDescription>
-              Immutable historical records and item pricing frozen at checkout time.
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedOrder && (
-            <div className="space-y-6 text-xs py-2">
-              {/* Customer & Address Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-muted/30 p-4 rounded-xl border">
-                <div>
-                  <span className="text-muted-foreground font-bold uppercase text-[10px] block mb-1 flex items-center gap-1">
-                    <MapPin size={12} /> Shipping Snapshot
-                  </span>
-                  <p className="font-bold text-foreground text-sm">{selectedOrder.shippingAddress?.fullName}</p>
-                  <p className="text-muted-foreground mt-0.5">{selectedOrder.shippingAddress?.streetAddress}</p>
-                  {selectedOrder.shippingAddress?.landmark && <p className="text-muted-foreground">Landmark: {selectedOrder.shippingAddress.landmark}</p>}
-                  <p className="text-muted-foreground">{selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.state} - {selectedOrder.shippingAddress?.postalCode}</p>
-                  <p className="font-medium text-foreground mt-1.5">📞 {selectedOrder.shippingAddress?.phone}</p>
-                </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <span className="text-muted-foreground font-bold uppercase text-[10px] block mb-1 flex items-center gap-1">
-                      <CreditCard size={12} /> Financial & Payment Info
-                    </span>
-                    <p className="font-bold text-foreground uppercase">Method: {selectedOrder.paymentMethod}</p>
-                    <p className="text-muted-foreground">Payment Status: <span className="font-bold text-primary">{selectedOrder.paymentStatus}</span></p>
-                    {selectedOrder.paymentId && <p className="font-mono text-[11px] text-muted-foreground">Tx ID: {selectedOrder.paymentId}</p>}
-                  </div>
-
-                  <div>
-                    <span className="text-muted-foreground font-bold uppercase text-[10px] block mb-1">Logistics Status</span>
-                    <p className="font-bold text-foreground">{selectedOrder.orderStatus}</p>
-                    {selectedOrder.trackingNumber && <p className="font-mono text-emerald-700 font-bold">Tracking: {selectedOrder.trackingNumber}</p>}
-                    {selectedOrder.cancelledReason && <p className="text-rose-600 mt-1 font-semibold">Cancel Reason: {selectedOrder.cancelledReason}</p>}
-                  </div>
-                </div>
-              </div>
-
-              {/* Items Breakdown */}
-              <div>
-                <h4 className="font-bold text-sm text-foreground mb-2">Purchased Items Snapshot ({selectedOrder.items?.length})</h4>
-                <div className="border rounded-xl divide-y overflow-hidden">
-                  {selectedOrder.items && selectedOrder.items.map((item, idx) => (
-                    <div key={idx} className="p-3 bg-card flex items-center justify-between gap-4">
-                      <div>
-                        <p className="font-bold text-foreground text-sm">{item.productName}</p>
-                        <p className="text-muted-foreground">
-                          SKU: <span className="font-mono text-foreground">{item.sku}</span> | Qty: <strong className="text-foreground">x{item.quantity}</strong> | Price: ₹{item.unitPrice}
-                        </p>
-                      </div>
-                      <div className="text-right font-bold text-sm text-foreground">
-                        ₹{item.subtotal}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Totals Calculation Card */}
-              <div className="bg-card border rounded-xl p-4 space-y-1.5 text-right max-w-xs ml-auto text-xs">
-                <div className="flex justify-between text-muted-foreground"><span>Subtotal:</span><span className="font-bold">₹{selectedOrder.subtotal}</span></div>
-                {selectedOrder.discount > 0 && <div className="flex justify-between text-emerald-600 font-medium"><span>Discount:</span><span>-₹{selectedOrder.discount}</span></div>}
-                <div className="flex justify-between text-muted-foreground"><span>Shipping Charge:</span><span className="font-bold">{selectedOrder.shippingCharge === 0 ? 'FREE' : `₹${selectedOrder.shippingCharge}`}</span></div>
-                <div className="flex justify-between text-muted-foreground"><span>Tax (Included):</span><span>₹{selectedOrder.tax}</span></div>
-                <div className="border-t pt-2 flex justify-between font-bold text-base text-foreground">
-                  <span>Grand Total:</span>
-                  <span>₹{selectedOrder.totalAmount}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button onClick={() => setSelectedOrder(null)} className="w-full sm:w-auto font-bold bg-[#1A2E4C] hover:bg-[#132238] text-white">
-              Close Preview
             </Button>
           </DialogFooter>
         </DialogContent>
