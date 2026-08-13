@@ -65,10 +65,12 @@ export class AuditLogRepository implements IAuditLogRepository {
     if (filter.resourceType) query.resourceType = filter.resourceType;
     if (filter.resourceId) query.resourceId = filter.resourceId;
 
-    if (filter.dateFrom || filter.dateTo) {
+    const isValidDate = (d?: any) => d && typeof d === 'string' && d.trim() !== '' && !isNaN(new Date(d).getTime());
+
+    if (isValidDate(filter.dateFrom) || isValidDate(filter.dateTo)) {
       query.createdAt = {};
-      if (filter.dateFrom) query.createdAt.$gte = new Date(filter.dateFrom);
-      if (filter.dateTo) query.createdAt.$lte = new Date(filter.dateTo);
+      if (isValidDate(filter.dateFrom)) query.createdAt.$gte = new Date(filter.dateFrom!);
+      if (isValidDate(filter.dateTo)) query.createdAt.$lte = new Date(filter.dateTo!);
     }
 
     if (filter.search && filter.search.trim() !== '') {

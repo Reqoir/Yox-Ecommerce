@@ -32,6 +32,8 @@ export const PERMISSIONS_LIST = [
   { id: 'manage_roles', label: 'Manage Roles' },
   { id: 'manage_settings', label: 'Manage Settings' },
   { id: 'view_analytics', label: 'View Analytics' },
+  { id: 'view_reports', label: 'View Payment & Financial Reports' },
+  { id: 'view_audit_logs', label: 'View Audit Logs' },
 ];
 
 export const roleApi = {

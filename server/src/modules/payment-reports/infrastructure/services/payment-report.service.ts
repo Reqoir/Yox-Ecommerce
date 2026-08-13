@@ -47,9 +47,11 @@ export class PaymentReportService {
       return { dateFrom: start, dateTo: now };
     }
 
+    const isValidDate = (d?: any) => d && typeof d === 'string' && d.trim() !== '' && !isNaN(new Date(d).getTime());
+
     return {
-      dateFrom: filter.dateFrom ? new Date(filter.dateFrom) : undefined,
-      dateTo: filter.dateTo ? new Date(filter.dateTo) : undefined,
+      dateFrom: isValidDate(filter.dateFrom) ? new Date(filter.dateFrom!) : undefined,
+      dateTo: isValidDate(filter.dateTo) ? new Date(filter.dateTo!) : undefined,
     };
   }
 

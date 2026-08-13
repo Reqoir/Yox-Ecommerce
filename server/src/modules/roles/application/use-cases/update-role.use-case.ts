@@ -19,7 +19,7 @@ export class UpdateRoleUseCase implements IUseCase<{ id: string; data: UpdateRol
 
     if (role.isSystem) {
       // Allow adding/removing permissions for system roles, but not changing name/description
-      if (input.data.name && input.data.name.toUpperCase() !== role.name) {
+      if (input.data.name && input.data.name.trim().toUpperCase() !== role.name.trim().toUpperCase()) {
         throw new ValidationError('Cannot change the name of a system role');
       }
     }
