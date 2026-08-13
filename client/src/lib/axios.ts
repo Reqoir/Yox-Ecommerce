@@ -43,19 +43,36 @@ apiClient.interceptors.response.use(
     }
 
     if (error.response?.status === 401) {
-      // Import the store dynamically to avoid circular dependencies if any
-      const { useAuthStore } = await import('../store/useAuthStore');
-      
-      // Only redirect if we are not already on a login page
-      const currentPath = window.location.pathname;
-      if (typeof window !== 'undefined' && !currentPath.includes('/login')) {
+      const requestUrl = error.config?.url || '';
+
+      // Do NOT trigger logout or redirect on authentication attempt endpoints (e.g. login, register)
+      const isAuthEndpoint =
+        requestUrl.includes('/auth/login') ||
+        requestUrl.includes('/auth/register') ||
+        requestUrl.includes('/auth/forgot-password') ||
+        requestUrl.includes('/auth/reset-password');
+
+      if (!isAuthEndpoint) {
+        const { useAuthStore } = await import('../store/useAuthStore');
         useAuthStore.getState().logoutUser();
-        
-        // If they were in the admin section, send to admin-login
-        if (currentPath.startsWith('/admin')) {
-          window.location.href = '/admin-login';
-        } else {
-          window.location.href = '/login';
+
+        if (typeof window !== 'undefined') {
+          const currentPath = window.location.pathname;
+          const isLoginPage = currentPath.includes('/login') || currentPath.includes('/admin-login');
+
+          // Only redirect to login if user is accessing a protected route
+          const isProtectedRoute =
+            currentPath.startsWith('/profile') ||
+            currentPath.startsWith('/checkout') ||
+            currentPath.startsWith('/admin');
+
+          if (isProtectedRoute && !isLoginPage) {
+            if (currentPath.startsWith('/admin')) {
+              window.location.href = '/admin-login';
+            } else {
+              window.location.href = '/login';
+            }
+          }
         }
       }
     }

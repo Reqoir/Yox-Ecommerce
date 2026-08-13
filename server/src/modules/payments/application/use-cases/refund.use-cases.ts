@@ -129,7 +129,7 @@ export class ProcessRefundUseCase implements IUseCase<ProcessRefundRequestDTO, R
     }
 
     // 9. Update return status to REFUNDED
-    returnEntity.markRefunded(refund.id, finalRefundAmount);
+    returnEntity.markRefunded({ refundId: refund.id, refundAmount: finalRefundAmount });
     await this.returnRepo.save(returnEntity);
 
     // 10. Check if all items in order are returned/refunded

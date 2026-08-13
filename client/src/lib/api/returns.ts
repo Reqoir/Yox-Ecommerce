@@ -30,16 +30,22 @@ export interface BackendReturn {
   quantity: number;
   reason: ReturnReason | string;
   customerNote?: string | null;
+  images?: string[];
   status: ReturnStatus | string;
   inspectionResult?: InspectionResult | string | null;
   rejectionReason?: string | null;
   refundId?: string | null;
   refundAmount?: number | null;
+  refundMethod?: string | null;
+  refundTransactionId?: string | null;
   approvedAt?: string | null;
   receivedAt?: string | null;
   inspectedAt?: string | null;
   refundedAt?: string | null;
   pickupDate?: string | null;
+  pickupTimeSlot?: string | null;
+  pickupAgentName?: string | null;
+  pickupAgentPhone?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -65,6 +71,20 @@ export interface CreateReturnPayload {
   quantity: number;
   reason: ReturnReason | string;
   customerNote?: string;
+  images?: string[];
+}
+
+export interface SchedulePickupPayload {
+  pickupDate?: string;
+  pickupTimeSlot?: string;
+  pickupAgentName?: string;
+  pickupAgentPhone?: string;
+}
+
+export interface ProcessRefundPayload {
+  refundAmount?: number;
+  refundMethod?: string;
+  refundTransactionId?: string;
 }
 
 export const returnsApi = {
@@ -99,8 +119,8 @@ export const returnsApi = {
     return response.data?.data;
   },
 
-  schedulePickup: async (id: string, pickupDate?: string): Promise<BackendReturn> => {
-    const response = await apiClient.patch<{ data: BackendReturn }>(`/returns/${id}/pickup`, { pickupDate });
+  schedulePickup: async (id: string, payload?: SchedulePickupPayload): Promise<BackendReturn> => {
+    const response = await apiClient.patch<{ data: BackendReturn }>(`/returns/${id}/pickup`, payload || {});
     return response.data?.data;
   },
 
@@ -111,6 +131,11 @@ export const returnsApi = {
 
   inspectReturn: async (id: string, inspectionResult: InspectionResult): Promise<BackendReturn> => {
     const response = await apiClient.patch<{ data: BackendReturn }>(`/returns/${id}/inspect`, { inspectionResult });
+    return response.data?.data;
+  },
+
+  processRefundDirect: async (id: string, payload?: ProcessRefundPayload): Promise<BackendReturn> => {
+    const response = await apiClient.patch<{ data: BackendReturn }>(`/returns/${id}/refund`, payload || {});
     return response.data?.data;
   },
 

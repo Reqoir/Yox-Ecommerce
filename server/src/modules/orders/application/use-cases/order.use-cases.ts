@@ -150,6 +150,7 @@ export class PlaceOrderUseCase implements IUseCase<{ userId: string; data: Place
         unitPrice: item.price,
         discount: 0,
         subtotal: item.quantity * item.price,
+        imageUrl: (variant as any).images?.[0] || (item as any).image || (item as any).imageUrl || null,
       });
     }
 

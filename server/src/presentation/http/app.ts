@@ -49,10 +49,11 @@ export const createApp = (): Application => {
   app.use(
     rateLimit({
       windowMs: env.RATE_LIMIT_WINDOW_MS,
-      max: env.RATE_LIMIT_MAX_REQUESTS,
+      max: env.NODE_ENV === 'development' ? 5000 : env.RATE_LIMIT_MAX_REQUESTS,
       standardHeaders: true,
       legacyHeaders: false,
       message: 'Too many requests from this IP. Please try again later.',
+      skip: () => env.NODE_ENV === 'development', // Skip rate limiting during local dev testing
     }),
   );
 

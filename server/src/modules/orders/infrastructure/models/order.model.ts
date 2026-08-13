@@ -49,6 +49,7 @@ const orderItemSchema = new Schema(
     unitPrice: { type: Number, required: true, min: 0 },
     discount: { type: Number, default: 0 },
     subtotal: { type: Number, required: true, min: 0 },
+    imageUrl: { type: String, default: null },
   },
   { _id: false }
 );
@@ -72,7 +73,7 @@ const shippingAddressSchema = new Schema(
 const orderSchema = new Schema<IOrderDocument>(
   {
     orderNumber: { type: String, required: true, unique: true, index: true },
-    userId: { type: String, required: true, index: true },
+    userId: { type: String, required: true },
     couponId: { type: String, default: null },
     paymentId: { type: String, default: null },
     subtotal: { type: Number, required: true, default: 0 },

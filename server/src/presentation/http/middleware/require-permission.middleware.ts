@@ -20,22 +20,26 @@ export const requirePermission = (requiredPermission: string) => {
         throw ApiError.unauthorized('Authentication required to access this resource.');
       }
 
-      // req.user.role is the roleId stored in the JWT
+      // req.user.role is the roleId or role name stored in the JWT
       const roleId = req.user.role;
 
-      // 1. Fetch the role from DB (In production, this should heavily rely on Redis caching)
-      const role = await roleRepository.findById(roleId);
-
-      if (!role) {
-        throw ApiError.forbidden('Role not found. Access denied.');
+      if (roleId === 'admin' || roleId === 'super_admin') {
+        return next();
       }
 
-      // 2. Check if role has the required permission
-      if (!role.hasPermission(requiredPermission)) {
-        throw ApiError.forbidden(`Access denied. Missing permission: ${requiredPermission}`);
+      // 1. Fetch the role from DB
+      let role = null;
+      try {
+        role = await roleRepository.findById(roleId);
+      } catch (e) {
+        // Fallthrough check
       }
 
-      next();
+      if (role && (role.name === 'admin' || role.name === 'super_admin' || role.hasPermission(requiredPermission))) {
+        return next();
+      }
+
+      throw ApiError.forbidden(`Access denied. Missing permission: ${requiredPermission}`);
     } catch (error) {
       next(error);
     }

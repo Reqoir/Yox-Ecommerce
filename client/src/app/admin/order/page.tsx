@@ -22,7 +22,9 @@ import {
   RotateCcw,
   RefreshCw,
   Check,
-  ShieldAlert,
+  ImageIcon,
+  X,
+  MessageSquare,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -62,6 +64,7 @@ export default function AdminOrdersPage() {
   // Returns State
   const [returns, setReturns] = useState<BackendReturn[]>([]);
   const [loadingReturns, setLoadingReturns] = useState(false);
+  const [previewPhotos, setPreviewPhotos] = useState<string[] | null>(null);
 
   // Ship Order Modal State
   const [shippingOrder, setShippingOrder] = useState<BackendOrder | null>(null);
@@ -166,7 +169,6 @@ export default function AdminOrdersPage() {
       setIsUpdating(true);
       const updated = await ordersApi.shipOrder(shippingOrder.id, trackingNumber, deliveryPartner);
       
-      // Auto-create shipment record
       try {
         await shipmentsApi.updateShipmentStatus(shippingOrder.id, 'SHIPPED', `Tracking: ${trackingNumber}`);
       } catch (e) {
@@ -200,13 +202,24 @@ export default function AdminOrdersPage() {
   };
 
   // Return Management Handlers
+  const [schedulingReturn, setSchedulingReturn] = useState<BackendReturn | null>(null);
+  const [pickupDateInput, setPickupDateInput] = useState('');
+  const [pickupTimeSlotInput, setPickupTimeSlotInput] = useState('10:00 AM - 02:00 PM');
+  const [pickupAgentNameInput, setPickupAgentNameInput] = useState('Ramesh Kumar (YOX Express)');
+  const [pickupAgentPhoneInput, setPickupAgentPhoneInput] = useState('+91 98765 43210');
+
+  const [refundingReturn, setRefundingReturn] = useState<BackendReturn | null>(null);
+  const [refundAmountInput, setRefundAmountInput] = useState<number>(0);
+  const [refundMethodInput, setRefundMethodInput] = useState('UPI / Original Payment Method');
+  const [refundTxnIdInput, setRefundTxnIdInput] = useState('');
+
   const handleApproveReturn = async (id: string) => {
     try {
       const updated = await returnsApi.approveReturn(id);
       toast.success('Return request approved');
       setReturns((prev) => prev.map((r) => (r.id === id ? updated : r)));
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to approve return');
+      toast.error(error?.response?.data?.message || 'Failed to approve return request.');
     }
   };
 
@@ -218,7 +231,36 @@ export default function AdminOrdersPage() {
       toast.success('Return request rejected');
       setReturns((prev) => prev.map((r) => (r.id === id ? updated : r)));
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to reject return');
+      toast.error(error?.response?.data?.message || 'Failed to reject return request.');
+    }
+  };
+
+  const handleOpenSchedulePickup = (ret: BackendReturn) => {
+    setSchedulingReturn(ret);
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    setPickupDateInput(tomorrow);
+    setPickupTimeSlotInput('10:00 AM - 02:00 PM');
+    setPickupAgentNameInput('Ramesh Kumar (YOX Express)');
+    setPickupAgentPhoneInput('+91 98765 43210');
+  };
+
+  const handleConfirmSchedulePickup = async () => {
+    if (!schedulingReturn) return;
+    try {
+      setIsUpdating(true);
+      const updated = await returnsApi.schedulePickup(schedulingReturn.id, {
+        pickupDate: pickupDateInput,
+        pickupTimeSlot: pickupTimeSlotInput,
+        pickupAgentName: pickupAgentNameInput,
+        pickupAgentPhone: pickupAgentPhoneInput,
+      });
+      toast.success('Return pickup scheduled with delivery executive assigned!');
+      setReturns((prev) => prev.map((r) => (r.id === schedulingReturn.id ? updated : r)));
+      setSchedulingReturn(null);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to schedule pickup.');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -228,7 +270,7 @@ export default function AdminOrdersPage() {
       toast.success('Return marked as received at warehouse');
       setReturns((prev) => prev.map((r) => (r.id === id ? updated : r)));
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to mark received');
+      toast.error(error?.response?.data?.message || 'Failed to mark received.');
     }
   };
 
@@ -238,18 +280,33 @@ export default function AdminOrdersPage() {
       toast.success(`Return inspected as ${condition}. Inventory updated!`);
       setReturns((prev) => prev.map((r) => (r.id === id ? updated : r)));
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to record inspection');
+      toast.error(error?.response?.data?.message || 'Failed to record inspection.');
     }
   };
 
-  const handleProcessRefund = async (returnId: string) => {
+  const handleOpenProcessRefund = (ret: BackendReturn) => {
+    setRefundingReturn(ret);
+    setRefundAmountInput(ret.refundAmount || 799);
+    setRefundMethodInput('UPI / Original Payment Method');
+    setRefundTxnIdInput(`REF-${Date.now().toString().substring(5)}`);
+  };
+
+  const handleConfirmProcessRefund = async () => {
+    if (!refundingReturn) return;
     try {
-      const refund = await returnsApi.processRefund(returnId);
-      toast.success(`Refund of ₹${refund.amount} processed successfully!`);
-      fetchAllReturns();
-      fetchAllOrders();
+      setIsUpdating(true);
+      const updated = await returnsApi.processRefundDirect(refundingReturn.id, {
+        refundAmount: Number(refundAmountInput),
+        refundMethod: refundMethodInput,
+        refundTransactionId: refundTxnIdInput,
+      });
+      toast.success(`Refund of ₹${refundAmountInput} processed successfully!`);
+      setReturns((prev) => prev.map((r) => (r.id === refundingReturn.id ? updated : r)));
+      setRefundingReturn(null);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to process refund');
+      toast.error(error?.response?.data?.message || 'Failed to process refund.');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -390,6 +447,12 @@ export default function AdminOrdersPage() {
                             {order.shippingAddress?.fullName || 'Customer'}
                           </div>
                           <div className="text-[11px] text-muted-foreground">{order.shippingAddress?.phone}</div>
+                          {order.notes && (
+                            <div className="mt-1 text-[11px] font-semibold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1">
+                              <MessageSquare size={11} className="text-amber-700 shrink-0" />
+                              <span className="truncate max-w-[200px]" title={order.notes}>Note: "{order.notes}"</span>
+                            </div>
+                          )}
                         </td>
 
                         <td className="p-4 text-xs">
@@ -478,6 +541,7 @@ export default function AdminOrdersPage() {
                     <th className="p-4">Return ID</th>
                     <th className="p-4">Order ID</th>
                     <th className="p-4">Quantity & Reason</th>
+                    <th className="p-4">Customer Photos</th>
                     <th className="p-4">Status</th>
                     <th className="p-4">Inspection</th>
                     <th className="p-4 text-right">Actions</th>
@@ -494,7 +558,20 @@ export default function AdminOrdersPage() {
                         {ret.customerNote && <div className="italic text-gray-500 text-[10px]">"{ret.customerNote}"</div>}
                       </td>
                       <td className="p-4">
-                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">
+                        {ret.images && ret.images.length > 0 ? (
+                          <button
+                            onClick={() => setPreviewPhotos(ret.images!)}
+                            className="flex items-center gap-1 px-2.5 py-1 bg-muted hover:bg-muted/80 rounded border text-xs font-semibold transition-colors"
+                          >
+                            <ImageIcon size={14} className="text-primary" />
+                            <span>{ret.images.length} Photos</span>
+                          </button>
+                        ) : (
+                          <span className="text-muted-foreground italic text-[11px]">No photos</span>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
                           {ret.status.replace(/_/g, ' ')}
                         </span>
                       </td>
@@ -519,9 +596,20 @@ export default function AdminOrdersPage() {
                           </>
                         )}
 
-                        {ret.status === 'APPROVED' && (
-                          <Button size="sm" onClick={() => handleReceiveReturn(ret.id)} className="bg-indigo-700 hover:bg-indigo-800 text-white h-7 text-xs">
-                            Mark Received
+                        {(ret.status === 'APPROVED' || ret.status === 'PICKUP_SCHEDULED') && (
+                          <div className="inline-flex gap-1.5 items-center">
+                            <Button size="sm" onClick={() => handleOpenSchedulePickup(ret)} className="bg-amber-600 hover:bg-amber-700 text-white h-7 text-xs font-semibold">
+                              {ret.pickupAgentName ? 'Re-Schedule Pickup' : 'Schedule Pickup & Agent'}
+                            </Button>
+                            <Button size="sm" onClick={() => handleReceiveReturn(ret.id)} className="bg-indigo-700 hover:bg-indigo-800 text-white h-7 text-xs">
+                              Mark Received
+                            </Button>
+                          </div>
+                        )}
+
+                        {ret.status === 'PICKED_UP' && (
+                          <Button size="sm" onClick={() => handleReceiveReturn(ret.id)} className="bg-indigo-700 hover:bg-indigo-800 text-white h-7 text-xs font-bold">
+                            Mark Received at Warehouse
                           </Button>
                         )}
 
@@ -537,15 +625,16 @@ export default function AdminOrdersPage() {
                         )}
 
                         {(ret.status === 'REFUND_PENDING' || ret.status === 'INSPECTED') && (
-                          <Button size="sm" onClick={() => handleProcessRefund(ret.id)} className="bg-purple-700 hover:bg-purple-800 text-white h-7 text-xs font-bold">
-                            Process Refund
+                          <Button size="sm" onClick={() => handleOpenProcessRefund(ret)} className="bg-purple-700 hover:bg-purple-800 text-white h-7 text-xs font-bold">
+                            Issue Refund
                           </Button>
                         )}
 
                         {ret.status === 'REFUNDED' && (
-                          <span className="text-emerald-700 font-bold flex items-center gap-1 justify-end text-[11px]">
-                            <Check size={14} /> Refunded (₹{ret.refundAmount || 0})
-                          </span>
+                          <div className="text-emerald-700 font-bold text-right text-[11px]">
+                            <div className="flex items-center justify-end gap-1"><Check size={14} /> Refunded ₹{ret.refundAmount || 0}</div>
+                            {ret.refundTransactionId && <div className="text-[10px] text-muted-foreground font-mono">TXN: {ret.refundTransactionId}</div>}
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -556,6 +645,171 @@ export default function AdminOrdersPage() {
           )}
         </div>
       )}
+
+      {/* Customer Photos Preview Modal */}
+      {previewPhotos && (
+        <Dialog open={!!previewPhotos} onOpenChange={(val) => !val && setPreviewPhotos(null)}>
+          <DialogContent className="max-w-xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-primary" />
+                <span>Customer Return Photos ({previewPhotos.length})</span>
+              </DialogTitle>
+              <DialogDescription>
+                Attached item photos for physical condition verification.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid grid-cols-2 gap-3 py-3 max-h-[60vh] overflow-y-auto">
+              {previewPhotos.map((src, idx) => (
+                <div key={idx} className="border rounded-lg overflow-hidden bg-muted/30 aspect-square">
+                  <img src={src} alt={`Return item photo ${idx + 1}`} className="w-full h-full object-contain" />
+                </div>
+              ))}
+            </div>
+
+            <DialogFooter>
+              <Button onClick={() => setPreviewPhotos(null)}>Close Preview</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Admin Schedule Return Pickup Dialog */}
+      <Dialog open={!!schedulingReturn} onOpenChange={(val) => !val && setSchedulingReturn(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Truck className="w-5 h-5 text-amber-600" />
+              <span>Schedule Return Pickup & Assign Agent</span>
+            </DialogTitle>
+            <DialogDescription>
+              Assign pickup day, time slot window, and delivery executive details for Return #{schedulingReturn?.id.substring(0, 8)}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 text-xs">
+            <div>
+              <Label htmlFor="pickupDate">Pickup Date *</Label>
+              <Input
+                id="pickupDate"
+                type="date"
+                value={pickupDateInput}
+                onChange={(e) => setPickupDateInput(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="timeSlot">Pickup Time Window Slot *</Label>
+              <select
+                id="timeSlot"
+                value={pickupTimeSlotInput}
+                onChange={(e) => setPickupTimeSlotInput(e.target.value)}
+                className="w-full border rounded-md p-2 bg-background mt-1 font-medium"
+              >
+                <option value="09:00 AM - 12:00 PM">09:00 AM - 12:00 PM (Morning)</option>
+                <option value="10:00 AM - 02:00 PM">10:00 AM - 02:00 PM (Mid-Day)</option>
+                <option value="02:00 PM - 06:00 PM">02:00 PM - 06:00 PM (Afternoon)</option>
+                <option value="06:00 PM - 09:00 PM">06:00 PM - 09:00 PM (Evening)</option>
+              </select>
+            </div>
+
+            <div>
+              <Label htmlFor="agentName">Delivery Executive Name *</Label>
+              <Input
+                id="agentName"
+                placeholder="e.g. Ramesh Kumar (YOX Logistics)"
+                value={pickupAgentNameInput}
+                onChange={(e) => setPickupAgentNameInput(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="agentPhone">Delivery Executive Phone Number *</Label>
+              <Input
+                id="agentPhone"
+                placeholder="e.g. +91 98765 43210"
+                value={pickupAgentPhoneInput}
+                onChange={(e) => setPickupAgentPhoneInput(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSchedulingReturn(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmSchedulePickup} disabled={isUpdating} className="bg-amber-600 hover:bg-amber-700 text-white font-bold">
+              {isUpdating ? 'Scheduling...' : 'Save & Assign Pickup'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Admin Process Refund Dialog */}
+      <Dialog open={!!refundingReturn} onOpenChange={(val) => !val && setRefundingReturn(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-purple-600" />
+              <span>Issue Customer Refund</span>
+            </DialogTitle>
+            <DialogDescription>
+              Enter final refund amount and reference transaction ID for Return #{refundingReturn?.id.substring(0, 8)}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 text-xs">
+            <div>
+              <Label htmlFor="refundAmt">Refund Amount (₹) *</Label>
+              <Input
+                id="refundAmt"
+                type="number"
+                value={refundAmountInput}
+                onChange={(e) => setRefundAmountInput(Number(e.target.value))}
+                className="mt-1 font-bold text-base"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="refundMethod">Refund Payment Method</Label>
+              <select
+                id="refundMethod"
+                value={refundMethodInput}
+                onChange={(e) => setRefundMethodInput(e.target.value)}
+                className="w-full border rounded-md p-2 bg-background mt-1 font-medium"
+              >
+                <option value="UPI / Original Payment Method">UPI / Original Payment Method</option>
+                <option value="Bank Transfer (NEFT/IMPS)">Bank Transfer (NEFT/IMPS)</option>
+                <option value="YOX Store Wallet Credit">YOX Store Wallet Credit</option>
+              </select>
+            </div>
+
+            <div>
+              <Label htmlFor="txnId">Refund Transaction / Reference ID *</Label>
+              <Input
+                id="txnId"
+                placeholder="e.g. TXN-8877665511"
+                value={refundTxnIdInput}
+                onChange={(e) => setRefundTxnIdInput(e.target.value)}
+                className="mt-1 font-mono"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRefundingReturn(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmProcessRefund} disabled={isUpdating} className="bg-purple-700 hover:bg-purple-800 text-white font-bold">
+              {isUpdating ? 'Processing...' : 'Confirm & Complete Refund'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Shipment Details Prompt Modal */}
       <Dialog open={!!shippingOrder} onOpenChange={(val) => !val && setShippingOrder(null)}>
@@ -598,6 +852,95 @@ export default function AdminOrdersPage() {
             </Button>
             <Button onClick={handleConfirmShipment} disabled={isUpdating} className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold">
               {isUpdating ? 'Confirming...' : 'Confirm & Mark Shipped'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Admin Order Details Dialog */}
+      <Dialog open={!!selectedOrder} onOpenChange={(val) => !val && setSelectedOrder(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between gap-2 border-b pb-3">
+              <div className="flex items-center gap-2">
+                <Package className="w-5 h-5 text-primary" />
+                <span>Order Details — #{selectedOrder?.orderNumber}</span>
+              </div>
+              <span className="text-xs px-3 py-1 rounded-full font-bold bg-primary/10 text-primary">
+                {selectedOrder?.orderStatus.replace(/_/g, ' ')}
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedOrder && (
+            <div className="space-y-4 py-2 text-xs">
+              {/* Delivery Instructions / Order Notes Banner */}
+              {selectedOrder.notes ? (
+                <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-xl space-y-1 text-amber-950">
+                  <span className="font-bold flex items-center gap-1.5 text-amber-900 text-xs">
+                    <MessageSquare size={14} className="text-amber-700 shrink-0" />
+                    Customer Delivery Instructions:
+                  </span>
+                  <p className="italic text-amber-900 font-medium">"{selectedOrder.notes}"</p>
+                </div>
+              ) : (
+                <div className="p-3 bg-muted/40 border rounded-xl text-muted-foreground italic">
+                  No special delivery instructions specified by customer.
+                </div>
+              )}
+
+              {/* Shipping Address */}
+              <div className="border rounded-xl p-4 bg-muted/20 space-y-1">
+                <h4 className="font-bold text-foreground text-xs uppercase tracking-wider mb-1">Shipping Recipient</h4>
+                <p className="font-bold text-sm text-foreground">{selectedOrder.shippingAddress?.fullName}</p>
+                <p>{selectedOrder.shippingAddress?.streetAddress}</p>
+                <p>{selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.state} - {selectedOrder.shippingAddress?.postalCode}</p>
+                <p className="font-semibold text-primary">Phone: {selectedOrder.shippingAddress?.phone}</p>
+              </div>
+
+              {/* Ordered Items Table */}
+              <div className="border rounded-xl overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-muted/50 border-b font-semibold text-muted-foreground uppercase">
+                    <tr>
+                      <th className="p-3">Item</th>
+                      <th className="p-3">SKU</th>
+                      <th className="p-3 text-right">Price</th>
+                      <th className="p-3 text-right">Qty</th>
+                      <th className="p-3 text-right">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    {selectedOrder.items && selectedOrder.items.map((item, idx) => (
+                      <tr key={idx}>
+                        <td className="p-3 font-bold">{item.productName}</td>
+                        <td className="p-3 font-mono">{item.sku}</td>
+                        <td className="p-3 text-right">₹{item.unitPrice}</td>
+                        <td className="p-3 text-right font-bold">x{item.quantity}</td>
+                        <td className="p-3 text-right font-bold text-foreground">₹{item.subtotal}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Summary Totals */}
+              <div className="flex justify-between items-center bg-muted/40 p-4 rounded-xl border">
+                <div>
+                  <span className="text-muted-foreground block text-[10px] uppercase font-bold">Payment Status</span>
+                  <span className="font-bold text-xs uppercase text-primary">{selectedOrder.paymentMethod} • {selectedOrder.paymentStatus}</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-muted-foreground block text-[10px] uppercase font-bold">Grand Total</span>
+                  <span className="text-base font-bold text-primary">₹{selectedOrder.totalAmount}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button onClick={() => setSelectedOrder(null)} className="bg-primary text-primary-foreground font-bold">
+              Close Details
             </Button>
           </DialogFooter>
         </DialogContent>

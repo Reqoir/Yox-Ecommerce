@@ -31,6 +31,7 @@ export interface OrderItemSnapshot {
   unitPrice: number;
   discount: number;
   subtotal: number;
+  imageUrl?: string | null;
 }
 
 export interface ShippingAddressSnapshot {

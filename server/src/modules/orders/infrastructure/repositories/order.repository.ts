@@ -39,6 +39,7 @@ export class OrderRepository implements IOrderRepository {
         unitPrice: item.unitPrice,
         discount: item.discount,
         subtotal: item.subtotal,
+        imageUrl: item.imageUrl || item.image || null,
       })) : [],
       placedAt: data.placedAt || data.createdAt || new Date(),
       confirmedAt: data.confirmedAt,

@@ -19,6 +19,7 @@ import {
   ScheduleReturnPickupUseCase,
   ReceiveReturnUseCase,
   InspectReturnUseCase,
+  ProcessRefundDirectUseCase,
   GetAllReturnsUseCase,
 } from '../../application/use-cases/return.use-cases';
 import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
@@ -40,6 +41,7 @@ const rejectReturnUseCase = new RejectReturnUseCase(returnRepo);
 const scheduleReturnPickupUseCase = new ScheduleReturnPickupUseCase(returnRepo);
 const receiveReturnUseCase = new ReceiveReturnUseCase(returnRepo);
 const inspectReturnUseCase = new InspectReturnUseCase(returnRepo, orderRepo, variantRepo, inventoryRepo, stockLogRepo);
+const processRefundDirectUseCase = new ProcessRefundDirectUseCase(returnRepo);
 const getAllReturnsUseCase = new GetAllReturnsUseCase(returnRepo);
 
 const returnController = new ReturnController(
@@ -51,6 +53,7 @@ const returnController = new ReturnController(
   scheduleReturnPickupUseCase,
   receiveReturnUseCase,
   inspectReturnUseCase,
+  processRefundDirectUseCase,
   getAllReturnsUseCase
 );
 
@@ -70,5 +73,6 @@ router.patch('/:id/reject', adminPermission, returnController.rejectReturn);
 router.patch('/:id/pickup', adminPermission, returnController.schedulePickup);
 router.patch('/:id/receive', adminPermission, returnController.receiveReturn);
 router.patch('/:id/inspect', adminPermission, returnController.inspectReturn);
+router.patch('/:id/refund', adminPermission, returnController.processRefund);
 
 export { router as returnRouter };

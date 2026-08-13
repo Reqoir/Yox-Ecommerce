@@ -15,6 +15,7 @@ import {
   ScheduleReturnPickupUseCase,
   ReceiveReturnUseCase,
   InspectReturnUseCase,
+  ProcessRefundDirectUseCase,
   GetAllReturnsUseCase,
 } from '../../application/use-cases/return.use-cases';
 
@@ -28,6 +29,7 @@ export class ReturnController {
     private readonly scheduleReturnPickupUseCase: ScheduleReturnPickupUseCase,
     private readonly receiveReturnUseCase: ReceiveReturnUseCase,
     private readonly inspectReturnUseCase: InspectReturnUseCase,
+    private readonly processRefundDirectUseCase: ProcessRefundDirectUseCase,
     private readonly getAllReturnsUseCase: GetAllReturnsUseCase
   ) {}
 
@@ -102,6 +104,15 @@ export class ReturnController {
     try {
       const result = await this.inspectReturnUseCase.execute({ id: req.params.id as string, data: req.body });
       ApiResponse.success(res, result, 'Return inspection recorded and inventory updated');
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  processRefund = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const result = await this.processRefundDirectUseCase.execute({ id: req.params.id as string, data: req.body });
+      ApiResponse.success(res, result, 'Refund issued successfully');
     } catch (error) {
       next(error);
     }

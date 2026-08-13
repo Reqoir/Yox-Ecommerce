@@ -3,7 +3,7 @@
  * @layer Application › DTOs
  */
 
-import { ReturnReason, ReturnStatus, InspectionResult } from '../../domain/entities/return.entity';
+import { ReturnReason, InspectionResult } from '../../domain/entities/return.entity';
 
 export interface CreateReturnRequestDTO {
   orderId: string;
@@ -11,6 +11,7 @@ export interface CreateReturnRequestDTO {
   quantity: number;
   reason: ReturnReason | string;
   customerNote?: string;
+  images?: string[];
 }
 
 export interface RejectReturnRequestDTO {
@@ -18,12 +19,21 @@ export interface RejectReturnRequestDTO {
 }
 
 export interface SchedulePickupRequestDTO {
-  pickupDate: Date | string;
+  pickupDate?: Date | string;
+  pickupTimeSlot?: string;
+  pickupAgentName?: string;
+  pickupAgentPhone?: string;
 }
 
 export interface InspectReturnRequestDTO {
   inspectionResult: InspectionResult; // 'RESELLABLE' | 'DAMAGED'
   notes?: string;
+}
+
+export interface ProcessRefundRequestDTO {
+  refundAmount?: number;
+  refundMethod?: string;
+  refundTransactionId?: string;
 }
 
 export interface ReturnResponseDTO {
@@ -34,16 +44,22 @@ export interface ReturnResponseDTO {
   quantity: number;
   reason: string;
   customerNote?: string | null;
+  images?: string[];
   status: string;
   inspectionResult?: string | null;
   rejectionReason?: string | null;
   refundId?: string | null;
   refundAmount?: number | null;
+  refundMethod?: string | null;
+  refundTransactionId?: string | null;
   approvedAt?: Date | null;
   receivedAt?: Date | null;
   inspectedAt?: Date | null;
   refundedAt?: Date | null;
   pickupDate?: Date | null;
+  pickupTimeSlot?: string | null;
+  pickupAgentName?: string | null;
+  pickupAgentPhone?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

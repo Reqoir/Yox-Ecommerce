@@ -17,6 +17,7 @@ import {
   RejectReturnRequestDTO,
   SchedulePickupRequestDTO,
   InspectReturnRequestDTO,
+  ProcessRefundRequestDTO,
   ReturnResponseDTO,
 } from '../dtos/return.dto';
 
@@ -29,16 +30,22 @@ export function mapToReturnResponseDTO(returnEntity: Return): ReturnResponseDTO 
     quantity: returnEntity.quantity,
     reason: returnEntity.reason,
     customerNote: returnEntity.customerNote,
+    images: returnEntity.images,
     status: returnEntity.status,
     inspectionResult: returnEntity.inspectionResult,
     rejectionReason: returnEntity.rejectionReason,
     refundId: returnEntity.refundId,
     refundAmount: returnEntity.refundAmount,
+    refundMethod: returnEntity.refundMethod,
+    refundTransactionId: returnEntity.refundTransactionId,
     approvedAt: returnEntity.approvedAt,
     receivedAt: returnEntity.receivedAt,
     inspectedAt: returnEntity.inspectedAt,
     refundedAt: returnEntity.refundedAt,
     pickupDate: returnEntity.pickupDate,
+    pickupTimeSlot: returnEntity.pickupTimeSlot,
+    pickupAgentName: returnEntity.pickupAgentName,
+    pickupAgentPhone: returnEntity.pickupAgentPhone,
     createdAt: returnEntity.createdAt,
     updatedAt: returnEntity.updatedAt,
   };
@@ -94,6 +101,7 @@ export class CreateReturnUseCase implements IUseCase<{ userId: string; data: Cre
       quantity: data.quantity,
       reason: data.reason,
       customerNote: data.customerNote,
+      images: data.images || [],
     });
 
     const saved = await this.returnRepo.save(returnEntity);
@@ -159,7 +167,12 @@ export class ScheduleReturnPickupUseCase implements IUseCase<{ id: string; data:
     if (!returnEntity) throw new Error('Return record not found');
 
     const pickupDate = input.data?.pickupDate ? new Date(input.data.pickupDate) : new Date(Date.now() + 24 * 60 * 60 * 1000);
-    returnEntity.schedulePickup(pickupDate);
+    returnEntity.schedulePickup({
+      pickupDate,
+      pickupTimeSlot: input.data?.pickupTimeSlot,
+      pickupAgentName: input.data?.pickupAgentName,
+      pickupAgentPhone: input.data?.pickupAgentPhone,
+    });
     const saved = await this.returnRepo.save(returnEntity);
     return mapToReturnResponseDTO(saved);
   }
@@ -256,6 +269,29 @@ export class InspectReturnUseCase implements IUseCase<{ id: string; data: Inspec
   }
 }
 
+export class ProcessRefundDirectUseCase implements IUseCase<{ id: string; data?: ProcessRefundRequestDTO }, ReturnResponseDTO> {
+  constructor(private readonly returnRepo: IReturnRepository) {}
+
+  async execute(input: { id: string; data?: ProcessRefundRequestDTO }): Promise<ReturnResponseDTO> {
+    const returnEntity = await this.returnRepo.findById(input.id);
+    if (!returnEntity) throw new Error('Return record not found');
+
+    const refundAmount = input.data?.refundAmount ?? (returnEntity.refundAmount || 0);
+    const refundMethod = input.data?.refundMethod || 'Original Payment Method';
+    const refundTransactionId = input.data?.refundTransactionId || `REF-${Date.now()}`;
+
+    returnEntity.markRefunded({
+      refundId: `RFD-${returnEntity.id.substring(0, 8)}`,
+      refundAmount,
+      refundMethod,
+      refundTransactionId,
+    });
+
+    const saved = await this.returnRepo.save(returnEntity);
+    return mapToReturnResponseDTO(saved);
+  }
+}
+
 export class GetAllReturnsUseCase implements IUseCase<any, { data: ReturnResponseDTO[]; total: number }> {
   constructor(private readonly returnRepo: IReturnRepository) {}
 
@@ -267,3 +303,4 @@ export class GetAllReturnsUseCase implements IUseCase<any, { data: ReturnRespons
     };
   }
 }
+

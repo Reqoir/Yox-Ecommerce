@@ -2,13 +2,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationApi } from '@/api/admin/notifications';
 import { toast } from 'sonner';
 
+import { useAuthStore } from '@/store/useAuthStore';
+
 export const useNotifications = (params?: { type?: string; isRead?: string }) => {
   const queryClient = useQueryClient();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   const notificationsQuery = useQuery({
     queryKey: ['notifications', params],
     queryFn: () => notificationApi.getAll(params),
-    refetchInterval: 30_000, // Poll every 30s for new notifications
+    enabled: isAuthenticated,
+    retry: false,
+    refetchInterval: isAuthenticated ? 30_000 : false, // Poll every 30s for new notifications if logged in
   });
 
   const markReadMutation = useMutation({
