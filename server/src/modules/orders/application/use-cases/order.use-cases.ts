@@ -13,6 +13,8 @@ import { IAddressRepository } from '../../../addresses/domain/repositories/addre
 import { Order, OrderItemSnapshot, ShippingAddressSnapshot } from '../../domain/entities/order.entity';
 import { Inventory } from '../../../inventory/domain/entities/inventory.entity';
 import { StockLog } from '../../../inventory/domain/entities/stock-log.entity';
+import { AuditLogService } from '../../../audit-logs/application/services/audit-log.service';
+import { AuditAction } from '../../../audit-logs/domain/entities/audit-log.entity';
 import {
   PlaceOrderRequestDTO,
   CancelOrderRequestDTO,
@@ -188,6 +190,16 @@ export class PlaceOrderUseCase implements IUseCase<{ userId: string; data: Place
     cart.clear();
     await this.cartRepo.save(cart);
 
+    AuditLogService.getInstance()?.record({
+      actorId: userId,
+      actorRole: 'CUSTOMER',
+      action: AuditAction.ORDER_CREATED,
+      resourceType: 'ORDER',
+      resourceId: savedOrder.id,
+      description: `Order #${savedOrder.orderNumber} placed for ₹${savedOrder.totalAmount}`,
+      after: { orderNumber: savedOrder.orderNumber, totalAmount: savedOrder.totalAmount, status: savedOrder.orderStatus },
+    });
+
     return mapToOrderResponseDTO(savedOrder);
   }
 }
@@ -247,6 +259,7 @@ export class CancelOrderUseCase implements IUseCase<{ id: string; userId?: strin
       throw new Error('Forbidden: You do not have permission to cancel this order');
     }
 
+    const prevStatus = order.orderStatus;
     order.cancel(input.data?.reason || 'Cancelled by user', input.isAdmin);
     const savedOrder = await this.orderRepo.save(order);
 
@@ -283,6 +296,17 @@ export class CancelOrderUseCase implements IUseCase<{ id: string; userId?: strin
       }
     }
 
+    AuditLogService.getInstance()?.record({
+      actorId: input.userId || 'SYSTEM',
+      actorRole: input.isAdmin ? 'ADMIN' : 'CUSTOMER',
+      action: AuditAction.ORDER_CANCELLED,
+      resourceType: 'ORDER',
+      resourceId: savedOrder.id,
+      description: `Order #${savedOrder.orderNumber} cancelled. Reason: ${input.data?.reason || 'Cancelled'}`,
+      before: { status: prevStatus },
+      after: { status: 'CANCELLED' },
+    });
+
     return mapToOrderResponseDTO(savedOrder);
   }
 }
@@ -293,8 +317,19 @@ export class ConfirmOrderUseCase implements IUseCase<{ id: string }, OrderRespon
     let order = await this.orderRepo.findById(input.id);
     if (!order) order = await this.orderRepo.findByOrderNumber(input.id);
     if (!order) throw new Error('Order not found');
+    const prevStatus = order.orderStatus;
     order.confirm();
     const saved = await this.orderRepo.save(order);
+
+    AuditLogService.getInstance()?.record({
+      action: AuditAction.ORDER_STATUS_CHANGED,
+      resourceType: 'ORDER',
+      resourceId: saved.id,
+      description: `Order #${saved.orderNumber} confirmed`,
+      before: { status: prevStatus },
+      after: { status: 'CONFIRMED' },
+    });
+
     return mapToOrderResponseDTO(saved);
   }
 }
@@ -305,8 +340,19 @@ export class PackOrderUseCase implements IUseCase<{ id: string }, OrderResponseD
     let order = await this.orderRepo.findById(input.id);
     if (!order) order = await this.orderRepo.findByOrderNumber(input.id);
     if (!order) throw new Error('Order not found');
+    const prevStatus = order.orderStatus;
     order.pack();
     const saved = await this.orderRepo.save(order);
+
+    AuditLogService.getInstance()?.record({
+      action: AuditAction.ORDER_STATUS_CHANGED,
+      resourceType: 'ORDER',
+      resourceId: saved.id,
+      description: `Order #${saved.orderNumber} packed`,
+      before: { status: prevStatus },
+      after: { status: 'PACKED' },
+    });
+
     return mapToOrderResponseDTO(saved);
   }
 }
@@ -317,8 +363,19 @@ export class ShipOrderUseCase implements IUseCase<{ id: string; data: ShipOrderR
     let order = await this.orderRepo.findById(input.id);
     if (!order) order = await this.orderRepo.findByOrderNumber(input.id);
     if (!order) throw new Error('Order not found');
+    const prevStatus = order.orderStatus;
     order.ship(input.data?.trackingNumber, input.data?.deliveryPartnerId);
     const saved = await this.orderRepo.save(order);
+
+    AuditLogService.getInstance()?.record({
+      action: AuditAction.ORDER_STATUS_CHANGED,
+      resourceType: 'ORDER',
+      resourceId: saved.id,
+      description: `Order #${saved.orderNumber} shipped via ${input.data?.deliveryPartnerId || 'Carrier'} (Tracking: ${input.data?.trackingNumber})`,
+      before: { status: prevStatus },
+      after: { status: 'SHIPPED', trackingNumber: input.data?.trackingNumber },
+    });
+
     return mapToOrderResponseDTO(saved);
   }
 }
@@ -329,8 +386,19 @@ export class OutForDeliveryUseCase implements IUseCase<{ id: string }, OrderResp
     let order = await this.orderRepo.findById(input.id);
     if (!order) order = await this.orderRepo.findByOrderNumber(input.id);
     if (!order) throw new Error('Order not found');
+    const prevStatus = order.orderStatus;
     order.outForDelivery();
     const saved = await this.orderRepo.save(order);
+
+    AuditLogService.getInstance()?.record({
+      action: AuditAction.ORDER_STATUS_CHANGED,
+      resourceType: 'ORDER',
+      resourceId: saved.id,
+      description: `Order #${saved.orderNumber} marked out for delivery`,
+      before: { status: prevStatus },
+      after: { status: 'OUT_FOR_DELIVERY' },
+    });
+
     return mapToOrderResponseDTO(saved);
   }
 }
@@ -345,6 +413,7 @@ export class DeliverOrderUseCase implements IUseCase<{ id: string }, OrderRespon
     let order = await this.orderRepo.findById(input.id);
     if (!order) order = await this.orderRepo.findByOrderNumber(input.id);
     if (!order) throw new Error('Order not found');
+    const prevStatus = order.orderStatus;
     order.deliver();
     const savedOrder = await this.orderRepo.save(order);
 
@@ -370,6 +439,16 @@ export class DeliverOrderUseCase implements IUseCase<{ id: string }, OrderRespon
         await this.stockLogRepo.save(log);
       }
     }
+
+    AuditLogService.getInstance()?.record({
+      action: AuditAction.ORDER_STATUS_CHANGED,
+      resourceType: 'ORDER',
+      resourceId: savedOrder.id,
+      description: `Order #${savedOrder.orderNumber} marked delivered`,
+      before: { status: prevStatus },
+      after: { status: 'DELIVERED' },
+    });
+
     return mapToOrderResponseDTO(savedOrder);
   }
 }
@@ -380,8 +459,19 @@ export class UpdateOrderStatusUseCase implements IUseCase<{ id: string; data: Up
     let order = await this.orderRepo.findById(input.id);
     if (!order) order = await this.orderRepo.findByOrderNumber(input.id);
     if (!order) throw new Error('Order not found');
+    const prevStatus = order.orderStatus;
     order.updateStatus(input.data.status.toUpperCase(), input.data.notes);
     const saved = await this.orderRepo.save(order);
+
+    AuditLogService.getInstance()?.record({
+      action: AuditAction.ORDER_STATUS_CHANGED,
+      resourceType: 'ORDER',
+      resourceId: saved.id,
+      description: `Order #${saved.orderNumber} status updated to ${input.data.status.toUpperCase()}`,
+      before: { status: prevStatus },
+      after: { status: input.data.status.toUpperCase() },
+    });
+
     return mapToOrderResponseDTO(saved);
   }
 }

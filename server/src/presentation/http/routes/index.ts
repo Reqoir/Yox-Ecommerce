@@ -58,6 +58,8 @@ import { reportsRouter } from '../../../modules/reports/presentation/routes/repo
 import { shipmentRouter } from '../../../modules/shipments/presentation/routes/shipment.routes';
 import { returnRouter } from '../../../modules/returns/presentation/routes/return.routes';
 import { paymentRouter } from '../../../modules/payments/presentation/routes/payment.routes';
+import { auditLogRouter } from '../../../modules/audit-logs/presentation/routes/audit-log.routes';
+import { paymentReportRouter } from '../../../modules/payment-reports/presentation/routes/payment-report.routes';
 
 rootRouter.use('/auth', authRouter);
 rootRouter.use('/users', userRouter);
@@ -78,5 +80,8 @@ rootRouter.use('/reports', reportsRouter);
 rootRouter.use('/shipments', shipmentRouter);
 rootRouter.use('/returns', returnRouter);
 rootRouter.use('/payments', paymentRouter);
+rootRouter.use('/audit-logs', auditLogRouter);
+rootRouter.use('/payment-reports', paymentReportRouter);
+
 
 

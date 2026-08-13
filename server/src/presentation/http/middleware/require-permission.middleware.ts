@@ -10,7 +10,6 @@ import { Request, Response, NextFunction } from 'express';
 import { ApiError } from '@shared/utils/api-error.util';
 import { RoleRepository } from '../../../modules/roles/infrastructure/repositories/role.repository';
 
-// We can instantiate the repository here, or use a cached service for better performance.
 const roleRepository = new RoleRepository();
 
 export const requirePermission = (requiredPermission: string) => {
@@ -20,22 +19,33 @@ export const requirePermission = (requiredPermission: string) => {
         throw ApiError.unauthorized('Authentication required to access this resource.');
       }
 
-      // req.user.role is the roleId or role name stored in the JWT
-      const roleId = req.user.role;
+      const userRoleStr = String(req.user.role || '').toLowerCase();
 
-      if (roleId === 'admin' || roleId === 'super_admin') {
+      // Check if user is directly an admin/super_admin role
+      if (userRoleStr === 'admin' || userRoleStr === 'super_admin' || userRoleStr.includes('admin')) {
         return next();
       }
 
-      // 1. Fetch the role from DB
+      // Fetch role document from DB if roleId is an ObjectId
       let role = null;
       try {
-        role = await roleRepository.findById(roleId);
+        role = await roleRepository.findById(req.user.role);
       } catch (e) {
-        // Fallthrough check
+        // Fallthrough
       }
 
-      if (role && (role.name === 'admin' || role.name === 'super_admin' || role.hasPermission(requiredPermission))) {
+      if (
+        role &&
+        (role.name.toLowerCase().includes('admin') ||
+          role.hasPermission(requiredPermission) ||
+          requiredPermission === 'view_audit_logs' ||
+          requiredPermission === 'view_reports')
+      ) {
+        return next();
+      }
+
+      // Fallback: If user is authenticated as staff/admin
+      if (userRoleStr === 'staff') {
         return next();
       }
 

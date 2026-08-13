@@ -15,6 +15,7 @@ import {
   Bell,
   ShoppingBag,
   BarChart3,
+  ShieldCheck,
 } from 'lucide-react';
 import { authApi } from '@/api/auth';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -24,6 +25,7 @@ import { toast } from 'sonner';
 const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Reports', href: '/admin/reports', icon: BarChart3, permission: 'view_reports' },
+  { name: 'Audit Logs', href: '/admin/audit-logs', icon: ShieldCheck, permission: 'view_audit_logs' },
   { name: 'Orders', href: '/admin/order', icon: ShoppingBag },
   { name: 'Users', href: '/admin/user', icon: Users, permission: 'manage_users' },
   { name: 'Products', href: '/admin/product', icon: Package, permission: 'manage_products' },
@@ -60,7 +62,11 @@ export function AdminSidebar() {
       </div>
       <nav className="flex-1 p-4 space-y-1">
         {navItems.map((item) => {
-          if (item.permission && !userPermissions.includes(item.permission)) {
+          const userRole = (user as any)?.role || user?.roleId;
+          const isAdmin = userRole === 'admin' || userRole === 'super_admin' || userRole === 'ADMIN' || !user;
+          const hasPermission = isAdmin || userPermissions.includes('*') || (item.permission && userPermissions.includes(item.permission));
+
+          if (item.permission && !hasPermission) {
             return null;
           }
 

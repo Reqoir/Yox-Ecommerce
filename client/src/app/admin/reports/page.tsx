@@ -13,14 +13,15 @@ import {
   CustomerInsightsReport,
   InventoryReport,
 } from '@/api/admin/reports';
+import { PaymentReportsTab } from '@/components/admin/reports/PaymentReportsTab';
 import { subDays, format } from 'date-fns';
-import { Download, BarChart3, Package, Users, Warehouse } from 'lucide-react';
+import { Download, BarChart3, Package, Users, Warehouse, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 
-type ActiveTab = 'sales' | 'products' | 'customers' | 'inventory';
+type ActiveTab = 'payments' | 'sales' | 'products' | 'customers' | 'inventory';
 
 export default function AdminReportsPage() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('sales');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('payments');
   const [startDate, setStartDate] = useState<string>(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
   const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month'>('day');
@@ -35,6 +36,7 @@ export default function AdminReportsPage() {
   const [exporting, setExporting] = useState<boolean>(false);
 
   const fetchCurrentTabReport = async () => {
+    if (activeTab === 'payments') return;
     try {
       setLoading(true);
       const queryParams = { startDate, endDate, groupBy };
@@ -64,6 +66,10 @@ export default function AdminReportsPage() {
   }, [activeTab, startDate, endDate, groupBy]);
 
   const handleExportCSV = async () => {
+    if (activeTab === 'payments') {
+      toast.info('Use financial transaction filters for payment audit details.');
+      return;
+    }
     try {
       setExporting(true);
       const queryParams = { startDate, endDate, groupBy };
@@ -92,13 +98,13 @@ export default function AdminReportsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Analytics & Reports</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Deep insights into store sales, product performance, customer behavior, and inventory health.
+            Deep insights into financial payment collections, store sales, product performance, customer behavior, and inventory health.
           </p>
         </div>
 
         <button
           onClick={handleExportCSV}
-          disabled={exporting || loading}
+          disabled={exporting || loading || activeTab === 'payments'}
           className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-medium text-sm rounded-lg shadow-sm hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           <Download className="h-4 w-4" />
@@ -107,7 +113,7 @@ export default function AdminReportsPage() {
       </div>
 
       {/* Date Filter Bar */}
-      {activeTab !== 'inventory' && (
+      {activeTab !== 'inventory' && activeTab !== 'payments' && (
         <DateRangePicker
           startDate={startDate}
           endDate={endDate}
@@ -123,6 +129,18 @@ export default function AdminReportsPage() {
       {/* Navigation Tabs */}
       <div className="border-b">
         <nav className="flex space-x-6">
+          <button
+            onClick={() => setActiveTab('payments')}
+            className={`flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-all ${
+              activeTab === 'payments'
+                ? 'border-primary text-primary font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <CreditCard className="h-4 w-4" />
+            Payment Reports
+          </button>
+
           <button
             onClick={() => setActiveTab('sales')}
             className={`flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-all ${
@@ -174,6 +192,7 @@ export default function AdminReportsPage() {
       </div>
 
       {/* Tab Panels */}
+      {activeTab === 'payments' && <PaymentReportsTab />}
       {activeTab === 'sales' && <SalesReportTab data={salesReport} loading={loading} />}
       {activeTab === 'products' && <ProductPerformanceTab data={productReport} loading={loading} />}
       {activeTab === 'customers' && <CustomerInsightsTab data={customerReport} loading={loading} />}

@@ -12,6 +12,8 @@ import { IProductVariantRepository } from '../../../products/domain/repositories
 import { Return } from '../../domain/entities/return.entity';
 import { Inventory } from '../../../inventory/domain/entities/inventory.entity';
 import { StockLog } from '../../../inventory/domain/entities/stock-log.entity';
+import { AuditLogService } from '../../../audit-logs/application/services/audit-log.service';
+import { AuditAction } from '../../../audit-logs/domain/entities/audit-log.entity';
 import {
   CreateReturnRequestDTO,
   RejectReturnRequestDTO,
@@ -105,6 +107,17 @@ export class CreateReturnUseCase implements IUseCase<{ userId: string; data: Cre
     });
 
     const saved = await this.returnRepo.save(returnEntity);
+
+    AuditLogService.getInstance()?.record({
+      actorId: userId,
+      actorRole: 'CUSTOMER',
+      action: AuditAction.RETURN_CREATED,
+      resourceType: 'RETURN',
+      resourceId: saved.id,
+      description: `Return requested for order #${order.orderNumber} item (${data.quantity} units)`,
+      after: { orderId: order.id, quantity: data.quantity, reason: data.reason },
+    });
+
     return mapToReturnResponseDTO(saved);
   }
 }
@@ -142,6 +155,15 @@ export class ApproveReturnUseCase implements IUseCase<string, ReturnResponseDTO>
 
     returnEntity.approve();
     const saved = await this.returnRepo.save(returnEntity);
+
+    AuditLogService.getInstance()?.record({
+      action: AuditAction.RETURN_APPROVED,
+      resourceType: 'RETURN',
+      resourceId: saved.id,
+      description: `Return #${saved.id.substring(0, 8)} approved by admin`,
+      after: { status: 'APPROVED' },
+    });
+
     return mapToReturnResponseDTO(saved);
   }
 }
@@ -155,6 +177,15 @@ export class RejectReturnUseCase implements IUseCase<{ id: string; data: RejectR
 
     returnEntity.reject(input.data?.reason);
     const saved = await this.returnRepo.save(returnEntity);
+
+    AuditLogService.getInstance()?.record({
+      action: AuditAction.RETURN_REJECTED,
+      resourceType: 'RETURN',
+      resourceId: saved.id,
+      description: `Return #${saved.id.substring(0, 8)} rejected. Reason: ${input.data?.reason}`,
+      after: { status: 'REJECTED', rejectionReason: input.data?.reason },
+    });
+
     return mapToReturnResponseDTO(saved);
   }
 }
