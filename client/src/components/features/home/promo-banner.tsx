@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function PromoBanner() {
   return (
-    <section className="w-[95%] md:w-[85%] lg:w-[75%] mx-auto py-8">
+    <section className="w-[95%] md:w-[85%] lg:w-[95%] mx-auto py-8">
       <Link href="/shop?category=linen" className="block w-full overflow-hidden">
         <img 
           src="/images/linen-banner.png" 

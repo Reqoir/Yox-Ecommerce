@@ -54,7 +54,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
   return (
     <div className="w-full bg-[#F7F8F7] min-h-screen pb-16 pt-4 lg:pt-8">
-      <div className="w-[95%] lg:w-[75%] max-w-7xl mx-auto space-y-6">
+      <div className="w-[95%] lg:w-[95%] max-w-7xl mx-auto space-y-6">
         
         {/* Top Breadcrumb & Banner */}
         <div className="flex flex-col gap-4">

@@ -22,7 +22,7 @@ export default function CartPage() {
 
   return (
     <main className="w-full bg-white min-h-screen pb-16 pt-4 lg:pt-8">
-      <div className="w-[95%] lg:w-[75%] max-w-7xl mx-auto">
+      <div className="w-[95%] lg:w-[95%] max-w-7xl mx-auto">
         
         {/* Header Breadcrumb & Title */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 pb-4 mb-6 lg:mb-8 gap-2">

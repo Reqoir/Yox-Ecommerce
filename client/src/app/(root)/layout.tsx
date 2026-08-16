@@ -18,7 +18,7 @@ export default function CommonLayout({ children }: RootLayoutProps) {
     <div className="flex min-h-screen flex-col">
       <TopBar />
       <Suspense fallback={
-        <div className="w-full h-16 bg-[#F7F8F7] border-b flex items-center justify-between px-4 lg:w-[75%] mx-auto" />
+        <div className="w-full h-16 bg-[#F7F8F7] border-b flex items-center justify-between px-4 lg:w-[95%] mx-auto" />
       }>
         <Navbar />
       </Suspense>

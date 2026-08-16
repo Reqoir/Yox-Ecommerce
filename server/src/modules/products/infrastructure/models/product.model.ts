@@ -24,6 +24,8 @@ export interface IProductDocument extends Document {
   seoTitle?: string | null;
   seoDescription?: string | null;
   salesCount: number;
+  averageRating: number;
+  reviewCount: number;
   createdBy?: string | null;
   updatedBy?: string | null;
   createdAt: Date;
@@ -47,6 +49,8 @@ const productSchema = new Schema<IProductDocument>(
     seoTitle: { type: String, default: null },
     seoDescription: { type: String, default: null },
     salesCount: { type: Number, default: 0 },
+    averageRating: { type: Number, default: 0, min: 0, max: 5 },
+    reviewCount: { type: Number, default: 0, min: 0 },
     createdBy: { type: String, default: null },
     updatedBy: { type: String, default: null },
   },

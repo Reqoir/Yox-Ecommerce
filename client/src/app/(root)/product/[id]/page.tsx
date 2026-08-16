@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { productsApi } from '@/lib/api/products';
 import { useCartStore } from '@/store/useCartStore';
 import { toast } from 'sonner';
+import { ProductReviews } from '@/components/features/product/product-reviews';
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -340,6 +341,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
           </div>
         </div>
+
+        {/* Reviews Section */}
+        <ProductReviews productId={product.id} />
       </div>
 
       {/* Mobile Sticky Bottom Bar */}

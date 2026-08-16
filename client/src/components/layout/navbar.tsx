@@ -3,11 +3,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, Heart, ShoppingBag, User, Menu, X, ArrowRight, LogOut, ChevronDown, Shield } from 'lucide-react';
+import { Search, Menu, X, ArrowRight, LogOut, ChevronDown, Shield } from 'lucide-react';
+import { IoPersonOutline } from "react-icons/io5";
+import { BsHandbag } from "react-icons/bs";
 import { useProductFilters } from '@/hooks/useProductFilters';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
-import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { authApi } from '@/api/auth';
 
 export function Navbar() {
@@ -16,7 +17,6 @@ export function Navbar() {
   const user = useAuthStore((state) => state.user);
   const logoutUserStore = useAuthStore((state) => state.logoutUser);
   const cartCount = useCartStore((state) => state.getItemCount());
-  const favouritesCount = useFavouritesStore((state) => state.items.length);
   
   const [inputValue, setInputValue] = useState(searchQuery);
   const [isFocused, setIsFocused] = useState(false);
@@ -26,19 +26,53 @@ export function Navbar() {
   const containerRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Keep local input state in sync with URL searchQuery
+  // Typing animation for search placeholder
+  const searchVariables = ["FORMAL SHIRTS", "POLO SHIRTS", "BLACK SHIRTS"];
+  const [variableText, setVariableText] = useState("");
+  const [variableIndex, setVariableIndex] = useState(0);
+  const [isTyping, setIsTyping] = useState(true);
+  const [charIndex, setCharIndex] = useState(0);
+
+  useEffect(() => {
+    let typingTimeout: NodeJS.Timeout;
+    
+    if (isTyping) {
+      if (charIndex < searchVariables[variableIndex].length) {
+        typingTimeout = setTimeout(() => {
+          setVariableText((prev) => prev + searchVariables[variableIndex][charIndex]);
+          setCharIndex(charIndex + 1);
+        }, 80); // typing speed
+      } else {
+        typingTimeout = setTimeout(() => {
+          setIsTyping(false);
+        }, 2000); // pause at end
+      }
+    } else {
+      if (charIndex > 0) {
+        typingTimeout = setTimeout(() => {
+          setVariableText((prev) => prev.slice(0, -1));
+          setCharIndex(charIndex - 1);
+        }, 40); // backspace speed
+      } else {
+        setIsTyping(true);
+        setVariableIndex((prev) => (prev + 1) % searchVariables.length);
+      }
+    }
+
+    return () => clearTimeout(typingTimeout);
+  }, [charIndex, isTyping, variableIndex, searchVariables]);
+
+
   useEffect(() => {
     setInputValue(searchQuery);
   }, [searchQuery]);
 
-  // Sync cart with backend when user is authenticated
   useEffect(() => {
     if (user) {
       useCartStore.getState().syncWithServer();
     }
   }, [user]);
 
-  // Handle outside click to close autocomplete and dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -64,7 +98,6 @@ export function Navbar() {
     }
   };
 
-  // Compute live search suggestions for autocomplete from database products (top 5)
   const suggestions = React.useMemo(() => {
     if (!inputValue.trim()) return [];
     const query = inputValue.toLowerCase().trim();
@@ -102,50 +135,65 @@ export function Navbar() {
   };
 
   return (
-    <nav className="w-full border-b bg-[#F7F8F7] sticky top-0 z-40">
-      <div className="w-full px-4 lg:px-0 lg:w-[75%] mx-auto h-16 flex items-center justify-between">
+    <nav className="w-full border-b bg-white sticky top-0 z-40">
+      <div className="w-full px-4 lg:px-0 lg:w-[95%] mx-auto h-20 flex items-center justify-between">
         
-        {/* Left Side: Logo & Search */}
-        <div className="flex items-center gap-3 md:gap-4 flex-1">
-          {/* Logo */}
-          <Link href="/" className="flex-shrink-0 h-11 w-20 md:w-24 relative overflow-hidden rounded-[2px] flex items-center justify-center">
+        {/* Left Side: Categories */}
+        <div className="hidden lg:flex items-center gap-6 flex-1">
+          {['Shop All', 'Women', 'Men', 'Kids', 'Footwear', 'Sleepwear', 'GenZ Store', 'Accessories'].map(cat => (
+             <Link key={cat} href={cat === 'Shop All' ? '/shop' : `/shop?category=${cat.toLowerCase()}`} className="flex items-center gap-1 text-[13px] font-bold text-gray-800 hover:text-black transition-colors">
+                {cat}
+                <ChevronDown size={14} className="text-gray-500" />
+             </Link>
+          ))}
+        </div>
+
+        {/* Center: Logo */}
+        <div className="flex justify-start lg:justify-center items-center flex-1">
+          <Link href="/" className="flex-shrink-0 h-10 md:h-12 relative overflow-hidden flex items-center justify-center">
             <img 
-              src="/images/chatgpt-logo.png" 
+              src="/images/logo.png" 
               alt="YOX Men's Fashion" 
-              className="h-full w-full object-contain drop-shadow-md" 
+              className="h-full w-auto object-contain" 
             />
           </Link>
+        </div>
 
-          {/* Desktop Search Bar & Autocomplete */}
-          <div className="hidden md:block relative w-full max-w-[440px]" ref={containerRef}>
-            <form onSubmit={handleSearchSubmit} className="flex items-center bg-[#ECEDEB] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#1A2E4C]/20 rounded-[2px] px-3.5 h-11 transition-all">
-              <Search className="text-gray-500 mr-2.5 flex-shrink-0" size={18} />
+        {/* Right Actions & Search */}
+        <div className="flex items-center justify-end gap-5 flex-1">
+          
+          {/* Desktop Search Bar */}
+          <div className="hidden md:block relative w-full max-w-[280px]" ref={containerRef}>
+            <form onSubmit={handleSearchSubmit} className="flex items-center bg-white border border-black rounded-none px-3 h-10 transition-all">
               <input 
                 type="text" 
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onFocus={() => setIsFocused(true)}
-                placeholder="Search Men's shirts, polo, cargo, hoodies..." 
-                className="bg-transparent border-none outline-none w-full text-sm text-gray-800 placeholder-gray-500"
+                placeholder={isFocused ? "" : `Search '${variableText}'`} 
+                className="bg-transparent border-none outline-none w-full text-xs font-medium text-gray-800 placeholder-gray-500"
               />
-              {inputValue && (
+              {inputValue ? (
                 <button 
                   type="button" 
                   onClick={handleClearSearch}
-                  className="text-gray-400 hover:text-gray-700 p-1"
+                  className="text-gray-400 hover:text-black p-1"
                 >
                   <X size={16} />
+                </button>
+              ) : (
+                <button type="submit" className="text-black ml-1">
+                  <Search size={18} strokeWidth={2} />
                 </button>
               )}
             </form>
 
             {/* Live Autocomplete Dropdown */}
             {isFocused && inputValue.trim().length > 0 && (
-              <div className="absolute top-12 left-0 right-0 bg-white border border-gray-200 rounded-b-md shadow-xl py-2 z-50 animate-in fade-in-50 duration-150">
+              <div className="absolute top-11 left-0 right-0 bg-white border border-gray-200 rounded-b-md shadow-xl py-2 z-50 animate-in fade-in-50 duration-150">
                 <div className="px-4 py-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
                   Suggestions ({suggestions.length})
                 </div>
-
                 {suggestions.length > 0 ? (
                   <div>
                     {suggestions.map((item) => (
@@ -169,7 +217,7 @@ export function Navbar() {
                     
                     <button
                       onClick={() => handleSearchSubmit()}
-                      className="w-full px-4 py-2.5 bg-gray-50 border-t border-gray-100 text-xs font-bold text-[#1A2E4C] flex items-center justify-between hover:bg-gray-100 transition-colors"
+                      className="w-full px-4 py-2.5 bg-gray-50 border-t border-gray-100 text-xs font-bold text-black flex items-center justify-between hover:bg-gray-100 transition-colors"
                     >
                       <span>View all results for &quot;{inputValue}&quot;</span>
                       <ArrowRight size={14} />
@@ -177,158 +225,110 @@ export function Navbar() {
                   </div>
                 ) : (
                   <div className="px-4 py-4 text-center text-xs text-gray-500">
-                    No Men&apos;s products matching &quot;{inputValue}&quot;
+                    No products matching &quot;{inputValue}&quot;
                   </div>
                 )}
               </div>
             )}
           </div>
-        </div>
 
-        {/* Right Actions */}
-        <div className="flex items-center gap-4 md:gap-6">
-          {user ? (
-            <div className="relative" ref={userDropdownRef}>
-              <button
-                onClick={() => setIsUserDropdownOpen((prev) => !prev)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-gray-200/60 transition-colors border border-gray-200 bg-white"
-                aria-expanded={isUserDropdownOpen}
-                aria-label="User menu"
-              >
-                <div className="w-7 h-7 rounded-full bg-[#1A2E4C] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
-                  {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
+          {/* User Icon */}
+          <div className="relative" ref={userDropdownRef}>
+            <button
+              onClick={() => {
+                if (user) {
+                  setIsUserDropdownOpen((prev) => !prev);
+                } else {
+                  router.push('/login');
+                }
+              }}
+              className="flex items-center text-black hover:opacity-70 transition-opacity"
+            >
+              <IoPersonOutline size={22} />
+            </button>
+
+            {/* User Dropdown Menu */}
+            {isUserDropdownOpen && user && (
+              <div className="absolute right-0 top-10 w-56 bg-white border border-gray-200 rounded-md shadow-xl py-2 z-50 animate-in fade-in-50 duration-150">
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <p className="text-xs font-bold text-gray-900 truncate">{user.fullName}</p>
+                  <p className="text-[11px] text-gray-500 truncate">{user.email}</p>
                 </div>
-                <div className="hidden lg:flex flex-col text-left">
-                  <span className="text-xs font-bold text-gray-800 leading-tight max-w-[120px] truncate">
-                    {user.fullName || 'Account'}
-                  </span>
-                  <span className="text-[10px] text-gray-500 leading-tight max-w-[120px] truncate">
-                    {user.email}
-                  </span>
-                </div>
-                <ChevronDown size={14} className={`text-gray-500 transition-transform ${isUserDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
 
-              {/* Dropdown Menu */}
-              {isUserDropdownOpen && (
-                <div className="absolute right-0 top-12 w-56 bg-white border border-gray-200 rounded-md shadow-xl py-2 z-50 animate-in fade-in-50 duration-150">
-                  <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-xs font-bold text-gray-900 truncate">{user.fullName}</p>
-                    <p className="text-[11px] text-gray-500 truncate">{user.email}</p>
-                  </div>
-
-                  <div className="py-1">
+                <div className="py-1">
+                  <Link
+                    href="/profile"
+                    onClick={() => setIsUserDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <IoPersonOutline size={15} className="text-gray-500" />
+                    <span>My Profile</span>
+                  </Link>
+                  {user.permissions?.includes('admin:access') && (
                     <Link
-                      href="/profile"
+                      href="/admin"
                       onClick={() => setIsUserDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold hover:bg-gray-50 transition-colors"
                     >
-                      <User size={15} className="text-gray-500" />
-                      <span>My Profile</span>
+                      <Shield size={15} />
+                      <span>Admin Dashboard</span>
                     </Link>
-                    <Link
-                      href="/favourites"
-                      onClick={() => setIsUserDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      <Heart size={15} className="text-gray-500" />
-                      <span>My Favourites</span>
-                    </Link>
-                    {user.permissions?.includes('admin:access') && (
-                      <Link
-                        href="/admin"
-                        onClick={() => setIsUserDropdownOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#1A2E4C] font-semibold hover:bg-gray-50 transition-colors"
-                      >
-                        <Shield size={15} className="text-[#1A2E4C]" />
-                        <span>Admin Dashboard</span>
-                      </Link>
-                    )}
-                  </div>
-
-                  <div className="border-t border-gray-100 pt-1">
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors text-left"
-                    >
-                      <LogOut size={15} className="text-red-500" />
-                      <span>Sign Out</span>
-                    </button>
-                  </div>
+                  )}
                 </div>
+
+                <div className="border-t border-gray-100 pt-1">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors text-left"
+                  >
+                    <LogOut size={15} className="text-red-500" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Search Trigger */}
+          <button 
+            onClick={() => setIsMobileSearchOpen(true)}
+            className="md:hidden flex items-center text-black hover:opacity-70 transition-opacity"
+          >
+            <Search size={22} />
+          </button>
+
+          {/* Cart Icon */}
+          <Link href="/cart" className="flex items-center relative text-black hover:opacity-70 transition-opacity">
+            <div className="relative">
+              <BsHandbag size={22} />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-2 bg-black text-white text-[10px] font-bold h-4 px-1 min-w-[16px] rounded-full flex items-center justify-center">
+                  {cartCount}
+                </span>
               )}
             </div>
-          ) : (
-            <Link 
-              href="/login"
-              className="hidden lg:block bg-[#1A2E4C] text-white text-xs font-semibold tracking-wide py-2.5 px-6 rounded-[2px] hover:bg-[#233f68] transition-colors"
-            >
-              SIGN UP / SIGN IN
-            </Link>
-          )}
+          </Link>
 
-          <div className="flex items-center gap-4 md:gap-5 text-black">
-            {/* Mobile Search Trigger Icon */}
-            <button 
-              onClick={() => setIsMobileSearchOpen(true)}
-              className="md:hidden flex flex-col items-center gap-1 hover:text-gray-700 transition-colors"
-              aria-label="Open search"
-            >
-              <Search size={22} strokeWidth={2} />
-            </button>
+          {/* Mobile Menu */}
+          <button className="lg:hidden flex items-center text-black hover:opacity-70 transition-opacity ml-2">
+            <Menu size={24} />
+          </button>
 
-            <Link href="/favourites" className="hidden md:flex flex-col items-center gap-1 hover:text-gray-700 transition-colors relative">
-              <div className="relative">
-                <Heart size={20} strokeWidth={2} />
-                {favouritesCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2 bg-rose-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                    {favouritesCount}
-                  </span>
-                )}
-              </div>
-              <span className="text-xs font-medium">Favourites</span>
-            </Link>
-
-            <Link href="/cart" className="flex md:flex-col items-center gap-1 hover:text-gray-700 transition-colors relative">
-              <div className="relative">
-                <ShoppingBag size={22} strokeWidth={2} />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 bg-[#1A2E4C] text-white text-[10px] font-bold h-4 px-1 rounded-full flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
-              </div>
-              <span className="hidden md:inline text-xs font-medium">Cart</span>
-            </Link>
-            
-            {!user && (
-              <Link href="/login" className="hidden md:flex flex-col items-center gap-1 hover:text-gray-700 transition-colors">
-                <User size={20} strokeWidth={2} />
-                <span className="text-xs font-medium">Sign In</span>
-              </Link>
-            )}
-
-            {/* Mobile Hamburger Menu */}
-            <button className="md:hidden flex items-center hover:text-gray-700 transition-colors ml-1">
-              <Menu size={26} strokeWidth={2} />
-            </button>
-          </div>
         </div>
-
       </div>
 
-      {/* Mobile Search Modal Overlay */}
+      {/* Mobile Search Modal */}
       {isMobileSearchOpen && (
         <div className="fixed inset-0 z-50 bg-white flex flex-col p-4 animate-in slide-in-from-top-4 duration-200">
           <div className="flex items-center gap-2 border-b pb-3">
-            <form onSubmit={handleSearchSubmit} className="flex-1 flex items-center bg-[#ECEDEB] rounded px-3 h-11">
+            <form onSubmit={handleSearchSubmit} className="flex-1 flex items-center bg-white border border-black rounded-none px-3 h-10">
               <Search size={18} className="text-gray-500 mr-2" />
               <input 
                 type="text" 
                 autoFocus
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Search Men's wear..."
+                placeholder="Search..."
                 className="bg-transparent border-none outline-none w-full text-sm text-gray-900"
               />
               {inputValue && (
@@ -345,7 +345,6 @@ export function Navbar() {
             </button>
           </div>
 
-          {/* Mobile Search Suggestions */}
           <div className="flex-1 overflow-y-auto pt-3">
             {suggestions.length > 0 ? (
               <div className="space-y-1">
@@ -365,12 +364,12 @@ export function Navbar() {
                 ))}
               </div>
             ) : inputValue.trim() ? (
-              <p className="text-xs text-gray-500 text-center pt-8">No Men&apos;s products matching &quot;{inputValue}&quot;</p>
+              <p className="text-xs text-gray-500 text-center pt-8">No products matching &quot;{inputValue}&quot;</p>
             ) : (
               <div className="pt-4">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Popular Men&apos;s Searches</p>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Popular Searches</p>
                 <div className="flex flex-wrap gap-2">
-                  {['Polo T-shirt', 'Oversized Tee', 'Cargo Pants', 'Linen Shirt', 'Fleece Hoodie'].map((term) => (
+                  {['Polo T-shirt', 'Oversized Tee', 'Cargo Pants', 'Linen Shirt'].map((term) => (
                     <button
                       key={term}
                       onClick={() => handleSelectSuggestion(term)}

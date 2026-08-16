@@ -60,6 +60,7 @@ import { returnRouter } from '../../../modules/returns/presentation/routes/retur
 import { paymentRouter } from '../../../modules/payments/presentation/routes/payment.routes';
 import { auditLogRouter } from '../../../modules/audit-logs/presentation/routes/audit-log.routes';
 import { paymentReportRouter } from '../../../modules/payment-reports/presentation/routes/payment-report.routes';
+import { reviewRoutes } from '../../../modules/reviews/presentation/routes/review.routes';
 
 rootRouter.use('/auth', authRouter);
 rootRouter.use('/users', userRouter);
@@ -82,6 +83,7 @@ rootRouter.use('/returns', returnRouter);
 rootRouter.use('/payments', paymentRouter);
 rootRouter.use('/audit-logs', auditLogRouter);
 rootRouter.use('/payment-reports', paymentReportRouter);
+rootRouter.use('/reviews', reviewRoutes);
 
 
 
