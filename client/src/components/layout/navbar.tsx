@@ -138,15 +138,8 @@ export function Navbar() {
     <nav className="w-full border-b bg-white sticky top-0 z-40">
       <div className="w-full px-4 lg:px-0 lg:w-[95%] mx-auto h-20 flex items-center justify-between">
         
-        {/* Left Side: Categories */}
-        <div className="hidden lg:flex items-center gap-6 flex-1">
-          {['Shop All', 'Women', 'Men', 'Kids', 'Footwear', 'Sleepwear', 'GenZ Store', 'Accessories'].map(cat => (
-             <Link key={cat} href={cat === 'Shop All' ? '/shop' : `/shop?category=${cat.toLowerCase()}`} className="flex items-center gap-1 text-[13px] font-bold text-gray-800 hover:text-black transition-colors">
-                {cat}
-                <ChevronDown size={14} className="text-gray-500" />
-             </Link>
-          ))}
-        </div>
+        {/* Left Side: Empty space to keep logo centered */}
+        <div className="hidden lg:flex flex-1"></div>
 
         {/* Center: Logo */}
         <div className="flex justify-start lg:justify-center items-center flex-1">
