@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Search, Menu, X, ArrowRight, LogOut, ChevronDown, Shield } from 'lucide-react';
 import { IoPersonOutline } from "react-icons/io5";
 import { BsHandbag } from "react-icons/bs";
@@ -13,6 +13,7 @@ import { authApi } from '@/api/auth';
 
 export function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const { searchQuery, setSearchQuery, filteredProducts } = useProductFilters();
   const user = useAuthStore((state) => state.user);
   const logoutUserStore = useAuthStore((state) => state.logoutUser);
@@ -135,7 +136,7 @@ export function Navbar() {
   };
 
   return (
-    <nav className="w-full border-b bg-white sticky top-0 z-40">
+    <nav className={`w-full bg-white sticky top-0 z-40 ${pathname !== '/' ? 'shadow-sm border-b border-gray-100' : 'border-b'}`}>
       <div className="w-full px-4 lg:px-0 lg:w-[95%] mx-auto h-20 flex items-center justify-between">
         
         {/* Left Side: Empty space to keep logo centered */}

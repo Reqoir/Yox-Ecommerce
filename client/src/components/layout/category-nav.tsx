@@ -14,18 +14,16 @@ function CategoryNavContent() {
   const categories = ['Women', 'Men', 'Kids', 'Footwear', 'Sleepwear', 'GenZ Store', 'Accessories'];
 
   const handleCategoryClick = (cat: string | null) => {
-    // If not on shop page, push to shop with query param
-    if (pathname !== '/shop') {
-      if (cat) {
-        router.push(`/shop?category=${cat.toLowerCase()}`);
-      } else {
-        router.push('/shop');
-      }
+    if (cat) {
+      router.push(`/shop?category=${cat.toLowerCase()}`);
     } else {
-      // If already on shop page, just use the filter hook to avoid full reload
-      setCategory(cat);
+      router.push('/shop');
     }
   };
+
+  if (pathname !== '/') {
+    return null;
+  }
 
   return (
     <div className="hidden lg:flex w-full border-b border-gray-100 bg-white sticky top-20 z-30 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">

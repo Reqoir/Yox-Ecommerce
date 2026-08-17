@@ -19,7 +19,7 @@ function ShopContent() {
   return (
     <main className="w-full bg-white min-h-screen pb-16 lg:pb-16 relative">
 
-      <div className="w-full lg:w-[85%] max-w-7xl mx-auto flex items-start pt-0 lg:pt-8">
+      <div className="w-[98%] max-w-[1500px] mx-auto flex items-start pt-0 lg:pt-8">
         {/* Sidebar Filter Area */}
         <div className="w-56 hidden lg:block flex-shrink-0">
           <FilterSidebar />
