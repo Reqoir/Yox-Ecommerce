@@ -38,7 +38,7 @@ export function CartSummary() {
   const grandTotal = Math.max(0, subtotal + shippingFee - discountAmount);
 
   return (
-    <div className="w-full bg-[#F7F8F7] border border-gray-200 rounded p-6 sticky top-24">
+    <div className="w-full bg-white border border-gray-200 rounded-none p-6 sticky top-24">
       <h3 className="text-base font-bold text-gray-900 mb-4 pb-3 border-b border-gray-200">
         Order Summary ({itemCount} {itemCount === 1 ? 'item' : 'items'})
       </h3>
@@ -128,7 +128,7 @@ export function CartSummary() {
       {/* Checkout CTA */}
       <Link
         href="/checkout"
-        className="w-full flex items-center justify-center gap-2 bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-bold tracking-wider py-4 rounded transition-colors shadow-sm mb-4"
+        className="w-full flex items-center justify-center gap-2 bg-black hover:bg-gray-900 text-white text-xs font-bold tracking-wider py-4 rounded-none transition-colors shadow-sm mb-4"
       >
         <span>PROCEED TO CHECKOUT</span>
         <ArrowRight size={16} />

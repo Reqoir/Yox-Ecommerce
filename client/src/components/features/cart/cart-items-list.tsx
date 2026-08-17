@@ -41,7 +41,7 @@ export function CartItemsList({ items }: CartItemsListProps) {
             {/* Image */}
             <Link
               href={`/product/${item.productId}`}
-              className="w-24 h-32 lg:w-28 lg:h-36 flex-shrink-0 bg-gray-50 overflow-hidden rounded relative group"
+              className="w-28 lg:w-36 flex-shrink-0 aspect-[3/4] bg-gray-50 overflow-hidden rounded relative group"
             >
               <img
                 src={item.image}
@@ -102,7 +102,7 @@ export function CartItemsList({ items }: CartItemsListProps) {
                   >
                     <Minus size={14} />
                   </button>
-                  <span className="px-3 text-xs font-bold text-gray-900 min-w-[2rem] text-center">
+                  <span className="px-3 py-1.5 text-xs font-bold text-gray-900 min-w-[2.5rem] text-center border-l border-r border-gray-200">
                     {item.quantity}
                   </span>
                   <button
@@ -122,12 +122,12 @@ export function CartItemsList({ items }: CartItemsListProps) {
                 </div>
 
                 {/* Save for later & Remove */}
-                <div className="flex items-center gap-4 text-xs font-semibold text-gray-500">
+                <div className="flex items-center gap-2 text-[11px] font-bold tracking-wider uppercase">
                   <button
                     onClick={() => handleMoveToFavourites(item)}
-                    className="hidden sm:flex items-center gap-1.5 hover:text-[#1A2E4C] transition-colors"
+                    className="hidden sm:flex items-center gap-1.5 text-black border border-gray-300 px-3 py-2 hover:border-black transition-colors"
                   >
-                    <Heart size={14} />
+                    <Heart size={14} strokeWidth={2} />
                     <span>Move to Favourites</span>
                   </button>
 
@@ -136,10 +136,10 @@ export function CartItemsList({ items }: CartItemsListProps) {
                       removeItem(item.id);
                       toast.success('Removed item from basket');
                     }}
-                    className="flex items-center gap-1 text-red-500 hover:text-red-700 transition-colors"
+                    className="flex items-center gap-1.5 text-black border border-gray-300 px-3 py-2 hover:border-black hover:text-red-600 transition-colors"
                     aria-label="Remove item"
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={14} strokeWidth={2} />
                     <span className="hidden sm:inline">Remove</span>
                   </button>
                 </div>
