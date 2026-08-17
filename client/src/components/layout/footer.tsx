@@ -179,7 +179,7 @@ export function Footer() {
       {/* Copyright */}
       <div className="w-full bg-[#D6CDAF] py-4 text-center border-t border-gray-300">
         <p className="text-[12px] font-bold text-gray-700">
-          © 2026, YOX Theme Powered by Shopify
+          © {new Date().getFullYear()} YOX. All rights reserved.
         </p>
       </div>
 

@@ -60,7 +60,7 @@ export function AddressSection() {
   };
 
   return (
-    <div className="w-full bg-white border border-gray-200 rounded-md p-5 lg:p-6 mb-6">
+    <div className="w-full bg-white border border-gray-200 rounded p-5 lg:p-6 mb-6">
       <div className="flex items-center justify-between mb-5 pb-3 border-b border-gray-100">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 bg-[#1A2E4C] text-white rounded-full flex items-center justify-center font-bold text-sm">
@@ -90,9 +90,9 @@ export function AddressSection() {
             <div
               key={addr.id}
               onClick={() => selectAddress(addr.id)}
-              className={`cursor-pointer rounded-md border p-4 transition-all relative ${
+              className={`cursor-pointer rounded border p-4 transition-all relative ${
                 isSelected
-                  ? 'border-[#1A2E4C] bg-blue-50/20 ring-2 ring-[#1A2E4C]/10'
+                  ? 'border-black bg-white'
                   : 'border-gray-200 hover:border-gray-300 bg-white'
               }`}
             >
@@ -106,7 +106,7 @@ export function AddressSection() {
                 </div>
 
                 {isSelected && (
-                  <CheckCircle2 size={18} className="text-[#1A2E4C] flex-shrink-0" />
+                  <CheckCircle2 size={18} className="text-green-600 flex-shrink-0" />
                 )}
               </div>
 

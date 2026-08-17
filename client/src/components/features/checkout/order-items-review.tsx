@@ -9,7 +9,7 @@ export function OrderItemsReview() {
   const [isOpen, setIsOpen] = useState(true);
 
   return (
-    <div className="w-full bg-white border border-gray-200 rounded-md p-5 lg:p-6 mb-6">
+    <div className="w-full bg-white border border-gray-200 rounded p-5 lg:p-6 mb-6">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between pb-3 border-b border-gray-100 text-left"

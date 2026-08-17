@@ -88,7 +88,7 @@ export function CheckoutSummaryPanel() {
   };
 
   return (
-    <div className="w-full bg-[#F7F8F7] border border-gray-200 rounded p-6 sticky top-24">
+    <div className="w-full bg-white border border-gray-200 rounded p-6 sticky top-24">
       <h3 className="text-base font-bold text-gray-900 mb-4 pb-3 border-b border-gray-200">
         Payment Details
       </h3>

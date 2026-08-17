@@ -14,7 +14,7 @@ export default function CheckoutPage() {
   const { items } = useCartStore();
 
   return (
-    <main className="w-full bg-[#FAFAFA] min-h-screen pb-16 pt-4 lg:pt-8">
+    <main className="w-full bg-white min-h-screen pb-16 pt-4 lg:pt-8">
       <div className="w-[98%] max-w-[1500px] mx-auto">
         
         {/* Header Breadcrumb & Security Indicator */}

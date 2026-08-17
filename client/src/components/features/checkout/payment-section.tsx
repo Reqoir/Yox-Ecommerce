@@ -8,7 +8,7 @@ export function PaymentSection() {
   const { paymentMethod, setPaymentMethod } = useCheckoutStore();
 
   return (
-    <div className="w-full bg-white border border-gray-200 rounded-md p-5 lg:p-6 mb-6">
+    <div className="w-full bg-white border border-gray-200 rounded p-5 lg:p-6 mb-6">
       <div className="flex items-center gap-2.5 mb-5 pb-3 border-b border-gray-100">
         <div className="w-8 h-8 bg-[#1A2E4C] text-white rounded-full flex items-center justify-center font-bold text-sm">
           2
@@ -23,9 +23,9 @@ export function PaymentSection() {
         {/* Razorpay Online Payment Option */}
         <div
           onClick={() => setPaymentMethod('RAZORPAY')}
-          className={`cursor-pointer rounded-md border p-4 transition-all relative ${
+          className={`cursor-pointer rounded border p-4 transition-all relative ${
             paymentMethod === 'RAZORPAY'
-              ? 'border-[#1A2E4C] bg-blue-50/20 ring-2 ring-[#1A2E4C]/10'
+              ? 'border-black bg-white'
               : 'border-gray-200 hover:border-gray-300 bg-white'
           }`}
         >
@@ -48,7 +48,7 @@ export function PaymentSection() {
             </div>
 
             {paymentMethod === 'RAZORPAY' && (
-              <CheckCircle2 size={20} className="text-[#1A2E4C] flex-shrink-0 mt-1" />
+              <CheckCircle2 size={20} className="text-green-600 flex-shrink-0 mt-1" />
             )}
           </div>
 
@@ -71,9 +71,9 @@ export function PaymentSection() {
         {/* Cash on Delivery Option */}
         <div
           onClick={() => setPaymentMethod('COD')}
-          className={`cursor-pointer rounded-md border p-4 transition-all relative ${
+          className={`cursor-pointer rounded border p-4 transition-all relative ${
             paymentMethod === 'COD'
-              ? 'border-[#1A2E4C] bg-blue-50/20 ring-2 ring-[#1A2E4C]/10'
+              ? 'border-black bg-white'
               : 'border-gray-200 hover:border-gray-300 bg-white'
           }`}
         >
@@ -91,7 +91,7 @@ export function PaymentSection() {
             </div>
 
             {paymentMethod === 'COD' && (
-              <CheckCircle2 size={20} className="text-[#1A2E4C] flex-shrink-0 mt-1" />
+              <CheckCircle2 size={20} className="text-green-600 flex-shrink-0 mt-1" />
             )}
           </div>
 
