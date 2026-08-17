@@ -58,7 +58,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900">Customer Reviews</h2>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
+          <DialogTrigger>
             <Button variant="outline" className="border-[#1A2E4C] text-[#1A2E4C] hover:bg-[#1A2E4C] hover:text-white transition-colors">
               Write a Review
             </Button>

@@ -16,7 +16,7 @@ export const REFRESH_TOKEN_COOKIE = 'refresh_token';
 const baseCookieOptions: CookieOptions = {
   httpOnly: true, // Prevents XSS attacks (JS cannot read the cookie)
   secure: env.NODE_ENV === 'production', // Send over HTTPS only in production
-  sameSite: 'strict', // Prevents CSRF attacks
+  sameSite: 'lax', // Prevents CSRF attacks while allowing cross-port navigation on localhost
   path: '/', // Available everywhere in the app
 };
 

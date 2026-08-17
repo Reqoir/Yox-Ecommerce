@@ -6,7 +6,7 @@
  */
 
 import { BaseRepository } from '@core/infrastructure/repositories/base.repository';
-import { User } from '../../domain/entities/user.entity';
+import { User, UserStatus } from '../../domain/entities/user.entity';
 import { IUserRepository } from '../../domain/repositories/user.repository.interface';
 import { IUserDocument, UserModel } from '../models/user.model';
 import { FilterQuery } from 'mongoose';
@@ -77,9 +77,9 @@ export class UserRepository
       password: doc.password,
       profileImage: doc.profileImage,
       roleId: doc.roleId,
-      isEmailVerified: doc.isEmailVerified,
-      isPhoneVerified: doc.isPhoneVerified,
-      status: doc.status as any,
+      isEmailVerified: doc.isEmailVerified ?? false,
+      isPhoneVerified: doc.isPhoneVerified ?? false,
+      status: (doc.status as any) || UserStatus.ACTIVE,
       lastLogin: doc.lastLogin,
       deletedAt: doc.deletedAt,
       createdAt: doc.createdAt,
@@ -127,7 +127,8 @@ export class UserRepository
   }
 
   public async findByEmail(email: string): Promise<User | null> {
-    const doc = await this.model.findOne({ email } as FilterQuery<IUserDocument>).exec();
+    const normalizedEmail = email.toLowerCase().trim();
+    const doc = await this.model.findOne({ email: normalizedEmail } as FilterQuery<IUserDocument>).exec();
     return doc ? this.toDomain(doc) : null;
   }
 

@@ -20,7 +20,8 @@ export class LoginUseCase {
 
   public async execute(data: LoginRequestDTO): Promise<LoginResponseDTO> {
     // 1. Find user by email
-    const user = await this.userRepository.findByEmail(data.email);
+    const email = data.email.toLowerCase().trim();
+    const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw ApiError.unauthorized('Invalid email or password');
     }
