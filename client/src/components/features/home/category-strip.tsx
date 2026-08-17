@@ -12,7 +12,7 @@ const CATEGORIES = [
 export function CategoryStrip() {
   return (
     <div className="w-full bg-white border-b">
-      <div className="w-full lg:w-[95%] px-4 lg:px-0 mx-auto flex overflow-x-auto lg:flex-wrap items-center justify-start lg:justify-center gap-8 lg:gap-12 py-6 lg:py-8 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="w-full lg:w-[98%] lg:max-w-[1500px] px-4 lg:px-0 mx-auto flex overflow-x-auto lg:flex-wrap items-center justify-start lg:justify-center gap-8 lg:gap-12 py-6 lg:py-8 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {CATEGORIES.map((category) => (
           <Link 
             href={`/shop?category=${encodeURIComponent(category.name.toLowerCase())}`} 

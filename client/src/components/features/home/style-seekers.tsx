@@ -46,7 +46,7 @@ export function StyleSeekers() {
   const scrollItems = [...categories, ...categories]; // Duplicate for infinite scroll
 
   return (
-    <section className="w-full py-16 bg-white overflow-hidden">
+    <section className="w-full mt-8 py-16 bg-white overflow-hidden">
       <style>{`
         @keyframes scroll {
           0% { transform: translateX(0); }
@@ -65,7 +65,7 @@ export function StyleSeekers() {
         <span className="text-xs font-bold tracking-widest text-gray-500 uppercase mb-4">
           Loved by Style Seekers
         </span>
-        <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-8 leading-snug">
+        <h2 className="text-xl md:text-2xl font-semibold text-gray-900 mb-8 leading-snug">
           Trusted by thousands for quality and style. Discover why customers love <br />
           our timeless designs and service.
         </h2>
