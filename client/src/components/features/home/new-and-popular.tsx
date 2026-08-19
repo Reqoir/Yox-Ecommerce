@@ -134,7 +134,7 @@ export function NewAndPopular() {
         {/* Product Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
           {PRODUCTS.map((product) => (
-            <Link href={`/shop/${product.id}`} key={product.id} className="group block">
+            <Link href={`/product/${product.id}`} key={product.id} className="group block">
               <div className="relative aspect-[3/4] w-full bg-[#f6f6f6] mb-3 overflow-hidden">
                 <Image
                   src={product.image}
