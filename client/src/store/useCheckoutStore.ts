@@ -1,18 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { addressesApi, Address as ApiAddress } from '../lib/api/addresses';
+import { useAuthStore } from './useAuthStore';
 
-export interface Address {
-  id: string;
-  fullName: string;
-  phone: string;
-  pincode: string;
-  streetAddress: string;
-  landmark?: string;
-  city: string;
-  state: string;
-  type: 'HOME' | 'WORK';
-  isDefault?: boolean;
-}
+export type Address = ApiAddress;
 
 export type PaymentMethod = 'COD' | 'RAZORPAY';
 
@@ -31,10 +22,12 @@ interface CheckoutState {
   isAddAddressOpen: boolean;
   isOrderSuccess: boolean;
   lastOrderDetails: OrderDetails | null;
+  isLoadingAddresses: boolean;
   
   // Actions
-  addAddress: (address: Omit<Address, 'id'>) => void;
-  removeAddress: (id: string) => void;
+  fetchAddresses: () => Promise<void>;
+  addAddress: (address: Omit<Address, 'id' | 'isDefault'>) => Promise<void>;
+  removeAddress: (id: string) => Promise<void>;
   selectAddress: (id: string) => void;
   setPaymentMethod: (method: PaymentMethod) => void;
   setIsAddAddressOpen: (open: boolean) => void;
@@ -45,56 +38,74 @@ interface CheckoutState {
 export const useCheckoutStore = create<CheckoutState>()(
   persist(
     (set, get) => ({
-      addresses: [
-        {
-          id: 'addr-1',
-          fullName: 'John Doe',
-          phone: '+91 98765 43210',
-          pincode: '400001',
-          streetAddress: 'Flat 402, Sunshine Heights, MG Road',
-          landmark: 'Near Central Bank',
-          city: 'Mumbai',
-          state: 'Maharashtra',
-          type: 'HOME',
-          isDefault: true,
-        },
-        {
-          id: 'addr-2',
-          fullName: 'John Doe (Office)',
-          phone: '+91 98765 43210',
-          pincode: '400051',
-          streetAddress: 'Level 8, Tech Park Towers, BKC',
-          city: 'Mumbai',
-          state: 'Maharashtra',
-          type: 'WORK',
-          isDefault: false,
-        },
-      ],
-      selectedAddressId: 'addr-1',
+      addresses: [],
+      selectedAddressId: null,
       paymentMethod: 'RAZORPAY',
       isAddAddressOpen: false,
       isOrderSuccess: false,
       lastOrderDetails: null,
+      isLoadingAddresses: false,
 
-      addAddress: (newAddr) => {
-        const id = `addr-${Date.now()}`;
-        set((state) => {
-          const updated = [...state.addresses, { ...newAddr, id }];
-          return {
-            addresses: updated,
-            selectedAddressId: id, // auto-select new address
-          };
-        });
+      fetchAddresses: async () => {
+        try {
+          const { isAuthenticated } = useAuthStore.getState();
+          if (!isAuthenticated) return;
+
+          set({ isLoadingAddresses: true });
+          const fetchedAddresses = await addressesApi.getAddresses();
+          
+          set((state) => {
+            // Keep selected address if it still exists, otherwise select the default or first one
+            let newSelectedId = state.selectedAddressId;
+            const stillExists = fetchedAddresses.find(a => a.id === newSelectedId);
+            
+            if (!stillExists && fetchedAddresses.length > 0) {
+              const defaultAddr = fetchedAddresses.find(a => a.isDefault);
+              newSelectedId = defaultAddr ? defaultAddr.id : fetchedAddresses[0].id;
+            }
+
+            return {
+              addresses: fetchedAddresses,
+              selectedAddressId: newSelectedId,
+              isLoadingAddresses: false,
+            };
+          });
+        } catch (error) {
+          console.error('Failed to fetch addresses:', error);
+          set({ isLoadingAddresses: false });
+        }
       },
 
-      removeAddress: (id) => {
-        set((state) => {
-          const updated = state.addresses.filter((a) => a.id !== id);
-          return {
-            addresses: updated,
-            selectedAddressId: state.selectedAddressId === id ? (updated[0]?.id || null) : state.selectedAddressId,
-          };
-        });
+      addAddress: async (newAddr) => {
+        try {
+          const added = await addressesApi.addAddress(newAddr);
+          set((state) => {
+            const updated = [...state.addresses, added];
+            return {
+              addresses: updated,
+              selectedAddressId: added.id, // auto-select new address
+            };
+          });
+        } catch (error) {
+          console.error('Failed to add address:', error);
+          throw error;
+        }
+      },
+
+      removeAddress: async (id) => {
+        try {
+          await addressesApi.deleteAddress(id);
+          set((state) => {
+            const updated = state.addresses.filter((a) => a.id !== id);
+            return {
+              addresses: updated,
+              selectedAddressId: state.selectedAddressId === id ? (updated[0]?.id || null) : state.selectedAddressId,
+            };
+          });
+        } catch (error) {
+          console.error('Failed to remove address:', error);
+          throw error;
+        }
       },
 
       selectAddress: (id) => set({ selectedAddressId: id }),
@@ -105,10 +116,16 @@ export const useCheckoutStore = create<CheckoutState>()(
 
       setOrderSuccess: (success, details) => set({ isOrderSuccess: success, lastOrderDetails: details || null }),
 
-      resetCheckout: () => set({ isOrderSuccess: false, lastOrderDetails: null }),
+      resetCheckout: () => set({ isOrderSuccess: false, lastOrderDetails: null, addresses: [], selectedAddressId: null }),
     }),
     {
       name: 'yox-checkout-storage',
+      // We don't want to persist addresses as they should be fetched fresh,
+      // but we do want to persist paymentMethod and selectedAddressId.
+      partialize: (state) => ({
+        paymentMethod: state.paymentMethod,
+        selectedAddressId: state.selectedAddressId,
+      }),
     }
   )
 );

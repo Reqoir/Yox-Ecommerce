@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/api/auth';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useCartStore } from '@/store/useCartStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,6 +28,10 @@ export default function CustomerRegisterPage() {
     try {
       const user = await authApi.register({ fullName, email, password, phone: phone || undefined });
       setAuthData(user, 'dummy_token'); // Since HttpOnly cookies are used, token in state is optional
+      
+      // Sync the offline cart with the user's account
+      await useCartStore.getState().syncWithServer();
+
       toast.success('Account created successfully!');
       router.push('/'); // Redirect to the storefront
     } catch (error: any) {

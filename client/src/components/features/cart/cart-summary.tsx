@@ -5,8 +5,12 @@ import Link from 'next/link';
 import { ShieldCheck, Truck, ArrowRight, Tag } from 'lucide-react';
 import { useCartStore } from '@/store/useCartStore';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export function CartSummary() {
+  const router = useRouter();
+  const { isAuthenticated } = useAuthStore();
   const { getSubtotal, getSavingsTotal, getItemCount } = useCartStore();
   const [promoCode, setPromoCode] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
@@ -32,6 +36,15 @@ export function CartSummary() {
       toast.success(`Promo code ${promoCode.toUpperCase()} applied!`);
     } else {
       toast.error('Invalid promo code. Try "MAX400" or "YOX10"');
+    }
+  };
+
+  const handleProceedToCheckout = () => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to proceed to checkout');
+      router.push('/login?callbackUrl=/checkout');
+    } else {
+      router.push('/checkout');
     }
   };
 
@@ -126,13 +139,14 @@ export function CartSummary() {
       </form>
 
       {/* Checkout CTA */}
-      <Link
-        href="/checkout"
-        className="w-full flex items-center justify-center gap-2 bg-black hover:bg-gray-900 text-white text-xs font-bold tracking-wider py-4 rounded-none transition-colors shadow-sm mb-4"
+      <button
+        onClick={handleProceedToCheckout}
+        disabled={itemCount === 0}
+        className="w-full flex items-center justify-center gap-2 bg-black hover:bg-gray-900 text-white text-xs font-bold tracking-wider py-4 rounded-none transition-colors shadow-sm mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span>PROCEED TO CHECKOUT</span>
         <ArrowRight size={16} />
-      </Link>
+      </button>
 
       {/* Security Guarantee */}
       <div className="flex items-center justify-center gap-2 text-[11px] text-gray-500 font-medium">
