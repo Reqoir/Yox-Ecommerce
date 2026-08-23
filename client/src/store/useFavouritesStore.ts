@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { wishlistsApi } from '@/lib/api/wishlists';
+import { useAuthStore } from './useAuthStore';
 
 export interface FavouriteItem {
   id: string;
@@ -14,6 +16,7 @@ export interface FavouriteItem {
 
 interface FavouritesState {
   items: FavouriteItem[];
+  fetchWishlist: () => Promise<void>;
   addFavourite: (item: FavouriteItem) => void;
   removeFavourite: (id: string) => void;
   toggleFavourite: (item: FavouriteItem) => void;
@@ -24,49 +27,58 @@ interface FavouritesState {
 export const useFavouritesStore = create<FavouritesState>()(
   persist(
     (set, get) => ({
-      items: [
-        {
-          id: '1',
-          name: 'Classic Linen Blend Shirt',
-          category: 'Shirts',
-          image: '/images/product-4.jpeg',
-          price: 1799,
-          comparePrice: 2499,
-          tag: 'BESTSELLER',
-          inStock: true,
-        },
-        {
-          id: '3',
-          name: 'Relaxed Fit Cargo Trousers',
-          category: 'Pants',
-          image: '/images/product-3.jpeg',
-          price: 2199,
-          comparePrice: 2999,
-          tag: 'NEW',
-          inStock: true,
-        },
-        {
-          id: '6',
-          name: 'Vintage Wash Graphic Tee',
-          category: 'T-Shirts',
-          image: '/images/product-6.jpeg',
-          price: 899,
-          comparePrice: 1299,
-          inStock: true,
-        },
-      ],
+      items: [],
 
-      addFavourite: (item) => {
+      fetchWishlist: async () => {
+        try {
+          const { isAuthenticated } = useAuthStore.getState();
+          if (!isAuthenticated) return;
+          const data = await wishlistsApi.getWishlist();
+          if (data?.data?.items) {
+            const apiItems = data.data.items.map((i: any) => ({
+              id: i.productId,
+              name: i.productName,
+              category: 'Category', // Placeholder since API doesn't populate category
+              image: i.productImage,
+              price: i.productPrice,
+              inStock: i.productStock > 0,
+            }));
+            set({ items: apiItems });
+          }
+        } catch (error) {
+          console.error('Failed to fetch wishlist:', error);
+        }
+      },
+
+      addFavourite: async (item) => {
         set((state) => {
           if (state.items.some((i) => i.id === item.id)) return state;
           return { items: [...state.items, item] };
         });
+        
+        try {
+          const { isAuthenticated } = useAuthStore.getState();
+          if (isAuthenticated) {
+            await wishlistsApi.toggleWishlist(item.id);
+          }
+        } catch (error) {
+          console.error('Failed to sync wishlist add:', error);
+        }
       },
 
-      removeFavourite: (id) => {
+      removeFavourite: async (id) => {
         set((state) => ({
           items: state.items.filter((item) => item.id !== id),
         }));
+
+        try {
+          const { isAuthenticated } = useAuthStore.getState();
+          if (isAuthenticated) {
+            await wishlistsApi.toggleWishlist(id);
+          }
+        } catch (error) {
+          console.error('Failed to sync wishlist remove:', error);
+        }
       },
 
       toggleFavourite: (item) => {

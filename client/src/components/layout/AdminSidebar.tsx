@@ -16,6 +16,7 @@ import {
   ShoppingBag,
   BarChart3,
   ShieldCheck,
+  MessageSquare,
 } from 'lucide-react';
 import { authApi } from '@/api/auth';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -27,6 +28,7 @@ const navItems = [
   { name: 'Reports', href: '/admin/reports', icon: BarChart3, permission: 'view_reports' },
   { name: 'Audit Logs', href: '/admin/audit-logs', icon: ShieldCheck, permission: 'view_audit_logs' },
   { name: 'Orders', href: '/admin/order', icon: ShoppingBag },
+  { name: 'Reviews', href: '/admin/reviews', icon: MessageSquare, permission: 'manage_reviews' },
   { name: 'Users', href: '/admin/user', icon: Users, permission: 'manage_users' },
   { name: 'Products', href: '/admin/product', icon: Package, permission: 'manage_products' },
   { name: 'Categories', href: '/admin/category', icon: FolderTree, permission: 'manage_categories' },

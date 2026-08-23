@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { FavouriteCard } from '@/components/features/favourites/favourite-card';
@@ -9,7 +9,11 @@ import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function FavouritesPage() {
-  const { items, clearFavourites } = useFavouritesStore();
+  const { items, clearFavourites, fetchWishlist } = useFavouritesStore();
+
+  useEffect(() => {
+    fetchWishlist();
+  }, [fetchWishlist]);
 
   if (!items || items.length === 0) {
     return (
