@@ -5,13 +5,19 @@
 
 import { BaseEntity, EntityProps } from '@core/domain/entities/base.entity';
 
+export enum ReviewStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED'
+}
+
 export interface ReviewProps extends EntityProps {
   productId: string;
   userId: string;
   rating: number;
   title?: string | null;
   comment?: string | null;
-  status: string;
+  status: ReviewStatus | string;
 }
 
 export class Review extends BaseEntity<ReviewProps> {

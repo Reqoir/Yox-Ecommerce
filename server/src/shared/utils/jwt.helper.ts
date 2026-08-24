@@ -53,6 +53,24 @@ export const verifyRefreshToken = (token: string): TokenPayload => {
 };
 
 /**
+ * Sign a reset password token.
+ */
+export const signResetToken = (payload: { sub: string }): string => {
+  return jwt.sign(payload, jwtConfig.reset.secret, jwtConfig.reset.signOptions);
+};
+
+/**
+ * Verify a reset password token.
+ */
+export const verifyResetToken = (token: string): { sub: string } => {
+  const decoded = jwt.verify(token, jwtConfig.reset.secret, {
+    issuer: jwtConfig.reset.signOptions.issuer as string | undefined,
+    audience: jwtConfig.reset.signOptions.audience as string | undefined,
+  });
+  return decoded as { sub: string };
+};
+
+/**
  * Decode a token WITHOUT verifying the signature.
  */
 export const decodeToken = (token: string): TokenPayload | null => {

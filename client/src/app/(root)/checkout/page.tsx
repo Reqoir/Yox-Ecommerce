@@ -1,17 +1,22 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { AddressSection } from '@/components/features/checkout/address-section';
 import { PaymentSection } from '@/components/features/checkout/payment-section';
 import { OrderItemsReview } from '@/components/features/checkout/order-items-review';
 import { CheckoutSummaryPanel } from '@/components/features/checkout/checkout-summary-panel';
 import { OrderSuccessModal } from '@/components/features/checkout/order-success-modal';
 import { useCartStore } from '@/store/useCartStore';
-import { ShieldCheck, Lock, ArrowLeft } from 'lucide-react';
+import { useAuthStore } from '@/store/useAuthStore';
+import { ShieldCheck, Lock, ArrowLeft, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function CheckoutPage() {
+  const router = useRouter();
   const { items } = useCartStore();
+  const { isAuthenticated } = useAuthStore();
 
   return (
     <main className="w-full bg-white min-h-screen pb-16 pt-4 lg:pt-8">

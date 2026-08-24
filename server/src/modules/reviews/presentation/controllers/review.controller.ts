@@ -36,9 +36,9 @@ export class ReviewController {
         comment,
       });
 
-      res.status(201).json({ success: true, data: review });
+      return res.status(201).json({ success: true, data: review });
     } catch (error: any) {
-      res.status(400).json({ success: false, message: error.message });
+      return res.status(400).json({ success: false, message: error.message });
     }
   };
 
@@ -49,9 +49,9 @@ export class ReviewController {
       const limit = parseInt(req.query.limit as string) || 10;
 
       const result = await this.getProductReviewsUseCase.execute({ productId, page, limit });
-      res.status(200).json({ success: true, data: result });
+      return res.status(200).json({ success: true, data: result });
     } catch (error: any) {
-      res.status(400).json({ success: false, message: error.message });
+      return res.status(400).json({ success: false, message: error.message });
     }
   };
 
@@ -63,9 +63,9 @@ export class ReviewController {
       const status = req.query.status as string | undefined;
 
       const result = await this.getAllReviewsUseCase.execute(page, limit, status);
-      res.status(200).json({ success: true, data: result });
+      return res.status(200).json({ success: true, data: result });
     } catch (error: any) {
-      res.status(400).json({ success: false, message: error.message });
+      return res.status(400).json({ success: false, message: error.message });
     }
   };
 
@@ -76,9 +76,9 @@ export class ReviewController {
       const { status } = req.body;
       
       const result = await this.updateReviewStatusUseCase.execute(id, status as ReviewStatus);
-      res.status(200).json({ success: true, data: result });
+      return res.status(200).json({ success: true, data: result });
     } catch (error: any) {
-      res.status(400).json({ success: false, message: error.message });
+      return res.status(400).json({ success: false, message: error.message });
     }
   };
 
@@ -92,9 +92,9 @@ export class ReviewController {
       const limit = parseInt(req.query.limit as string) || 10;
 
       const result = await this.getUserReviewsUseCase.execute(userId, page, limit);
-      res.status(200).json({ success: true, data: result });
+      return res.status(200).json({ success: true, data: result });
     } catch (error: any) {
-      res.status(400).json({ success: false, message: error.message });
+      return res.status(400).json({ success: false, message: error.message });
     }
   };
 }

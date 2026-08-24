@@ -26,9 +26,9 @@ export class WishlistController {
       }
 
       const result = await this.toggleWishlistUseCase.execute(userId, productId);
-      res.status(200).json({ success: true, data: result });
+      return res.status(200).json({ success: true, data: result });
     } catch (error: any) {
-      res.status(400).json({ success: false, message: error.message });
+      return res.status(400).json({ success: false, message: error.message });
     }
   };
 
@@ -40,9 +40,9 @@ export class WishlistController {
       }
 
       const result = await this.getWishlistUseCase.execute(userId);
-      res.status(200).json({ success: true, data: result });
+      return res.status(200).json({ success: true, data: result });
     } catch (error: any) {
-      res.status(400).json({ success: false, message: error.message });
+      return res.status(400).json({ success: false, message: error.message });
     }
   };
 }

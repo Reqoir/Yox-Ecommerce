@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
 import { toast } from 'sonner';
 
 export default function LoginPage() {
@@ -74,6 +75,9 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
+                <Link href="/forgot-password" className="text-sm text-primary hover:underline font-medium">
+                  Forgot password?
+                </Link>
               </div>
               <Input
                 id="password"

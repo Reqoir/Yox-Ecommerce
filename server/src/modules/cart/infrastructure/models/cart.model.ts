@@ -51,7 +51,6 @@ const CartSchema = new Schema<ICartDocument>(
   }
 );
 
-// Indexes
-CartSchema.index({ userId: 1 });
+// Indexes are handled by schema definition
 
 export const CartModel = model<ICartDocument>('Cart', CartSchema);

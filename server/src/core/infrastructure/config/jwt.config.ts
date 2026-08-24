@@ -20,6 +20,7 @@ export interface JwtTokenConfig {
 export interface JwtConfig {
   access: JwtTokenConfig;
   refresh: JwtTokenConfig;
+  reset: JwtTokenConfig;
   algorithm: NonNullable<SignOptions['algorithm']>;
 }
 
@@ -43,6 +44,17 @@ export const jwtConfig: JwtConfig = {
     signOptions: {
       algorithm: 'HS256',
       expiresIn: env.JWT_REFRESH_EXPIRES_IN as StringValue,
+      issuer: 'yox-ecommerce',
+      audience: 'yox-ecommerce-client',
+    },
+  },
+
+  reset: {
+    secret: env.JWT_RESET_SECRET,
+    expiresIn: env.JWT_RESET_EXPIRES_IN as StringValue,
+    signOptions: {
+      algorithm: 'HS256',
+      expiresIn: env.JWT_RESET_EXPIRES_IN as StringValue,
       issuer: 'yox-ecommerce',
       audience: 'yox-ecommerce-client',
     },

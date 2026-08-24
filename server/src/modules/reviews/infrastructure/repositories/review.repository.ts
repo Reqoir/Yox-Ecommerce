@@ -136,7 +136,7 @@ export class ReviewRepository implements IReviewRepository {
             product: docs[i].productId,
             user: docs[i].userId
           })
-        } as Review;
+        } as unknown as Review;
       }), 
       total 
     };
@@ -171,7 +171,7 @@ export class ReviewRepository implements IReviewRepository {
             ...json,
             product: docs[i].productId
           })
-        } as Review;
+        } as unknown as Review;
       }), 
       total 
     };

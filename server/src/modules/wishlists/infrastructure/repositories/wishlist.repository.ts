@@ -33,6 +33,8 @@ export class WishlistRepository implements IWishlistRepository {
       { new: true, upsert: true, lean: true }
     );
     
+    if (!doc) throw new Error('Failed to save wishlist');
+
     return Wishlist.create(
       {
         userId: doc.userId.toString(),

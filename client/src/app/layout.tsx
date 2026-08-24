@@ -5,6 +5,7 @@ import './globals.css';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import { ToastProvider } from '@/components/providers/ToastProvider';
+import { AuthProvider } from '@/components/providers/AuthProvider';
 
 const figtree = Figtree({
   variable: '--font-sans',
@@ -60,7 +61,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <ThemeProvider>
           <QueryProvider>
-            {children}
+            <AuthProvider>
+              {children}
+            </AuthProvider>
             <ToastProvider />
           </QueryProvider>
         </ThemeProvider>

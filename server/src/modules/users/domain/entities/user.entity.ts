@@ -116,6 +116,15 @@ export class User extends BaseEntity<UserProps> {
   }
 
   /**
+   * Updates the user's password.
+   * Note: The password MUST be pre-hashed before calling this.
+   */
+  public updatePassword(hashedPassword: string): void {
+    this._props.password = hashedPassword;
+    this._props.updatedAt = new Date();
+  }
+
+  /**
    * Soft deletes / deactivates the user account.
    */
   public deactivate(): void {
