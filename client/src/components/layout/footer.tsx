@@ -21,7 +21,7 @@ export function Footer() {
   return (
     <footer className="w-full bg-[#E5DCC5] text-gray-900">
       {/* Top Features Section */}
-      <div className="w-[98%] max-w-[1500px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 py-10 border-b border-gray-300">
+      <div className="w-[98%] max-w-[1500px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 py-10 border-b border-[#C4BA9D]">
         <div className="flex items-center gap-4">
           <Truck size={36} className="text-gray-700 opacity-80" strokeWidth={1} />
           <div>
@@ -53,7 +53,7 @@ export function Footer() {
       </div>
 
       {/* Middle Links Section */}
-      <div className="w-[98%] max-w-[1500px] mx-auto py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12 border-b border-gray-300">
+      <div className="w-[98%] max-w-[1500px] mx-auto py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12 border-b border-[#C4BA9D]">
         
         {/* Brand Col */}
         <div className="lg:col-span-4 flex flex-col gap-6">
@@ -85,7 +85,6 @@ export function Footer() {
           <ul className="flex flex-col gap-3.5 text-[13px] text-gray-600 font-medium">
             <li><Link href="/shop" className="hover:text-black transition-colors">Shop All</Link></li>
             <li><Link href="/shop" className="hover:text-black transition-colors">Cloth</Link></li>
-            <li><Link href="/shop?category=women" className="hover:text-black transition-colors">Women's</Link></li>
             <li><Link href="/shop?category=men" className="hover:text-black transition-colors">Men's</Link></li>
             <li><Link href="/shop" className="hover:text-black transition-colors">Blogs</Link></li>
             <li><Link href="/" className="hover:text-black transition-colors">Theme Features</Link></li>
@@ -115,7 +114,7 @@ export function Footer() {
             <input 
               type="email" 
               placeholder="Email" 
-              className="flex-1 bg-transparent border border-gray-400 rounded-[24px] px-5 py-2.5 text-[13px] outline-none focus:border-gray-900 transition-colors text-gray-900 placeholder-gray-500"
+              className="flex-1 bg-transparent border border-[#C4BA9D] rounded-[24px] px-5 py-2.5 text-[13px] outline-none focus:border-black transition-colors text-gray-900 placeholder-gray-600"
             />
             <button 
               type="submit" 
@@ -177,7 +176,7 @@ export function Footer() {
       </div>
 
       {/* Copyright */}
-      <div className="w-full bg-[#D6CDAF] py-4 text-center border-t border-gray-300">
+      <div className="w-full bg-[#D6CDAF] py-4 text-center border-t border-[#C4BA9D]">
         <p className="text-[12px] font-bold text-gray-700">
           © {new Date().getFullYear()} YOX. All rights reserved.
         </p>

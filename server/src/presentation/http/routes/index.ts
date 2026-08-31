@@ -54,6 +54,7 @@ import { notificationsRouter } from '../../../modules/notifications/presentation
 import { ordersRouter } from '../../../modules/orders/presentation/routes/orders.routes';
 import { analyticsRouter } from '../../../modules/analytics/presentation/routes/analytics.routes';
 import { reportsRouter } from '../../../modules/reports/presentation/routes/reports.routes';
+import { settingsRoutes } from '../../../modules/settings/presentation/routes/settings.routes';
 
 import { shipmentRouter } from '../../../modules/shipments/presentation/routes/shipment.routes';
 import { returnRouter } from '../../../modules/returns/presentation/routes/return.routes';
@@ -86,3 +87,4 @@ rootRouter.use('/audit-logs', auditLogRouter);
 rootRouter.use('/payment-reports', paymentReportRouter);
 rootRouter.use('/reviews', reviewRoutes);
 rootRouter.use('/wishlists', wishlistRoutes);
+rootRouter.use('/settings', settingsRoutes);

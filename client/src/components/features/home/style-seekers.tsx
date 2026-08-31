@@ -1,49 +1,53 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import Image from 'next/image';
-
-const categories = [
-  {
-    id: 'casuals',
-    label: 'CASUALS',
-    image: '/images/categories/hoodies.webp',
-    height: 'h-[450px]',
-  },
-  {
-    id: 'jacket',
-    label: 'JACKET',
-    image: '/images/categories/jacket.webp',
-    height: 'h-[300px]',
-  },
-  {
-    id: 'shirts',
-    label: 'SHIRTS',
-    image: '/images/categories/shirt.jpeg',
-    height: 'h-[450px]',
-  },
-  {
-    id: 't-shirts',
-    label: 'T-SHIRTS',
-    image: '/images/categories/tshirt.webp',
-    height: 'h-[300px]',
-  },
-  {
-    id: 'pants',
-    label: 'PANTS',
-    image: '/images/categories/pants.webp',
-    height: 'h-[450px]',
-  },
-  {
-    id: 'accessories',
-    label: 'ACCESSORIES',
-    image: '/images/categories/accessories.webp',
-    height: 'h-[300px]',
-  },
-];
+import { categoryApi, Category } from '@/api/admin/categories';
 
 export function StyleSeekers() {
-  const scrollItems = [...categories, ...categories]; // Duplicate for infinite scroll
+  const [categories, setCategories] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await categoryApi.getAll();
+        // Filter out inactive categories and map to UI format
+        const mapped = data
+          .filter(cat => cat.isActive)
+          .map((cat, index) => ({
+            id: cat.id,
+            slug: cat.slug,
+            label: cat.name.toUpperCase(),
+            image: cat.image || 'https://placehold.co/400x600?text=No+Image',
+            height: index % 2 === 0 ? 'h-[450px]' : 'h-[300px]',
+          }));
+        
+        setCategories(mapped);
+      } catch (error) {
+        console.error('Failed to fetch categories', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchCategories();
+  }, []);
+
+  // Duplicate for infinite scroll animation (if we have categories)
+  const scrollItems = categories.length > 0 ? [...categories, ...categories] : [];
+
+  if (isLoading) {
+    return (
+      <section className="w-full mt-8 py-16 bg-white overflow-hidden flex justify-center min-h-[500px] items-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </section>
+    );
+  }
+
+  if (categories.length === 0) return null;
 
   return (
     <section className="w-full mt-8 py-16 bg-white overflow-hidden">
@@ -80,9 +84,10 @@ export function StyleSeekers() {
       {/* Image Grid Marquee */}
       <div className="flex w-max animate-scroll items-end gap-4 px-2">
         {scrollItems.map((category, index) => (
-          <div
+          <Link
             key={`${category.id}-${index}`}
-            className={`relative flex-shrink-0 w-[240px] md:w-[280px] lg:w-[320px] ${category.height} group overflow-hidden bg-gray-100 cursor-pointer rounded-sm`}
+            href={`/shop?category=${category.slug}`}
+            className={`relative flex-shrink-0 w-[240px] md:w-[280px] lg:w-[320px] ${category.height} group overflow-hidden bg-gray-100 cursor-pointer rounded-sm block`}
           >
             {/* Image */}
             <Image
@@ -104,9 +109,10 @@ export function StyleSeekers() {
                 <ArrowUpRight size={18} strokeWidth={2.5} />
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </section>
   );
 }
+

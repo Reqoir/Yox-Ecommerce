@@ -45,13 +45,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-4">
-      <div className="w-full max-w-md space-y-8 rounded-xl bg-white dark:bg-zinc-900 p-10 shadow-lg border border-zinc-200 dark:border-zinc-800">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+      <div className="w-full max-w-md space-y-8 rounded-none bg-white p-10 shadow-sm border border-gray-200">
         <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+          <h2 className="text-3xl font-bold tracking-tight text-gray-900">
             Sign in to YOX
           </h2>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-2 text-sm text-gray-500">
             Welcome back! Please enter your details.
           </p>
         </div>
@@ -59,7 +59,7 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="mt-8 space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-gray-900 font-medium">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -67,14 +67,14 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full"
+                className="w-full h-12 rounded-none border-gray-300 text-gray-900 bg-white focus-visible:ring-1 focus-visible:ring-gray-400"
                 disabled={isLoading}
               />
             </div>
             
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-gray-900 font-medium">Password</Label>
                 <Link href="/forgot-password" className="text-sm text-primary hover:underline font-medium">
                   Forgot password?
                 </Link>
@@ -85,7 +85,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full"
+                className="w-full h-12 rounded-none border-gray-300 text-gray-900 bg-white focus-visible:ring-1 focus-visible:ring-gray-400"
                 disabled={isLoading}
               />
             </div>
@@ -93,7 +93,7 @@ export default function LoginPage() {
 
           <Button 
             type="submit" 
-            className="w-full bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-50 dark:hover:bg-zinc-200 dark:text-zinc-900" 
+            className="w-full h-12 rounded-none bg-[#1A2E4C] hover:bg-[#132238] text-white shadow-none transition-colors" 
             disabled={isLoading}
           >
             {isLoading ? (

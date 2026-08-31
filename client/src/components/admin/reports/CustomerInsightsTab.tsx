@@ -47,12 +47,12 @@ export function CustomerInsightsTab({ data, loading }: CustomerInsightsTabProps)
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Active In Period</CardTitle>
-            <div className="p-2 bg-emerald-500/10 rounded-full text-emerald-600">
+            <div className="p-2 bg-emerald-500/100/10 rounded-full text-emerald-500">
               <Users className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-600">{summary.activeCustomers.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-emerald-500">{summary.activeCustomers.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground mt-1">Customers with order activity</p>
           </CardContent>
         </Card>
@@ -120,7 +120,7 @@ export function CustomerInsightsTab({ data, loading }: CustomerInsightsTabProps)
                       <td className="px-4 py-3 text-muted-foreground text-xs">{customer.email}</td>
                       <td className="px-4 py-3 text-right font-semibold">{customer.totalOrders}</td>
                       <td className="px-4 py-3 text-right">${customer.averageOrderValue.toFixed(2)}</td>
-                      <td className="px-4 py-3 text-right font-bold text-emerald-600">
+                      <td className="px-4 py-3 text-right font-bold text-emerald-500">
                         ${customer.totalSpent.toFixed(2)}
                       </td>
                     </tr>

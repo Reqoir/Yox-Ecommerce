@@ -51,7 +51,7 @@ export function ProductPerformanceTab({ data, loading }: ProductPerformanceTabPr
             <AlertTriangle className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-amber-600">{inventoryHealth.lowStockVariants}</div>
+            <div className="text-2xl font-bold text-amber-500">{inventoryHealth.lowStockVariants}</div>
             <p className="text-xs text-muted-foreground mt-1">Stock ≤ alert threshold</p>
           </CardContent>
         </Card>
@@ -62,7 +62,7 @@ export function ProductPerformanceTab({ data, loading }: ProductPerformanceTabPr
             <XCircle className="h-4 w-4 text-rose-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-rose-600">{inventoryHealth.outOfStockVariants}</div>
+            <div className="text-2xl font-bold text-rose-500">{inventoryHealth.outOfStockVariants}</div>
             <p className="text-xs text-muted-foreground mt-1">Zero stock remaining</p>
           </CardContent>
         </Card>
@@ -135,7 +135,7 @@ export function ProductPerformanceTab({ data, loading }: ProductPerformanceTabPr
                       <td className="px-4 py-3 font-medium">{product.productName}</td>
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{product.sku}</td>
                       <td className="px-4 py-3 text-right font-semibold">{product.unitsSold}</td>
-                      <td className="px-4 py-3 text-right font-bold text-emerald-600">
+                      <td className="px-4 py-3 text-right font-bold text-emerald-500">
                         ${product.totalRevenue.toFixed(2)}
                       </td>
                     </tr>

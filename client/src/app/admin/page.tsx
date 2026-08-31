@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/store/useAuthStore';
 import { analyticsApi, DashboardStats, SalesChartData } from '@/api/admin/analytics';
 import { SalesChart } from '@/components/admin/analytics/sales-chart';
-import { DollarSign, ShoppingBag, Users, Package, TrendingUp } from 'lucide-react';
+import { IndianRupee, ShoppingBag, Users, Package, TrendingUp } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   const { user } = useAuthStore();
@@ -66,12 +66,12 @@ export default function AdminDashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <div className="p-2 bg-primary/10 rounded-full">
-              <DollarSign className="h-4 w-4 text-primary" />
+              <IndianRupee className="h-4 w-4 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${stats?.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              ₹{stats?.totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground mt-1 flex items-center">
               <TrendingUp className="h-3 w-3 mr-1 text-green-500" />

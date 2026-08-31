@@ -48,12 +48,12 @@ export function SalesReportTab({ data, loading }: SalesReportTabProps) {
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Net Revenue</CardTitle>
-            <div className="p-2 bg-emerald-500/10 rounded-full text-emerald-600">
+            <div className="p-2 bg-emerald-500/100/10 rounded-full text-emerald-500">
               <DollarSign className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-600">
+            <div className="text-2xl font-bold text-emerald-500">
               ${summary.netRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Excludes cancelled orders</p>
@@ -76,7 +76,7 @@ export function SalesReportTab({ data, loading }: SalesReportTabProps) {
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Avg Order Value</CardTitle>
-            <div className="p-2 bg-amber-500/10 rounded-full text-amber-600">
+            <div className="p-2 bg-amber-500/100/10 rounded-full text-amber-500">
               <TrendingUp className="h-4 w-4" />
             </div>
           </CardHeader>
@@ -89,7 +89,7 @@ export function SalesReportTab({ data, loading }: SalesReportTabProps) {
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Gross Discounts</CardTitle>
-            <div className="p-2 bg-rose-500/10 rounded-full text-rose-600">
+            <div className="p-2 bg-rose-500/100/10 rounded-full text-rose-500">
               <Percent className="h-4 w-4" />
             </div>
           </CardHeader>

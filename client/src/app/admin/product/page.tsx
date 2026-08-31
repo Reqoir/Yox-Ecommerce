@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Plus, MoreHorizontal, Pencil, Trash, X, Image as ImageIcon, Loader2, Eye, Search } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash, X, Image as ImageIcon, Loader2, Eye, Search, Upload } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Table,
@@ -454,7 +454,7 @@ export default function AdminProductPage() {
               setCurrentPage(1);
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
@@ -716,9 +716,9 @@ export default function AdminProductPage() {
                 </TabsList>
               </div>
 
-              <ScrollArea className="h-[480px] px-6 py-4">
+              <ScrollArea className="h-[480px]">
                 {/* GENERAL TAB */}
-                <TabsContent value="general" className="space-y-4 m-0">
+                <TabsContent value="general" className="space-y-4 m-0 px-6 py-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="name">Product Name <span className="text-red-500">*</span></Label>
@@ -746,8 +746,10 @@ export default function AdminProductPage() {
                     <div className="grid gap-2">
                       <Label htmlFor="brandId">Brand</Label>
                       <Select value={formData.brandId} onValueChange={(val) => setFormData({ ...formData, brandId: val || 'none' })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select brand" />
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select brand">
+                            {formData.brandId && formData.brandId !== 'none' ? brands.find(b => b.id === formData.brandId)?.name : ''}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">No Brand</SelectItem>
@@ -764,8 +766,10 @@ export default function AdminProductPage() {
                         value={formData.categoryId} 
                         onValueChange={(val) => setFormData({ ...formData, categoryId: val || 'none', subCategoryId: 'none' })}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select category">
+                            {formData.categoryId && formData.categoryId !== 'none' ? (parentCategories.length > 0 ? parentCategories : categories).find(c => c.id === formData.categoryId)?.name : ''}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">No Category</SelectItem>
@@ -783,8 +787,10 @@ export default function AdminProductPage() {
                         onValueChange={(val) => setFormData({ ...formData, subCategoryId: val || 'none' })}
                         disabled={formData.categoryId === 'none' || availableSubCategories.length === 0}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder={availableSubCategories.length ? "Select subcategory" : "No subcategories"} />
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder={availableSubCategories.length ? "Select subcategory" : "No subcategories"}>
+                            {formData.subCategoryId && formData.subCategoryId !== 'none' ? availableSubCategories.find(c => c.id === formData.subCategoryId)?.name : ''}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">None</SelectItem>
@@ -809,17 +815,24 @@ export default function AdminProductPage() {
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="thumbnail">Thumbnail Image</Label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          id="thumbnail"
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleImageUpload(e, (url) => setFormData({ ...formData, thumbnail: url }))}
-                          disabled={isUploading}
-                        />
+                      <div className="flex items-center gap-3 mt-1">
+                        <div className="relative">
+                          <input
+                            id="thumbnail"
+                            type="file"
+                            accept="image/*"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            onChange={(e) => handleImageUpload(e, (url) => setFormData({ ...formData, thumbnail: url }))}
+                            disabled={isUploading}
+                          />
+                          <Button type="button" variant="outline" className="pointer-events-none">
+                            <Upload className="h-4 w-4 mr-2" />
+                            {formData.thumbnail ? 'Change Image' : 'Upload Image'}
+                          </Button>
+                        </div>
                         {isUploading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                       </div>
-                      <p className="text-xs text-muted-foreground">Upload a primary image for product listings.</p>
+                      <p className="text-xs text-muted-foreground mt-1">Upload a primary image for product listings.</p>
                     </div>
                   </div>
 
@@ -853,34 +866,33 @@ export default function AdminProductPage() {
                 </TabsContent>
 
                 {/* ATTRIBUTES TAB (FIT & PROMOTIONS) */}
-                <TabsContent value="attributes" className="space-y-4 m-0">
+                <TabsContent value="attributes" className="space-y-4 m-0 px-6 py-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="fit">Apparel Fit Type</Label>
-                      <Input
-                        id="fit"
-                        list="fit-suggestions"
-                        value={formData.fit === 'none' ? '' : formData.fit}
-                        onChange={(e) => setFormData({ ...formData, fit: e.target.value })}
-                        placeholder="e.g. Slim Fit, Oversized, Athletic Fit..."
-                      />
-                      <datalist id="fit-suggestions">
-                        <option value="Slim Fit" />
-                        <option value="Regular Fit" />
-                        <option value="Oversized" />
-                        <option value="Relaxed Fit" />
-                        <option value="Skinny Fit" />
-                        <option value="Athletic Fit" />
-                        <option value="Boxy Fit" />
-                        <option value="Tailored Fit" />
-                      </datalist>
-                      <p className="text-[11px] text-muted-foreground">Type custom fit or choose from suggestions.</p>
+                      <Select value={formData.fit || 'none'} onValueChange={(val) => setFormData({ ...formData, fit: val === 'none' ? '' : val })}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select fit type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No Fit Type</SelectItem>
+                          <SelectItem value="Slim Fit">Slim Fit</SelectItem>
+                          <SelectItem value="Regular Fit">Regular Fit</SelectItem>
+                          <SelectItem value="Oversized">Oversized</SelectItem>
+                          <SelectItem value="Relaxed Fit">Relaxed Fit</SelectItem>
+                          <SelectItem value="Skinny Fit">Skinny Fit</SelectItem>
+                          <SelectItem value="Athletic Fit">Athletic Fit</SelectItem>
+                          <SelectItem value="Boxy Fit">Boxy Fit</SelectItem>
+                          <SelectItem value="Tailored Fit">Tailored Fit</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[11px] text-muted-foreground">Select the fit type of the apparel.</p>
                     </div>
 
                     <div className="grid gap-2">
                       <Label htmlFor="tag">Promotion Tag / Badge</Label>
                       <Select value={formData.tag} onValueChange={(val) => setFormData({ ...formData, tag: val || 'none' })}>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select promotion tag" />
                         </SelectTrigger>
                         <SelectContent>
@@ -889,12 +901,13 @@ export default function AdminProductPage() {
                           <SelectItem value="LIMITED">LIMITED</SelectItem>
                         </SelectContent>
                       </Select>
+                      <p className="text-[11px] text-muted-foreground">Highlight product with a special badge.</p>
                     </div>
                   </div>
                 </TabsContent>
 
                 {/* VARIANTS TAB (COLORS & SIZES) */}
-                <TabsContent value="variants" className="space-y-6 m-0">
+                <TabsContent value="variants" className="space-y-6 m-0 px-6 py-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-semibold text-sm">Product Color Variants</h3>
@@ -1043,7 +1056,7 @@ export default function AdminProductPage() {
                 </TabsContent>
 
                 {/* MEDIA TAB (IMAGE UPLOADS PER COLOR) */}
-                <TabsContent value="media" className="space-y-4 m-0">
+                <TabsContent value="media" className="space-y-4 m-0 px-6 py-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-semibold text-sm">Color Variant Images</h3>
@@ -1064,7 +1077,7 @@ export default function AdminProductPage() {
                           value={selectedMediaColorId}
                           onValueChange={(val) => setSelectedMediaColorId(val || '')}
                         >
-                          <SelectTrigger className="max-w-md">
+                          <SelectTrigger className="w-full max-w-md">
                             <SelectValue placeholder="Select a color..." />
                           </SelectTrigger>
                           <SelectContent>
@@ -1139,7 +1152,7 @@ export default function AdminProductPage() {
                 </TabsContent>
 
                 {/* SETTINGS TAB */}
-                <TabsContent value="settings" className="space-y-6 m-0">
+                <TabsContent value="settings" className="space-y-6 m-0 px-6 py-4">
                   <div className="flex items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
                       <Label className="text-base">Active Status</Label>
@@ -1168,7 +1181,7 @@ export default function AdminProductPage() {
                 </TabsContent>
 
                 {/* SEO TAB */}
-                <TabsContent value="seo" className="space-y-4 m-0">
+                <TabsContent value="seo" className="space-y-4 m-0 px-6 py-4">
                   <div className="grid gap-2">
                     <Label htmlFor="seoTitle">SEO Title</Label>
                     <Input

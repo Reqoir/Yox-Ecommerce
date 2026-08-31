@@ -22,6 +22,7 @@ import { authApi } from '@/api/auth';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNotifications } from '@/hooks/admin/useNotifications';
 import { toast } from 'sonner';
+import { ThemeToggle } from '@/components/common/ThemeToggle';
 
 const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
@@ -58,11 +59,11 @@ export function AdminSidebar() {
   };
 
   return (
-    <aside className="w-64 border-r bg-card min-h-screen flex flex-col transition-all">
-      <div className="p-6 border-b">
+    <aside className="w-64 border-r bg-card h-screen sticky top-0 shrink-0 flex flex-col transition-all z-20">
+      <div className="p-6 border-b shrink-0">
         <h2 className="text-2xl font-bold tracking-tight text-primary">YOX Admin</h2>
       </div>
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 overflow-y-auto p-4 space-y-1">
         {navItems.map((item) => {
           const userRole = (user as any)?.role || user?.roleId;
           const isAdmin = userRole === 'admin' || userRole === 'super_admin' || userRole === 'ADMIN' || !user;
@@ -96,7 +97,8 @@ export function AdminSidebar() {
           );
         })}
       </nav>
-      <div className="p-4 border-t">
+      <div className="p-4 border-t space-y-1 shrink-0">
+        <ThemeToggle />
         <button 
           onClick={handleLogout}
           className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"

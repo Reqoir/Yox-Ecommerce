@@ -34,12 +34,12 @@ export function InventoryReportTab({ data, loading }: InventoryReportTabProps) {
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Inventory Value</CardTitle>
-            <div className="p-2 bg-emerald-500/10 rounded-full text-emerald-600">
+            <div className="p-2 bg-emerald-500/100/10 rounded-full text-emerald-500">
               <DollarSign className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-600">
+            <div className="text-2xl font-bold text-emerald-500">
               ${summary.totalInventoryValuation.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Total retail value of active stock</p>
@@ -62,12 +62,12 @@ export function InventoryReportTab({ data, loading }: InventoryReportTabProps) {
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Low Stock Alerts</CardTitle>
-            <div className="p-2 bg-amber-500/10 rounded-full text-amber-600">
+            <div className="p-2 bg-amber-500/100/10 rounded-full text-amber-500">
               <AlertTriangle className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-amber-600">{summary.lowStockCount}</div>
+            <div className="text-2xl font-bold text-amber-500">{summary.lowStockCount}</div>
             <p className="text-xs text-muted-foreground mt-1">Variants below reorder threshold</p>
           </CardContent>
         </Card>
@@ -75,12 +75,12 @@ export function InventoryReportTab({ data, loading }: InventoryReportTabProps) {
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Out of Stock</CardTitle>
-            <div className="p-2 bg-rose-500/10 rounded-full text-rose-600">
+            <div className="p-2 bg-rose-500/100/10 rounded-full text-rose-500">
               <XCircle className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-rose-600">{summary.outOfStockCount}</div>
+            <div className="text-2xl font-bold text-rose-500">{summary.outOfStockCount}</div>
             <p className="text-xs text-muted-foreground mt-1">Variants with 0 available units</p>
           </CardContent>
         </Card>
@@ -116,11 +116,11 @@ export function InventoryReportTab({ data, loading }: InventoryReportTabProps) {
                   </tr>
                 ) : (
                   lowStockItems.map((item) => (
-                    <tr key={item.variantId} className="hover:bg-amber-50/50 transition-colors">
+                    <tr key={item.variantId} className="hover:bg-amber-500/10/50 transition-colors">
                       <td className="px-4 py-3 font-medium">{item.productName}</td>
                       <td className="px-4 py-3 text-xs">{item.title}</td>
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{item.sku}</td>
-                      <td className="px-4 py-3 text-right font-bold text-amber-600">{item.currentStock}</td>
+                      <td className="px-4 py-3 text-right font-bold text-amber-500">{item.currentStock}</td>
                       <td className="px-4 py-3 text-right text-muted-foreground">{item.lowStockThreshold}</td>
                       <td className="px-4 py-3 text-right">${item.price.toFixed(2)}</td>
                     </tr>
@@ -161,11 +161,11 @@ export function InventoryReportTab({ data, loading }: InventoryReportTabProps) {
                   </tr>
                 ) : (
                   outOfStockItems.map((item) => (
-                    <tr key={item.variantId} className="hover:bg-rose-50/50 transition-colors">
+                    <tr key={item.variantId} className="hover:bg-rose-500/10/50 transition-colors">
                       <td className="px-4 py-3 font-medium">{item.productName}</td>
                       <td className="px-4 py-3 text-xs">{item.title}</td>
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{item.sku}</td>
-                      <td className="px-4 py-3 text-right font-bold text-rose-600">0</td>
+                      <td className="px-4 py-3 text-right font-bold text-rose-500">0</td>
                       <td className="px-4 py-3 text-right">${item.price.toFixed(2)}</td>
                     </tr>
                   ))

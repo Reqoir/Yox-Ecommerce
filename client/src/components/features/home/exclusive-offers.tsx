@@ -3,106 +3,79 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-
-const OFFERS = [
-  {
-    id: 1,
-    category: 'Jacket',
-    price: '8,500.00',
-    oldPrice: '9,300.00',
-    title: "Men's Casual Quilted Jacket",
-    image: '/images/nav/men/1.jpg',
-  },
-  {
-    id: 2,
-    category: 'Jacket',
-    price: '7,300.00',
-    oldPrice: null,
-    title: "Men's Warm Sports Jacket",
-    image: '/images/nav/men/3.jpg',
-  },
-  {
-    id: 3,
-    category: 'Jacket',
-    price: '7,300.00',
-    oldPrice: '7,700.00',
-    title: "Men's Athletic Stripe Jacket",
-    image: '/images/nav/men/5.jpg',
-  },
-  {
-    id: 4,
-    category: 'Jacket',
-    price: '4,800.00',
-    oldPrice: '5,400.00',
-    title: "Men's Solid Quilted Jacket",
-    image: '/images/nav/men/4.jpg',
-  },
-  {
-    id: 5,
-    category: 'Jacket',
-    price: '7,200.00',
-    oldPrice: '7,700.00',
-    title: "Men's Modern Shirt Jacket",
-    image: '/images/nav/men/2.jpg',
-  },
-  {
-    id: 6,
-    category: 'Jacket',
-    price: '7,100.00',
-    oldPrice: null,
-    title: "Men's Training Sports Jacket",
-    image: '/images/categories/jacket.webp',
-  },
-  {
-    id: 7,
-    category: 'Jacket',
-    price: '3,400.00',
-    oldPrice: '3,800.00',
-    title: "Overshirt Transition Jacket",
-    image: '/images/new-popular/shirts/10.webp',
-  },
-  {
-    id: 8,
-    category: 'Jacket',
-    price: '5,900.00',
-    oldPrice: '6,600.00',
-    title: "Men's Outerwear Jacket",
-    image: '/images/categories/shirt.jpeg',
-  },
-];
+import { settingsApi } from '@/api/admin/settings';
+import { Loader2 } from 'lucide-react';
 
 export function ExclusiveOffers() {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 9, mins: 9, secs: 59 });
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
   const [mounted, setMounted] = useState(false);
+  const [offers, setOffers] = useState<any[]>([]);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setMounted(true);
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        let { days, hours, mins, secs } = prev;
-        if (secs > 0) {
-          secs--;
-        } else {
-          secs = 59;
-          if (mins > 0) {
-            mins--;
-          } else {
-            mins = 59;
-            if (hours > 0) {
-              hours--;
-            } else {
-              hours = 23;
-              if (days > 0) {
-                days--;
-              }
-            }
+    const fetchOffers = async () => {
+      try {
+        const config: any = await settingsApi.getSetting('storefront.exclusive_offers');
+        if (config) {
+          if (config.endDate) {
+            setEndDate(new Date(config.endDate));
+          }
+          if (config.products) {
+            setOffers(config.products);
           }
         }
-        return { days, hours, mins, secs };
-      });
-    }, 1000);
-    return () => clearInterval(timer);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchOffers();
   }, []);
+
+  useEffect(() => {
+    if (!endDate) return;
+
+    const calculateTime = () => {
+      const now = new Date().getTime();
+      const distance = endDate.getTime() - now;
+
+      if (distance < 0) {
+        setTimeLeft({ days: 0, hours: 0, mins: 0, secs: 0 });
+        setEndDate(null); // hide timer if passed
+        return false;
+      }
+
+      setTimeLeft({
+        days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        mins: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+        secs: Math.floor((distance % (1000 * 60)) / 1000)
+      });
+      return true;
+    };
+
+    // Run immediately once
+    if (calculateTime()) {
+      const timer = setInterval(calculateTime, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [endDate]);
+
+  if (isLoading) {
+    return (
+      <section className="w-full bg-[#F1EFEA] py-16 border-t border-gray-200 min-h-[400px] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#4B4239]" />
+      </section>
+    );
+  }
+
+  // If no offers configured, don't show the section
+  if (offers.length === 0) {
+    return null;
+  }
 
   return (
     <section className="w-full bg-[#F1EFEA] py-16 border-t border-gray-200">
@@ -115,7 +88,7 @@ export function ExclusiveOffers() {
           </h2>
           
           {/* Countdown Timer */}
-          {mounted && (
+          {mounted && endDate && (
             <div className="flex items-center gap-2 md:gap-3 text-[18px] md:text-[22px] font-bold text-[#4B4239]">
               <div className="flex flex-col items-center justify-center bg-[#4B4239] text-white w-12 h-12 md:w-16 md:h-16 rounded-[2px] shadow-sm">
                 <span className="text-[16px] md:text-[20px] leading-none">{timeLeft.days}</span>
@@ -142,9 +115,9 @@ export function ExclusiveOffers() {
 
         {/* Offers Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-12 gap-x-6">
-          {OFFERS.map(offer => (
+          {offers.map(offer => (
             <Link 
-              href="/shop" 
+              href={`/product/${offer.slug}`} 
               key={offer.id} 
               className="flex items-center group cursor-pointer transition-transform hover:-translate-y-1"
             >
@@ -159,11 +132,11 @@ export function ExclusiveOffers() {
               <div className="flex flex-col justify-center pl-4 py-2 flex-1">
                 <span className="text-[11px] text-gray-500 mb-1">{offer.category}</span>
                 <span className="text-[13px] font-medium text-[#40362C] mb-0.5">
-                  From Rs. {offer.price} INR
+                  From ₹{offer.price}
                 </span>
                 {offer.oldPrice ? (
                    <span className="text-[11px] text-[#B33924] line-through mb-1">
-                     Rs. {offer.oldPrice} INR
+                     ₹{offer.oldPrice}
                    </span>
                 ) : (
                    <span className="text-[11px] text-transparent mb-1 opacity-0 pointer-events-none">

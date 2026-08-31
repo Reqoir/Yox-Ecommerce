@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, MoreHorizontal, Pencil, Trash, Loader2, Search } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash, Loader2, Search, Upload } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Table,
@@ -343,14 +343,21 @@ export default function AdminBrandPage() {
                 <TabsContent value="media" className="space-y-4 m-0">
                   <div className="grid gap-2">
                     <Label htmlFor="logo">Logo Image</Label>
-                    <div className="flex items-center gap-2">
-                      <Input 
-                        id="logo" 
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(e, (url) => setFormData({...formData, logo: url}))}
-                        disabled={isUploading}
-                      />
+                    <div className="flex items-center gap-3 mt-1">
+                      <div className="relative">
+                        <input
+                          id="logo"
+                          type="file"
+                          accept="image/*"
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                          onChange={(e) => handleImageUpload(e, (url) => setFormData({...formData, logo: url}))}
+                          disabled={isUploading}
+                        />
+                        <Button type="button" variant="outline" className="pointer-events-none">
+                          <Upload className="h-4 w-4 mr-2" />
+                          {formData.logo ? 'Change Image' : 'Upload Image'}
+                        </Button>
+                      </div>
                       {isUploading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                     </div>
                     <p className="text-xs text-muted-foreground">Upload an image for the brand logo.</p>
