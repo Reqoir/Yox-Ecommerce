@@ -17,6 +17,7 @@ import {
   BarChart3,
   ShieldCheck,
   MessageSquare,
+  Gift,
 } from 'lucide-react';
 import { authApi } from '@/api/auth';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -35,6 +36,7 @@ const navItems = [
   { name: 'Categories', href: '/admin/category', icon: FolderTree, permission: 'manage_categories' },
   { name: 'Brands', href: '/admin/brand', icon: Tag, permission: 'manage_brands' },
   { name: 'Inventory', href: '/admin/inventory', icon: Warehouse, permission: 'manage_inventory' },
+  { name: 'Offers', href: '/admin/offers', icon: Gift },
   { name: 'Roles', href: '/admin/role', icon: Shield, permission: 'manage_roles' },
   { name: 'Notifications', href: '/admin/notifications', icon: Bell },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
