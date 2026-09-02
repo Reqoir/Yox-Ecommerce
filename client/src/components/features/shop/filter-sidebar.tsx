@@ -36,7 +36,7 @@ export function FilterSidebar() {
           {FILTER_CATEGORIES.map((cat) => (
             <div key={cat} className="border-b border-gray-200 py-4">
               <button 
-                className="w-full flex items-center justify-between group"
+                className="w-full flex items-center justify-between group hover:opacity-70 transition-opacity cursor-pointer"
                 onClick={() => toggleSection(cat)}
               >
                 <span className="text-[11px] font-semibold text-black tracking-wide uppercase">{cat}</span>
@@ -69,12 +69,12 @@ export function FilterSidebar() {
       <div className="pt-6 pb-2 flex items-center gap-2">
         <button 
           onClick={clearAllFilters}
-          className="flex-1 bg-white text-black border border-black text-[11px] font-bold py-3 uppercase tracking-widest hover:bg-gray-50 transition-colors"
+          className="flex-1 bg-white text-black border border-black text-[11px] font-bold py-3 uppercase tracking-widest hover:bg-gray-50 transition-colors cursor-pointer"
         >
           Clear
         </button>
         <button 
-          className="flex-1 bg-black text-white border border-black text-[11px] font-bold py-3 uppercase tracking-widest hover:bg-gray-900 transition-colors"
+          className="flex-1 bg-black text-white border border-black text-[11px] font-bold py-3 uppercase tracking-widest hover:bg-gray-900 transition-colors cursor-pointer"
         >
           Apply (1692)
         </button>

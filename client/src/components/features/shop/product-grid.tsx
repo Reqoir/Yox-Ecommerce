@@ -48,7 +48,7 @@ export function ProductGrid() {
           
           <div className="w-[200px]">
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-              <SelectTrigger className="border-gray-200 rounded-none h-10 text-[13px] font-medium text-gray-800 bg-white focus:ring-0 focus:ring-offset-0">
+              <SelectTrigger className="border-gray-200 rounded-none h-10 text-[13px] font-medium text-gray-800 bg-white focus:ring-0 focus:ring-offset-0 hover:bg-gray-50 transition-colors cursor-pointer">
                 <SelectValue placeholder="Sort" />
               </SelectTrigger>
               <SelectContent className="bg-white border border-gray-200 rounded-none">
@@ -68,7 +68,7 @@ export function ProductGrid() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 text-[10px] font-semibold tracking-widest uppercase transition-colors border ${
+              className={`px-3 py-1.5 text-[10px] font-semibold tracking-widest uppercase transition-colors border cursor-pointer ${
                 activeTab === tab
                   ? 'bg-black text-white border-black'
                   : 'bg-white text-gray-800 border-gray-800 hover:bg-gray-100'
