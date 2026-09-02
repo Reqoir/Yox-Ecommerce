@@ -8,10 +8,6 @@ import { SORT_OPTIONS_LIST } from '@/constants/products';
 import { SortOption } from '@/types/product';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const CATEGORY_TABS = [
-  'ALL', 'NEW', 'SLIM', 'ROUND NECK', 'LUXE', 'PLAIN', 'OVERSIZED', 'CORE LAB', 'PARTY WEAR', 'PLUS SIZE', 'POLO', 'TECHNICAL', 'GRAPHIC PRINTED'
-];
-
 export function ProductGrid() {
   const {
     searchQuery,
@@ -28,6 +24,28 @@ export function ProductGrid() {
 
   const [activeTab, setActiveTab] = useState('ALL');
 
+  // Generate dynamic tabs based on the currently filtered products
+  const dynamicTabs = React.useMemo(() => {
+    const tabs = new Set<string>();
+    filteredProducts.forEach(p => {
+      if (p.subCategory) tabs.add(p.subCategory.toUpperCase());
+      else if (p.category) tabs.add(p.category.toUpperCase());
+      else if (p.tag) tabs.add(p.tag.toUpperCase());
+    });
+    // Add some common defaults if they exist in the products, otherwise just unique subcategories
+    return ['ALL', ...Array.from(tabs).slice(0, 15)]; // Limit to a reasonable number of tabs
+  }, [filteredProducts]);
+
+  // Apply the active tab filter locally on top of the URL filters
+  const finalProducts = React.useMemo(() => {
+    if (activeTab === 'ALL') return filteredProducts;
+    return filteredProducts.filter(p => 
+      p.subCategory?.toUpperCase() === activeTab || 
+      p.category?.toUpperCase() === activeTab ||
+      p.tag?.toUpperCase() === activeTab
+    );
+  }, [filteredProducts, activeTab]);
+
   return (
     <div className="w-full lg:pl-8 pb-16 lg:pb-0">
       
@@ -43,7 +61,7 @@ export function ProductGrid() {
               ? category 
               : searchQuery 
               ? `SEARCH: ${searchQuery}` 
-              : "T-SHIRTS"}
+              : "ALL PRODUCTS"}
           </h1>
           
           <div className="w-[200px]">
@@ -64,7 +82,7 @@ export function ProductGrid() {
 
         {/* Horizontal Tabs */}
         <div className="flex flex-wrap gap-2">
-          {CATEGORY_TABS.map((tab) => (
+          {dynamicTabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -81,9 +99,9 @@ export function ProductGrid() {
       </div>
 
       {/* Grid or Empty State */}
-      {filteredProducts.length > 0 ? (
+      {finalProducts.length > 0 ? (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-10 px-1 lg:px-0">
-          {filteredProducts.map((product) => (
+          {finalProducts.map((product) => (
             <Link href={`/product/${product.id}`} key={product.id} className="flex flex-col group cursor-pointer">
               {/* Image Box */}
               <div className="relative w-full aspect-[3/4] bg-[#f2f2f2] overflow-hidden mb-3">
