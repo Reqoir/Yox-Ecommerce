@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { Heart, X, RefreshCw, ShoppingBag, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { useProductFilters } from '@/hooks/useProductFilters';
+import { useFavouritesStore } from '@/store/useFavouritesStore';
+import { toast } from 'sonner';
 import { SORT_OPTIONS_LIST } from '@/constants/products';
 import { SortOption } from '@/types/product';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -22,6 +24,7 @@ export function ProductGrid() {
     clearAllFilters,
   } = useProductFilters();
 
+  const { isFavourite, toggleFavourite } = useFavouritesStore();
   const [activeTab, setActiveTab] = useState('ALL');
 
   // Generate dynamic tabs based on the currently filtered products
@@ -101,37 +104,79 @@ export function ProductGrid() {
       {/* Grid or Empty State */}
       {finalProducts.length > 0 ? (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-10 px-1 lg:px-0">
-          {finalProducts.map((product) => (
-            <Link href={`/product/${product.id}`} key={product.id} className="flex flex-col group cursor-pointer">
-              {/* Image Box */}
-              <div className="relative w-full aspect-[3/4] bg-[#f2f2f2] overflow-hidden mb-3">
-                <img 
-                  src={product.image} 
-                  alt={product.name} 
-                  className="w-full h-full object-cover object-top mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
-                />
-                
-                {/* Wishlist Button */}
-                <button 
-                  className="absolute top-2 right-2 p-1.5 text-gray-600 hover:text-red-500 transition-colors"
-                  aria-label="Add to Wishlist"
-                  onClick={(e) => e.preventDefault()}
-                >
-                  <Heart size={18} strokeWidth={1.5} />
-                </button>
-              </div>
+          {finalProducts.map((product) => {
+            const prodIdStr = String(product.productId || product.id);
+            const isFav = isFavourite(prodIdStr);
 
-              {/* Product Details */}
-              <div className="flex flex-col gap-1">
-                <h3 className="text-[12px] font-medium text-gray-800 line-clamp-1 truncate" title={product.name}>
-                  {product.name}
-                </h3>
-                <span className="text-[12px] font-medium text-gray-900">
-                  ₹{product.price}
-                </span>
-              </div>
-            </Link>
-          ))}
+            return (
+              <Link 
+                href={product.href || `/product/${product.productId || product.id}`} 
+                key={product.colorCardId || product.id} 
+                className="flex flex-col group cursor-pointer"
+              >
+                {/* Image Box */}
+                <div className="relative w-full aspect-[3/4] bg-[#f2f2f2] overflow-hidden mb-3">
+                  <img 
+                    src={product.image} 
+                    alt={`${product.name}${product.currentColor ? ` - ${product.currentColor}` : ''}`} 
+                    className="w-full h-full object-cover object-top mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
+                  />
+                  
+                  {/* Wishlist Button */}
+                  <button 
+                    className="absolute top-2 right-2 p-1.5 text-gray-600 hover:text-red-500 transition-colors z-10"
+                    aria-label={isFav ? "Remove from Wishlist" : "Add to Wishlist"}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleFavourite({
+                        id: prodIdStr,
+                        name: product.name,
+                        category: product.category,
+                        image: product.image,
+                        price: product.price,
+                        comparePrice: product.originalPrice || undefined,
+                        inStock: product.inStock !== false,
+                      });
+                      if (isFav) {
+                        toast.info(`Removed ${product.name} from wishlist`);
+                      } else {
+                        toast.success(`Added ${product.name} to wishlist`);
+                      }
+                    }}
+                  >
+                    <Heart 
+                      size={18} 
+                      strokeWidth={1.5} 
+                      className={isFav ? "fill-red-500 text-red-500 transition-colors" : "text-gray-600 hover:text-red-500 transition-colors"} 
+                    />
+                  </button>
+                </div>
+
+                {/* Product Details */}
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-[12px] font-medium text-gray-800 line-clamp-1 truncate" title={product.name}>
+                    {product.name}
+                  </h3>
+                  {product.currentColor && (
+                    <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                      {product.currentColor}
+                    </span>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[12px] font-medium text-gray-900">
+                      ₹{product.price}
+                    </span>
+                    {product.originalPrice && product.originalPrice > product.price && (
+                      <span className="text-[11px] text-gray-400 line-through">
+                        ₹{product.originalPrice}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       ) : (
         /* Empty State */

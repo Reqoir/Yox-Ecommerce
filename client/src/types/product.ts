@@ -16,7 +16,11 @@ export type ProductSize = LetterSize | WaistSize;
 export type ProductTag = 'NEW' | 'ON OFFER' | 'BESTSELLER' | 'LIMITED';
 
 export interface Product {
-  id: number;
+  id: number | string;
+  colorCardId?: string;
+  productId?: string;
+  currentColor?: string;
+  href?: string;
   name: string;
   category: ProductCategory;
   subCategory?: string;

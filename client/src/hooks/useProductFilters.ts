@@ -22,39 +22,103 @@ export function useProductFilters() {
     return map;
   }, [apiCategories]);
 
-  // Combine database products with fallback mock products
+  // Combine database products with fallback mock products (split by color variant)
   const allProducts = useMemo<Product[]>(() => {
     if (dbProducts && dbProducts.length > 0) {
-      return dbProducts.map((p, idx) => {
-        const variants = p.variants || [];
-        const sizes = Array.from(new Set(variants.map(v => v.size).filter(Boolean))) as ProductSize[];
-        const colors = Array.from(new Set(variants.map(v => v.color).filter(Boolean)));
-        
-        let minPrice = 999;
-        if (variants.length > 0) {
-          const prices = variants.map(v => v.price).filter(price => typeof price === 'number' && price > 0);
-          if (prices.length > 0) minPrice = Math.min(...prices);
-        }
+      const expanded: Product[] = [];
 
+      dbProducts.forEach((p, idx) => {
+        const variants = p.variants || [];
         const catName = p.categoryId ? categoryMap.get(p.categoryId) || p.categoryId : 'Apparel';
         const subCatName = p.subCategoryId ? categoryMap.get(p.subCategoryId) || p.subCategoryId : undefined;
 
-        return {
-          id: (p.id as any) || idx + 100,
-          name: p.name,
-          category: catName as any,
-          subCategory: subCatName,
-          image: p.thumbnail || variants[0]?.images?.[0] || '/images/product-1.jpeg',
-          price: minPrice,
-          bestPrice: Math.round(minPrice * 0.9),
-          tag: (p.tag as ProductTag) || undefined,
-          sizes: sizes,
-          colors: colors,
-          fit: (p.fit as ProductFit) || undefined,
-          description: p.description || p.shortDescription || undefined,
-          inStock: p.isActive,
-        };
+        // Group variants by color
+        const colorMap = new Map<string, typeof variants>();
+
+        variants.forEach(v => {
+          const colorKey = (v.color || 'Default').trim();
+          if (!colorMap.has(colorKey)) {
+            colorMap.set(colorKey, []);
+          }
+          colorMap.get(colorKey)!.push(v);
+        });
+
+        // If no variants exist or no colors defined
+        if (colorMap.size === 0) {
+          expanded.push({
+            id: (p.id as any) || idx + 100,
+            productId: p.id,
+            colorCardId: `${p.id}-default`,
+            name: p.name,
+            category: catName as any,
+            subCategory: subCatName,
+            image: p.thumbnail || '/images/product-1.jpeg',
+            price: 999,
+            bestPrice: 899,
+            tag: (p.tag as ProductTag) || undefined,
+            sizes: [],
+            colors: [],
+            fit: (p.fit as ProductFit) || undefined,
+            description: p.description || p.shortDescription || undefined,
+            inStock: p.isActive,
+            href: `/product/${p.id}`,
+          });
+          return;
+        }
+
+        // For each color group, create an individual product card
+        colorMap.forEach((colorVariants, colorName) => {
+          const sizes = Array.from(new Set(colorVariants.map(v => v.size).filter(Boolean))) as ProductSize[];
+          
+          let minPrice = 999;
+          let originalPrice: number | undefined = undefined;
+
+          const validPrices = colorVariants.map(v => v.price).filter(price => typeof price === 'number' && price > 0);
+          if (validPrices.length > 0) {
+            minPrice = Math.min(...validPrices);
+          }
+
+          const validComparePrices = colorVariants
+            .map(v => v.comparePrice)
+            .filter((cp): cp is number => typeof cp === 'number' && cp > 0);
+          if (validComparePrices.length > 0) {
+            originalPrice = Math.max(...validComparePrices);
+          }
+
+          // First image of this color variant group, falling back to p.thumbnail
+          const variantImages = colorVariants.flatMap(v => v.images || []).filter(Boolean);
+          const firstImage = variantImages[0] || p.thumbnail || '/images/product-1.jpeg';
+
+          const isDefaultColor = colorName.toLowerCase() === 'default';
+          const href = isDefaultColor 
+            ? `/product/${p.id}` 
+            : `/product/${p.id}?color=${encodeURIComponent(colorName)}`;
+
+          expanded.push({
+            id: isDefaultColor ? p.id : `${p.id}-${colorName}`,
+            productId: p.id,
+            colorCardId: `${p.id}-${colorName}`,
+            currentColor: isDefaultColor ? undefined : colorName,
+            name: p.name,
+            category: catName as any,
+            subCategory: subCatName,
+            image: firstImage,
+            images: variantImages.length > 0 ? variantImages : [firstImage],
+            price: minPrice,
+            originalPrice: originalPrice,
+            bestPrice: Math.round(minPrice * 0.9),
+            tag: (p.tag as ProductTag) || undefined,
+            sizes: sizes,
+            colors: [colorName],
+            fit: (p.fit as ProductFit) || undefined,
+            description: p.description || p.shortDescription || undefined,
+            inStock: p.isActive && colorVariants.some(v => (v.stock || 0) > 0),
+            href: href,
+          });
+        });
       });
+
+      return expanded;
     }
     return MOCK_PRODUCTS;
   }, [dbProducts, categoryMap]);
@@ -251,7 +315,8 @@ export function useProductFilters() {
           p.category.toLowerCase().includes(q) ||
           (p.subCategory && p.subCategory.toLowerCase().includes(q)) ||
           (p.description && p.description.toLowerCase().includes(q)) ||
-          (p.tag && p.tag.toLowerCase().includes(q))
+          (p.tag && p.tag.toLowerCase().includes(q)) ||
+          (p.currentColor && p.currentColor.toLowerCase().includes(q))
       );
     }
 

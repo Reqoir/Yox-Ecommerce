@@ -1,17 +1,20 @@
 "use client";
 
 import React, { useState, use, useEffect } from 'react';
-import { notFound } from 'next/navigation';
+import { notFound, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Heart, Share2, Tag, Loader2, Minus, Plus, ShoppingBag, Droplets, Ruler, Scissors, ChevronDown } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { productsApi } from '@/lib/api/products';
 import { useCartStore } from '@/store/useCartStore';
+import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { toast } from 'sonner';
 import { ProductReviews } from '@/components/features/product/product-reviews';
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const searchParams = useSearchParams();
+  const colorFromUrl = searchParams.get('color');
   
   const { data: product, isLoading, error } = useQuery({
     queryKey: ['product', resolvedParams.id],
@@ -25,6 +28,26 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
   const addItem = useCartStore((state) => state.addItem);
   const cartItems = useCartStore((state) => state.items);
+  const { isFavourite, toggleFavourite } = useFavouritesStore();
+  const isFav = product ? isFavourite(product.id) : false;
+
+  const handleToggleWishlist = () => {
+    if (!product) return;
+    toggleFavourite({
+      id: product.id,
+      name: product.name,
+      category: typeof product.categoryId === 'string' ? product.categoryId : 'Apparel',
+      image: images[0] || product.thumbnail || '/images/product-1.jpeg',
+      price: currentPrice,
+      comparePrice: originalPrice || undefined,
+      inStock: !!activeVariant?.stock && activeVariant.stock > 0,
+    });
+    if (isFav) {
+      toast.info(`Removed ${product.name} from wishlist`);
+    } else {
+      toast.success(`Added ${product.name} to wishlist`);
+    }
+  };
 
   const handleQuantity = (type: 'inc' | 'dec') => {
     if (type === 'inc') {
@@ -39,9 +62,23 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   useEffect(() => {
     if (product) {
       if (product.variants && product.variants.length > 0) {
-        const defaultVariant = product.variants.find(v => v.isDefault) || product.variants[0];
-        setSelectedColor(defaultVariant.color);
-        setSelectedSize(defaultVariant.size);
+        if (colorFromUrl) {
+          const matchedVariant = product.variants.find(
+            (v) => v.color && v.color.trim().toLowerCase() === colorFromUrl.trim().toLowerCase()
+          );
+          if (matchedVariant) {
+            setSelectedColor(matchedVariant.color);
+            setSelectedSize(matchedVariant.size || null);
+          } else {
+            const defaultVariant = product.variants.find(v => v.isDefault) || product.variants[0];
+            setSelectedColor(defaultVariant.color);
+            setSelectedSize(defaultVariant.size || null);
+          }
+        } else {
+          const defaultVariant = product.variants.find(v => v.isDefault) || product.variants[0];
+          setSelectedColor(defaultVariant.color);
+          setSelectedSize(defaultVariant.size || null);
+        }
       }
 
       // Update Document Title & SEO meta dynamically
@@ -283,12 +320,20 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               <button 
                 onClick={handleAddToBasket}
                 disabled={!activeVariant?.stock || activeVariant.stock <= 0}
-                className="flex-1 flex items-center justify-center h-[48px] rounded-none bg-black text-white text-[12px] font-bold hover:bg-gray-800 transition-colors tracking-widest uppercase disabled:opacity-50"
+                className="flex-1 flex items-center justify-center h-[48px] rounded-none bg-black text-white text-[12px] font-bold hover:bg-gray-800 transition-colors tracking-widest uppercase disabled:opacity-50 cursor-pointer"
               >
                 {activeVariant?.stock && activeVariant.stock > 0 ? 'Add To Bag' : 'Out Of Stock'}
               </button>
-              <button className="flex-1 flex items-center justify-center h-[48px] rounded-none bg-[#E5DCC5] text-[12px] font-bold text-gray-900 hover:bg-[#d6ccb2] transition-colors tracking-widest uppercase">
+              <button className="flex-1 flex items-center justify-center h-[48px] rounded-none bg-[#E5DCC5] text-[12px] font-bold text-gray-900 hover:bg-[#d6ccb2] transition-colors tracking-widest uppercase cursor-pointer">
                 Buy It Now
+              </button>
+              <button
+                onClick={handleToggleWishlist}
+                className="w-full sm:w-[48px] h-[48px] flex items-center justify-center border border-black hover:bg-gray-100 transition-colors cursor-pointer shrink-0"
+                title={isFav ? "Remove from Wishlist" : "Add to Wishlist"}
+                aria-label={isFav ? "Remove from Wishlist" : "Add to Wishlist"}
+              >
+                <Heart size={20} className={isFav ? "fill-red-500 text-red-500 transition-colors" : "text-black transition-colors"} />
               </button>
             </div>
 

@@ -3,7 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Search, Menu, X, ArrowRight, LogOut, ChevronDown, Shield } from 'lucide-react';
+import { useFavouritesStore } from '@/store/useFavouritesStore';
+import { Heart, Search, Menu, X, ArrowRight, LogOut, ChevronDown, Shield } from 'lucide-react';
 import { IoPersonOutline } from "react-icons/io5";
 import { BsHandbag } from "react-icons/bs";
 import { useProductFilters } from '@/hooks/useProductFilters';
@@ -18,6 +19,7 @@ export function Navbar() {
   const user = useAuthStore((state) => state.user);
   const logoutUserStore = useAuthStore((state) => state.logoutUser);
   const cartCount = useCartStore((state) => state.getItemCount());
+  const favouritesCount = useFavouritesStore((state) => state.items.length);
   const [mounted, setMounted] = useState(false);
   
   const [inputValue, setInputValue] = useState(searchQuery);
@@ -76,6 +78,7 @@ export function Navbar() {
   useEffect(() => {
     if (user) {
       useCartStore.getState().syncWithServer();
+      useFavouritesStore.getState().fetchWishlist();
     }
   }, [user]);
 
@@ -263,6 +266,14 @@ export function Navbar() {
                     <IoPersonOutline size={15} className="text-gray-500" />
                     <span>My Profile</span>
                   </Link>
+                  <Link
+                    href="/favourites"
+                    onClick={() => setIsUserDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <Heart size={15} className="text-gray-500" />
+                    <span>My Wishlist</span>
+                  </Link>
                   {user.permissions?.includes('admin:access') && (
                     <Link
                       href="/admin"
@@ -287,6 +298,18 @@ export function Navbar() {
               </div>
             )}
           </div>
+
+          {/* Wishlist Icon */}
+          <Link href="/favourites" className="flex items-center relative text-black hover:opacity-70 transition-opacity" title="Wishlist">
+            <div className="relative">
+              <Heart size={21} />
+              {mounted && favouritesCount > 0 && (
+                <span className="absolute -top-1 -right-2 bg-black text-white text-[10px] font-bold h-4 px-1 min-w-[16px] rounded-full flex items-center justify-center">
+                  {favouritesCount}
+                </span>
+              )}
+            </div>
+          </Link>
 
           {/* Mobile Search Trigger */}
           <button 
