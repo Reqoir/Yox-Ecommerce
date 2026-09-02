@@ -86,6 +86,12 @@ export class ProductVariantRepository implements IProductVariantRepository {
     return doc ? this.mapToDomain(doc) : null;
   }
 
+  async findByBarcode(barcode: string): Promise<ProductVariant | null> {
+    if (!barcode || !barcode.trim()) return null;
+    const doc = await ProductVariantModel.findOne({ barcode: barcode.trim() }).exec();
+    return doc ? this.mapToDomain(doc) : null;
+  }
+
   async findAll(query: any = {}): Promise<{ data: ProductVariant[]; total: number }> {
     const filter: any = {};
     if (query.productId) filter.productId = query.productId;

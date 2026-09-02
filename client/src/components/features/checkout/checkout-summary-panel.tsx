@@ -46,12 +46,12 @@ export function CheckoutSummaryPanel() {
         shippingAddress: {
           fullName: selectedAddress.fullName,
           phone: selectedAddress.phone,
-          streetAddress: `${selectedAddress.streetAddress}${selectedAddress.landmark ? `, ${selectedAddress.landmark}` : ''}`,
-          landmark: selectedAddress.landmark || '',
+          streetAddress: `${(selectedAddress as any).streetAddress || (selectedAddress as any).street || ''}${((selectedAddress as any).landmark) ? `, ${(selectedAddress as any).landmark}` : ''}`,
+          landmark: (selectedAddress as any).landmark || '',
           city: selectedAddress.city,
           state: selectedAddress.state,
-          country: 'India',
-          postalCode: selectedAddress.pincode || '400001',
+          country: selectedAddress.country || 'India',
+          postalCode: (selectedAddress as any).pincode || (selectedAddress as any).zipCode || '400001',
         },
         paymentMethod: paymentMethod,
       });
@@ -100,8 +100,8 @@ export function CheckoutSummaryPanel() {
             Shipping To
           </span>
           <p className="font-bold text-gray-900">{selectedAddress.fullName}</p>
-          <p className="text-gray-600 truncate">{selectedAddress.streetAddress}, {selectedAddress.city}</p>
-          <p className="text-gray-500 font-medium">Pin: {selectedAddress.pincode}</p>
+          <p className="text-gray-600 truncate">{(selectedAddress as any).streetAddress || (selectedAddress as any).street || ''}, {selectedAddress.city}</p>
+          <p className="text-gray-500 font-medium">Pin: {(selectedAddress as any).pincode || (selectedAddress as any).zipCode || ''}</p>
         </div>
       ) : (
         <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded p-3 mb-5 text-xs font-semibold">

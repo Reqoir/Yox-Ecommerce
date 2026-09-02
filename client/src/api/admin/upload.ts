@@ -12,5 +12,20 @@ export const uploadApi = {
     });
     
     return response.data.data.url;
+  },
+
+  uploadMultipleImages: async (files: File[]): Promise<string[]> => {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('images', file);
+    });
+
+    const response = await apiClient.post<{ data: { urls: string[] } }>('/upload/images', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+
+    return response.data.data.urls || [];
   }
 };

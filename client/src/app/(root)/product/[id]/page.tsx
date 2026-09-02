@@ -35,12 +35,31 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     }
   };
 
-  // Initialize selected variants when data loads
+  // Initialize selected variants and SEO metadata when data loads
   useEffect(() => {
-    if (product && product.variants && product.variants.length > 0) {
-      const defaultVariant = product.variants.find(v => v.isDefault) || product.variants[0];
-      setSelectedColor(defaultVariant.color);
-      setSelectedSize(defaultVariant.size);
+    if (product) {
+      if (product.variants && product.variants.length > 0) {
+        const defaultVariant = product.variants.find(v => v.isDefault) || product.variants[0];
+        setSelectedColor(defaultVariant.color);
+        setSelectedSize(defaultVariant.size);
+      }
+
+      // Update Document Title & SEO meta dynamically
+      if (typeof document !== 'undefined') {
+        const title = product.seoTitle || `${product.name} | YOX Apparel`;
+        document.title = title;
+
+        const metaDesc = document.querySelector('meta[name="description"]');
+        const description = product.seoDescription || product.shortDescription || product.description || `Shop ${product.name} online at YOX.`;
+        if (metaDesc) {
+          metaDesc.setAttribute('content', description);
+        } else {
+          const meta = document.createElement('meta');
+          meta.name = 'description';
+          meta.content = description;
+          document.head.appendChild(meta);
+        }
+      }
     }
   }, [product]);
 

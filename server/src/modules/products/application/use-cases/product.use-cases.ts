@@ -86,7 +86,7 @@ export class CreateProductUseCase implements IUseCase<CreateProductRequestDTO, P
         images: v.images || [],
         isDefault: v.isDefault || false,
         isActive: v.isActive !== undefined ? v.isActive : true,
-        size: v.size,
+        size: v.size ? v.size.trim().toUpperCase() : null,
       }));
       savedVariants = await this.variantRepo.saveMany(variantEntities);
     }
@@ -133,7 +133,7 @@ export class UpdateProductUseCase implements IUseCase<{ id: string; data: Update
         images: v.images || [],
         isDefault: v.isDefault || false,
         isActive: v.isActive !== undefined ? v.isActive : true,
-        size: v.size,
+        size: v.size ? v.size.trim().toUpperCase() : null,
       }));
       await this.variantRepo.saveMany(variantEntities);
     }
@@ -169,6 +169,22 @@ export class GetProductByIdUseCase implements IUseCase<string, ProductResponseDT
     const product = await this.productRepo.findById(id);
     if (!product) throw new Error('Product not found');
     const variants = await this.variantRepo.findByProductId(id);
+    return mapToResponseDTO(product, variants);
+  }
+}
+
+export class GetProductByBarcodeUseCase implements IUseCase<string, ProductResponseDTO | null> {
+  constructor(
+    private readonly productRepo: IProductRepository,
+    private readonly variantRepo: IProductVariantRepository
+  ) {}
+
+  async execute(barcode: string): Promise<ProductResponseDTO | null> {
+    const variant = await this.variantRepo.findByBarcode(barcode);
+    if (!variant) return null;
+    const product = await this.productRepo.findById(variant.productId);
+    if (!product) return null;
+    const variants = await this.variantRepo.findByProductId(product.id);
     return mapToResponseDTO(product, variants);
   }
 }

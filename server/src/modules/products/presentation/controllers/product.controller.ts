@@ -11,6 +11,7 @@ import {
   UpdateProductUseCase, 
   DeleteProductUseCase, 
   GetProductByIdUseCase, 
+  GetProductByBarcodeUseCase,
   GetAllProductsUseCase,
   GetFeaturedProductsUseCase,
   GetLatestProductsUseCase,
@@ -28,6 +29,7 @@ export class ProductController {
     private readonly updateProductUseCase: UpdateProductUseCase,
     private readonly deleteProductUseCase: DeleteProductUseCase,
     private readonly getProductByIdUseCase: GetProductByIdUseCase,
+    private readonly getProductByBarcodeUseCase: GetProductByBarcodeUseCase,
     private readonly getAllProductsUseCase: GetAllProductsUseCase,
     private readonly getFeaturedProductsUseCase: GetFeaturedProductsUseCase,
     private readonly getLatestProductsUseCase: GetLatestProductsUseCase,
@@ -59,6 +61,20 @@ export class ProductController {
       const { id } = req.params;
       const result = await this.getProductByIdUseCase.execute(id);
       ApiResponse.success(res, result, 'Product retrieved successfully', HttpStatus.OK);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getByBarcode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { barcode } = req.params;
+      const result = await this.getProductByBarcodeUseCase.execute(barcode);
+      if (!result) {
+        ApiResponse.error(res, 'No product found with this barcode', HttpStatus.NOT_FOUND);
+        return;
+      }
+      ApiResponse.success(res, result, 'Product retrieved successfully by barcode', HttpStatus.OK);
     } catch (error) {
       next(error);
     }

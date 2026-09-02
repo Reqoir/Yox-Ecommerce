@@ -70,6 +70,16 @@ export const productApi = {
     const response = await apiClient.get<{ data: Product }>(`/products/${id}`);
     return response.data.data;
   },
+
+  getByBarcode: async (barcode: string): Promise<Product | null> => {
+    try {
+      const response = await apiClient.get<{ data: Product }>(`/products/by-barcode/${encodeURIComponent(barcode)}`);
+      return response.data.data;
+    } catch (err: any) {
+      if (err?.response?.status === 404) return null;
+      throw err;
+    }
+  },
   
   create: async (data: CreateProductDTO) => {
     const response = await apiClient.post<{ data: Product }>('/products', data);

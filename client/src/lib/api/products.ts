@@ -15,11 +15,17 @@ export interface BackendProductVariant {
 export interface BackendProduct {
   id: string;
   name: string;
+  slug?: string;
   categoryId: string;
+  subCategoryId?: string | null;
+  brandId?: string | null;
+  fit?: string | null;
   shortDescription?: string;
   description?: string;
   thumbnail: string;
   tag?: string;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
   variants: BackendProductVariant[];
 }
 

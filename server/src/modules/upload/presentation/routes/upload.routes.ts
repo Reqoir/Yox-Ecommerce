@@ -11,3 +11,4 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 uploadRouter.post('/image', requireAuth, upload.single('image'), uploadController.uploadImage);
+uploadRouter.post('/images', requireAuth, upload.array('images', 10), uploadController.uploadImages);

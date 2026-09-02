@@ -14,6 +14,7 @@ import {
   UpdateProductUseCase, 
   DeleteProductUseCase, 
   GetProductByIdUseCase, 
+  GetProductByBarcodeUseCase,
   GetAllProductsUseCase,
   GetFeaturedProductsUseCase,
   GetLatestProductsUseCase,
@@ -31,6 +32,7 @@ const productController = new ProductController(
   new UpdateProductUseCase(productRepo, variantRepo),
   new DeleteProductUseCase(productRepo, variantRepo),
   new GetProductByIdUseCase(productRepo, variantRepo),
+  new GetProductByBarcodeUseCase(productRepo, variantRepo),
   new GetAllProductsUseCase(productRepo, variantRepo),
   new GetFeaturedProductsUseCase(productRepo),
   new GetLatestProductsUseCase(productRepo),
@@ -47,6 +49,9 @@ router.get('/best-selling', productController.getBestSelling);
 
 import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
 import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
+
+// Barcode lookup
+router.get('/by-barcode/:barcode', productController.getByBarcode);
 
 // Standard CRUD
 router.get('/:id', productController.getById);
