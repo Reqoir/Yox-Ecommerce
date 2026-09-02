@@ -930,11 +930,11 @@ export default function AdminProductPage() {
 
       {/* VIEW PRODUCT DETAILS DIALOG */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent className="sm:max-w-[850px] p-0 overflow-hidden">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b">
+        <DialogContent className="sm:max-w-[850px] max-h-[92vh] flex flex-col p-0 overflow-hidden gap-0">
+          <DialogHeader className="px-6 pt-5 pb-3 border-b shrink-0">
             <DialogTitle>Product Details</DialogTitle>
           </DialogHeader>
-          <ScrollArea className="h-[65vh] px-6 py-4">
+          <ScrollArea className="flex-1 min-h-0 px-6 py-4 overflow-y-auto max-h-[calc(92vh-130px)]">
             {viewProduct && (
               <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row gap-6">
@@ -1057,7 +1057,7 @@ export default function AdminProductPage() {
               </div>
             )}
           </ScrollArea>
-          <div className="flex justify-end gap-2 p-4 border-t bg-muted/10">
+          <div className="flex justify-end gap-2 p-3.5 border-t bg-muted/10 shrink-0 mt-auto">
             <Button variant="outline" onClick={() => setIsViewOpen(false)}>Close</Button>
             <Button onClick={() => {
               setIsViewOpen(false);
@@ -1071,17 +1071,17 @@ export default function AdminProductPage() {
 
       {/* ADD / EDIT PRODUCT DIALOG WITH ALL TABS */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent className="sm:max-w-[950px] p-0 overflow-hidden">
-          <DialogHeader className="px-6 pt-6 pb-2">
+        <DialogContent className="sm:max-w-[950px] max-h-[92vh] flex flex-col p-0 overflow-hidden gap-0">
+          <DialogHeader className="px-6 pt-5 pb-2 shrink-0">
             <DialogTitle className="text-xl font-bold">{editProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
             <DialogDescription>
               {editProduct ? 'Update product details, fits, promotions, variants, media, and SEO.' : 'Create a new apparel product with automated slug, custom fit/tags, variants, and bulk media.'}
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="flex flex-col max-h-[85vh]">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="px-6 border-b flex flex-wrap gap-2">
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="px-6 border-b flex flex-wrap gap-2 shrink-0 bg-muted/10">
                 <TabsList className="w-full justify-start rounded-none border-b-0 bg-transparent p-0 overflow-x-auto">
                   <TabsTrigger value="general" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2 font-medium">General</TabsTrigger>
                   <TabsTrigger value="attributes" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2 font-medium">Fit & Promotion</TabsTrigger>
@@ -1092,7 +1092,7 @@ export default function AdminProductPage() {
                 </TabsList>
               </div>
 
-              <ScrollArea className="h-[520px]">
+              <ScrollArea className="flex-1 min-h-0 max-h-[calc(92vh-190px)] overflow-y-auto">
                 {/* GENERAL TAB */}
                 <TabsContent value="general" className="space-y-4 m-0 px-6 py-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2003,7 +2003,7 @@ export default function AdminProductPage() {
               </ScrollArea>
 
               {/* Form Footer */}
-              <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/20">
+              <div className="flex items-center justify-between px-6 py-3.5 border-t bg-muted/20 shrink-0 mt-auto">
                 <div className="text-xs text-muted-foreground">
                   {formData.colorGroups.length} Color(s) &bull; {formData.colorGroups.reduce((acc, g) => acc + g.sizes.length, 0)} Size Variant(s)
                 </div>
