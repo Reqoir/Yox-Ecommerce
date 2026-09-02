@@ -8,12 +8,14 @@ import { WishlistController } from '../controllers/wishlist.controller';
 import { WishlistRepository } from '../../infrastructure/repositories/wishlist.repository';
 import { ToggleWishlistUseCase } from '../../application/use-cases/toggle-wishlist.use-case';
 import { GetWishlistUseCase } from '../../application/use-cases/get-wishlist.use-case';
+import { ClearWishlistUseCase } from '../../application/use-cases/clear-wishlist.use-case';
 import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
 
 const wishlistRepo = new WishlistRepository();
 const toggleWishlistUseCase = new ToggleWishlistUseCase(wishlistRepo);
 const getWishlistUseCase = new GetWishlistUseCase(wishlistRepo);
-const wishlistController = new WishlistController(toggleWishlistUseCase, getWishlistUseCase);
+const clearWishlistUseCase = new ClearWishlistUseCase(wishlistRepo);
+const wishlistController = new WishlistController(toggleWishlistUseCase, getWishlistUseCase, clearWishlistUseCase);
 
 export const wishlistRoutes = Router();
 
@@ -21,3 +23,4 @@ export const wishlistRoutes = Router();
 wishlistRoutes.use(requireAuth);
 wishlistRoutes.get('/', wishlistController.getWishlist);
 wishlistRoutes.post('/toggle', wishlistController.toggleWishlist);
+wishlistRoutes.delete('/clear', wishlistController.clearWishlist);

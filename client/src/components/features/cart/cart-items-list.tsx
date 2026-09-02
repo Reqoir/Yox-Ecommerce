@@ -17,9 +17,11 @@ export function CartItemsList({ items }: CartItemsListProps) {
 
   const handleMoveToFavourites = (item: CartItem) => {
     addFavourite({
-      id: item.productId,
+      id: `${item.productId}__${item.color || 'default'}`,
+      productId: item.productId,
+      color: item.color || null,
       name: item.name,
-      category: 'Men',
+      category: 'Apparel',
       image: item.image,
       price: item.price,
       comparePrice: item.comparePrice,

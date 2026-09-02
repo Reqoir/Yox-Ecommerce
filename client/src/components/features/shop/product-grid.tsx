@@ -106,19 +106,20 @@ export function ProductGrid() {
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-10 px-1 lg:px-0">
           {finalProducts.map((product) => {
             const prodIdStr = String(product.productId || product.id);
-            const isFav = isFavourite(prodIdStr);
+            const cardColor = product.currentColor || null;
+            const isFav = isFavourite(prodIdStr, cardColor);
 
             return (
               <Link 
-                href={product.href || `/product/${product.productId || product.id}`} 
-                key={product.colorCardId || product.id} 
+                href={product.href || `/product/${product.productId || product.id}${cardColor ? `?color=${encodeURIComponent(cardColor)}` : ''}`} 
+                key={product.colorCardId || `${prodIdStr}_${cardColor || 'default'}`} 
                 className="flex flex-col group cursor-pointer"
               >
                 {/* Image Box */}
                 <div className="relative w-full aspect-[3/4] bg-[#f2f2f2] overflow-hidden mb-3">
                   <img 
                     src={product.image} 
-                    alt={`${product.name}${product.currentColor ? ` - ${product.currentColor}` : ''}`} 
+                    alt={`${product.name}${cardColor ? ` - ${cardColor}` : ''}`} 
                     className="w-full h-full object-cover object-top mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
                   />
                   
@@ -130,7 +131,9 @@ export function ProductGrid() {
                       e.preventDefault();
                       e.stopPropagation();
                       toggleFavourite({
-                        id: prodIdStr,
+                        id: `${prodIdStr}__${cardColor || 'default'}`,
+                        productId: prodIdStr,
+                        color: cardColor,
                         name: product.name,
                         category: product.category,
                         image: product.image,
@@ -139,9 +142,9 @@ export function ProductGrid() {
                         inStock: product.inStock !== false,
                       });
                       if (isFav) {
-                        toast.info(`Removed ${product.name} from wishlist`);
+                        toast.info(`Removed ${product.name}${cardColor ? ` (${cardColor})` : ''} from wishlist`);
                       } else {
-                        toast.success(`Added ${product.name} to wishlist`);
+                        toast.success(`Added ${product.name}${cardColor ? ` (${cardColor})` : ''} to wishlist`);
                       }
                     }}
                   >

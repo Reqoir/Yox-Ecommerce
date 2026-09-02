@@ -1,34 +1,31 @@
 /**
- * @file toggle-wishlist.use-case.ts
+ * @file clear-wishlist.use-case.ts
  * @layer Application
  */
 
 import { IWishlistRepository } from '../../domain/repositories/wishlist.repository.interface';
 import { Wishlist } from '../../domain/entities/wishlist.entity';
 
-export class ToggleWishlistUseCase {
+export class ClearWishlistUseCase {
   constructor(private readonly wishlistRepository: IWishlistRepository) {}
 
-  async execute(userId: string, productId: string, color?: string | null) {
+  async execute(userId: string) {
     let wishlist = await this.wishlistRepository.findByUserId(userId);
-    
     if (!wishlist) {
       wishlist = Wishlist.create({ userId, items: [] });
-    }
-
-    const trimmedColor = color ? color.trim() : null;
-    const alreadyInWishlist = wishlist.hasItem(productId, trimmedColor);
-
-    if (alreadyInWishlist) {
-      wishlist.removeItem(productId, trimmedColor);
     } else {
-      wishlist.addItem(productId, trimmedColor);
+      wishlist = Wishlist.create(
+        {
+          userId,
+          items: [],
+          createdAt: wishlist.toJSON().createdAt,
+          updatedAt: new Date(),
+        },
+        wishlist.id
+      );
     }
 
     const saved = await this.wishlistRepository.save(wishlist);
-    return {
-      ...saved.toJSON(),
-      inWishlist: !alreadyInWishlist,
-    };
+    return { ...saved.toJSON(), items: [] };
   }
 }

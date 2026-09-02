@@ -29,12 +29,15 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const addItem = useCartStore((state) => state.addItem);
   const cartItems = useCartStore((state) => state.items);
   const { isFavourite, toggleFavourite } = useFavouritesStore();
-  const isFav = product ? isFavourite(product.id) : false;
+  const isFav = product ? isFavourite(product.id, selectedColor) : false;
 
   const handleToggleWishlist = () => {
     if (!product) return;
+    const currentColor = selectedColor || activeVariant?.color || product.variants?.[0]?.color || null;
     toggleFavourite({
-      id: product.id,
+      id: `${product.id}__${currentColor || 'default'}`,
+      productId: product.id,
+      color: currentColor,
       name: product.name,
       category: typeof product.categoryId === 'string' ? product.categoryId : 'Apparel',
       image: images[0] || product.thumbnail || '/images/product-1.jpeg',
@@ -43,9 +46,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       inStock: !!activeVariant?.stock && activeVariant.stock > 0,
     });
     if (isFav) {
-      toast.info(`Removed ${product.name} from wishlist`);
+      toast.info(`Removed ${product.name}${currentColor ? ` (${currentColor})` : ''} from wishlist`);
     } else {
-      toast.success(`Added ${product.name} to wishlist`);
+      toast.success(`Added ${product.name}${currentColor ? ` (${currentColor})` : ''} to wishlist`);
     }
   };
 

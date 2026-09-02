@@ -16,6 +16,7 @@ export class WishlistRepository implements IWishlistRepository {
         userId: doc.userId.toString(),
         items: doc.items.map((i: any) => ({
           productId: i.productId.toString(),
+          color: i.color || null,
           addedAt: i.addedAt,
         })),
         createdAt: doc.createdAt,
@@ -40,6 +41,7 @@ export class WishlistRepository implements IWishlistRepository {
         userId: doc.userId.toString(),
         items: doc.items.map((i: any) => ({
           productId: i.productId.toString(),
+          color: i.color || null,
           addedAt: i.addedAt,
         })),
         createdAt: doc.createdAt,
@@ -51,7 +53,7 @@ export class WishlistRepository implements IWishlistRepository {
 
   async findByUserIdPopulated(userId: string): Promise<any> {
     return WishlistModel.findOne({ userId })
-      .populate('items.productId', 'name description price images brand stock status slug')
+      .populate('items.productId')
       .lean();
   }
 }

@@ -5,6 +5,7 @@
 
 export interface WishlistItemProps {
   productId: string;
+  color?: string | null;
   addedAt: Date;
 }
 
@@ -25,18 +26,33 @@ export class Wishlist {
   get userId() { return this.props.userId; }
   get items() { return this.props.items; }
 
-  hasItem(productId: string): boolean {
-    return this.props.items.some(item => item.productId === productId);
+  hasItem(productId: string, color?: string | null): boolean {
+    const targetColor = color ? color.trim().toLowerCase() : null;
+    return this.props.items.some(item => {
+      if (item.productId !== productId) return false;
+      const itemColor = item.color ? item.color.trim().toLowerCase() : null;
+      if (!targetColor && !itemColor) return true;
+      if (targetColor && itemColor) return targetColor === itemColor;
+      return !targetColor || !itemColor;
+    });
   }
 
-  addItem(productId: string): void {
-    if (!this.hasItem(productId)) {
-      this.props.items.push({ productId, addedAt: new Date() });
+  addItem(productId: string, color?: string | null): void {
+    if (!this.hasItem(productId, color)) {
+      this.props.items.push({ productId, color: color?.trim() || null, addedAt: new Date() });
     }
   }
 
-  removeItem(productId: string): void {
-    this.props.items = this.props.items.filter(item => item.productId !== productId);
+  removeItem(productId: string, color?: string | null): void {
+    const targetColor = color ? color.trim().toLowerCase() : null;
+    this.props.items = this.props.items.filter(item => {
+      if (item.productId !== productId) return true;
+      const itemColor = item.color ? item.color.trim().toLowerCase() : null;
+      if (targetColor && itemColor) {
+        return itemColor !== targetColor;
+      }
+      return false;
+    });
   }
 
   toJSON() {

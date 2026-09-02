@@ -7,6 +7,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IWishlistItem {
   productId: mongoose.Types.ObjectId;
+  color?: string | null;
   addedAt: Date;
 }
 
@@ -23,6 +24,7 @@ const wishlistSchema = new Schema(
     items: [
       {
         productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+        color: { type: String, default: null, trim: true },
         addedAt: { type: Date, default: Date.now },
       },
     ],
