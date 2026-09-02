@@ -14,9 +14,7 @@ import {
   Ruler, 
   Scissors, 
   ChevronDown, 
-  ChevronUp, 
   Flame, 
-  CheckCircle2, 
   AlertCircle,
   Maximize2
 } from 'lucide-react';
@@ -305,31 +303,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               );
             })}
           </div>
-
-          {/* Mobile Show More / Show Less Button (Only on mobile view when > 4 images) */}
-          {images.length > 4 && (
-            <div className="lg:hidden px-4 mt-3 mb-1">
-              {!isMobileImagesExpanded ? (
-                <button
-                  type="button"
-                  onClick={() => setIsMobileImagesExpanded(true)}
-                  className="w-full py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-xs font-bold text-gray-800 rounded flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <span>Show {images.length - 4} More Photos</span>
-                  <ChevronDown size={15} />
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsMobileImagesExpanded(false)}
-                  className="w-full py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-xs font-bold text-gray-800 rounded flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <span>Show Less</span>
-                  <ChevronUp size={15} />
-                </button>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Right Column: 35% Details & Actions */}
