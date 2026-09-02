@@ -8,7 +8,7 @@ export function PromoBanner() {
         <img 
           src="/images/linen-banner.png" 
           alt="The New Linen - The perfect balance of easy luxury. Starting at ₹999" 
-          className="w-full h-auto object-cover hover:opacity-95 transition-opacity"
+          className="w-full h-auto object-cover"
         />
       </Link>
     </section>

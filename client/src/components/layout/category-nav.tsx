@@ -14,6 +14,7 @@ function CategoryNavContent() {
 
   const [categories, setCategories] = useState<{name: string, slug: string}[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hoveredCat, setHoveredCat] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -54,18 +55,25 @@ function CategoryNavContent() {
     <div className="hidden lg:flex w-full border-b border-gray-100 bg-white sticky top-20 z-30 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
       <div className="w-[95%] max-w-7xl mx-auto flex items-center justify-center gap-10 text-[13px] font-bold text-gray-800">
         {categories.map((cat) => (
-          <div key={cat.slug} className="flex items-center group">
+          <div 
+            key={cat.slug} 
+            className="flex items-center h-full"
+            onMouseEnter={() => setHoveredCat(cat.slug)}
+            onMouseLeave={() => setHoveredCat(null)}
+          >
             <button
               onClick={() => handleCategoryClick(cat.slug)}
               className="flex items-center gap-1 cursor-pointer hover:text-[#D2925D] transition-colors whitespace-nowrap py-4"
             >
               {cat.name}
-              <ChevronDown size={14} className="text-gray-500" />
+              <ChevronDown size={14} className={`transition-transform ${hoveredCat === cat.slug ? 'rotate-180 text-[#D2925D]' : 'text-gray-500'}`} />
             </button>
             {/* Mega Menu Dropdown */}
-            <div className="absolute top-full left-0 right-0 hidden group-hover:block hover:block">
-              <MegaMenuMen />
-            </div>
+            {hoveredCat === cat.slug && (
+              <div className="absolute top-full left-0 right-0">
+                <MegaMenuMen />
+              </div>
+            )}
           </div>
         ))}
       </div>
