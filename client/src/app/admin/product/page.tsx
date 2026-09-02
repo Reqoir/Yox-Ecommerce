@@ -201,6 +201,25 @@ export default function AdminProductPage() {
     toast.success('Slug updated from product name');
   };
 
+  // Auto-fill SEO metadata
+  const handleAutoFillSeo = () => {
+    if (!formData.name) {
+      toast.error('Please enter product name first.');
+      return;
+    }
+    const cleanName = formData.name.trim();
+    const descSnippet = formData.shortDescription?.trim()
+      || (formData.description?.trim() ? formData.description.trim().slice(0, 155) : '')
+      || `Shop ${cleanName} online at YOX. High quality premium apparel, tailored fit, modern design, and fast shipping with easy returns.`;
+
+    setFormData(prev => ({
+      ...prev,
+      seoTitle: `${cleanName} | YOX Apparel`,
+      seoDescription: descSnippet,
+    }));
+    toast.success('Auto-filled SEO title and description from product details!');
+  };
+
   // Available subcategories based on selected parent categoryId
   const availableSubCategories = useMemo(() => {
     if (formData.categoryId === 'none') return [];
@@ -1943,28 +1962,67 @@ export default function AdminProductPage() {
 
                 {/* SEO TAB WITH LIVE GOOGLE SEARCH PREVIEW */}
                 <TabsContent value="seo" className="space-y-6 m-0 px-6 py-4">
+                  <div className="flex items-center justify-between pb-2 border-b">
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        Search Engine Optimization
+                      </h4>
+                      <p className="text-[11px] text-muted-foreground">
+                        Boost discoverability of this product on Google and other search engines.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAutoFillSeo}
+                      className="gap-1.5 text-xs text-primary border-primary/30 hover:bg-primary/5"
+                    >
+                      <Sparkles className="h-3.5 w-3.5 text-amber-500" /> Auto-fill SEO
+                    </Button>
+                  </div>
+
                   <div className="space-y-4">
+                    {/* SEO Meta Title */}
                     <div className="grid gap-2">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="seoTitle" className="font-semibold">SEO Meta Title</Label>
-                        <span className={`text-[11px] font-mono ${formData.seoTitle.length > 60 ? 'text-amber-500' : 'text-muted-foreground'}`}>
-                          {formData.seoTitle.length} / 60 characters
+                        <Label htmlFor="seoTitle" className="font-semibold text-xs">
+                          SEO Meta Title
+                        </Label>
+                        <span
+                          className={`text-[11px] font-mono ${
+                            formData.seoTitle.length > 60
+                              ? 'text-amber-500 font-bold'
+                              : 'text-muted-foreground'
+                          }`}
+                        >
+                          {formData.seoTitle.length}/60 chars (Recommended: 50-60)
                         </span>
                       </div>
                       <Input
                         id="seoTitle"
                         value={formData.seoTitle}
                         onChange={(e) => setFormData({ ...formData, seoTitle: e.target.value })}
-                        placeholder={formData.name || 'e.g. Buy Premium Oxford Cotton Shirt Online | YOX'}
+                        placeholder={formData.name ? `${formData.name} | YOX Apparel` : 'e.g. Classic Oxford Cotton Shirt | YOX Apparel'}
+                        className="text-sm"
                       />
-                      <p className="text-[11px] text-muted-foreground">Defaults to Product Name if left blank.</p>
+                      <p className="text-[11px] text-muted-foreground">Appears as the clickable headline in Google search results.</p>
                     </div>
 
+                    {/* SEO Meta Description */}
                     <div className="grid gap-2">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="seoDescription" className="font-semibold">SEO Meta Description</Label>
-                        <span className={`text-[11px] font-mono ${formData.seoDescription.length > 160 ? 'text-amber-500' : 'text-muted-foreground'}`}>
-                          {formData.seoDescription.length} / 160 characters
+                        <Label htmlFor="seoDescription" className="font-semibold text-xs">
+                          SEO Meta Description
+                        </Label>
+                        <span
+                          className={`text-[11px] font-mono ${
+                            formData.seoDescription.length > 160
+                              ? 'text-amber-500 font-bold'
+                              : 'text-muted-foreground'
+                          }`}
+                        >
+                          {formData.seoDescription.length}/160 chars (Recommended: 120-160)
                         </span>
                       </div>
                       <Textarea
@@ -1973,29 +2031,44 @@ export default function AdminProductPage() {
                         value={formData.seoDescription}
                         onChange={(e) => setFormData({ ...formData, seoDescription: e.target.value })}
                         placeholder={formData.shortDescription || 'Shop the highest quality tailored clothing at YOX. Free shipping on all orders...'}
+                        className="text-sm"
                       />
                       <p className="text-[11px] text-muted-foreground">Displayed as the summary snippet under Google search results.</p>
                     </div>
 
                     {/* Google Search Result Live Preview Card */}
-                    <div className="border rounded-xl p-4 bg-muted/10 space-y-2">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                        <ExternalLink className="h-3 w-3" /> Live Google Search Result Preview
-                      </span>
-                      <div className="bg-card border rounded-lg p-4 font-sans space-y-1 shadow-sm">
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <span className="text-emerald-700 dark:text-emerald-400 font-medium">https://yox.com</span>
-                          <span>›</span>
-                          <span>product</span>
-                          <span>›</span>
-                          <span className="font-mono">{formData.slug || 'product-slug'}</span>
+                    <div className="border rounded-xl p-4 bg-muted/10 space-y-2 mt-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                          <Search className="h-3 w-3 text-blue-600" /> Google Search Live Preview
+                        </span>
+                        <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                          Desktop Snippet
+                        </span>
+                      </div>
+
+                      <div className="p-3 bg-white dark:bg-card border rounded-lg space-y-1 font-sans shadow-xs">
+                        {/* URL */}
+                        <div className="flex items-center gap-1.5 text-xs text-[#202124] dark:text-gray-300">
+                          <div className="h-4 w-4 rounded-full bg-gray-100 flex items-center justify-center text-[9px] font-bold text-gray-700">
+                            Y
+                          </div>
+                          <span className="text-[12px] text-[#202124] dark:text-gray-300 font-medium">YOX</span>
+                          <span className="text-gray-400 text-xs">› product › {formData.slug || 'product-slug'}</span>
                         </div>
-                        <h4 className="text-blue-700 dark:text-blue-400 font-semibold text-base hover:underline cursor-pointer line-clamp-1">
-                          {formData.seoTitle || formData.name || 'Product Title | YOX Apparel'}
-                        </h4>
-                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                          {formData.seoDescription || formData.shortDescription || formData.description || 'Explore premium essentials, modern apparel, and bespoke fits curated for contemporary lifestyles at YOX.'}
-                        </p>
+
+                        {/* Title Link */}
+                        <div className="text-[16px] font-medium text-[#1a0dab] dark:text-[#8ab4f8] hover:underline cursor-pointer line-clamp-1 leading-snug">
+                          {formData.seoTitle || formData.name || 'Product Title'} | YOX Apparel
+                        </div>
+
+                        {/* Snippet Description */}
+                        <div className="text-[13px] text-[#4d5156] dark:text-gray-400 line-clamp-2 leading-relaxed">
+                          {formData.seoDescription ||
+                            formData.shortDescription ||
+                            formData.description ||
+                            'Explore premium essentials, modern apparel, and bespoke fits curated for contemporary lifestyles at YOX.'}
+                        </div>
                       </div>
                     </div>
                   </div>
