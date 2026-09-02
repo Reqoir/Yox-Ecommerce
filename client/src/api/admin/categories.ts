@@ -33,8 +33,11 @@ export interface UpdateCategoryDTO extends Partial<CreateCategoryDTO> {}
 
 export const categoryApi = {
   getAll: async () => {
-    const response = await apiClient.get<{ data: { data: Category[]; total: number } }>('/categories');
-    return response.data.data.data || [];
+    const response = await apiClient.get<any>('/categories');
+    const resData = response.data?.data;
+    if (Array.isArray(resData)) return resData;
+    if (Array.isArray(resData?.data)) return resData.data;
+    return [];
   },
   
   getById: async (id: string) => {

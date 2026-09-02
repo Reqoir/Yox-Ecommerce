@@ -3,7 +3,7 @@ import apiClient from '@/lib/axios';
 export const settingsApi = {
   getSetting: async <T>(key: string): Promise<T | null> => {
     const response = await apiClient.get<{ success: boolean; data: T }>(`/settings/${key}`);
-    return response.data.data;
+    return response.data?.data ?? null;
   },
   
   updateSetting: async <T>(key: string, value: T): Promise<T> => {
