@@ -143,14 +143,14 @@ export default function AdminCategoryPage() {
   // Helper to find parent name
   const getParentName = (parentId?: string | null) => {
     if (!parentId) return '-';
-    const parent = categories.find(c => c.id === parentId);
+    const parent = categories.find((c: Category) => c.id === parentId);
     return parent ? parent.name : 'Unknown';
   };
 
   // Prevent selecting itself or its children as a parent
-  const availableParents = categories.filter(c => !editCategory || c.id !== editCategory.id);
+  const availableParents = categories.filter((c: Category) => !editCategory || c.id !== editCategory.id);
 
-  const filteredCategories = categories.filter((category) => {
+  const filteredCategories = categories.filter((category: Category) => {
     const matchesSearch = category.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           category.slug.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' 
