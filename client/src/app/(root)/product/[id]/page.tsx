@@ -15,7 +15,6 @@ import {
   Scissors, 
   ChevronDown, 
   Flame, 
-  AlertCircle,
   Maximize2
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -336,20 +335,13 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               )}
             </div>
 
-            {/* Stock / Low Stock Alert (Only shown when out of stock or low stock) */}
-            {(isOutOfStock || isLowStock) && (
+            {/* Low Stock Alert (Only shown when stock is running low) */}
+            {isLowStock && (
               <div className="mb-4">
-                {isOutOfStock ? (
-                  <div className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2.5 py-1 rounded">
-                    <AlertCircle size={14} className="shrink-0" />
-                    <span>Currently Out of Stock</span>
-                  </div>
-                ) : (
-                  <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2.5 py-1 rounded animate-pulse">
-                    <Flame size={14} className="text-amber-600 shrink-0" />
-                    <span>Hurry, only {variantStock} left in stock!</span>
-                  </div>
-                )}
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2.5 py-1 rounded animate-pulse">
+                  <Flame size={14} className="text-amber-600 shrink-0" />
+                  <span>Hurry, only {variantStock} left in stock!</span>
+                </div>
               </div>
             )}
             
