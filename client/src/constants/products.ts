@@ -7,7 +7,14 @@ export const MOCK_PRODUCTS: Product[] = [
     category: 'T-Shirts',
     subCategory: 'Polo T-Shirts',
     image: '/images/new-popular/shirts/1.webp',
-    images: ['/images/new-popular/shirts/1.webp', '/images/new-popular/shirts/2.webp', '/images/new-popular/shirts/3.webp', '/images/new-popular/shirts/4.webp'],
+    images: [
+      '/images/new-popular/shirts/1.webp',
+      '/images/new-popular/shirts/2.webp',
+      '/images/new-popular/shirts/3.webp',
+      '/images/new-popular/shirts/4.webp',
+      '/images/new-popular/shirts/5.webp',
+      '/images/new-popular/shirts/6.webp'
+    ],
     price: 799,
     originalPrice: 999,
     bestPrice: 699,
@@ -25,6 +32,14 @@ export const MOCK_PRODUCTS: Product[] = [
     category: 'T-Shirts',
     subCategory: 'Oversized Tees',
     image: '/images/new-popular/shirts/2.webp',
+    images: [
+      '/images/new-popular/shirts/2.webp',
+      '/images/new-popular/shirts/3.webp',
+      '/images/new-popular/shirts/4.webp',
+      '/images/new-popular/shirts/5.webp',
+      '/images/new-popular/shirts/7.webp',
+      '/images/new-popular/shirts/8.webp'
+    ],
     price: 559,
     originalPrice: 699,
     bestPrice: 489,
