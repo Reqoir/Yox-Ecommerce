@@ -21,15 +21,33 @@ export function AddressSection() {
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
-    pincode: '',
-    streetAddress: '',
-    landmark: '',
+    zipCode: '',
+    street: '',
     city: '',
     state: '',
-    type: 'HOME' as 'HOME' | 'WORK',
+    country: 'India',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
+    
+    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
+    else if (!/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) newErrors.phone = 'Enter a valid 10-digit number';
+    
+    if (!formData.zipCode.trim()) newErrors.zipCode = 'Pincode is required';
+    else if (!/^\d{6}$/.test(formData.zipCode.replace(/\D/g, ''))) newErrors.zipCode = 'Enter a valid 6-digit pincode';
+
+    if (!formData.street.trim()) newErrors.street = 'Street address is required';
+    if (!formData.city.trim()) newErrors.city = 'City is required';
+    if (!formData.state.trim()) newErrors.state = 'State is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   useEffect(() => {
     fetchAddresses();
@@ -37,8 +55,7 @@ export function AddressSection() {
 
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.fullName || !formData.phone || !formData.pincode || !formData.streetAddress || !formData.city || !formData.state) {
-      toast.error('Please fill in all required address fields');
+    if (!validate()) {
       return;
     }
 
@@ -47,12 +64,11 @@ export function AddressSection() {
       await addAddress({
         fullName: formData.fullName,
         phone: formData.phone,
-        pincode: formData.pincode,
-        streetAddress: formData.streetAddress,
-        landmark: formData.landmark || undefined,
+        zipCode: formData.zipCode,
+        street: formData.street,
         city: formData.city,
         state: formData.state,
-        type: formData.type,
+        country: formData.country,
       });
 
       toast.success('New delivery address added');
@@ -60,13 +76,13 @@ export function AddressSection() {
       setFormData({
         fullName: '',
         phone: '',
-        pincode: '',
-        streetAddress: '',
-        landmark: '',
+        zipCode: '',
+        street: '',
         city: '',
         state: '',
-        type: 'HOME',
+        country: 'India',
       });
+      setErrors({});
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to add address');
     } finally {
@@ -130,10 +146,6 @@ export function AddressSection() {
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-sm text-gray-900">{addr.fullName}</span>
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-gray-100 text-gray-700 rounded">
-                      {addr.type === 'HOME' ? <Home size={10} /> : <Briefcase size={10} />}
-                      {addr.type}
-                    </span>
                   </div>
 
                   {isSelected && (
@@ -141,10 +153,9 @@ export function AddressSection() {
                   )}
                 </div>
 
-                <p className="text-xs text-gray-600 mb-1 leading-relaxed">{addr.streetAddress}</p>
-                {addr.landmark && <p className="text-xs text-gray-500 mb-1">Landmark: {addr.landmark}</p>}
+                <p className="text-xs text-gray-600 mb-1 leading-relaxed">{addr.street}</p>
                 <p className="text-xs font-medium text-gray-800 mb-2">
-                  {addr.city}, {addr.state} - <span className="font-bold">{addr.pincode}</span>
+                  {addr.city}, {addr.state} - <span className="font-bold">{addr.zipCode}</span>
                 </p>
                 <p className="text-xs text-gray-500">Phone: <span className="font-semibold text-gray-800">{addr.phone}</span></p>
 
@@ -175,7 +186,10 @@ export function AddressSection() {
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-gray-100">
               <h3 className="text-base font-bold text-gray-900">Add Delivery Address</h3>
               <button
-                onClick={() => setIsAddAddressOpen(false)}
+                onClick={() => {
+                  setIsAddAddressOpen(false);
+                  setErrors({});
+                }}
                 className="text-gray-400 hover:text-gray-700 p-1"
               >
                 <X size={18} />
@@ -191,9 +205,15 @@ export function AddressSection() {
                     required
                     placeholder="e.g. John Doe"
                     value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-[#1A2E4C]"
+                    onChange={(e) => {
+                      setFormData({ ...formData, fullName: e.target.value });
+                      if (errors.fullName) setErrors({ ...errors, fullName: '' });
+                    }}
+                    className={`w-full px-3 py-2 border rounded outline-none bg-white text-gray-900 placeholder-gray-400 ${
+                      errors.fullName ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#1A2E4C]'
+                    }`}
                   />
+                  {errors.fullName && <p className="text-red-500 text-[10px] mt-1">{errors.fullName}</p>}
                 </div>
                 <div>
                   <label className="block text-gray-700 font-semibold mb-1">Phone Number *</label>
@@ -202,9 +222,15 @@ export function AddressSection() {
                     required
                     placeholder="10-digit mobile number"
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-[#1A2E4C]"
+                    onChange={(e) => {
+                      setFormData({ ...formData, phone: e.target.value });
+                      if (errors.phone) setErrors({ ...errors, phone: '' });
+                    }}
+                    className={`w-full px-3 py-2 border rounded outline-none bg-white text-gray-900 placeholder-gray-400 ${
+                      errors.phone ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#1A2E4C]'
+                    }`}
                   />
+                  {errors.phone && <p className="text-red-500 text-[10px] mt-1">{errors.phone}</p>}
                 </div>
               </div>
 
@@ -215,37 +241,16 @@ export function AddressSection() {
                     type="text"
                     required
                     placeholder="6-digit pincode"
-                    value={formData.pincode}
-                    onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-[#1A2E4C]"
+                    value={formData.zipCode}
+                    onChange={(e) => {
+                      setFormData({ ...formData, zipCode: e.target.value });
+                      if (errors.zipCode) setErrors({ ...errors, zipCode: '' });
+                    }}
+                    className={`w-full px-3 py-2 border rounded outline-none bg-white text-gray-900 placeholder-gray-400 ${
+                      errors.zipCode ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#1A2E4C]'
+                    }`}
                   />
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-1">Address Type</label>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, type: 'HOME' })}
-                      className={`flex-1 py-2 rounded font-bold border text-center ${
-                        formData.type === 'HOME'
-                          ? 'border-[#1A2E4C] bg-[#1A2E4C] text-white'
-                          : 'border-gray-300 text-gray-700'
-                      }`}
-                    >
-                      HOME
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, type: 'WORK' })}
-                      className={`flex-1 py-2 rounded font-bold border text-center ${
-                        formData.type === 'WORK'
-                          ? 'border-[#1A2E4C] bg-[#1A2E4C] text-white'
-                          : 'border-gray-300 text-gray-700'
-                      }`}
-                    >
-                      WORK
-                    </button>
-                  </div>
+                  {errors.zipCode && <p className="text-red-500 text-[10px] mt-1">{errors.zipCode}</p>}
                 </div>
               </div>
 
@@ -255,10 +260,16 @@ export function AddressSection() {
                   required
                   rows={2}
                   placeholder="Flat/House No, Building Name, Street Name"
-                  value={formData.streetAddress}
-                  onChange={(e) => setFormData({ ...formData, streetAddress: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-[#1A2E4C]"
+                  value={formData.street}
+                  onChange={(e) => {
+                    setFormData({ ...formData, street: e.target.value });
+                    if (errors.street) setErrors({ ...errors, street: '' });
+                  }}
+                  className={`w-full px-3 py-2 border rounded outline-none bg-white text-gray-900 placeholder-gray-400 ${
+                    errors.street ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#1A2E4C]'
+                  }`}
                 />
+                {errors.street && <p className="text-red-500 text-[10px] mt-1">{errors.street}</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -269,9 +280,15 @@ export function AddressSection() {
                     required
                     placeholder="e.g. Mumbai"
                     value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-[#1A2E4C]"
+                    onChange={(e) => {
+                      setFormData({ ...formData, city: e.target.value });
+                      if (errors.city) setErrors({ ...errors, city: '' });
+                    }}
+                    className={`w-full px-3 py-2 border rounded outline-none bg-white text-gray-900 placeholder-gray-400 ${
+                      errors.city ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#1A2E4C]'
+                    }`}
                   />
+                  {errors.city && <p className="text-red-500 text-[10px] mt-1">{errors.city}</p>}
                 </div>
                 <div>
                   <label className="block text-gray-700 font-semibold mb-1">State *</label>
@@ -280,9 +297,15 @@ export function AddressSection() {
                     required
                     placeholder="e.g. Maharashtra"
                     value={formData.state}
-                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-[#1A2E4C]"
+                    onChange={(e) => {
+                      setFormData({ ...formData, state: e.target.value });
+                      if (errors.state) setErrors({ ...errors, state: '' });
+                    }}
+                    className={`w-full px-3 py-2 border rounded outline-none bg-white text-gray-900 placeholder-gray-400 ${
+                      errors.state ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#1A2E4C]'
+                    }`}
                   />
+                  {errors.state && <p className="text-red-500 text-[10px] mt-1">{errors.state}</p>}
                 </div>
               </div>
 

@@ -191,6 +191,39 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               <span className="underline cursor-pointer hover:text-black decoration-gray-400">Shipping</span> calculated at checkout.
             </div>
 
+            {/* Color Selector */}
+            {uniqueColors.length > 0 && (
+              <div className="mb-6">
+                <div className="text-[12px] font-bold text-gray-800 mb-3">
+                  Color: <span className="font-extrabold text-gray-900">{selectedColor}</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {uniqueColors.map((color) => {
+                    const isSelected = selectedColor === color;
+                    return (
+                      <button
+                        key={color}
+                        onClick={() => {
+                          setSelectedColor(color);
+                          const availableSizes = product.variants.filter(v => v.color === color).map(v => v.size);
+                          if (selectedSize && !availableSizes.includes(selectedSize)) {
+                            setSelectedSize(availableSizes[0] || null);
+                          }
+                        }}
+                        className={`min-w-[48px] px-3 h-[30px] flex items-center justify-center text-[11px] font-bold tracking-wider transition-all border border-black ${
+                          isSelected 
+                            ? 'bg-black text-white' 
+                            : 'bg-transparent text-black hover:bg-gray-100'
+                        }`}
+                      >
+                        {color}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Size Selector */}
             <div className="mb-6">
               <div className="text-[12px] font-bold text-gray-800 mb-3">

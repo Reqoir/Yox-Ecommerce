@@ -4,12 +4,11 @@ export interface Address {
   id: string;
   fullName: string;
   phone: string;
-  pincode: string;
-  streetAddress: string;
-  landmark?: string;
+  zipCode: string;
+  street: string;
   city: string;
   state: string;
-  type: 'HOME' | 'WORK';
+  country: string;
   isDefault?: boolean;
 }
 
