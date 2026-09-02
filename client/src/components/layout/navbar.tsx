@@ -18,6 +18,7 @@ export function Navbar() {
   const user = useAuthStore((state) => state.user);
   const logoutUserStore = useAuthStore((state) => state.logoutUser);
   const cartCount = useCartStore((state) => state.getItemCount());
+  const [mounted, setMounted] = useState(false);
   
   const [inputValue, setInputValue] = useState(searchQuery);
   const [isFocused, setIsFocused] = useState(false);
@@ -26,6 +27,10 @@ export function Navbar() {
   
   const containerRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Typing animation for search placeholder
   const searchVariables = ["FORMAL SHIRTS", "POLO SHIRTS", "BLACK SHIRTS"];
@@ -295,7 +300,7 @@ export function Navbar() {
           <Link href="/cart" className="flex items-center relative text-black hover:opacity-70 transition-opacity">
             <div className="relative">
               <BsHandbag size={22} />
-              {cartCount > 0 && (
+              {mounted && cartCount > 0 && (
                 <span className="absolute -top-1 -right-2 bg-black text-white text-[10px] font-bold h-4 px-1 min-w-[16px] rounded-full flex items-center justify-center">
                   {cartCount}
                 </span>
