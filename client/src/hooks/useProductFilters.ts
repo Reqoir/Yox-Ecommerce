@@ -2,9 +2,13 @@
 
 import { useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { MOCK_PRODUCTS } from '@/constants/products';
 import { useProducts } from '@/hooks/admin/useProducts';
 import { useCategories } from '@/hooks/admin/useCategories';
+import { useBrands } from '@/hooks/admin/useBrands';
+import { useQuery } from '@tanstack/react-query';
+import { offersApi } from '@/api/admin/offers';
+import { calculateBestOffer } from '@/lib/offers';
+import { matchesProductSearch } from '@/lib/search';
 import { Product, ProductFit, ProductSize, ProductTag, SortOption } from '@/types/product';
 
 export function useProductFilters() {
@@ -12,8 +16,19 @@ export function useProductFilters() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const { products: dbProducts } = useProducts();
+  const {
+    products: dbProducts,
+    isLoading: isProductsLoading,
+    isError: isProductsError,
+    refetch: refetchProducts,
+  } = useProducts();
   const { categories: apiCategories } = useCategories();
+  const { brands: apiBrands } = useBrands();
+
+  const { data: activeOffers = [] } = useQuery({
+    queryKey: ['active-offers'],
+    queryFn: offersApi.getActive,
+  });
 
   // Map category ID to Category Name for display
   const categoryMap = useMemo(() => {
@@ -21,6 +36,13 @@ export function useProductFilters() {
     apiCategories.forEach(c => map.set(c.id, c.name));
     return map;
   }, [apiCategories]);
+
+  // Map brand ID to Brand Name for display and search
+  const brandMap = useMemo(() => {
+    const map = new Map<string, string>();
+    apiBrands.forEach(b => map.set(b.id, b.name));
+    return map;
+  }, [apiBrands]);
 
   // Combine database products with fallback mock products (split by color variant)
   const allProducts = useMemo<Product[]>(() => {
@@ -31,6 +53,8 @@ export function useProductFilters() {
         const variants = p.variants || [];
         const catName = p.categoryId ? categoryMap.get(p.categoryId) || p.categoryId : 'Apparel';
         const subCatName = p.subCategoryId ? categoryMap.get(p.subCategoryId) || p.subCategoryId : undefined;
+        const brandName = p.brandId ? brandMap.get(p.brandId) || (p as any).brand || (p as any).brandName : (p as any).brand || undefined;
+        const allProductColors = Array.from(new Set(variants.map(v => v.color).filter(Boolean)));
 
         // Group variants by color
         const colorMap = new Map<string, typeof variants>();
@@ -50,6 +74,7 @@ export function useProductFilters() {
             productId: p.id,
             colorCardId: `${p.id}-default`,
             name: p.name,
+            brand: brandName,
             category: catName as any,
             subCategory: subCatName,
             image: p.thumbnail || '/images/product-1.jpeg',
@@ -57,7 +82,7 @@ export function useProductFilters() {
             bestPrice: 899,
             tag: (p.tag as ProductTag) || undefined,
             sizes: [],
-            colors: [],
+            colors: allProductColors,
             fit: (p.fit as ProductFit) || undefined,
             description: p.description || p.shortDescription || undefined,
             inStock: p.isActive,
@@ -94,22 +119,34 @@ export function useProductFilters() {
             ? `/product/${p.id}` 
             : `/product/${p.id}?color=${encodeURIComponent(colorName)}`;
 
+          // Evaluate active best offer for this product
+          const offerResult = calculateBestOffer(p, minPrice, activeOffers, originalPrice);
+          const finalCardPrice = offerResult.hasOffer ? offerResult.discountedPrice : minPrice;
+          const finalStrikePrice = offerResult.hasOffer 
+            ? offerResult.originalPrice 
+            : (originalPrice && originalPrice > minPrice ? originalPrice : undefined);
+
           expanded.push({
             id: isDefaultColor ? p.id : `${p.id}-${colorName}`,
             productId: p.id,
             colorCardId: `${p.id}-${colorName}`,
             currentColor: isDefaultColor ? undefined : colorName,
             name: p.name,
+            brand: brandName,
             category: catName as any,
             subCategory: subCatName,
             image: firstImage,
             images: variantImages.length > 0 ? variantImages : [firstImage],
-            price: minPrice,
-            originalPrice: originalPrice,
-            bestPrice: Math.round(minPrice * 0.9),
+            price: finalCardPrice,
+            originalPrice: finalStrikePrice,
+            bestPrice: Math.round(finalCardPrice * 0.9),
             tag: (p.tag as ProductTag) || undefined,
+            offerTitle: offerResult.bestOffer?.title,
+            offerBadge: offerResult.badgeText || undefined,
+            offerSavings: offerResult.savings || undefined,
+            offerDiscountPct: offerResult.discountPercentage || undefined,
             sizes: sizes,
-            colors: [colorName],
+            colors: allProductColors.length > 0 ? allProductColors : [colorName],
             fit: (p.fit as ProductFit) || undefined,
             description: p.description || p.shortDescription || undefined,
             inStock: p.isActive && colorVariants.some(v => (v.stock || 0) > 0),
@@ -120,8 +157,8 @@ export function useProductFilters() {
 
       return expanded;
     }
-    return MOCK_PRODUCTS;
-  }, [dbProducts, categoryMap]);
+    return [];
+  }, [dbProducts, categoryMap, brandMap, activeOffers]);
 
   // Read current filter state from URL search params
   const searchQuery = searchParams.get('search') || '';
@@ -306,18 +343,9 @@ export function useProductFilters() {
   const filteredProducts = useMemo(() => {
     let result = [...allProducts];
 
-    // Search query match
+    // Search query match (multi-token matching for name, brand, color, category, subCategory, description)
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      result = result.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.category.toLowerCase().includes(q) ||
-          (p.subCategory && p.subCategory.toLowerCase().includes(q)) ||
-          (p.description && p.description.toLowerCase().includes(q)) ||
-          (p.tag && p.tag.toLowerCase().includes(q)) ||
-          (p.currentColor && p.currentColor.toLowerCase().includes(q))
-      );
+      result = result.filter((p) => matchesProductSearch(p, searchQuery));
     }
 
     // Category match
@@ -427,7 +455,11 @@ export function useProductFilters() {
     selectedColors,
     selectedTags,
     sortBy,
+    allProducts,
     filteredProducts,
+    isLoading: isProductsLoading,
+    isError: isProductsError,
+    refetch: refetchProducts,
     activeFilterCount,
     availableSizes,
     availableFits,

@@ -79,7 +79,7 @@ export default function AdminCategoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const defaultForm = {
     name: '',
@@ -498,13 +498,15 @@ export default function AdminCategoryPage() {
         </Table>
       </div>
 
-      {filteredCategories.length > itemsPerPage && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
-      )}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredCategories.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        onItemsPerPageChange={setItemsPerPage}
+        itemsPerPageOptions={[10, 25, 50, 100]}
+      />
 
       {/* Add / Edit Category Dialog */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>

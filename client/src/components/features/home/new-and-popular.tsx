@@ -7,15 +7,26 @@ import { Heart, ChevronDown } from 'lucide-react';
 import { useProducts } from '@/hooks/admin/useProducts';
 import { useCategories } from '@/hooks/admin/useCategories';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
-import { MOCK_PRODUCTS } from '@/constants/products';
+import { useQuery } from '@tanstack/react-query';
+import { offersApi } from '@/api/admin/offers';
+import { calculateBestOffer } from '@/lib/offers';
 
 const DEFAULT_TABS = ['ALL', 'SHIRTS', 'T-SHIRTS', 'JEANS', 'TROUSERS', 'SHOES'];
 
 export function NewAndPopular() {
   const [activeTab, setActiveTab] = useState('ALL');
-  const { products: dbProducts, isLoading: isProductsLoading } = useProducts();
+  const {
+    products: dbProducts,
+    isLoading: isProductsLoading,
+    isError: isProductsError,
+    refetch: refetchProducts,
+  } = useProducts();
   const { categories: dbCategories } = useCategories();
   const { isFavourite, toggleFavourite } = useFavouritesStore();
+  const { data: activeOffers = [] } = useQuery({
+    queryKey: ['active-offers'],
+    queryFn: offersApi.getActive,
+  });
 
   // Create Category ID to Name mapping
   const categoryMap = useMemo(() => {
@@ -56,6 +67,14 @@ export function NewAndPopular() {
           .filter((pr) => typeof pr === 'number' && pr > 0);
         const minPrice = validPrices.length > 0 ? Math.min(...validPrices) : firstVariant?.price || 999;
         const comparePrice = firstVariant?.comparePrice || null;
+
+        // Auto-applied offer calculation
+        const offerResult = calculateBestOffer(p, minPrice, activeOffers, comparePrice);
+        const finalPrice = offerResult.hasOffer ? offerResult.discountedPrice : minPrice;
+        const strikePrice = offerResult.hasOffer 
+          ? offerResult.originalPrice 
+          : (comparePrice && comparePrice > minPrice ? comparePrice : null);
+
         const image =
           firstVariant?.images?.[0] ||
           p.thumbnail ||
@@ -66,10 +85,12 @@ export function NewAndPopular() {
           id: p.id,
           name: p.name,
           category: catName,
-          price: minPrice,
-          comparePrice,
+          price: finalPrice,
+          comparePrice: strikePrice,
+          offerBadge: offerResult.hasOffer ? offerResult.badgeText : null,
+          offerSavings: offerResult.hasOffer ? offerResult.savings : null,
           image,
-          href: `/product/${p.id}`,
+          href: `/product/${p.slug || p.id}`,
         };
       });
 
@@ -93,40 +114,8 @@ export function NewAndPopular() {
       return filtered.length > 0 ? filtered.slice(0, 15) : mapped.slice(0, 15);
     }
 
-    // Fallback to MOCK_PRODUCTS if database is empty
-    if (activeTab === 'ALL') {
-      return MOCK_PRODUCTS.slice(0, 15).map((p) => ({
-        id: String(p.id),
-        name: p.name,
-        category: p.category,
-        price: p.price,
-        comparePrice: p.originalPrice || null,
-        image: p.image || '/images/product-1.jpeg',
-        href: `/product/${p.id}`,
-      }));
-    }
-
-    const tabUpper = activeTab.toUpperCase();
-    const mockFiltered = MOCK_PRODUCTS.filter((p) => {
-      const catUpper = p.category.toUpperCase();
-      return (
-        catUpper === tabUpper ||
-        catUpper.includes(tabUpper) ||
-        p.name.toUpperCase().includes(tabUpper.replace(/S$/, ''))
-      );
-    });
-
-    const results = mockFiltered.length > 0 ? mockFiltered : MOCK_PRODUCTS;
-    return results.slice(0, 15).map((p) => ({
-      id: String(p.id),
-      name: p.name,
-      category: p.category,
-      price: p.price,
-      comparePrice: p.originalPrice || null,
-      image: p.image || '/images/product-1.jpeg',
-      href: `/product/${p.id}`,
-    }));
-  }, [dbProducts, activeTab, categoryMap]);
+    return [];
+  }, [dbProducts, activeTab, categoryMap, activeOffers]);
 
   return (
     <section className="w-full py-16 bg-white overflow-hidden">
@@ -156,14 +145,44 @@ export function NewAndPopular() {
           </div>
         </div>
 
-        {/* Product Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-          {filteredProducts.map((product) => {
-            const isFav = isFavourite(product.id);
+        {/* Product Grid / Loading / Error / Empty */}
+        {isProductsLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex flex-col gap-2.5 animate-pulse">
+                <div className="aspect-[3/4] w-full bg-gray-100 rounded-xs" />
+                <div className="h-3.5 bg-gray-100 rounded-xs w-3/4" />
+                <div className="h-3 bg-gray-100 rounded-xs w-1/3" />
+              </div>
+            ))}
+          </div>
+        ) : isProductsError ? (
+          <div className="py-12 flex flex-col items-center justify-center text-center bg-gray-50/50 rounded border border-dashed border-gray-200">
+            <p className="text-xs text-gray-500 mb-3">Unable to connect to live collection.</p>
+            <button
+              onClick={() => refetchProducts()}
+              className="px-4 py-1.5 bg-black text-white text-xs font-semibold rounded-xs hover:bg-gray-800 transition-colors cursor-pointer"
+            >
+              Retry
+            </button>
+          </div>
+        ) : filteredProducts.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+            {filteredProducts.map((product) => {
+              const isFav = isFavourite(product.id);
 
             return (
               <Link href={product.href} key={product.id} className="group block">
                 <div className="relative aspect-[3/4] w-full bg-[#f6f6f6] mb-3 overflow-hidden rounded-[2px]">
+                  {/* Offer Badge if active */}
+                  {product.offerBadge && (
+                    <div className="absolute top-2 left-2 z-10">
+                      <span className="bg-rose-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-xs tracking-wider">
+                        {product.offerBadge}
+                      </span>
+                    </div>
+                  )}
+
                   <Image
                     src={product.image}
                     alt={product.name}
@@ -201,14 +220,33 @@ export function NewAndPopular() {
                   <h3 className="text-[12px] font-medium text-gray-800 line-clamp-1 truncate">
                     {product.name}
                   </h3>
-                  <span className="text-[12px] font-medium text-gray-600">
-                    ₹{product.price.toLocaleString('en-IN')}
-                  </span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-[12px] font-bold text-gray-900">
+                      ₹{product.price.toLocaleString('en-IN')}
+                    </span>
+                    {product.comparePrice && product.comparePrice > product.price && (
+                      <>
+                        <span className="text-[10px] text-gray-400 line-through">
+                          ₹{product.comparePrice.toLocaleString('en-IN')}
+                        </span>
+                        {product.offerSavings && (
+                          <span className="text-[9px] font-bold text-emerald-700">
+                            Save ₹{product.offerSavings}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
               </Link>
             );
           })}
         </div>
+      ) : (
+        <div className="py-12 text-center text-xs text-gray-400">
+          No products available in this category.
+        </div>
+      )}
 
         {/* View More Button */}
         <div className="flex justify-center mt-12">

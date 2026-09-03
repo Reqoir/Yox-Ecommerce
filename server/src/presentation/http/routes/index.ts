@@ -63,6 +63,7 @@ import { auditLogRouter } from '../../../modules/audit-logs/presentation/routes/
 import { paymentReportRouter } from '../../../modules/payment-reports/presentation/routes/payment-report.routes';
 import { reviewRoutes } from '../../../modules/reviews/presentation/routes/review.routes';
 import { wishlistRoutes } from '../../../modules/wishlists/presentation/routes/wishlist.routes';
+import { offerRoutes } from '../../../modules/offers/presentation/routes/offer.routes';
 
 rootRouter.use('/auth', authRouter);
 rootRouter.use('/users', userRouter);
@@ -87,4 +88,5 @@ rootRouter.use('/audit-logs', auditLogRouter);
 rootRouter.use('/payment-reports', paymentReportRouter);
 rootRouter.use('/reviews', reviewRoutes);
 rootRouter.use('/wishlists', wishlistRoutes);
+rootRouter.use('/offers', offerRoutes);
 rootRouter.use('/settings', settingsRoutes);

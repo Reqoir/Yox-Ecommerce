@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { settingsApi } from '@/api/admin/settings';
-import { Loader2 } from 'lucide-react';
+import { offersApi, Offer } from '@/api/admin/offers';
+import { Loader2, ArrowRight, Sparkles, Flame } from 'lucide-react';
 
 export function ExclusiveOffers() {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
@@ -12,11 +13,41 @@ export function ExclusiveOffers() {
   const [offers, setOffers] = useState<any[]>([]);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeOffer, setActiveOffer] = useState<Offer | null>(null);
 
   useEffect(() => {
     setMounted(true);
     const fetchOffers = async () => {
       try {
+        // First try to get active offers from new offers module
+        const activeOffers = await offersApi.getActive();
+        const flashOrPromo = activeOffers.find((o) => o.isLimitedTime || o.offerType === 'LIMITED_TIME') || activeOffers[0];
+
+        if (flashOrPromo) {
+          setActiveOffer(flashOrPromo);
+          if (flashOrPromo.endDate) {
+            setEndDate(new Date(flashOrPromo.endDate));
+          }
+          const offerWithProds = await offersApi.getOfferWithProducts(flashOrPromo.id);
+          if (offerWithProds.products && offerWithProds.products.length > 0) {
+            setOffers(
+              offerWithProds.products.map((p) => ({
+                id: p.id,
+                category: 'Exclusive Deal',
+                price: p.discountedPrice,
+                oldPrice: p.originalPrice > p.discountedPrice ? p.originalPrice : null,
+                title: p.name,
+                image: p.thumbnail || '/images/product-1.jpeg',
+                slug: p.slug || p.id,
+                discountPercentage: p.discountPercentage,
+              }))
+            );
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // Fallback to legacy settings
         const config: any = await settingsApi.getSetting('storefront.exclusive_offers');
         if (config) {
           if (config.endDate) {
@@ -83,9 +114,19 @@ export function ExclusiveOffers() {
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-6">
-          <h2 className="text-[24px] md:text-[28px] font-medium text-[#40362C]">
-            Exclusive Offers In Focus
-          </h2>
+          <div>
+            <h2 className="text-[24px] md:text-[28px] font-medium text-[#40362C]">
+              {activeOffer?.title || 'Exclusive Offers In Focus'}
+            </h2>
+            {activeOffer && (
+              <Link
+                href={`/offers/${activeOffer.id}`}
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#40362C] hover:text-[#1A2E4C] border-b border-[#40362C] pb-0.5 mt-1"
+              >
+                View Complete Offer Collection <ArrowRight size={13} />
+              </Link>
+            )}
+          </div>
           
           {/* Countdown Timer */}
           {mounted && endDate && (

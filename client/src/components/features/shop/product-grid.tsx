@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Heart, X, RefreshCw, ShoppingBag, ChevronDown } from 'lucide-react';
+import { Heart, X, RefreshCw, ShoppingBag, ChevronDown, WifiOff } from 'lucide-react';
 import Link from 'next/link';
 import { useProductFilters } from '@/hooks/useProductFilters';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
@@ -17,6 +17,9 @@ export function ProductGrid() {
     subCategory,
     sortBy,
     filteredProducts,
+    isLoading,
+    isError,
+    refetch,
     setSearchQuery,
     setCategory,
     setSubCategory,
@@ -101,8 +104,38 @@ export function ProductGrid() {
         </div>
       </div>
 
-      {/* Grid or Empty State */}
-      {finalProducts.length > 0 ? (
+      {/* Grid, Loading, Error, or Empty State */}
+      {isLoading ? (
+        /* Amazon / Flipkart Style Shimmer Loading Skeletons */
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-10 px-1 lg:px-0">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="flex flex-col gap-2.5 animate-pulse">
+              <div className="w-full aspect-[3/4] bg-gray-100 rounded-sm" />
+              <div className="h-3.5 bg-gray-100 rounded-xs w-3/4" />
+              <div className="h-2.5 bg-gray-100 rounded-xs w-1/3" />
+              <div className="h-3.5 bg-gray-100 rounded-xs w-1/2" />
+            </div>
+          ))}
+        </div>
+      ) : isError ? (
+        /* Amazon / Flipkart Style Connection Offline State */
+        <div className="w-full py-16 px-4 flex flex-col items-center justify-center text-center bg-gray-50/70 rounded-xl border border-gray-200 max-w-md mx-auto my-8">
+          <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4 shadow-xs">
+            <WifiOff size={28} />
+          </div>
+          <h3 className="text-base font-bold text-gray-900 mb-1.5">Connection Problem</h3>
+          <p className="text-xs text-gray-500 max-w-xs mb-5 leading-relaxed">
+            We couldn&apos;t load the product catalog. Please check your internet connection and try again.
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="inline-flex items-center gap-2 bg-black text-white text-xs font-bold py-2.5 px-6 rounded-xs hover:bg-gray-800 transition-colors shadow-xs cursor-pointer"
+          >
+            <RefreshCw size={14} />
+            Try Again
+          </button>
+        </div>
+      ) : finalProducts.length > 0 ? (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-10 px-1 lg:px-0">
           {finalProducts.map((product) => {
             const prodIdStr = String(product.productId || product.id);
@@ -122,6 +155,20 @@ export function ProductGrid() {
                     alt={`${product.name}${cardColor ? ` - ${cardColor}` : ''}`} 
                     className="w-full h-full object-cover object-top mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
                   />
+                  
+                  {/* Offer Badge if available */}
+                  {product.offerBadge && (
+                    <div className="absolute top-2 left-2 z-10 flex flex-col gap-0.5">
+                      <span className="bg-rose-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-xs tracking-wider">
+                        {product.offerBadge}
+                      </span>
+                      {product.offerTitle && (
+                        <span className="bg-black/75 backdrop-blur-xs text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-xs max-w-[120px] truncate">
+                          {product.offerTitle}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   
                   {/* Wishlist Button */}
                   <button 
@@ -166,14 +213,21 @@ export function ProductGrid() {
                       {product.currentColor}
                     </span>
                   )}
-                  <div className="flex items-center gap-2">
-                    <span className="text-[12px] font-medium text-gray-900">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-[13px] font-bold text-gray-900">
                       ₹{product.price}
                     </span>
                     {product.originalPrice && product.originalPrice > product.price && (
-                      <span className="text-[11px] text-gray-400 line-through">
-                        ₹{product.originalPrice}
-                      </span>
+                      <>
+                        <span className="text-[11px] text-gray-400 line-through">
+                          ₹{product.originalPrice}
+                        </span>
+                        {product.offerSavings && (
+                          <span className="text-[10px] font-bold text-emerald-700">
+                            Save ₹{product.offerSavings}
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

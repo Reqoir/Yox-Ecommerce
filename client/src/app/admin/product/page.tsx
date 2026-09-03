@@ -131,7 +131,7 @@ export default function AdminProductPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [viewProduct, setViewProduct] = useState<Product | null>(null);
@@ -939,13 +939,15 @@ export default function AdminProductPage() {
         </Table>
       </div>
 
-      {filteredProducts.length > itemsPerPage && (
-        <Pagination 
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
-      )}
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredProducts.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        onItemsPerPageChange={setItemsPerPage}
+        itemsPerPageOptions={[10, 25, 50, 100]}
+      />
 
       {/* VIEW PRODUCT DETAILS DIALOG */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>

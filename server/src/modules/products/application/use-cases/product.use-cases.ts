@@ -11,6 +11,7 @@ import { IProductVariantRepository } from '../../domain/repositories/product-var
 import { Product } from '../../domain/entities/product.entity';
 import { ProductVariant } from '../../domain/entities/product-variant.entity';
 import { CreateProductRequestDTO, UpdateProductRequestDTO, ProductResponseDTO } from '../dtos/product.dto';
+import { NotFoundError } from '@core/domain/errors/not-found.error';
 
 // --- Mappers ---
 function mapToResponseDTO(product: Product, variants: ProductVariant[] = []): ProductResponseDTO {
@@ -165,10 +166,34 @@ export class GetProductByIdUseCase implements IUseCase<string, ProductResponseDT
     private readonly variantRepo: IProductVariantRepository
   ) {}
 
-  async execute(id: string): Promise<ProductResponseDTO> {
-    const product = await this.productRepo.findById(id);
-    if (!product) throw new Error('Product not found');
-    const variants = await this.variantRepo.findByProductId(id);
+  async execute(idOrSlug: string): Promise<ProductResponseDTO> {
+    if (!idOrSlug) throw new NotFoundError('Product identifier is required');
+    const cleanParam = decodeURIComponent(idOrSlug).trim();
+
+    // 1. Try finding by direct ID
+    let product = await this.productRepo.findById(cleanParam);
+
+    // 2. Try finding by slug
+    if (!product) {
+      product = await this.productRepo.findBySlug(cleanParam);
+    }
+
+    // 3. Handle suffixed IDs (e.g. "productId-colorName" or "productId__colorName")
+    if (!product && (cleanParam.includes('-') || cleanParam.includes('__'))) {
+      const separator = cleanParam.includes('__') ? '__' : '-';
+      const potentialId = cleanParam.split(separator)[0];
+      product = await this.productRepo.findById(potentialId);
+      if (!product) {
+        product = await this.productRepo.findBySlug(potentialId);
+      }
+    }
+
+    if (!product) {
+      throw new NotFoundError(`Product not found with id or slug '${idOrSlug}'`);
+    }
+
+    // Always use product.id to fetch associated variants
+    const variants = await this.variantRepo.findByProductId(product.id);
     return mapToResponseDTO(product, variants);
   }
 }

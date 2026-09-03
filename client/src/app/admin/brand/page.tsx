@@ -72,7 +72,7 @@ export default function AdminBrandPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const defaultForm = {
     name: '',
@@ -477,13 +477,15 @@ export default function AdminBrandPage() {
         </Table>
       </div>
 
-      {filteredBrands.length > itemsPerPage && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
-      )}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredBrands.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        onItemsPerPageChange={setItemsPerPage}
+        itemsPerPageOptions={[10, 25, 50, 100]}
+      />
 
       {/* Add / Edit Brand Dialog */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>

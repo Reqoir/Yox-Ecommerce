@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Pagination } from '@/components/ui/pagination';
 import { toast } from 'sonner';
 
 const STATUS_CONFIG: Record<string, { label: string; badge: string; icon: any }> = {
@@ -119,7 +120,28 @@ export default function AdminOrdersPage() {
       );
     }
     setFilteredOrders(res);
+    setOrderPage(1);
   }, [orders, statusFilter, searchQuery]);
+
+  // Orders Pagination
+  const [orderPage, setOrderPage] = useState(1);
+  const [orderItemsPerPage, setOrderItemsPerPage] = useState(10);
+
+  const totalOrderPages = Math.ceil(filteredOrders.length / orderItemsPerPage);
+  const paginatedOrders = filteredOrders.slice(
+    (orderPage - 1) * orderItemsPerPage,
+    orderPage * orderItemsPerPage
+  );
+
+  // Returns Pagination
+  const [returnPage, setReturnPage] = useState(1);
+  const [returnItemsPerPage, setReturnItemsPerPage] = useState(10);
+
+  const totalReturnPages = Math.ceil(returns.length / returnItemsPerPage);
+  const paginatedReturns = returns.slice(
+    (returnPage - 1) * returnItemsPerPage,
+    returnPage * returnItemsPerPage
+  );
 
   // State Transition Handlers for Orders
   const advanceOrder = async (id: string, currentStatus: string) => {
@@ -404,118 +426,129 @@ export default function AdminOrdersPage() {
               </p>
             </div>
           ) : (
-            <div className="border rounded-xl bg-card overflow-hidden shadow-2xs">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50 text-xs text-muted-foreground uppercase tracking-wider font-semibold">
-                    <th className="p-4">Order Number</th>
-                    <th className="p-4">Customer</th>
-                    <th className="p-4">Payment</th>
-                    <th className="p-4">Total Amount</th>
-                    <th className="p-4">Current Status</th>
-                    <th className="p-4">Date Placed</th>
-                    <th className="p-4 text-right">State Machine Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  {filteredOrders.map((order) => {
-                    const cfg = STATUS_CONFIG[order.orderStatus] || STATUS_CONFIG.PLACED;
-                    const StatusIcon = cfg.icon;
-                    const nextActions: Record<string, string> = {
-                      PLACED: 'Confirm Order',
-                      CONFIRMED: 'Pack Items',
-                      PACKED: 'Ship Package',
-                      SHIPPED: 'Out For Delivery',
-                      OUT_FOR_DELIVERY: 'Mark Delivered',
-                    };
-                    const actionLabel = nextActions[order.orderStatus];
+            <div className="space-y-4">
+              <div className="border rounded-xl bg-card overflow-hidden shadow-2xs">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50 text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                      <th className="p-4">Order Number</th>
+                      <th className="p-4">Customer</th>
+                      <th className="p-4">Payment</th>
+                      <th className="p-4">Total Amount</th>
+                      <th className="p-4">Fulfillment Status</th>
+                      <th className="p-4">Date Placed</th>
+                      <th className="p-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    {paginatedOrders.map((order) => {
+                      const cfg = STATUS_CONFIG[order.orderStatus] || STATUS_CONFIG.PLACED;
+                      const StatusIcon = cfg.icon;
+                      const nextActions: Record<string, string> = {
+                        PLACED: 'Confirm Order',
+                        CONFIRMED: 'Pack Items',
+                        PACKED: 'Ship Package',
+                        SHIPPED: 'Out For Delivery',
+                        OUT_FOR_DELIVERY: 'Mark Delivered',
+                      };
+                      const actionLabel = nextActions[order.orderStatus];
 
-                    return (
-                      <tr key={order.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="p-4 font-mono font-bold text-primary flex items-center gap-2">
-                          <button
-                            onClick={() => setSelectedOrder(order)}
-                            className="hover:underline flex items-center gap-1 text-sm"
-                          >
-                            {order.orderNumber}
-                            <Eye size={14} className="text-muted-foreground opacity-70" />
-                          </button>
-                        </td>
-
-                        <td className="p-4">
-                          <div className="font-medium text-foreground text-xs">
-                            {order.shippingAddress?.fullName || 'Customer'}
-                          </div>
-                          <div className="text-[11px] text-muted-foreground">{order.shippingAddress?.phone}</div>
-                          {order.notes && (
-                            <div className="mt-1 text-[11px] font-semibold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1">
-                              <MessageSquare size={11} className="text-amber-700 shrink-0" />
-                              <span className="truncate max-w-[200px]" title={order.notes}>Note: "{order.notes}"</span>
-                            </div>
-                          )}
-                        </td>
-
-                        <td className="p-4 text-xs">
-                          <div className="font-bold">{order.paymentMethod}</div>
-                          <span
-                            className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold mt-0.5 ${
-                              order.paymentStatus === 'PAID'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : order.paymentStatus === 'REFUNDED'
-                                ? 'bg-purple-100 text-purple-800'
-                                : 'bg-amber-100 text-amber-800'
-                            }`}
-                          >
-                            {order.paymentStatus}
-                          </span>
-                        </td>
-
-                        <td className="p-4 font-bold text-foreground">₹{order.totalAmount}</td>
-
-                        <td className="p-4">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${cfg.badge}`}>
-                            <StatusIcon size={12} strokeWidth={2.5} />
-                            <span>{cfg.label}</span>
-                          </span>
-                        </td>
-
-                        <td className="p-4 text-xs text-muted-foreground">
-                          {new Date(order.placedAt).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
-                        </td>
-
-                        <td className="p-4 text-right space-x-2">
-                          {actionLabel && (
-                            <Button
-                              size="sm"
-                              disabled={isUpdating}
-                              onClick={() => advanceOrder(order.id, order.orderStatus)}
-                              className="bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-bold h-8"
+                      return (
+                        <tr key={order.id} className="hover:bg-muted/30 transition-colors">
+                          <td className="p-4 font-mono font-bold text-primary flex items-center gap-2">
+                            <button
+                              onClick={() => setSelectedOrder(order)}
+                              className="hover:underline flex items-center gap-1 text-sm"
                             >
-                              <span>{actionLabel}</span>
-                              <ArrowRight size={12} className="ml-1" />
-                            </Button>
-                          )}
-                          {order.orderStatus !== 'CANCELLED' && order.orderStatus !== 'DELIVERED' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={isUpdating}
-                              onClick={() => handleAdminCancel(order.id)}
-                              className="text-rose-600 hover:bg-rose-50 border-rose-200 h-8 text-xs font-semibold"
+                              {order.orderNumber}
+                              <Eye size={14} className="text-muted-foreground opacity-70" />
+                            </button>
+                          </td>
+
+                          <td className="p-4">
+                            <div className="font-semibold text-foreground">{order.shippingAddress?.fullName || 'Guest Customer'}</div>
+                            <div className="text-xs text-muted-foreground">{order.shippingAddress?.city || 'No city'}, {order.shippingAddress?.state || 'State'}</div>
+                            <div className="text-[11px] text-muted-foreground">{order.items?.length || 0} item(s)</div>
+                            {order.notes && (
+                              <div className="text-[11px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded mt-1 inline-flex items-center gap-1">
+                                <MessageSquare size={10} />
+                                <span className="truncate max-w-[200px]" title={order.notes}>Note: "{order.notes}"</span>
+                              </div>
+                            )}
+                          </td>
+
+                          <td className="p-4 text-xs">
+                            <div className="font-bold">{order.paymentMethod}</div>
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold mt-0.5 ${
+                                order.paymentStatus === 'PAID'
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : order.paymentStatus === 'REFUNDED'
+                                  ? 'bg-purple-100 text-purple-800'
+                                  : 'bg-amber-100 text-amber-800'
+                              }`}
                             >
-                              Cancel
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                              {order.paymentStatus}
+                            </span>
+                          </td>
+
+                          <td className="p-4 font-bold text-foreground">₹{order.totalAmount}</td>
+
+                          <td className="p-4">
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${cfg.badge}`}>
+                              <StatusIcon size={12} strokeWidth={2.5} />
+                              <span>{cfg.label}</span>
+                            </span>
+                          </td>
+
+                          <td className="p-4 text-xs text-muted-foreground">
+                            {new Date(order.placedAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
+                          </td>
+
+                          <td className="p-4 text-right space-x-2">
+                            {actionLabel && (
+                              <Button
+                                size="sm"
+                                disabled={isUpdating}
+                                onClick={() => advanceOrder(order.id, order.orderStatus)}
+                                className="bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-bold h-8"
+                              >
+                                <span>{actionLabel}</span>
+                                <ArrowRight size={12} className="ml-1" />
+                              </Button>
+                            )}
+                            {order.orderStatus !== 'CANCELLED' && order.orderStatus !== 'DELIVERED' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={isUpdating}
+                                onClick={() => handleAdminCancel(order.id)}
+                                className="text-rose-600 hover:bg-rose-50 border-rose-200 h-8 text-xs font-semibold"
+                              >
+                                Cancel
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <Pagination
+                currentPage={orderPage}
+                totalPages={totalOrderPages}
+                totalItems={filteredOrders.length}
+                itemsPerPage={orderItemsPerPage}
+                onPageChange={setOrderPage}
+                onItemsPerPageChange={setOrderItemsPerPage}
+                itemsPerPageOptions={[10, 25, 50, 100]}
+              />
             </div>
           )}
         </>
@@ -534,113 +567,125 @@ export default function AdminOrdersPage() {
               <p className="text-xs text-muted-foreground mt-1">There are no customer return requests to review.</p>
             </div>
           ) : (
-            <div className="border rounded-xl bg-card overflow-hidden">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50 text-xs text-muted-foreground uppercase font-semibold">
-                    <th className="p-4">Return ID</th>
-                    <th className="p-4">Order ID</th>
-                    <th className="p-4">Quantity & Reason</th>
-                    <th className="p-4">Customer Photos</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4">Inspection</th>
-                    <th className="p-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  {returns.map((ret) => (
-                    <tr key={ret.id} className="hover:bg-muted/30 text-xs">
-                      <td className="p-4 font-mono font-bold">{ret.id.substring(0, 8)}...</td>
-                      <td className="p-4 font-mono text-primary font-bold">{ret.orderId}</td>
-                      <td className="p-4">
-                        <div className="font-bold text-foreground">Qty: {ret.quantity}</div>
-                        <div className="text-muted-foreground text-[11px]">Reason: {ret.reason}</div>
-                        {ret.customerNote && <div className="italic text-gray-500 text-[10px]">"{ret.customerNote}"</div>}
-                      </td>
-                      <td className="p-4">
-                        {ret.images && ret.images.length > 0 ? (
-                          <button
-                            onClick={() => setPreviewPhotos(ret.images!)}
-                            className="flex items-center gap-1 px-2.5 py-1 bg-muted hover:bg-muted/80 rounded border text-xs font-semibold transition-colors"
-                          >
-                            <ImageIcon size={14} className="text-primary" />
-                            <span>{ret.images.length} Photos</span>
-                          </button>
-                        ) : (
-                          <span className="text-muted-foreground italic text-[11px]">No photos</span>
-                        )}
-                      </td>
-                      <td className="p-4">
-                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                          {ret.status.replace(/_/g, ' ')}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        {ret.inspectionResult ? (
-                          <span className={`font-bold text-[11px] ${ret.inspectionResult === 'RESELLABLE' ? 'text-emerald-700' : 'text-rose-600'}`}>
-                            {ret.inspectionResult}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground italic text-[11px]">Pending</span>
-                        )}
-                      </td>
-                      <td className="p-4 text-right space-x-1.5">
-                        {ret.status === 'REQUESTED' && (
-                          <>
-                            <Button size="sm" onClick={() => handleApproveReturn(ret.id)} className="bg-emerald-700 hover:bg-emerald-800 text-white h-7 text-xs">
-                              Approve
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleRejectReturn(ret.id)} className="text-rose-600 border-rose-200 h-7 text-xs">
-                              Reject
-                            </Button>
-                          </>
-                        )}
-
-                        {(ret.status === 'APPROVED' || ret.status === 'PICKUP_SCHEDULED') && (
-                          <div className="inline-flex gap-1.5 items-center">
-                            <Button size="sm" onClick={() => handleOpenSchedulePickup(ret)} className="bg-amber-600 hover:bg-amber-700 text-white h-7 text-xs font-semibold">
-                              {ret.pickupAgentName ? 'Re-Schedule Pickup' : 'Schedule Pickup & Agent'}
-                            </Button>
-                            <Button size="sm" onClick={() => handleReceiveReturn(ret.id)} className="bg-indigo-700 hover:bg-indigo-800 text-white h-7 text-xs">
-                              Mark Received
-                            </Button>
-                          </div>
-                        )}
-
-                        {ret.status === 'PICKED_UP' && (
-                          <Button size="sm" onClick={() => handleReceiveReturn(ret.id)} className="bg-indigo-700 hover:bg-indigo-800 text-white h-7 text-xs font-bold">
-                            Mark Received at Warehouse
-                          </Button>
-                        )}
-
-                        {ret.status === 'RECEIVED' && (
-                          <div className="inline-flex gap-1">
-                            <Button size="sm" onClick={() => handleInspectReturn(ret.id, 'RESELLABLE')} className="bg-emerald-700 hover:bg-emerald-800 text-white h-7 text-xs">
-                              Pass (Resellable)
-                            </Button>
-                            <Button size="sm" onClick={() => handleInspectReturn(ret.id, 'DAMAGED')} className="bg-amber-700 hover:bg-amber-800 text-white h-7 text-xs">
-                              Fail (Damaged)
-                            </Button>
-                          </div>
-                        )}
-
-                        {(ret.status === 'REFUND_PENDING' || ret.status === 'INSPECTED') && (
-                          <Button size="sm" onClick={() => handleOpenProcessRefund(ret)} className="bg-purple-700 hover:bg-purple-800 text-white h-7 text-xs font-bold">
-                            Issue Refund
-                          </Button>
-                        )}
-
-                        {ret.status === 'REFUNDED' && (
-                          <div className="text-emerald-700 font-bold text-right text-[11px]">
-                            <div className="flex items-center justify-end gap-1"><Check size={14} /> Refunded ₹{ret.refundAmount || 0}</div>
-                            {ret.refundTransactionId && <div className="text-[10px] text-muted-foreground font-mono">TXN: {ret.refundTransactionId}</div>}
-                          </div>
-                        )}
-                      </td>
+            <div className="space-y-4">
+              <div className="border rounded-xl bg-card overflow-hidden">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50 text-xs text-muted-foreground uppercase font-semibold">
+                      <th className="p-4">Return ID</th>
+                      <th className="p-4">Order ID</th>
+                      <th className="p-4">Quantity & Reason</th>
+                      <th className="p-4">Customer Photos</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4">Inspection</th>
+                      <th className="p-4 text-right">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    {paginatedReturns.map((ret) => (
+                      <tr key={ret.id} className="hover:bg-muted/30 text-xs">
+                        <td className="p-4 font-mono font-bold">{ret.id.substring(0, 8)}...</td>
+                        <td className="p-4 font-mono text-primary font-bold">{ret.orderId}</td>
+                        <td className="p-4">
+                          <div className="font-bold text-foreground">Qty: {ret.quantity}</div>
+                          <div className="text-muted-foreground text-[11px]">Reason: {ret.reason}</div>
+                          {ret.customerNote && <div className="italic text-gray-500 text-[10px]">"{ret.customerNote}"</div>}
+                        </td>
+                        <td className="p-4">
+                          {ret.images && ret.images.length > 0 ? (
+                            <button
+                              onClick={() => setPreviewPhotos(ret.images!)}
+                              className="flex items-center gap-1 px-2.5 py-1 bg-muted hover:bg-muted/80 rounded border text-xs font-semibold transition-colors"
+                            >
+                              <ImageIcon size={14} className="text-primary" />
+                              <span>{ret.images.length} Photos</span>
+                            </button>
+                          ) : (
+                            <span className="text-muted-foreground italic text-[11px]">No photos</span>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                            {ret.status.replace(/_/g, ' ')}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          {ret.inspectionResult ? (
+                            <span className={`font-bold text-[11px] ${ret.inspectionResult === 'RESELLABLE' ? 'text-emerald-700' : 'text-rose-600'}`}>
+                              {ret.inspectionResult}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground italic text-[11px]">Pending</span>
+                          )}
+                        </td>
+                        <td className="p-4 text-right space-x-1.5">
+                          {ret.status === 'REQUESTED' && (
+                            <>
+                              <Button size="sm" onClick={() => handleApproveReturn(ret.id)} className="bg-emerald-700 hover:bg-emerald-800 text-white h-7 text-xs">
+                                Approve
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => handleRejectReturn(ret.id)} className="text-rose-600 border-rose-200 h-7 text-xs">
+                                Reject
+                              </Button>
+                            </>
+                          )}
+
+                          {(ret.status === 'APPROVED' || ret.status === 'PICKUP_SCHEDULED') && (
+                            <div className="inline-flex gap-1.5 items-center">
+                              <Button size="sm" onClick={() => handleOpenSchedulePickup(ret)} className="bg-amber-600 hover:bg-amber-700 text-white h-7 text-xs font-semibold">
+                                {ret.pickupAgentName ? 'Re-Schedule Pickup' : 'Schedule Pickup & Agent'}
+                              </Button>
+                              <Button size="sm" onClick={() => handleReceiveReturn(ret.id)} className="bg-indigo-700 hover:bg-indigo-800 text-white h-7 text-xs">
+                                Mark Received
+                              </Button>
+                            </div>
+                          )}
+
+                          {ret.status === 'PICKED_UP' && (
+                            <Button size="sm" onClick={() => handleReceiveReturn(ret.id)} className="bg-indigo-700 hover:bg-indigo-800 text-white h-7 text-xs font-bold">
+                              Mark Received at Warehouse
+                            </Button>
+                          )}
+
+                          {ret.status === 'RECEIVED' && (
+                            <div className="inline-flex gap-1">
+                              <Button size="sm" onClick={() => handleInspectReturn(ret.id, 'RESELLABLE')} className="bg-emerald-700 hover:bg-emerald-800 text-white h-7 text-xs">
+                                Pass (Resellable)
+                              </Button>
+                              <Button size="sm" onClick={() => handleInspectReturn(ret.id, 'DAMAGED')} className="bg-amber-700 hover:bg-amber-800 text-white h-7 text-xs">
+                                Fail (Damaged)
+                              </Button>
+                            </div>
+                          )}
+
+                          {(ret.status === 'REFUND_PENDING' || ret.status === 'INSPECTED') && (
+                            <Button size="sm" onClick={() => handleOpenProcessRefund(ret)} className="bg-purple-700 hover:bg-purple-800 text-white h-7 text-xs font-bold">
+                              Issue Refund
+                            </Button>
+                          )}
+
+                          {ret.status === 'REFUNDED' && (
+                            <div className="text-emerald-700 font-bold text-right text-[11px]">
+                              <div className="flex items-center justify-end gap-1"><Check size={14} /> Refunded ₹{ret.refundAmount || 0}</div>
+                              {ret.refundTransactionId && <div className="text-[10px] text-muted-foreground font-mono">TXN: {ret.refundTransactionId}</div>}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <Pagination
+                currentPage={returnPage}
+                totalPages={totalReturnPages}
+                totalItems={returns.length}
+                itemsPerPage={returnItemsPerPage}
+                onPageChange={setReturnPage}
+                onItemsPerPageChange={setReturnItemsPerPage}
+                itemsPerPageOptions={[10, 25, 50, 100]}
+              />
             </div>
           )}
         </div>

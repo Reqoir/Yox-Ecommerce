@@ -5,11 +5,17 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { useProducts } from '@/hooks/admin/useProducts';
-import { MOCK_PRODUCTS } from '@/constants/products';
+import { useQuery } from '@tanstack/react-query';
+import { offersApi } from '@/api/admin/offers';
+import { calculateBestOffer } from '@/lib/offers';
 
 export function FeaturedSection() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { products: dbProducts, isLoading } = useProducts();
+  const { data: activeOffers = [] } = useQuery({
+    queryKey: ['active-offers'],
+    queryFn: offersApi.getActive,
+  });
 
   const featuredList = useMemo(() => {
     if (dbProducts && dbProducts.length > 0) {
@@ -38,10 +44,20 @@ export function FeaturedSection() {
         const minPrice = validPrices.length > 0 ? Math.min(...validPrices) : firstVariant?.price || 999;
         const comparePrice = firstVariant?.comparePrice || null;
 
+        // Auto-applied offer calculation
+        const offerResult = calculateBestOffer(p, minPrice, activeOffers, comparePrice);
+        const finalPrice = offerResult.hasOffer ? offerResult.discountedPrice : minPrice;
+        const strikePrice = offerResult.hasOffer 
+          ? offerResult.originalPrice 
+          : (comparePrice && comparePrice > minPrice ? comparePrice : null);
+
         let badge = p.tag || null;
         let badgeColor = 'text-gray-800';
 
-        if (comparePrice && comparePrice > minPrice) {
+        if (offerResult.hasOffer) {
+          badge = offerResult.badgeText || `${offerResult.discountPercentage}% off`;
+          badgeColor = 'text-rose-600 font-bold';
+        } else if (comparePrice && comparePrice > minPrice) {
           const discount = Math.round(((comparePrice - minPrice) / comparePrice) * 100);
           badge = `${discount}% off`;
           badgeColor = 'text-green-600';
@@ -59,39 +75,20 @@ export function FeaturedSection() {
         return {
           id: p.id,
           name: p.name,
-          price: minPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 }),
-          comparePrice: comparePrice
-            ? comparePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })
+          price: finalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 }),
+          comparePrice: strikePrice
+            ? strikePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })
             : null,
           badge,
           badgeColor,
           image,
-          href: `/product/${p.id}`,
+          href: `/product/${p.slug || p.id}`,
         };
       });
     }
 
-    // Fallback to mock products if no database products
-    return MOCK_PRODUCTS.slice(0, 8).map((p) => {
-      const discount =
-        p.originalPrice && p.originalPrice > p.price
-          ? `${Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)}% off`
-          : p.tag || null;
-
-      return {
-        id: String(p.id),
-        name: p.name,
-        price: p.price.toLocaleString('en-IN', { minimumFractionDigits: 2 }),
-        comparePrice: p.originalPrice
-          ? p.originalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })
-          : null,
-        badge: discount,
-        badgeColor: p.originalPrice ? 'text-green-600' : 'text-gray-800',
-        image: p.image || '/images/product-1.jpeg',
-        href: `/product/${p.id}`,
-      };
-    });
-  }, [dbProducts]);
+    return [];
+  }, [dbProducts, activeOffers]);
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -104,6 +101,10 @@ export function FeaturedSection() {
       scrollContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
     }
   };
+
+  if (!isLoading && featuredList.length === 0) {
+    return null;
+  }
 
   return (
     <section className="w-full py-16 bg-white overflow-hidden">
@@ -131,12 +132,23 @@ export function FeaturedSection() {
           </div>
         </div>
 
-        {/* Products Scroll Container */}
-        <div 
-          ref={scrollContainerRef}
-          className="flex overflow-x-auto gap-4 md:gap-6 pb-4 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {featuredList.map((product) => (
+        {/* Products Scroll Container / Skeletons */}
+        {isLoading ? (
+          <div className="flex overflow-x-auto gap-4 md:gap-6 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex-shrink-0 w-[260px] md:w-[300px] lg:w-[calc(25%-18px)] flex flex-col gap-2.5 animate-pulse">
+                <div className="aspect-[3/4] bg-gray-100 rounded-xs" />
+                <div className="h-3.5 bg-gray-100 rounded-xs w-3/4" />
+                <div className="h-3 bg-gray-100 rounded-xs w-1/2" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div 
+            ref={scrollContainerRef}
+            className="flex overflow-x-auto gap-4 md:gap-6 pb-4 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {featuredList.map((product) => (
             <div key={product.id} className="flex-shrink-0 w-[260px] md:w-[300px] lg:w-[calc(25%-18px)] snap-start group">
               <Link href={product.href} className="block">
                 {/* Image Container */}
@@ -177,7 +189,8 @@ export function FeaturedSection() {
               </Link>
             </div>
           ))}
-        </div>
+          </div>
+        )}
       </div>
     </section>
   );

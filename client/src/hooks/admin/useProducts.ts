@@ -48,6 +48,7 @@ export const useProducts = () => {
     isLoading: productsQuery.isLoading,
     isError: productsQuery.isError,
     error: productsQuery.error,
+    refetch: productsQuery.refetch,
     createProduct: createProductMutation.mutate,
     isCreating: createProductMutation.isPending,
     updateProduct: updateProductMutation.mutate,

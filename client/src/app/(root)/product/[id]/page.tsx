@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, use, useEffect } from 'react';
-import { notFound, useSearchParams, useRouter } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   Heart, 
@@ -15,10 +15,15 @@ import {
   Scissors, 
   ChevronDown, 
   Flame, 
-  Maximize2
+  Maximize2,
+  Sparkles,
+  Clock,
+  Copy,
+  Check
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { productsApi } from '@/lib/api/products';
+import { offersApi } from '@/api/admin/offers';
 import { useCartStore } from '@/store/useCartStore';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { toast } from 'sonner';
@@ -27,15 +32,28 @@ import { ProductImagePreviewModal } from '@/components/features/product/product-
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const routeParams = useParams<{ id: string }>();
+  const rawId = resolvedParams?.id || routeParams?.id || '';
+  const productId = decodeURIComponent(rawId);
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const colorFromUrl = searchParams.get('color');
   
   const { data: product, isLoading, error } = useQuery({
-    queryKey: ['product', resolvedParams.id],
-    queryFn: () => productsApi.getProductById(resolvedParams.id),
+    queryKey: ['product', productId],
+    queryFn: () => productsApi.getProductById(productId),
+    enabled: Boolean(productId),
     retry: 1
   });
+
+  const { data: bestOfferData } = useQuery({
+    queryKey: ['best-offer', productId],
+    queryFn: () => offersApi.getBestOfferForProduct(productId),
+    enabled: Boolean(productId),
+  });
+
+  const [copiedOfferCode, setCopiedOfferCode] = useState<string | null>(null);
 
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -113,18 +131,22 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     );
   }
 
-  // Derive unique colors
-  const uniqueColors = Array.from(new Set(product.variants.map(v => v.color)));
+  // Derive unique colors safely
+  const variants = product.variants && Array.isArray(product.variants) ? product.variants : [];
+  const uniqueColors = Array.from(
+    new Set(variants.map(v => v.color).filter((c): c is string => Boolean(c && c.trim())))
+  );
   
   // Get active variant
-  const activeVariant = product.variants.find(v => v.color === selectedColor && v.size === selectedSize) 
-    || product.variants.find(v => v.color === selectedColor) 
-    || product.variants[0];
+  const activeVariant = variants.find(v => v.color === selectedColor && v.size === selectedSize) 
+    || variants.find(v => v.color === selectedColor) 
+    || variants[0] || null;
 
   // Available sizes for selected color
-  const availableSizesForColor = product.variants
+  const availableSizesForColor = variants
     .filter(v => v.color === selectedColor)
-    .map(v => v.size);
+    .map(v => v.size)
+    .filter(Boolean);
 
   const images = activeVariant?.images && activeVariant.images.length > 0
     ? activeVariant.images
@@ -134,9 +156,39 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
   const currentPrice = activeVariant?.price || 0;
   const originalPrice = activeVariant?.comparePrice || null;
-  const discountPercentage = originalPrice 
-    ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100) 
+
+  // Auto-applied best offer calculation
+  const bestOffer = bestOfferData?.bestOffer || null;
+  let finalPrice = currentPrice;
+  let baseStrikePrice: number | null = originalPrice && originalPrice > currentPrice ? originalPrice : null;
+  let offerSavings = 0;
+  let finalDiscountPct = baseStrikePrice && baseStrikePrice > currentPrice 
+    ? Math.round(((baseStrikePrice - currentPrice) / baseStrikePrice) * 100) 
     : 0;
+
+  if (bestOffer && currentPrice > 0) {
+    if (bestOffer.discountType === 'PERCENTAGE') {
+      offerSavings = Math.round((currentPrice * bestOffer.discountValue) / 100);
+      if (bestOffer.maxDiscountAmount && offerSavings > bestOffer.maxDiscountAmount) {
+        offerSavings = bestOffer.maxDiscountAmount;
+      }
+    } else {
+      offerSavings = Math.min(currentPrice, bestOffer.discountValue);
+    }
+    finalPrice = Math.max(0, currentPrice - offerSavings);
+    
+    // When product has compare amount, cross that amount!
+    // If not compare amount, then only cross the price amount!
+    if (originalPrice && originalPrice > finalPrice) {
+      baseStrikePrice = originalPrice;
+    } else {
+      baseStrikePrice = currentPrice;
+    }
+
+    finalDiscountPct = baseStrikePrice > finalPrice
+      ? Math.round(((baseStrikePrice - finalPrice) / baseStrikePrice) * 100)
+      : Math.round((offerSavings / currentPrice) * 100);
+  }
 
   // Stock status logic
   const variantStock = activeVariant?.stock !== undefined ? activeVariant.stock : 10;
@@ -198,8 +250,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       image: images[0] || product.thumbnail,
       color: activeVariant.color || 'Default',
       size: activeVariant.size || 'Standard',
-      price: activeVariant.price,
-      comparePrice: activeVariant.comparePrice || undefined,
+      price: finalPrice,
+      comparePrice: baseStrikePrice && baseStrikePrice > finalPrice ? baseStrikePrice : undefined,
       quantity: quantity,
       stock: variantStock,
     });
@@ -217,40 +269,50 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     router.push('/checkout');
   };
 
-  const renderOffers = () => (
-    <div className="bg-[#F8FAF9] border border-[#E0ECE5] rounded-lg p-3.5 sm:p-4 my-6 shadow-sm">
-      <div className="flex items-center justify-between mb-2.5">
-        <div className="flex items-center gap-2 font-bold text-gray-900 text-xs sm:text-sm">
-          <Tag size={15} className="text-[#B58546]" />
-          Available Offers & Discounts
-        </div>
-        <span className="text-[11px] text-[#B58546] font-semibold">
-          2 Offers Applied
-        </span>
-      </div>
-      
-      <div className="flex overflow-x-auto gap-2.5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex-shrink-0 border border-emerald-200 bg-white rounded-md flex overflow-hidden shadow-xs min-w-[210px] sm:min-w-[230px]">
-          <div className="bg-emerald-600 text-white flex flex-col justify-center px-2.5 py-1.5 text-center">
-            <span className="text-[9px] font-bold uppercase tracking-wider">Best Price</span>
-            <span className="font-bold text-xs sm:text-sm">₹{Math.floor(currentPrice * 0.8)}</span>
+  const renderOffers = () => {
+    if (!bestOffer || offerSavings <= 0) return null;
+
+    return (
+      <div className="bg-gradient-to-r from-emerald-50/90 via-teal-50/70 to-emerald-50/90 border border-emerald-300 rounded-xl p-4 my-5 shadow-xs">
+        <div className="flex items-center justify-between gap-2 mb-2.5">
+          <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-emerald-900">
+            <Sparkles size={14} className="text-emerald-600 animate-pulse" />
+            <span>Best Offer Auto-Applied</span>
           </div>
-          <div className="px-2.5 py-1.5 flex flex-col justify-center">
-            <span className="text-[11px] font-bold text-gray-900">YOXFIRST</span>
-            <span className="text-[10px] text-gray-500">20% instant discount</span>
+          <span className="text-[10px] font-extrabold text-white bg-emerald-700 px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
+            {finalDiscountPct}% OFF
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between gap-3 bg-white p-3.5 rounded-lg border border-emerald-200">
+          <div>
+            <h4 className="text-sm font-bold text-gray-900">{bestOffer.title}</h4>
+            <p className="text-xs text-emerald-700 font-semibold mt-0.5">
+              You save ₹{offerSavings.toLocaleString('en-IN')} instantly on this item!
+            </p>
+            {bestOffer.isLimitedTime && (
+              <p className="text-[11px] text-rose-600 font-bold flex items-center gap-1 mt-1">
+                <Clock size={12} className="text-rose-600 animate-pulse" />
+                Limited-time flash deal active
+              </p>
+            )}
+          </div>
+
+          <div className="shrink-0 text-right pl-3 border-l border-gray-150">
+            <span className="text-[10px] text-gray-500 font-medium uppercase block">Offer Price</span>
+            <span className="text-base font-black text-gray-900">
+              ₹{finalPrice.toLocaleString('en-IN')}
+            </span>
           </div>
         </div>
 
-        <div className="flex-shrink-0 border border-emerald-200 bg-white rounded-md flex overflow-hidden shadow-xs min-w-[170px] sm:min-w-[190px]">
-          <div className="px-3 py-1.5 flex flex-col justify-center w-full">
-            <span className="text-[9px] text-gray-500 uppercase font-bold tracking-wider">Prepaid Offer</span>
-            <span className="font-bold text-gray-900 text-xs sm:text-sm">₹{Math.floor(currentPrice * 0.9)}</span>
-            <span className="text-[9px] text-emerald-600 font-semibold">Extra 10% on UPI/Cards</span>
-          </div>
-        </div>
+        <p className="text-[11px] text-gray-600 font-medium mt-2 flex items-center gap-1.5">
+          <Check size={13} className="text-emerald-600 shrink-0" />
+          <span>Discount is automatically applied to your cart — No promo code needed!</span>
+        </p>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <main className="w-full bg-white min-h-screen pb-20 relative">
@@ -321,15 +383,15 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             {/* Price section */}
             <div className="flex flex-wrap items-baseline gap-2 mb-2">
               <span className="text-xl sm:text-2xl font-bold text-gray-900">
-                Rs. {currentPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })} INR
+                Rs. {finalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })} INR
               </span>
-              {originalPrice && (
+              {baseStrikePrice && baseStrikePrice > finalPrice && (
                 <>
                   <span className="text-[13px] sm:text-sm text-[#D84141] line-through font-medium">
-                    Rs. {originalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })} INR
+                    Rs. {baseStrikePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })} INR
                   </span>
                   <span className="text-[10px] text-[#D84141] bg-[#FDF0F0] border border-[#f0caca] px-1.5 py-0.5 rounded font-bold uppercase">
-                    {discountPercentage}% OFF
+                    {finalDiscountPct}% OFF
                   </span>
                 </>
               )}

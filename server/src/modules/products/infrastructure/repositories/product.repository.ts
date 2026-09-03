@@ -60,7 +60,12 @@ export class ProductRepository implements IProductRepository {
   }
 
   async findBySlug(slug: string): Promise<Product | null> {
-    const doc = await ProductModel.findOne({ slug }).exec();
+    if (!slug) return null;
+    const trimmed = slug.trim();
+    let doc = await ProductModel.findOne({ slug: trimmed }).exec();
+    if (!doc) {
+      doc = await ProductModel.findOne({ slug: new RegExp(`^${trimmed}$`, 'i') }).exec();
+    }
     return doc ? this.mapToDomain(doc) : null;
   }
 

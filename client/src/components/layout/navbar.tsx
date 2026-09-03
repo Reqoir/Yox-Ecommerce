@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
+import { matchesProductSearch } from '@/lib/search';
+import { toast } from 'sonner';
 import { Heart, Search, Menu, X, ArrowRight, LogOut, ChevronDown, Shield } from 'lucide-react';
 import { IoPersonOutline } from "react-icons/io5";
 import { BsHandbag } from "react-icons/bs";
@@ -15,7 +17,7 @@ import { authApi } from '@/api/auth';
 export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
-  const { searchQuery, setSearchQuery, filteredProducts } = useProductFilters();
+  const { searchQuery, setSearchQuery, allProducts } = useProductFilters();
   const user = useAuthStore((state) => state.user);
   const logoutUserStore = useAuthStore((state) => state.logoutUser);
   const cartCount = useCartStore((state) => state.getItemCount());
@@ -109,15 +111,10 @@ export function Navbar() {
 
   const suggestions = React.useMemo(() => {
     if (!inputValue.trim()) return [];
-    const query = inputValue.toLowerCase().trim();
-    return filteredProducts.filter(
-      (p) =>
-        p.name.toLowerCase().includes(query) ||
-        p.category.toLowerCase().includes(query) ||
-        (p.subCategory && p.subCategory.toLowerCase().includes(query)) ||
-        (p.description && p.description.toLowerCase().includes(query))
-    ).slice(0, 5);
-  }, [inputValue, filteredProducts]);
+    return (allProducts || [])
+      .filter((p) => matchesProductSearch(p, inputValue))
+      .slice(0, 6);
+  }, [inputValue, allProducts]);
 
   const handleSearchSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -211,7 +208,9 @@ export function Navbar() {
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold text-gray-800 truncate">{item.name}</p>
-                          <p className="text-[11px] text-gray-500">{item.category} • ₹{item.price}</p>
+                          <p className="text-[11px] text-gray-500">
+                            {item.brand ? `${item.brand} • ` : ''}{item.category}{item.currentColor ? ` • ${item.currentColor}` : ''} • ₹{item.price}
+                          </p>
                         </div>
                         <ArrowRight size={14} className="text-gray-400" />
                       </button>
@@ -380,7 +379,9 @@ export function Navbar() {
                     <img src={item.image} alt={item.name} className="w-10 h-12 object-cover rounded bg-gray-100" />
                     <div className="flex-1">
                       <p className="text-xs font-semibold text-gray-900">{item.name}</p>
-                      <p className="text-[11px] text-gray-500">{item.category} • ₹{item.price}</p>
+                      <p className="text-[11px] text-gray-500">
+                        {item.brand ? `${item.brand} • ` : ''}{item.category}{item.currentColor ? ` • ${item.currentColor}` : ''} • ₹{item.price}
+                      </p>
                     </div>
                   </button>
                 ))}

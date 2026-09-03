@@ -42,6 +42,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useInventory, useStockLogs } from '@/hooks/admin/useInventory';
 import { InventoryItem, StockLog, inventoryApi } from '@/api/admin/inventory';
+import { Pagination } from '@/components/ui/pagination';
 import { toast } from 'sonner';
 
 type LogType = 'IN' | 'OUT' | 'ADJUSTMENT' | 'RESERVE' | 'RELEASE';
@@ -94,6 +95,16 @@ export default function AdminInventoryPage() {
       (item.size && item.size.toLowerCase().includes(query))
     );
   });
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const totalPages = Math.ceil(displayedItems.length / itemsPerPage);
+  const paginatedItems = displayedItems.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   // Open edit modal
   const handleOpenEdit = (item: InventoryItem) => {
@@ -272,7 +283,7 @@ export default function AdminInventoryPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              displayedItems.map((item) => (
+              paginatedItems.map((item) => (
                 <TableRow
                   key={item.id}
                   className={item.isLowStock ? 'bg-rose-500/5 hover:bg-rose-500/10' : ''}
@@ -372,6 +383,16 @@ export default function AdminInventoryPage() {
           </TableBody>
         </Table>
       </div>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={displayedItems.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        onItemsPerPageChange={setItemsPerPage}
+        itemsPerPageOptions={[10, 25, 50, 100]}
+      />
 
       {/* ── Edit Inventory Dialog ───────────────────────────────────────────────── */}
       <Dialog open={!!editItem} onOpenChange={(open) => !open && setEditItem(null)}>

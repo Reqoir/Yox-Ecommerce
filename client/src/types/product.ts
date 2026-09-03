@@ -22,6 +22,7 @@ export interface Product {
   currentColor?: string;
   href?: string;
   name: string;
+  brand?: string;
   category: ProductCategory;
   subCategory?: string;
   image: string;
@@ -36,6 +37,10 @@ export interface Product {
   rating?: number;
   description?: string;
   inStock?: boolean;
+  offerTitle?: string;
+  offerBadge?: string;
+  offerSavings?: number;
+  offerDiscountPct?: number;
 }
 
 export type SortOption = 
