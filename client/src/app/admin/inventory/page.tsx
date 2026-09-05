@@ -302,8 +302,8 @@ export default function AdminInventoryPage() {
                         )}
                       </div>
                       <div className="flex flex-col min-w-0">
-                        <span className="font-medium text-sm text-foreground truncate max-w-[200px]" title={item.productName || undefined}>
-                          {item.productName || 'Unnamed Product'}
+                        <span className="font-medium text-sm text-foreground truncate max-w-[200px]" title={item.productName || item.variantTitle || undefined}>
+                          {item.productName || item.variantTitle || 'Unnamed Product'}
                         </span>
                         <span className="text-xs text-muted-foreground font-mono truncate max-w-[160px]" title={item.variantId}>
                           ID: {item.variantId.slice(-8)}

@@ -160,7 +160,7 @@ export function PaymentReportsTab() {
             </div>
           </div>
           <p className="text-xl font-extrabold text-foreground font-mono">
-            ₹{(summary?.grossCollected || 0).toLocaleString()}
+            ${(summary?.grossCollected || 0).toLocaleString()}
           </p>
           <p className="text-[10px] text-muted-foreground">Total collected before refunds</p>
         </div>
@@ -174,7 +174,7 @@ export function PaymentReportsTab() {
             </div>
           </div>
           <p className="text-xl font-extrabold text-rose-500 font-mono">
-            ₹{(summary?.totalRefunded || 0).toLocaleString()}
+            ${(summary?.totalRefunded || 0).toLocaleString()}
           </p>
           <p className="text-[10px] text-muted-foreground">Completed order refunds</p>
         </div>
@@ -188,7 +188,7 @@ export function PaymentReportsTab() {
             </div>
           </div>
           <p className="text-2xl font-extrabold text-white font-mono">
-            ₹{(summary?.netCollected || 0).toLocaleString()}
+            ${(summary?.netCollected || 0).toLocaleString()}
           </p>
           <p className="text-[10px] text-blue-200">Gross Collected - Refunded</p>
         </div>
@@ -259,7 +259,7 @@ export function PaymentReportsTab() {
                     </div>
                   </div>
                   <span className="font-bold text-foreground font-mono text-sm">
-                    ₹{data.amount.toLocaleString()}
+                    ${data.amount.toLocaleString()}
                   </span>
                 </div>
               ))
@@ -295,7 +295,7 @@ export function PaymentReportsTab() {
                     <span className="text-muted-foreground font-medium">{data.count} Orders</span>
                   </div>
                   <span className="font-bold text-foreground font-mono text-sm">
-                    ₹{data.amount.toLocaleString()}
+                    ${data.amount.toLocaleString()}
                   </span>
                 </div>
               ))
@@ -388,7 +388,7 @@ export function PaymentReportsTab() {
                     </td>
 
                     <td className="p-4 text-right font-mono font-bold text-foreground">
-                      ₹{tx.amount.toLocaleString()}
+                      ${tx.amount.toLocaleString()}
                     </td>
 
                     <td className="p-4">

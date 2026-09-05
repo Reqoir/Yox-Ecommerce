@@ -937,10 +937,24 @@ export default function AdminOrdersPage() {
               {/* Shipping Address */}
               <div className="border rounded-xl p-4 bg-muted/20 space-y-1">
                 <h4 className="font-bold text-foreground text-xs uppercase tracking-wider mb-1">Shipping Recipient</h4>
-                <p className="font-bold text-sm text-foreground">{selectedOrder.shippingAddress?.fullName}</p>
-                <p>{selectedOrder.shippingAddress?.streetAddress}</p>
-                <p>{selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.state} - {selectedOrder.shippingAddress?.postalCode}</p>
-                <p className="font-semibold text-primary">Phone: {selectedOrder.shippingAddress?.phone}</p>
+                {selectedOrder.shippingAddress?.fullName && selectedOrder.shippingAddress.fullName !== 'undefined' && (
+                  <p className="font-bold text-sm text-foreground">{selectedOrder.shippingAddress.fullName}</p>
+                )}
+                {selectedOrder.shippingAddress?.streetAddress && selectedOrder.shippingAddress.streetAddress !== 'undefined' && (
+                  <p>{selectedOrder.shippingAddress.streetAddress}</p>
+                )}
+                <p>
+                  {[
+                    selectedOrder.shippingAddress?.city !== 'undefined' ? selectedOrder.shippingAddress?.city : null,
+                    selectedOrder.shippingAddress?.state !== 'undefined' ? selectedOrder.shippingAddress?.state : null,
+                  ].filter(Boolean).join(', ')}
+                  {selectedOrder.shippingAddress?.postalCode && selectedOrder.shippingAddress.postalCode !== 'undefined'
+                    ? ` - ${selectedOrder.shippingAddress.postalCode}`
+                    : ''}
+                </p>
+                {selectedOrder.shippingAddress?.phone && selectedOrder.shippingAddress.phone !== 'undefined' && (
+                  <p className="font-semibold text-primary">Phone: {selectedOrder.shippingAddress.phone}</p>
+                )}
               </div>
 
               {/* Ordered Items Table */}

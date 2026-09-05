@@ -67,8 +67,9 @@ export function AdminSidebar() {
       </div>
       <nav className="flex-1 overflow-y-auto p-4 space-y-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {navItems.map((item) => {
-          const userRole = (user as any)?.role || user?.roleId;
-          const isAdmin = userRole === 'admin' || userRole === 'super_admin' || userRole === 'ADMIN' || !user;
+          const userRole = (user as any)?.role || user?.roleId || '';
+          const userRoleUpper = typeof userRole === 'string' ? userRole.toUpperCase() : '';
+          const isAdmin = userRoleUpper === 'ADMIN' || userRoleUpper === 'SUPER_ADMIN' || !user;
           const hasPermission = isAdmin || userPermissions.includes('*') || (item.permission && userPermissions.includes(item.permission));
 
           if (item.permission && !hasPermission) {

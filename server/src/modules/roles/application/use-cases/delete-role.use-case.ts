@@ -6,12 +6,12 @@
 import { IUseCase } from '@core/application/use-cases/base.use-case.interface';
 import { NotFoundError, ValidationError } from '@core/application/errors/application.error';
 import { IRoleRepository } from '../../domain/repositories/role.repository.interface';
-// import { IUserRepository } from '../../../users/domain/repositories/user.repository.interface';
+import { IUserRepository } from '../../../users/domain/repositories/user.repository.interface';
 
 export class DeleteRoleUseCase implements IUseCase<string, void> {
   constructor(
     private readonly roleRepository: IRoleRepository,
-    // In a real scenario, you'd inject userRepository to prevent deleting roles that are in use
+    private readonly userRepository: IUserRepository,
   ) {}
 
   public async execute(id: string): Promise<void> {
@@ -24,7 +24,10 @@ export class DeleteRoleUseCase implements IUseCase<string, void> {
       throw new ValidationError('Cannot delete a system role');
     }
 
-    // TODO: Check if any users have this role before deleting
+    const usersWithRole = await this.userRepository.findAll({ roleId: id, limit: 1 } as any);
+    if (usersWithRole.data.length > 0) {
+      throw new ValidationError('Cannot delete role as it is assigned to one or more users');
+    }
 
     await this.roleRepository.delete(id);
   }
