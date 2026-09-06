@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { matchesProductSearch } from '@/lib/search';
 import { toast } from 'sonner';
-import { Heart, Search, Menu, X, ArrowRight, LogOut, ChevronDown, Shield } from 'lucide-react';
+import { Heart, Search, Menu, X, ArrowRight, LogOut, ChevronDown, Shield, User, Package, MapPin, Settings } from 'lucide-react';
 import { IoPersonOutline } from "react-icons/io5";
 import { BsHandbag } from "react-icons/bs";
 import { useProductFilters } from '@/hooks/useProductFilters';
@@ -233,59 +233,128 @@ export function Navbar() {
             )}
           </div>
 
-          {/* User Icon */}
+          {/* User Icon & Account Dropdown */}
           <div className="relative" ref={userDropdownRef}>
-            <button
-              onClick={() => {
-                if (user) {
-                  setIsUserDropdownOpen((prev) => !prev);
-                } else {
-                  router.push('/login');
-                }
-              }}
-              className="flex items-center text-black hover:opacity-70 transition-opacity"
-            >
-              <IoPersonOutline size={22} />
-            </button>
+            {mounted && user ? (
+              <button
+                onClick={() => setIsUserDropdownOpen((prev) => !prev)}
+                className="flex items-center gap-2 p-1 -m-1 rounded-full hover:bg-gray-100 transition-all focus:outline-none group"
+                aria-expanded={isUserDropdownOpen}
+                aria-label="User account menu"
+                title={user.fullName || "My Account"}
+              >
+                <div className="relative">
+                  {user.avatar ? (
+                    <img 
+                      src={user.avatar} 
+                      alt={user.fullName || "User"} 
+                      className="w-8 h-8 rounded-full object-cover border border-gray-300 shadow-xs group-hover:border-black transition-colors"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-black text-white text-xs font-bold flex items-center justify-center border border-black/10 shadow-xs group-hover:scale-105 transition-transform">
+                      {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                  )}
+                  {/* Active online status badge */}
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full" />
+                </div>
+
+                <div className="hidden lg:flex items-center gap-1 text-left">
+                  <span className="text-xs font-semibold text-gray-800 group-hover:text-black max-w-[90px] truncate">
+                    {user.fullName ? user.fullName.split(' ')[0] : 'Account'}
+                  </span>
+                  <ChevronDown 
+                    size={14} 
+                    className={`text-gray-500 group-hover:text-black transition-transform duration-200 ${isUserDropdownOpen ? 'rotate-180' : ''}`} 
+                  />
+                </div>
+              </button>
+            ) : (
+              <button
+                onClick={() => router.push('/login')}
+                className="flex items-center text-black hover:opacity-70 transition-opacity"
+                title="Sign In / Register"
+                aria-label="Sign In"
+              >
+                <IoPersonOutline size={22} />
+              </button>
+            )}
 
             {/* User Dropdown Menu */}
-            {isUserDropdownOpen && user && (
-              <div className="absolute right-0 top-10 w-56 bg-white border border-gray-200 rounded-md shadow-xl py-2 z-50 animate-in fade-in-50 duration-150">
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-xs font-bold text-gray-900 truncate">{user.fullName}</p>
-                  <p className="text-[11px] text-gray-500 truncate">{user.email}</p>
+            {mounted && isUserDropdownOpen && user && (
+              <div className="absolute right-0 top-11 w-64 bg-white border border-gray-200 rounded-xl shadow-xl py-2 z-50 animate-in fade-in-50 duration-150 divide-y divide-gray-100">
+                <div className="px-4 py-3 flex items-center gap-3">
+                  {user.avatar ? (
+                    <img 
+                      src={user.avatar} 
+                      alt={user.fullName || "User"} 
+                      className="w-10 h-10 rounded-full object-cover border border-gray-200 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-black text-white text-sm font-bold flex items-center justify-center shrink-0">
+                      {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-gray-900 truncate">{user.fullName || 'YOX Member'}</p>
+                    <p className="text-[11px] text-gray-500 truncate">{user.email}</p>
+                  </div>
                 </div>
 
                 <div className="py-1">
                   <Link
                     href="/profile"
                     onClick={() => setIsUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
                   >
-                    <IoPersonOutline size={15} className="text-gray-500" />
+                    <User size={15} className="text-gray-500" />
                     <span>My Profile</span>
+                  </Link>
+                  <Link
+                    href="/profile/orders"
+                    onClick={() => setIsUserDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                  >
+                    <Package size={15} className="text-gray-500" />
+                    <span>My Orders</span>
+                  </Link>
+                  <Link
+                    href="/profile/addresses"
+                    onClick={() => setIsUserDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                  >
+                    <MapPin size={15} className="text-gray-500" />
+                    <span>Saved Addresses</span>
                   </Link>
                   <Link
                     href="/favourites"
                     onClick={() => setIsUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
                   >
                     <Heart size={15} className="text-gray-500" />
                     <span>My Wishlist</span>
+                  </Link>
+                  <Link
+                    href="/profile/settings"
+                    onClick={() => setIsUserDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                  >
+                    <Settings size={15} className="text-gray-500" />
+                    <span>Account Settings</span>
                   </Link>
                   {user.permissions?.includes('admin:access') && (
                     <Link
                       href="/admin"
                       onClick={() => setIsUserDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold hover:bg-gray-50 transition-colors"
+                      className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-[#1A2E4C] hover:bg-blue-50 transition-colors"
                     >
-                      <Shield size={15} />
+                      <Shield size={15} className="text-[#1A2E4C]" />
                       <span>Admin Dashboard</span>
                     </Link>
                   )}
                 </div>
 
-                <div className="border-t border-gray-100 pt-1">
+                <div className="pt-1">
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors text-left"
