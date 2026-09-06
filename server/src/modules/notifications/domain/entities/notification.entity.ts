@@ -9,7 +9,13 @@
 
 import { BaseEntity, EntityProps } from '@core/domain/entities/base.entity';
 
-export type NotificationType = 'LOW_STOCK' | 'ORDER_STATUS' | 'SYSTEM';
+export type NotificationType =
+  | 'LOW_STOCK'
+  | 'ORDER_STATUS'
+  | 'SYSTEM'
+  | 'NEW_ORDER'
+  | 'ORDER_CANCELLED'
+  | 'RETURN_REQUEST';
 
 export interface NotificationProps extends EntityProps {
   userId: string | null;

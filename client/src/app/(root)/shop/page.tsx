@@ -21,7 +21,7 @@ function ShopContent() {
 
       <div className="w-[98%] max-w-[1500px] mx-auto flex items-start pt-0 lg:pt-8">
         {/* Sidebar Filter Area */}
-        <div className="w-56 hidden lg:block flex-shrink-0">
+        <div className="w-64 hidden lg:block flex-shrink-0">
           <FilterSidebar />
         </div>
 

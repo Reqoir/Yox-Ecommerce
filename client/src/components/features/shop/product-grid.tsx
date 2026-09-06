@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Heart, X, RefreshCw, ShoppingBag, ChevronDown, WifiOff } from 'lucide-react';
 import Link from 'next/link';
 import { useProductFilters } from '@/hooks/useProductFilters';
+import { useCategories } from '@/hooks/admin/useCategories';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { toast } from 'sonner';
 import { SORT_OPTIONS_LIST } from '@/constants/products';
@@ -27,36 +28,97 @@ export function ProductGrid() {
     clearAllFilters,
   } = useProductFilters();
 
+  const { categories: apiCategories } = useCategories();
   const { isFavourite, toggleFavourite } = useFavouritesStore();
-  const [activeTab, setActiveTab] = useState('ALL');
 
-  // Generate dynamic tabs based on the currently filtered products
-  const dynamicTabs = React.useMemo(() => {
-    const tabs = new Set<string>();
-    filteredProducts.forEach(p => {
-      if (p.subCategory) tabs.add(p.subCategory.toUpperCase());
-      else if (p.category) tabs.add(p.category.toUpperCase());
-      else if (p.tag) tabs.add(p.tag.toUpperCase());
-    });
-    // Add some common defaults if they exist in the products, otherwise just unique subcategories
-    return ['ALL', ...Array.from(tabs).slice(0, 15)]; // Limit to a reasonable number of tabs
-  }, [filteredProducts]);
+  // Show ONLY parent categories (no subcategories) in tabs
+  const parentCategories = React.useMemo(() => {
+    return (apiCategories || [])
+      .filter((c) => c.isActive !== false && !c.parentCategoryId)
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  }, [apiCategories]);
 
-  // Apply the active tab filter locally on top of the URL filters
-  const finalProducts = React.useMemo(() => {
-    if (activeTab === 'ALL') return filteredProducts;
-    return filteredProducts.filter(p => 
-      p.subCategory?.toUpperCase() === activeTab || 
-      p.category?.toUpperCase() === activeTab ||
-      p.tag?.toUpperCase() === activeTab
+  const tabs = React.useMemo(() => {
+    if (parentCategories.length > 0) {
+      return [
+        { label: 'ALL', slug: null },
+        ...parentCategories.map((c) => ({
+          label: c.name.toUpperCase(),
+          slug: c.slug || c.name.toLowerCase(),
+          id: c.id,
+          name: c.name,
+        })),
+      ];
+    }
+    return [{ label: 'ALL', slug: null }];
+  }, [parentCategories]);
+
+  // Determine which tab is highlighted
+  const activeTab = React.useMemo(() => {
+    if (!category && !subCategory) return 'ALL';
+    const target = (category || subCategory || '').toLowerCase().trim();
+
+    // 1. Direct match with a parent category
+    const directParent = parentCategories.find(
+      (c) => c.slug?.toLowerCase() === target || c.name.toLowerCase() === target
     );
-  }, [filteredProducts, activeTab]);
+    if (directParent) return directParent.name.toUpperCase();
+
+    // 2. Subcategory match -> resolve to its parent
+    const matchedSub = (apiCategories || []).find(
+      (c) => c.slug?.toLowerCase() === target || c.name.toLowerCase() === target
+    );
+    if (matchedSub?.parentCategoryId) {
+      const parent = parentCategories.find((p) => p.id === matchedSub.parentCategoryId);
+      if (parent) return parent.name.toUpperCase();
+    }
+
+    return target.toUpperCase();
+  }, [category, subCategory, parentCategories, apiCategories]);
+
+  // Determine current parent category object
+  const currentParentCategory = React.useMemo(() => {
+    if (!category && !subCategory) return null;
+    const target = (category || subCategory || '').toLowerCase().trim();
+
+    // 1. Direct match with a parent category
+    const directParent = parentCategories.find(
+      (c) => c.slug?.toLowerCase() === target || c.name.toLowerCase() === target
+    );
+    if (directParent) return directParent;
+
+    // 2. Subcategory match -> resolve to its parent
+    const matchedSub = (apiCategories || []).find(
+      (c) => c.slug?.toLowerCase() === target || c.name.toLowerCase() === target
+    );
+    if (matchedSub?.parentCategoryId) {
+      return parentCategories.find((p) => p.id === matchedSub.parentCategoryId) || null;
+    }
+
+    return null;
+  }, [category, subCategory, parentCategories, apiCategories]);
+
+  // Subcategories belonging to the active parent category
+  const activeSubCategories = React.useMemo(() => {
+    if (!currentParentCategory) return [];
+    return (apiCategories || [])
+      .filter((c) => c.isActive !== false && c.parentCategoryId === currentParentCategory.id)
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  }, [currentParentCategory, apiCategories]);
+
+  const handleTabClick = (tabItem: { label: string; slug: string | null }) => {
+    if (tabItem.label === 'ALL' || activeTab === tabItem.label) {
+      setCategory(null);
+    } else {
+      setCategory(tabItem.slug);
+    }
+  };
 
   return (
     <div className="w-full lg:pl-8 pb-16 lg:pb-0">
       
-      {/* Top Meta Area (Desktop Only) */}
-      <div className="hidden lg:block mb-8">
+      {/* Top Meta Area */}
+      <div className="mb-6 lg:mb-8">
         
         {/* Title and Sort */}
         <div className="flex items-center justify-between mb-6">
@@ -70,7 +132,7 @@ export function ProductGrid() {
               : "ALL PRODUCTS"}
           </h1>
           
-          <div className="w-[200px]">
+          <div className="w-[200px] hidden lg:block">
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
               <SelectTrigger className="border-gray-200 rounded-none h-10 text-[13px] font-medium text-gray-800 bg-white focus:ring-0 focus:ring-offset-0 hover:bg-gray-50 transition-colors cursor-pointer">
                 <SelectValue placeholder="Sort" />
@@ -86,22 +148,75 @@ export function ProductGrid() {
           </div>
         </div>
 
-        {/* Horizontal Tabs */}
-        <div className="flex flex-wrap gap-2">
-          {dynamicTabs.map((tab) => (
+        {/* Horizontal Tabs - Parent categories only */}
+        <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-1">
+          {tabs.map((tabItem) => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 text-[10px] font-semibold tracking-widest uppercase transition-colors border cursor-pointer ${
-                activeTab === tab
+              key={tabItem.label}
+              onClick={() => handleTabClick(tabItem)}
+              className={`px-3 py-1.5 text-[10px] font-semibold tracking-widest uppercase transition-colors border cursor-pointer shrink-0 ${
+                activeTab === tabItem.label
                   ? 'bg-black text-white border-black'
                   : 'bg-white text-gray-800 border-gray-800 hover:bg-gray-100'
               }`}
             >
-              {tab}
+              {tabItem.label}
             </button>
           ))}
         </div>
+
+        {/* Contextual Subcategories Pill Bar (Shown when selected category has subcategories) */}
+        {activeSubCategories.length > 0 && currentParentCategory && (
+          <div className="mt-3.5 pt-3 border-t border-gray-100 flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-gray-500 mr-1 flex items-center gap-1.5">
+              <span>{currentParentCategory.name} Types</span>
+              <span className="text-gray-300">•</span>
+            </span>
+
+            {/* "All [Parent]" pill */}
+            <button
+              type="button"
+              onClick={() => setCategory(currentParentCategory.slug || currentParentCategory.name.toLowerCase())}
+              className={`px-3 py-1 text-[11px] font-semibold rounded-full transition-all cursor-pointer ${
+                (!subCategory && (category?.toLowerCase() === currentParentCategory.slug?.toLowerCase() || category?.toLowerCase() === currentParentCategory.name.toLowerCase()))
+                  ? 'bg-black text-white shadow-xs'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              All {currentParentCategory.name}
+            </button>
+
+            {/* Individual Subcategories */}
+            {activeSubCategories.map((sub) => {
+              const isSubActive =
+                subCategory?.toLowerCase() === sub.slug?.toLowerCase() ||
+                subCategory?.toLowerCase() === sub.name.toLowerCase() ||
+                category?.toLowerCase() === sub.slug?.toLowerCase() ||
+                category?.toLowerCase() === sub.name.toLowerCase();
+
+              return (
+                <button
+                  key={sub.id || sub.slug}
+                  type="button"
+                  onClick={() => {
+                    if (isSubActive) {
+                      setCategory(currentParentCategory.slug || currentParentCategory.name.toLowerCase());
+                    } else {
+                      setCategory(sub.slug || sub.name.toLowerCase());
+                    }
+                  }}
+                  className={`px-3 py-1 text-[11px] font-semibold rounded-full transition-all cursor-pointer ${
+                    isSubActive
+                      ? 'bg-black text-white shadow-xs'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {sub.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Grid, Loading, Error, or Empty State */}
@@ -135,9 +250,9 @@ export function ProductGrid() {
             Try Again
           </button>
         </div>
-      ) : finalProducts.length > 0 ? (
+      ) : filteredProducts.length > 0 ? (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-10 px-1 lg:px-0">
-          {finalProducts.map((product) => {
+          {filteredProducts.map((product) => {
             const prodIdStr = String(product.productId || product.id);
             const cardColor = product.currentColor || null;
             const isFav = isFavourite(prodIdStr, cardColor);

@@ -18,6 +18,8 @@ import {
   ShieldCheck,
   MessageSquare,
   Gift,
+  LayoutTemplate,
+  UserCog,
 } from 'lucide-react';
 import { authApi } from '@/api/auth';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -29,17 +31,19 @@ const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Reports', href: '/admin/reports', icon: BarChart3, permission: 'view_reports' },
   { name: 'Audit Logs', href: '/admin/audit-logs', icon: ShieldCheck, permission: 'view_audit_logs' },
-  { name: 'Orders', href: '/admin/order', icon: ShoppingBag },
+  { name: 'Orders', href: '/admin/order', icon: ShoppingBag, permission: 'manage_orders' },
   { name: 'Reviews', href: '/admin/reviews', icon: MessageSquare, permission: 'manage_reviews' },
-  { name: 'Users', href: '/admin/user', icon: Users, permission: 'manage_users' },
+  { name: 'Customers', href: '/admin/user', icon: Users, permission: 'manage_users' },
+  { name: 'Staff Members', href: '/admin/staff', icon: UserCog, permission: 'manage_users' },
   { name: 'Products', href: '/admin/product', icon: Package, permission: 'manage_products' },
   { name: 'Categories', href: '/admin/category', icon: FolderTree, permission: 'manage_categories' },
   { name: 'Brands', href: '/admin/brand', icon: Tag, permission: 'manage_brands' },
   { name: 'Inventory', href: '/admin/inventory', icon: Warehouse, permission: 'manage_inventory' },
-  { name: 'Offers', href: '/admin/offers', icon: Gift },
+  { name: 'Offers', href: '/admin/offers', icon: Gift, permission: 'manage_offers' },
+  { name: 'Content Management', href: '/admin/content', icon: LayoutTemplate, permission: 'manage_content' },
   { name: 'Roles', href: '/admin/role', icon: Shield, permission: 'manage_roles' },
-  { name: 'Notifications', href: '/admin/notifications', icon: Bell },
-  { name: 'Settings', href: '/admin/settings', icon: Settings },
+  { name: 'Notifications', href: '/admin/notifications', icon: Bell, permission: 'manage_notifications' },
+  { name: 'Settings', href: '/admin/settings', icon: Settings, permission: 'manage_settings' },
 ];
 
 export function AdminSidebar() {
@@ -78,16 +82,15 @@ export function AdminSidebar() {
 
           const isActive = pathname === item.href || (pathname.startsWith(item.href + '/') && item.href !== '/admin');
           const Icon = item.icon;
-          
+
           return (
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive 
-                  ? 'bg-primary text-primary-foreground shadow-sm' 
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive
+                  ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
+                }`}
             >
               <Icon className="h-5 w-5" />
               <span className="flex-1">{item.name}</span>
@@ -102,7 +105,7 @@ export function AdminSidebar() {
       </nav>
       <div className="p-4 border-t space-y-1 shrink-0">
         <ThemeToggle />
-        <button 
+        <button
           onClick={handleLogout}
           className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
         >

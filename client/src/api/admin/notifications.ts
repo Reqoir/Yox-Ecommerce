@@ -3,7 +3,7 @@ import apiClient from '@/lib/axios';
 export interface Notification {
   id: string;
   userId: string | null;
-  type: 'LOW_STOCK' | 'ORDER_STATUS' | 'SYSTEM';
+  type: 'LOW_STOCK' | 'ORDER_STATUS' | 'SYSTEM' | 'NEW_ORDER' | 'ORDER_CANCELLED' | 'RETURN_REQUEST';
   title: string;
   message: string;
   isRead: boolean;

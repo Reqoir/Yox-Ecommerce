@@ -14,9 +14,9 @@ export function StyleSeekers() {
     const fetchCategories = async () => {
       try {
         const data = await categoryApi.getAll();
-        // Filter out inactive categories and map to UI format
+        // Filter out inactive categories and subcategories (only show parent categories)
         const mapped = data
-          .filter(cat => cat.isActive)
+          .filter(cat => cat.isActive && !cat.parentCategoryId)
           .map((cat, index) => ({
             id: cat.id,
             slug: cat.slug,

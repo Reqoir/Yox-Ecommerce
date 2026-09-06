@@ -85,7 +85,7 @@ export class AuthController {
    */
   public refreshToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const refreshTokenCookie = req.cookies?.refresh_token;
+      const refreshTokenCookie = req.cookies?.refresh_token || req.cookies?.refreshToken;
 
       if (!refreshTokenCookie) {
         throw ApiError.unauthorized('No refresh token provided');

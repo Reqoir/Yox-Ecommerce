@@ -30,11 +30,11 @@ import { toast } from 'sonner';
 export default function RoleManagementPage() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Dialog state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
-  
+
   // Form state
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -84,7 +84,7 @@ export default function RoleManagementPage() {
   };
 
   const handlePermissionToggle = (permissionId: string) => {
-    setSelectedPermissions(prev => 
+    setSelectedPermissions(prev =>
       prev.includes(permissionId)
         ? prev.filter(p => p !== permissionId)
         : [...prev, permissionId]
@@ -93,7 +93,7 @@ export default function RoleManagementPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name.trim()) {
       toast.error('Role name is required');
       return;
@@ -101,7 +101,7 @@ export default function RoleManagementPage() {
 
     try {
       setIsSubmitting(true);
-      
+
       const payload = {
         name,
         description,
@@ -115,7 +115,7 @@ export default function RoleManagementPage() {
         await roleApi.create(payload as CreateRoleDTO);
         toast.success('Role created successfully');
       }
-      
+
       setIsDialogOpen(false);
       fetchRoles();
     } catch (error: any) {
@@ -127,7 +127,7 @@ export default function RoleManagementPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this role?')) return;
-    
+
     try {
       await roleApi.delete(id);
       toast.success('Role deleted successfully');
@@ -264,7 +264,7 @@ export default function RoleManagementPage() {
                   <p className="text-xs text-muted-foreground">System role names cannot be changed.</p>
                 )}
               </div>
-              
+
               <div className="grid gap-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
@@ -281,7 +281,7 @@ export default function RoleManagementPage() {
                 <div className="grid grid-cols-2 gap-3 max-h-[200px] overflow-y-auto p-1">
                   {PERMISSIONS_LIST.map((permission) => (
                     <div key={permission.id} className="flex items-start space-x-2">
-                      <Checkbox 
+                      <Checkbox
                         id={permission.id}
                         checked={selectedPermissions.includes(permission.id)}
                         onCheckedChange={() => handlePermissionToggle(permission.id)}

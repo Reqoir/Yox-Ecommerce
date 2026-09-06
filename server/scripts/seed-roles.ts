@@ -27,9 +27,9 @@ const rolesToSeed = [
     name: 'MANAGER',
     description: 'Store manager',
     permissions: [
-      'manage_brands', 
-      'manage_inventory', 
-      'manage_products', 
+      'manage_brands',
+      'manage_inventory',
+      'manage_products',
       'manage_categories',
       'manage_orders',
       'view_reports'
@@ -40,7 +40,7 @@ const rolesToSeed = [
     name: 'EDITOR',
     description: 'Content editor',
     permissions: [
-      'manage_brands', 
+      'manage_brands',
       'manage_categories'
     ],
     isSystem: true,

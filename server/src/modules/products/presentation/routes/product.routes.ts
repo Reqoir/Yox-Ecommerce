@@ -2,7 +2,7 @@
  * @file product.routes.ts
  * @layer Presentation › Routes
  * 
- * Defines the Express routes for the Products module.
+ * Defines the Express routes for the Products module with e-commerce filters.
  */
 
 import { Router } from 'express';
@@ -18,12 +18,15 @@ import {
   GetAllProductsUseCase,
   GetFeaturedProductsUseCase,
   GetLatestProductsUseCase,
-  GetBestSellingProductsUseCase
+  GetBestSellingProductsUseCase,
+  GetProductFilterFacetsUseCase
 } from '../../application/use-cases/product.use-cases';
+import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
+import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
 
 const router = Router();
 
-// Manual Dependency Injection for now (can be replaced with a DI container like Awilix/Inversify later)
+// Dependency Injection
 const productRepo = new ProductRepository();
 const variantRepo = new ProductVariantRepository();
 
@@ -36,27 +39,28 @@ const productController = new ProductController(
   new GetAllProductsUseCase(productRepo, variantRepo),
   new GetFeaturedProductsUseCase(productRepo),
   new GetLatestProductsUseCase(productRepo),
-  new GetBestSellingProductsUseCase(productRepo)
+  new GetBestSellingProductsUseCase(productRepo),
+  new GetProductFilterFacetsUseCase(productRepo)
 );
 
-// Search is often just GET / with query params
+// 1. E-commerce Filter Facets (must be before /:id)
+router.get('/filters', productController.getFilters);
+
+// 2. Product Search & Filtered Listing
 router.get('/', productController.getAll); 
 
-// Specialized listing routes
+// 3. Specialized listing routes
 router.get('/featured', productController.getFeatured);
 router.get('/latest', productController.getLatest);
 router.get('/best-selling', productController.getBestSelling);
 
-import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
-import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
-
-// Barcode lookup
+// 4. Barcode lookup
 router.get('/by-barcode/:barcode', productController.getByBarcode);
 
-// Standard CRUD
+// 5. Standard Product Details by ID or Slug
 router.get('/:id', productController.getById);
 
-// Protected Admin Routes
+// 6. Protected Admin Routes
 router.post('/', requireAuth, requirePermission('manage_products'), productController.create);
 router.patch('/:id', requireAuth, requirePermission('manage_products'), productController.update);
 router.delete('/:id', requireAuth, requirePermission('manage_products'), productController.delete);

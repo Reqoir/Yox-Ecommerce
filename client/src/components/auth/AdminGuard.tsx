@@ -7,10 +7,20 @@ import { toast } from 'sonner';
 
 const ROUTE_PERMISSIONS: Record<string, string> = {
   '/admin/user': 'manage_users',
+  '/admin/staff': 'manage_users',
   '/admin/product': 'manage_products',
   '/admin/category': 'manage_categories',
   '/admin/brand': 'manage_brands',
   '/admin/role': 'manage_roles',
+  '/admin/inventory': 'manage_inventory',
+  '/admin/order': 'manage_orders',
+  '/admin/offers': 'manage_offers',
+  '/admin/content': 'manage_content',
+  '/admin/reviews': 'manage_reviews',
+  '/admin/reports': 'view_reports',
+  '/admin/audit-logs': 'view_audit_logs',
+  '/admin/notifications': 'manage_notifications',
+  '/admin/settings': 'manage_settings',
 };
 
 export function AdminGuard({ children }: { children: React.ReactNode }) {
@@ -64,7 +74,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
         }
       }
     };
-    
+
     checkAuth();
   }, [isMounted, isAuthenticated, user, router, pathname]);
 

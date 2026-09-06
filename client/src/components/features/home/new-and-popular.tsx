@@ -41,7 +41,7 @@ export function NewAndPopular() {
   // Derive dynamic tabs from database categories or fallback to default tabs
   const tabs = useMemo(() => {
     const activeCats = (dbCategories || [])
-      .filter((c) => c.isActive !== false)
+      .filter((c) => c.isActive !== false && !c.parentCategoryId)
       .map((c) => c.name.toUpperCase());
 
     if (activeCats.length > 0) {

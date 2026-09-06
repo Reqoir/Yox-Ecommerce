@@ -7,6 +7,7 @@ import { useCategories } from '@/hooks/admin/useCategories';
 import { useBrands } from '@/hooks/admin/useBrands';
 import { useQuery } from '@tanstack/react-query';
 import { offersApi } from '@/api/admin/offers';
+import { productApi } from '@/api/admin/products';
 import { calculateBestOffer } from '@/lib/offers';
 import { matchesProductSearch } from '@/lib/search';
 import { Product, ProductFit, ProductSize, ProductTag, SortOption } from '@/types/product';
@@ -28,6 +29,12 @@ export function useProductFilters() {
   const { data: activeOffers = [] } = useQuery({
     queryKey: ['active-offers'],
     queryFn: offersApi.getActive,
+  });
+
+  const { data: filterFacets, isLoading: isFacetsLoading } = useQuery({
+    queryKey: ['product-filter-facets'],
+    queryFn: () => productApi.getFilters(),
+    staleTime: 60 * 1000,
   });
 
   // Map category ID to Category Name for display
@@ -75,6 +82,8 @@ export function useProductFilters() {
             colorCardId: `${p.id}-default`,
             name: p.name,
             brand: brandName,
+            categoryId: p.categoryId,
+            subCategoryId: p.subCategoryId,
             category: catName as any,
             subCategory: subCatName,
             image: p.thumbnail || '/images/product-1.jpeg',
@@ -94,7 +103,7 @@ export function useProductFilters() {
         // For each color group, create an individual product card
         colorMap.forEach((colorVariants, colorName) => {
           const sizes = Array.from(new Set(colorVariants.map(v => v.size).filter(Boolean))) as ProductSize[];
-          
+
           let minPrice = 999;
           let originalPrice: number | undefined = undefined;
 
@@ -115,15 +124,15 @@ export function useProductFilters() {
           const firstImage = variantImages[0] || p.thumbnail || '/images/product-1.jpeg';
 
           const isDefaultColor = colorName.toLowerCase() === 'default';
-          const href = isDefaultColor 
-            ? `/product/${p.id}` 
+          const href = isDefaultColor
+            ? `/product/${p.id}`
             : `/product/${p.id}?color=${encodeURIComponent(colorName)}`;
 
           // Evaluate active best offer for this product
           const offerResult = calculateBestOffer(p, minPrice, activeOffers, originalPrice);
           const finalCardPrice = offerResult.hasOffer ? offerResult.discountedPrice : minPrice;
-          const finalStrikePrice = offerResult.hasOffer 
-            ? offerResult.originalPrice 
+          const finalStrikePrice = offerResult.hasOffer
+            ? offerResult.originalPrice
             : (originalPrice && originalPrice > minPrice ? originalPrice : undefined);
 
           expanded.push({
@@ -133,6 +142,8 @@ export function useProductFilters() {
             currentColor: isDefaultColor ? undefined : colorName,
             name: p.name,
             brand: brandName,
+            categoryId: p.categoryId,
+            subCategoryId: p.subCategoryId,
             category: catName as any,
             subCategory: subCatName,
             image: firstImage,
@@ -167,6 +178,8 @@ export function useProductFilters() {
   const minPrice = Number(searchParams.get('minPrice')) || 0;
   const maxPrice = Number(searchParams.get('maxPrice')) || 10000;
   const sortBy = (searchParams.get('sort') as SortOption) || 'Relevance';
+  const inStockOnly = searchParams.get('inStock') === 'true';
+  const onSaleOnly = searchParams.get('onSale') === 'true';
 
   const selectedSizes = useMemo(() => {
     const raw = searchParams.get('sizes');
@@ -227,16 +240,22 @@ export function useProductFilters() {
       const params = new URLSearchParams(searchParams.toString());
 
       Object.entries(newParams).forEach(([key, value]) => {
+        const lowerKey = key.toLowerCase();
+        // Delete all matching existing keys case-insensitively
+        for (const existingKey of Array.from(params.keys())) {
+          if (existingKey.toLowerCase() === lowerKey) {
+            params.delete(existingKey);
+          }
+        }
+
         if (
-          value === null || 
-          value === undefined || 
-          value === '' || 
-          (value === 0 && key === 'minPrice') || 
-          (value === 10000 && key === 'maxPrice')
+          value !== null &&
+          value !== undefined &&
+          value !== '' &&
+          !(value === 0 && lowerKey === 'minprice') &&
+          !(value === 10000 && lowerKey === 'maxprice')
         ) {
-          params.delete(key);
-        } else {
-          params.set(key, String(value));
+          params.set(lowerKey, String(value));
         }
       });
 
@@ -262,14 +281,18 @@ export function useProductFilters() {
 
   const setCategory = useCallback(
     (cat: string | null) => {
-      updateQueryParams({ category: cat ? cat.toLowerCase() : null, subcategory: null });
+      updateQueryParams({
+        category: cat ? cat.toLowerCase() : null,
+        subcategory: null,
+        subCategory: null,
+      });
     },
     [updateQueryParams]
   );
 
   const setSubCategory = useCallback(
     (subCat: string | null) => {
-      updateQueryParams({ subcategory: subCat ? subCat.toLowerCase() : null });
+      updateQueryParams({ subcategory: subCat ? subCat.toLowerCase() : null, subCategory: null });
     },
     [updateQueryParams]
   );
@@ -324,6 +347,14 @@ export function useProductFilters() {
     [selectedTags, updateQueryParams]
   );
 
+  const toggleInStock = useCallback(() => {
+    updateQueryParams({ inStock: inStockOnly ? null : 'true' });
+  }, [inStockOnly, updateQueryParams]);
+
+  const toggleOnSale = useCallback(() => {
+    updateQueryParams({ onSale: onSaleOnly ? null : 'true' });
+  }, [onSaleOnly, updateQueryParams]);
+
   const setSortBy = useCallback(
     (sort: SortOption) => {
       updateQueryParams({ sort: sort === 'Relevance' ? null : sort });
@@ -348,16 +379,86 @@ export function useProductFilters() {
       result = result.filter((p) => matchesProductSearch(p, searchQuery));
     }
 
-    // Category match
+    // Category match (supports parent category or subcategory by slug, name, or ID)
     if (category) {
-      const catLower = category.toLowerCase();
-      result = result.filter((p) => p.category.toLowerCase() === catLower);
+      const catLower = category.toLowerCase().trim();
+      const matchedCat = apiCategories.find(
+        (c) =>
+          c.slug?.toLowerCase() === catLower ||
+          c.name.toLowerCase() === catLower ||
+          c.id === category
+      );
+
+      if (matchedCat) {
+        if (matchedCat.parentCategoryId) {
+          // If the query category is a subcategory, match against subCategory or subCategoryId
+          result = result.filter(
+            (p) =>
+              p.subCategory?.toLowerCase() === matchedCat.name.toLowerCase() ||
+              p.subCategory?.toLowerCase() === matchedCat.slug.toLowerCase() ||
+              p.subCategoryId === matchedCat.id ||
+              p.category?.toLowerCase() === matchedCat.name.toLowerCase()
+          );
+        } else {
+          // If the query category is a parent category, match against category or categoryId or any child subcategories
+          const childSubCategoryIds = new Set(
+            apiCategories.filter((c) => c.parentCategoryId === matchedCat.id).map((c) => c.id)
+          );
+          const childSubCategoryNames = new Set(
+            apiCategories
+              .filter((c) => c.parentCategoryId === matchedCat.id)
+              .map((c) => c.name.toLowerCase())
+          );
+
+          result = result.filter(
+            (p) =>
+              p.category?.toLowerCase() === matchedCat.name.toLowerCase() ||
+              p.category?.toLowerCase() === matchedCat.slug.toLowerCase() ||
+              p.categoryId === matchedCat.id ||
+              (p.subCategoryId && childSubCategoryIds.has(p.subCategoryId)) ||
+              (p.subCategory && childSubCategoryNames.has(p.subCategory.toLowerCase()))
+          );
+        }
+      } else {
+        // Fallback: match either category or subCategory loosely (name or slug format)
+        const normalizedParam = catLower.replace(/[-\s]/g, '');
+        result = result.filter((p) => {
+          const pCatNorm = p.category?.toLowerCase().replace(/[-\s]/g, '') || '';
+          const pSubNorm = p.subCategory?.toLowerCase().replace(/[-\s]/g, '') || '';
+          return (
+            p.category?.toLowerCase() === catLower ||
+            p.subCategory?.toLowerCase() === catLower ||
+            pCatNorm === normalizedParam ||
+            pSubNorm === normalizedParam
+          );
+        });
+      }
     }
 
     // SubCategory match
     if (subCategory) {
-      const subLower = subCategory.toLowerCase();
-      result = result.filter((p) => p.subCategory && p.subCategory.toLowerCase() === subLower);
+      const subLower = subCategory.toLowerCase().trim();
+      const matchedSub = apiCategories.find(
+        (c) =>
+          c.slug?.toLowerCase() === subLower ||
+          c.name.toLowerCase() === subLower ||
+          c.id === subCategory
+      );
+
+      if (matchedSub) {
+        result = result.filter(
+          (p) =>
+            p.subCategory?.toLowerCase() === matchedSub.name.toLowerCase() ||
+            p.subCategory?.toLowerCase() === matchedSub.slug.toLowerCase() ||
+            p.subCategoryId === matchedSub.id
+        );
+      } else {
+        const normalizedSub = subLower.replace(/[-\s]/g, '');
+        result = result.filter((p) => {
+          const pSubNorm = p.subCategory?.toLowerCase().replace(/[-\s]/g, '') || '';
+          return p.subCategory?.toLowerCase() === subLower || pSubNorm === normalizedSub;
+        });
+      }
     }
 
     // Price range match
@@ -381,6 +482,16 @@ export function useProductFilters() {
     // Tags match
     if (selectedTags.length > 0) {
       result = result.filter((p) => p.tag && selectedTags.includes(p.tag));
+    }
+
+    // In Stock Only
+    if (inStockOnly) {
+      result = result.filter((p) => p.inStock);
+    }
+
+    // On Sale / Offers Only
+    if (onSaleOnly) {
+      result = result.filter((p) => p.offerSavings || (p.originalPrice && p.originalPrice > p.price) || (p.tag as string) === 'SALE' || p.tag === 'ON OFFER');
     }
 
     // Sorting
@@ -417,7 +528,10 @@ export function useProductFilters() {
     selectedFits,
     selectedColors,
     selectedTags,
+    inStockOnly,
+    onSaleOnly,
     sortBy,
+    apiCategories,
   ]);
 
   // Count active filters
@@ -427,6 +541,8 @@ export function useProductFilters() {
     if (category) count++;
     if (subCategory) count++;
     if (minPrice > 0 || maxPrice < 10000) count++;
+    if (inStockOnly) count++;
+    if (onSaleOnly) count++;
     count += selectedSizes.length;
     count += selectedFits.length;
     count += selectedColors.length;
@@ -438,6 +554,8 @@ export function useProductFilters() {
     subCategory,
     minPrice,
     maxPrice,
+    inStockOnly,
+    onSaleOnly,
     selectedSizes,
     selectedFits,
     selectedColors,
@@ -454,9 +572,13 @@ export function useProductFilters() {
     selectedFits,
     selectedColors,
     selectedTags,
+    inStockOnly,
+    onSaleOnly,
     sortBy,
     allProducts,
     filteredProducts,
+    filterFacets,
+    isFacetsLoading,
     isLoading: isProductsLoading,
     isError: isProductsError,
     refetch: refetchProducts,
@@ -473,6 +595,8 @@ export function useProductFilters() {
     toggleFit,
     toggleColor,
     toggleTag,
+    toggleInStock,
+    toggleOnSale,
     setSortBy,
     clearAllFilters,
   };

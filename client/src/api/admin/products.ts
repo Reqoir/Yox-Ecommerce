@@ -65,6 +65,11 @@ export const productApi = {
     const response = await apiClient.get<{ data: { data: Product[]; total: number } }>('/products', { params });
     return response.data.data.data || [];
   },
+
+  getFilters: async (params?: Record<string, any>) => {
+    const response = await apiClient.get<{ data: any }>('/products/filters', { params });
+    return response.data.data;
+  },
   
   getById: async (id: string) => {
     const response = await apiClient.get<{ data: Product }>(`/products/${id}`);

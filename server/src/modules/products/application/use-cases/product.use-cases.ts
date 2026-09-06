@@ -10,7 +10,7 @@ import { IProductRepository } from '../../domain/repositories/product.repository
 import { IProductVariantRepository } from '../../domain/repositories/product-variant.repository.interface';
 import { Product } from '../../domain/entities/product.entity';
 import { ProductVariant } from '../../domain/entities/product-variant.entity';
-import { CreateProductRequestDTO, UpdateProductRequestDTO, ProductResponseDTO } from '../dtos/product.dto';
+import { CreateProductRequestDTO, UpdateProductRequestDTO, ProductResponseDTO, ProductFilterFacetsDTO } from '../dtos/product.dto';
 import { NotFoundError } from '@core/domain/errors/not-found.error';
 
 // --- Mappers ---
@@ -214,24 +214,74 @@ export class GetProductByBarcodeUseCase implements IUseCase<string, ProductRespo
   }
 }
 
-export class GetAllProductsUseCase implements IUseCase<any, { data: ProductResponseDTO[]; total: number }> {
+export class GetAllProductsUseCase implements IUseCase<any, {
+  data: ProductResponseDTO[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}> {
   constructor(
     private readonly productRepo: IProductRepository,
     private readonly variantRepo?: IProductVariantRepository
   ) {}
 
-  async execute(query: any): Promise<{ data: ProductResponseDTO[]; total: number }> {
-    const result = await this.productRepo.findAll(query);
-    const dataWithVariants = await Promise.all(
-      result.data.map(async (p) => {
-        const variants = this.variantRepo ? await this.variantRepo.findByProductId(p.id) : [];
-        return mapToResponseDTO(p, variants);
-      })
-    );
+  async execute(query: any): Promise<{
+    data: ProductResponseDTO[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  }> {
+    const page = Math.max(parseInt(query?.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(query?.limit) || 12, 1), 100);
+
+    const result = await this.productRepo.findAll({ ...query, page, limit });
+    const productIds = result.data.map(p => p.id);
+
+    // Batch fetch all variants in a single query for high performance
+    let allVariants: ProductVariant[] = [];
+    if (this.variantRepo && productIds.length > 0) {
+      allVariants = await this.variantRepo.findByProductIds(productIds);
+    }
+
+    const variantsByProductId = new Map<string, ProductVariant[]>();
+    allVariants.forEach((v) => {
+      const pId = v.productId;
+      if (!variantsByProductId.has(pId)) {
+        variantsByProductId.set(pId, []);
+      }
+      variantsByProductId.get(pId)!.push(v);
+    });
+
+    const dataWithVariants = result.data.map((p) => {
+      const variants = variantsByProductId.get(p.id) || [];
+      return mapToResponseDTO(p, variants);
+    });
+
+    const totalPages = Math.ceil(result.total / limit);
+
     return {
       data: dataWithVariants,
       total: result.total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
     };
+  }
+}
+
+export class GetProductFilterFacetsUseCase implements IUseCase<any, ProductFilterFacetsDTO> {
+  constructor(private readonly productRepo: IProductRepository) {}
+
+  async execute(query: any = {}): Promise<ProductFilterFacetsDTO> {
+    return await this.productRepo.getFilterFacets(query);
   }
 }
 

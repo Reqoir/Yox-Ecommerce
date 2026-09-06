@@ -28,14 +28,11 @@ export const setAuthCookies = (
   accessToken: string,
   refreshToken: string,
 ): void => {
-  // Access Token (typically short-lived, e.g., 15m)
-  // We parse the string (e.g., '15m') to a rough ms value for maxAge
-  // In a robust implementation, you might want to use the exact expiration from the JWT payload
-  // For simplicity, we just set standard values.
-  const accessMaxAge = 15 * 60 * 1000; // 15 mins
+  // Access Token (7 days to prevent annoying 15-minute logouts during development/admin use)
+  const accessMaxAge = 7 * 24 * 60 * 60 * 1000;
 
-  // Refresh Token (long-lived, e.g., 7d)
-  const refreshMaxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+  // Refresh Token (30 days)
+  const refreshMaxAge = 30 * 24 * 60 * 60 * 1000;
 
   res.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
     ...baseCookieOptions,
@@ -45,7 +42,7 @@ export const setAuthCookies = (
   res.cookie(REFRESH_TOKEN_COOKIE, refreshToken, {
     ...baseCookieOptions,
     maxAge: refreshMaxAge,
-    path: '/api/v1/auth/refresh', // Optional: Only send to the refresh endpoint for extra security
+    path: '/',
   });
 };
 
@@ -56,6 +53,13 @@ export const clearAuthCookies = (res: Response): void => {
   res.clearCookie(ACCESS_TOKEN_COOKIE, baseCookieOptions);
   res.clearCookie(REFRESH_TOKEN_COOKIE, {
     ...baseCookieOptions,
+    path: '/',
+  });
+  // Also clear legacy path and camelCase names if present
+  res.clearCookie(REFRESH_TOKEN_COOKIE, {
+    ...baseCookieOptions,
     path: '/api/v1/auth/refresh',
   });
+  res.clearCookie('accessToken', baseCookieOptions);
+  res.clearCookie('refreshToken', baseCookieOptions);
 };

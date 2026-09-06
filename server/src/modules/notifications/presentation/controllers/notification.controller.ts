@@ -4,6 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import { randomUUID } from 'crypto';
 import {
   GetNotificationsUseCase,
   MarkNotificationReadUseCase,
@@ -14,6 +15,7 @@ import { notificationListQuerySchema } from '../validators/notification.validato
 import { validateRequest } from '@shared/utils/validation.helper';
 import { ApiResponse } from '@shared/utils/api-response.util';
 import { HttpStatus } from '@shared/constants/http-status.constants';
+import { NotificationStreamService } from '../../infrastructure/services/notification-stream.service';
 
 export class NotificationController {
   constructor(
@@ -22,6 +24,22 @@ export class NotificationController {
     private readonly markAllReadUseCase: MarkAllNotificationsReadUseCase,
     private readonly deleteUseCase: DeleteNotificationUseCase
   ) {}
+
+  /**
+   * GET /notifications/stream
+   * Server-Sent Events endpoint for real-time notifications.
+   * Client subscribes once; server pushes events whenever they occur.
+   */
+  public streamNotifications = (req: Request, res: Response): void => {
+    const userId = req.user!.id;
+    const clientId = randomUUID();
+
+    const cleanup = NotificationStreamService.getInstance().addClient(clientId, userId, res);
+
+    // Clean up on client disconnect
+    req.on('close', cleanup);
+    req.on('error', cleanup);
+  };
 
   /**
    * GET /notifications
@@ -68,8 +86,6 @@ export class NotificationController {
     try {
       const { id } = req.params;
       const userId = req.user!.id;
-      // The role field from JWT is the roleId — for simplicity we pass isAdmin=false
-      // and let the use case check ownership. Admins can use the manage_inventory permission route.
       const isAdmin = false;
       await this.deleteUseCase.execute({ id, userId, isAdmin });
       ApiResponse.success(res, null, 'Notification deleted', HttpStatus.OK);

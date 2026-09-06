@@ -55,6 +55,12 @@ export interface BackendOrder {
   cancelledReason?: string | null;
   trackingNumber?: string | null;
   deliveryPartnerId?: string | null;
+  customer?: {
+    id?: string;
+    fullName?: string;
+    email?: string;
+    phone?: string | null;
+  } | null;
 }
 
 export interface PlaceOrderPayload {

@@ -26,18 +26,35 @@ export class UserRepository
       $or: [
         { fullName: { $regex: regex } },
         { email: { $regex: regex } },
+        { phone: { $regex: regex } },
       ],
     } as FilterQuery<IUserDocument>;
   }
 
   public async findAll(query: any = {}): Promise<PaginatedResult<User>> {
-    const { page = 1, limit = 10, sort = 'createdAt', order = 'desc', search, roleId, status } = query;
+    const {
+      page = 1,
+      limit = 10,
+      sort = 'createdAt',
+      order = 'desc',
+      search,
+      roleId,
+      status,
+      customerRoleIds,
+      excludeRoleIds,
+    } = query;
 
     const skip = (Number(page) - 1) * Number(limit);
     const sortOrder = order === 'asc' ? 1 : -1;
     const sortQuery: Record<string, 1 | -1> = { [sort]: sortOrder };
 
     const filter: FilterQuery<IUserDocument> = search ? this.buildSearchFilter(search) : {};
+
+    if (customerRoleIds && Array.isArray(customerRoleIds)) {
+      filter.roleId = { $in: customerRoleIds };
+    } else if (excludeRoleIds && Array.isArray(excludeRoleIds)) {
+      filter.roleId = { $nin: excludeRoleIds };
+    }
 
     if (roleId && roleId !== 'all') {
       filter.roleId = roleId;

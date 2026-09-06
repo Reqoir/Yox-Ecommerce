@@ -17,8 +17,8 @@ export const requireAuth = (req: Request, _res: Response, next: NextFunction): v
     let token: string | undefined;
 
     // 1. Try to get token from cookies
-    if (req.cookies && req.cookies[ACCESS_TOKEN_COOKIE]) {
-      token = req.cookies[ACCESS_TOKEN_COOKIE];
+    if (req.cookies && (req.cookies[ACCESS_TOKEN_COOKIE] || req.cookies['accessToken'])) {
+      token = req.cookies[ACCESS_TOKEN_COOKIE] || req.cookies['accessToken'];
     }
     // 2. Fallback to Authorization Header (Bearer Token)
     else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {

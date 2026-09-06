@@ -15,6 +15,7 @@ import { Inventory } from '../../../inventory/domain/entities/inventory.entity';
 import { StockLog } from '../../../inventory/domain/entities/stock-log.entity';
 import { AuditLogService } from '../../../audit-logs/application/services/audit-log.service';
 import { AuditAction } from '../../../audit-logs/domain/entities/audit-log.entity';
+import { NotificationService } from '../../../notifications/application/services/notification.service';
 import {
   PlaceOrderRequestDTO,
   CancelOrderRequestDTO,
@@ -22,6 +23,9 @@ import {
   UpdateOrderStatusRequestDTO,
   OrderResponseDTO,
 } from '../dtos/order.dto';
+import { UserModel } from '../../../users/infrastructure/models/user.model';
+import { ProductModel } from '../../../products/infrastructure/models/product.model';
+import { ProductVariantModel } from '../../../products/infrastructure/models/product-variant.model';
 
 export function mapToOrderResponseDTO(order: Order): OrderResponseDTO {
   return {
@@ -200,6 +204,28 @@ export class PlaceOrderUseCase implements IUseCase<{ userId: string; data: Place
       after: { orderNumber: savedOrder.orderNumber, totalAmount: savedOrder.totalAmount, status: savedOrder.orderStatus },
     });
 
+    // 🔔 Real-time admin notification
+    const itemCount = savedOrder.items.reduce((s, i) => s + i.quantity, 0);
+    let customerName = 'A customer';
+    try {
+      const u = await UserModel.findById(userId).select('fullName').lean();
+      if (u?.fullName) customerName = u.fullName as string;
+    } catch {}
+    await NotificationService.getInstance().notify({
+      userId: null, // broadcast to all admins
+      type: 'NEW_ORDER',
+      title: '🛒 New Order Received',
+      message: `${customerName} placed order #${savedOrder.orderNumber} for ₹${savedOrder.totalAmount} (${itemCount} item${itemCount !== 1 ? 's' : ''})`,
+      metadata: {
+        orderId: savedOrder.id,
+        orderNumber: savedOrder.orderNumber,
+        totalAmount: savedOrder.totalAmount,
+        itemCount,
+        customerId: userId,
+        customerName,
+      },
+    });
+
     return mapToOrderResponseDTO(savedOrder);
   }
 }
@@ -214,10 +240,46 @@ export class GetAllOrdersUseCase implements IUseCase<any, { data: OrderResponseD
     } else {
       res = await this.orderRepo.findAllOrders(input || {});
     }
-    return {
-      data: res.data.map((o) => mapToOrderResponseDTO(o)),
-      total: res.total,
-    };
+
+    try {
+      const userIds = Array.from(new Set(res.data.map((o) => o.userId).filter(Boolean)));
+      const users = await UserModel.find({ _id: { $in: userIds } }).select('email fullName phone').lean();
+      const userMap = new Map(
+        users.map((u) => [
+          u._id.toString(),
+          { id: u._id.toString(), fullName: u.fullName, email: u.email, phone: u.phone },
+        ])
+      );
+
+      const variantIds = Array.from(
+        new Set(res.data.flatMap((o) => o.items.map((i) => i.variantId)).filter(Boolean))
+      );
+      const variants = await ProductVariantModel.find({ _id: { $in: variantIds } }).select('images').lean();
+      const variantMap = new Map(variants.map((v) => [v._id.toString(), v.images?.[0] || null]));
+
+      const enriched = res.data.map((o) => {
+        const dto = mapToOrderResponseDTO(o);
+        dto.customer = userMap.get(o.userId) || null;
+        if (dto.items) {
+          dto.items.forEach((item) => {
+            if (!item.imageUrl && item.variantId) {
+              item.imageUrl = variantMap.get(item.variantId) || null;
+            }
+          });
+        }
+        return dto;
+      });
+
+      return {
+        data: enriched,
+        total: res.total,
+      };
+    } catch (e) {
+      return {
+        data: res.data.map((o) => mapToOrderResponseDTO(o)),
+        total: res.total,
+      };
+    }
   }
 }
 
@@ -235,7 +297,45 @@ export class GetOrderByIdUseCase implements IUseCase<{ id: string; userId?: stri
     if (!input.isAdmin && input.userId && order.userId !== input.userId) {
       throw new Error('Forbidden: You do not have permission to view this order');
     }
-    return mapToOrderResponseDTO(order);
+    const dto = mapToOrderResponseDTO(order);
+
+    try {
+      if (dto.userId) {
+        const user = await UserModel.findById(dto.userId).select('email fullName phone').lean();
+        if (user) {
+          dto.customer = {
+            id: user._id.toString(),
+            fullName: user.fullName,
+            email: user.email,
+            phone: user.phone,
+          };
+        }
+      }
+
+      if (dto.items && Array.isArray(dto.items)) {
+        for (const item of dto.items) {
+          if (!item.imageUrl) {
+            if (item.variantId) {
+              const variant = await ProductVariantModel.findById(item.variantId).select('images').lean();
+              if (variant?.images && variant.images.length > 0) {
+                item.imageUrl = variant.images[0];
+                continue;
+              }
+            }
+            if (item.productId) {
+              const product = await ProductModel.findById(item.productId).select('thumbnail').lean();
+              if (product?.thumbnail) {
+                item.imageUrl = product.thumbnail;
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // Ignore enrichment error
+    }
+
+    return dto;
   }
 }
 
@@ -306,6 +406,28 @@ export class CancelOrderUseCase implements IUseCase<{ id: string; userId?: strin
       before: { status: prevStatus },
       after: { status: 'CANCELLED' },
     });
+
+    // 🔔 Real-time admin notification (only when customer cancels, not admin)
+    if (!input.isAdmin) {
+      let cancellerName = 'A customer';
+      try {
+        const u = await UserModel.findById(input.userId).select('fullName').lean();
+        if (u?.fullName) cancellerName = u.fullName as string;
+      } catch {}
+      await NotificationService.getInstance().notify({
+        userId: null,
+        type: 'ORDER_CANCELLED',
+        title: '❌ Order Cancelled by Customer',
+        message: `${cancellerName} cancelled order #${savedOrder.orderNumber}. Reason: ${input.data?.reason || 'No reason provided'}`,
+        metadata: {
+          orderId: savedOrder.id,
+          orderNumber: savedOrder.orderNumber,
+          cancelledBy: input.userId,
+          cancellerName,
+          reason: input.data?.reason || null,
+        },
+      });
+    }
 
     return mapToOrderResponseDTO(savedOrder);
   }

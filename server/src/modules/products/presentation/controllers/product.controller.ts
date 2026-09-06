@@ -2,7 +2,7 @@
  * @file product.controller.ts
  * @layer Presentation › Controllers
  * 
- * HTTP Controller for Product endpoints.
+ * HTTP Controller for Product endpoints with comprehensive e-commerce filtering.
  */
 
 import { Request, Response, NextFunction } from 'express';
@@ -15,7 +15,8 @@ import {
   GetAllProductsUseCase,
   GetFeaturedProductsUseCase,
   GetLatestProductsUseCase,
-  GetBestSellingProductsUseCase
+  GetBestSellingProductsUseCase,
+  GetProductFilterFacetsUseCase,
 } from '../../application/use-cases/product.use-cases';
 import { CreateProductRequestDTO, UpdateProductRequestDTO } from '../../application/dtos/product.dto';
 import { createProductSchema, updateProductSchema, productListQuerySchema } from '../validators/product.validator';
@@ -33,7 +34,8 @@ export class ProductController {
     private readonly getAllProductsUseCase: GetAllProductsUseCase,
     private readonly getFeaturedProductsUseCase: GetFeaturedProductsUseCase,
     private readonly getLatestProductsUseCase: GetLatestProductsUseCase,
-    private readonly getBestSellingProductsUseCase: GetBestSellingProductsUseCase
+    private readonly getBestSellingProductsUseCase: GetBestSellingProductsUseCase,
+    private readonly getProductFilterFacetsUseCase: GetProductFilterFacetsUseCase
   ) {}
 
   public create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -51,6 +53,15 @@ export class ProductController {
       const validQuery = validateRequest(req, productListQuerySchema as any, 'query');
       const result = await this.getAllProductsUseCase.execute(validQuery);
       ApiResponse.success(res, result, 'Products retrieved successfully', HttpStatus.OK);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getFilters = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const result = await this.getProductFilterFacetsUseCase.execute(req.query);
+      ApiResponse.success(res, result, 'Filter facets retrieved successfully', HttpStatus.OK);
     } catch (error) {
       next(error);
     }

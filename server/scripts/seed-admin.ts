@@ -35,11 +35,11 @@ async function seed() {
       adminRole = await Role.create({
         name: 'Admin',
         permissions: [
-          'manage_brands', 
-          'manage_inventory', 
-          'manage_products', 
-          'manage_users', 
-          'manage_roles', 
+          'manage_brands',
+          'manage_inventory',
+          'manage_products',
+          'manage_users',
+          'manage_roles',
           'manage_categories',
           'manage_orders',
           'manage_settings',
@@ -50,21 +50,21 @@ async function seed() {
       });
       console.log('Created Admin role', adminRole._id);
     } else {
-        console.log('Admin role already exists', adminRole._id);
-        adminRole.permissions = [
-          'manage_brands', 
-          'manage_inventory', 
-          'manage_products', 
-          'manage_users', 
-          'manage_roles', 
-          'manage_categories',
-          'manage_orders',
-          'manage_settings',
-          'view_analytics',
-          'view_reports'
-        ];
-        await adminRole.save();
-        console.log('Updated existing Admin role with all permissions');
+      console.log('Admin role already exists', adminRole._id);
+      adminRole.permissions = [
+        'manage_brands',
+        'manage_inventory',
+        'manage_products',
+        'manage_users',
+        'manage_roles',
+        'manage_categories',
+        'manage_orders',
+        'manage_settings',
+        'view_analytics',
+        'view_reports'
+      ];
+      await adminRole.save();
+      console.log('Updated existing Admin role with all permissions');
     }
 
     let adminUser = await User.findOne({ email: 'admin@yox.com' });

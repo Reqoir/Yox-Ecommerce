@@ -80,6 +80,12 @@ export class ProductVariantRepository implements IProductVariantRepository {
     return docs.map(doc => this.mapToDomain(doc));
   }
 
+  async findByProductIds(productIds: string[]): Promise<ProductVariant[]> {
+    if (!productIds || productIds.length === 0) return [];
+    const docs = await ProductVariantModel.find({ productId: { $in: productIds } }).exec();
+    return docs.map(doc => this.mapToDomain(doc));
+  }
+
   async findById(id: string): Promise<ProductVariant | null> {
     if (!Types.ObjectId.isValid(id)) return null;
     const doc = await ProductVariantModel.findById(id).exec();

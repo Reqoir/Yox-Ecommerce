@@ -202,6 +202,12 @@ export class Order extends BaseEntity<OrderProps> {
   }
 
   public updateStatus(newStatus: OrderStatus | string, notes?: string): void {
+    if (this._props.orderStatus === 'DELIVERED' && newStatus !== 'RETURNED') {
+      throw new Error('Cannot change status of an order that has already been delivered. Delivered orders are final.');
+    }
+    if (this._props.orderStatus === 'CANCELLED') {
+      throw new Error('Cannot change status of a cancelled order.');
+    }
     const validStatuses: string[] = ['PLACED', 'CONFIRMED', 'PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'RETURNED'];
     if (!validStatuses.includes(newStatus)) {
       throw new Error(`Invalid order status: ${newStatus}`);

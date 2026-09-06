@@ -12,6 +12,7 @@ export interface IProductRepository {
   findById(id: string): Promise<Product | null>;
   findBySlug(slug: string): Promise<Product | null>;
   findAll(query: any): Promise<{ data: Product[]; total: number }>;
+  getFilterFacets(query?: any): Promise<any>;
   delete(id: string): Promise<boolean>;
   findFeatured(limit: number): Promise<Product[]>;
   findLatest(limit: number): Promise<Product[]>;

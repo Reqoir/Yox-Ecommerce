@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Save, Bell, Store } from 'lucide-react';
+import { Save, Bell, Store, LayoutTemplate, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminSettingsPage() {
@@ -26,6 +27,30 @@ export default function AdminSettingsPage() {
           Manage system configurations, store preferences, and administrative controls.
         </p>
       </div>
+
+      {/* Web Content Management Card */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 rounded-lg bg-primary text-primary-foreground">
+              <LayoutTemplate className="h-6 w-6" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-foreground">Web Content & Homepage Banners</h2>
+              <p className="text-sm text-muted-foreground">
+                Customize homepage banners, titles, subtitles, call-to-action buttons, and images with live preview.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/admin/content"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors shrink-0"
+          >
+            Manage Content
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </CardContent>
+      </Card>
 
       <form onSubmit={handleSaveGeneral} className="space-y-6">
         <Card>

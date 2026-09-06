@@ -3,9 +3,14 @@
  * @layer Application › DTOs
  */
 
+import { NotificationType } from '../../domain/entities/notification.entity';
+
+// Re-export for convenience
+export type { NotificationType };
+
 export interface CreateNotificationRequestDTO {
   userId: string | null;
-  type: 'LOW_STOCK' | 'ORDER_STATUS' | 'SYSTEM';
+  type: NotificationType;
   title: string;
   message: string;
   metadata?: Record<string, unknown> | null;
@@ -14,7 +19,7 @@ export interface CreateNotificationRequestDTO {
 export interface NotificationResponseDTO {
   id: string;
   userId: string | null;
-  type: 'LOW_STOCK' | 'ORDER_STATUS' | 'SYSTEM';
+  type: NotificationType;
   title: string;
   message: string;
   isRead: boolean;

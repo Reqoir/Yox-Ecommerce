@@ -14,6 +14,8 @@ import { Inventory } from '../../../inventory/domain/entities/inventory.entity';
 import { StockLog } from '../../../inventory/domain/entities/stock-log.entity';
 import { AuditLogService } from '../../../audit-logs/application/services/audit-log.service';
 import { AuditAction } from '../../../audit-logs/domain/entities/audit-log.entity';
+import { NotificationService } from '../../../notifications/application/services/notification.service';
+import { UserModel } from '../../../users/infrastructure/models/user.model';
 import {
   CreateReturnRequestDTO,
   RejectReturnRequestDTO,
@@ -116,6 +118,29 @@ export class CreateReturnUseCase implements IUseCase<{ userId: string; data: Cre
       resourceId: saved.id,
       description: `Return requested for order #${order.orderNumber} item (${data.quantity} units)`,
       after: { orderId: order.id, quantity: data.quantity, reason: data.reason },
+    });
+
+    // 🔔 Real-time admin notification for return request
+    let customerName = 'A customer';
+    try {
+      const u = await UserModel.findById(userId).select('fullName email').lean();
+      if (u?.fullName) customerName = u.fullName as string;
+    } catch {}
+    await NotificationService.getInstance().notify({
+      userId: null,
+      type: 'RETURN_REQUEST',
+      title: '📦 Return Request Received',
+      message: `${customerName} requested a return for order #${order.orderNumber}. Reason: ${data.reason}${data.customerNote ? ` — Note: “${data.customerNote}”` : ''}`,
+      metadata: {
+        returnId: saved.id,
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        customerId: userId,
+        customerName,
+        reason: data.reason,
+        customerNote: data.customerNote || null,
+        quantity: data.quantity,
+      },
     });
 
     return mapToReturnResponseDTO(saved);

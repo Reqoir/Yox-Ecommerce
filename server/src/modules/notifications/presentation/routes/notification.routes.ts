@@ -39,6 +39,9 @@ const controller = new NotificationController(
   deleteUseCase
 );
 
+// SSE stream endpoint — must be before /:id routes to avoid conflict
+router.get('/stream', controller.streamNotifications);
+
 // Routes (order matters — /read-all before /:id to prevent conflict)
 router.get('/', controller.getAll);
 router.patch('/read-all', controller.markAllRead);

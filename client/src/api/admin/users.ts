@@ -19,6 +19,7 @@ export interface GetUsersParams {
   search?: string;
   roleId?: string;
   status?: string;
+  userType?: 'customer' | 'staff';
 }
 
 export interface UsersResponse {

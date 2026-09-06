@@ -19,6 +19,8 @@ export interface Product {
   id: number | string;
   colorCardId?: string;
   productId?: string;
+  categoryId?: string | null;
+  subCategoryId?: string | null;
   currentColor?: string;
   href?: string;
   name: string;
