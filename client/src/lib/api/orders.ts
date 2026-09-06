@@ -160,4 +160,13 @@ export const ordersApi = {
     const response = await apiClient.patch<{ data: BackendOrder }>(`/orders/${id}/status`, { status, notes });
     return response.data?.data;
   },
+
+  updatePaymentStatusAdmin: async (id: string, paymentStatus: PaymentStatus, transactionId?: string, notes?: string): Promise<BackendOrder> => {
+    const response = await apiClient.patch<{ data: BackendOrder }>(`/orders/${id}/payment-status`, {
+      paymentStatus,
+      transactionId,
+      notes,
+    });
+    return response.data?.data;
+  },
 };

@@ -199,6 +199,12 @@ function AdminOrdersContent() {
   const [refundMethodInput, setRefundMethodInput] = useState('UPI / Original Payment Method');
   const [refundTxnIdInput, setRefundTxnIdInput] = useState('');
 
+  // Cancelled Order Direct Refund Modal State
+  const [refundingOrder, setRefundingOrder] = useState<BackendOrder | null>(null);
+  const [orderRefundAmount, setOrderRefundAmount] = useState(0);
+  const [orderRefundTxnId, setOrderRefundTxnId] = useState('');
+  const [isRefundingOrder, setIsRefundingOrder] = useState(false);
+
   // Orders Pagination
   const [orderPage, setOrderPage] = useState(1);
   const [orderItemsPerPage, setOrderItemsPerPage] = useState(10);
@@ -697,6 +703,34 @@ function AdminOrdersContent() {
     }
   };
 
+  const handleOpenOrderRefund = (order: BackendOrder) => {
+    setRefundingOrder(order);
+    setOrderRefundAmount(order.totalAmount || 0);
+    setOrderRefundTxnId(`REF-ORD-${Date.now().toString().slice(-7)}`);
+  };
+
+  const handleConfirmOrderRefund = async () => {
+    if (!refundingOrder) return;
+    try {
+      setIsRefundingOrder(true);
+      const updated = await ordersApi.updatePaymentStatusAdmin(
+        refundingOrder.id,
+        'REFUNDED',
+        orderRefundTxnId
+      );
+      toast.success(`Cancellation refund of ₹${orderRefundAmount} marked as completed successfully!`);
+      setOrders((prev) => prev.map((o) => (o.id === refundingOrder.id ? updated : o)));
+      if (selectedOrder && (selectedOrder.id === refundingOrder.id || selectedOrder.orderNumber === refundingOrder.orderNumber)) {
+        setSelectedOrder(updated);
+      }
+      setRefundingOrder(null);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to update order payment status to refunded.');
+    } finally {
+      setIsRefundingOrder(false);
+    }
+  };
+
   // Helper for next stage label
   const getNextStageInfo = (status: OrderStatus) => {
     switch (status) {
@@ -1111,9 +1145,26 @@ function AdminOrdersContent() {
                               <CheckCircle2 size={14} /> Completed
                             </span>
                           ) : order.orderStatus === 'CANCELLED' ? (
-                            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 px-3 py-1.5 rounded-xl">
-                              <XCircle size={14} /> Cancelled
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 px-3 py-1.5 rounded-xl">
+                                <XCircle size={14} /> Cancelled
+                              </span>
+                              {(order.paymentStatus === 'REFUND_PROCESSING' || (order.cancellationBankDetails && order.paymentStatus !== 'REFUNDED')) && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleOpenOrderRefund(order)}
+                                  className="bg-purple-600 hover:bg-purple-700 text-white font-bold h-8 px-3 text-xs rounded-xl shadow-2xs"
+                                >
+                                  <CreditCard size={13} className="mr-1.5" />
+                                  <span>Process Refund</span>
+                                </Button>
+                              )}
+                              {order.paymentStatus === 'REFUNDED' && (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 px-2.5 py-1 rounded-xl">
+                                  <Check size={12} /> Refunded
+                                </span>
+                              )}
+                            </div>
                           ) : order.orderStatus === 'RETURNED' ? (
                             <span className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 rounded-xl">
                               <RotateCcw size={14} /> Returned
@@ -1954,6 +2005,17 @@ function AdminOrdersContent() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {(selectedOrder.paymentStatus === 'REFUND_PROCESSING' || (selectedOrder.cancellationBankDetails && selectedOrder.paymentStatus !== 'REFUNDED')) && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleOpenOrderRefund(selectedOrder)}
+                      className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-2xs"
+                    >
+                      <CreditCard size={13} className="mr-1.5" />
+                      <span>Process Refund</span>
+                    </Button>
+                  )}
+
                   <Button
                     variant="outline"
                     size="sm"
@@ -2261,6 +2323,121 @@ function AdminOrdersContent() {
               className="bg-purple-600 hover:bg-purple-700 text-white font-bold"
             >
               {isUpdating ? 'Processing...' : 'Confirm & Complete Refund'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ========================================================================= */}
+      {/* PROCESS CANCELLED ORDER REFUND MODAL */}
+      {/* ========================================================================= */}
+      <Dialog open={!!refundingOrder} onOpenChange={(val) => !val && setRefundingOrder(null)}>
+        <DialogContent className="sm:max-w-lg max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-purple-600" />
+              <span>Process Cancellation Refund</span>
+            </DialogTitle>
+            <DialogDescription>
+              Direct refund disbursement for cancelled Order #{refundingOrder?.orderNumber}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 text-xs">
+            {refundingOrder?.cancellationBankDetails ? (
+              <div className="p-4 bg-amber-50/90 border border-amber-200 rounded-xl space-y-2 text-xs text-amber-950">
+                <div className="flex items-center justify-between font-bold text-amber-900 border-b border-amber-200/70 pb-1.5">
+                  <span className="flex items-center gap-1.5">
+                    <Building2 size={14} className="text-amber-700" />
+                    Customer Refund Bank Details
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const bankText = `Account Holder: ${refundingOrder.cancellationBankDetails?.accountHolderName}
+Account Number: ${refundingOrder.cancellationBankDetails?.accountNumber}
+IFSC Code: ${refundingOrder.cancellationBankDetails?.ifscCode}
+Bank: ${refundingOrder.cancellationBankDetails?.bankName || 'N/A'}`;
+                      navigator.clipboard.writeText(bankText);
+                      toast.success('Customer bank details copied to clipboard!');
+                    }}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-900 bg-amber-200/80 hover:bg-amber-300 px-2 py-0.5 rounded transition-colors"
+                  >
+                    <Copy size={11} />
+                    <span>Copy</span>
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-0.5">
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Account Holder Name:</span>
+                    <strong className="text-gray-900">{refundingOrder.cancellationBankDetails.accountHolderName}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Account Number:</span>
+                    <strong className="font-mono text-gray-900">{refundingOrder.cancellationBankDetails.accountNumber}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">IFSC Code:</span>
+                    <strong className="font-mono text-gray-900">{refundingOrder.cancellationBankDetails.ifscCode}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Bank / Branch:</span>
+                    <span className="text-gray-900 font-medium">{refundingOrder.cancellationBankDetails.bankName || 'Not specified'}</span>
+                  </div>
+                </div>
+                {refundingOrder.cancelledReason && (
+                  <div className="text-[10px] text-rose-700 font-semibold border-t border-amber-200/60 pt-1">
+                    Cancellation Reason: {refundingOrder.cancelledReason}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900">
+                <span>Original Payment Method: <strong>{refundingOrder?.paymentMethod || 'Razorpay / Online'}</strong></span>
+              </div>
+            )}
+
+            <div>
+              <Label htmlFor="ordRefundAmt" className="font-semibold text-xs">
+                Refund Amount (₹) *
+              </Label>
+              <Input
+                id="ordRefundAmt"
+                type="number"
+                value={orderRefundAmount}
+                onChange={(e) => setOrderRefundAmount(Number(e.target.value))}
+                className="mt-1 font-bold text-base"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="ordTxnId" className="font-semibold text-xs">
+                Bank Transfer Transaction / Reference ID *
+              </Label>
+              <Input
+                id="ordTxnId"
+                placeholder="e.g. UTR-9988776655 or TXN-12345"
+                value={orderRefundTxnId}
+                onChange={(e) => setOrderRefundTxnId(e.target.value)}
+                className="mt-1 font-mono text-xs"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Enter the bank transfer UTR or payment gateway refund ID.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setRefundingOrder(null)}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleConfirmOrderRefund}
+              disabled={isRefundingOrder || !orderRefundTxnId.trim()}
+              className="bg-purple-600 hover:bg-purple-700 text-white font-bold"
+            >
+              {isRefundingOrder ? 'Updating...' : 'Confirm & Mark Payment Refunded'}
             </Button>
           </DialogFooter>
         </DialogContent>

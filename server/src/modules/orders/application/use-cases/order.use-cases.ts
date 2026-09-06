@@ -605,3 +605,29 @@ export class UpdateOrderStatusUseCase implements IUseCase<{ id: string; data: Up
     return mapToOrderResponseDTO(saved);
   }
 }
+
+export class UpdateOrderPaymentStatusUseCase implements IUseCase<{ id: string; paymentStatus: string; transactionId?: string; notes?: string }, OrderResponseDTO> {
+  constructor(private readonly orderRepo: IOrderRepository) {}
+  async execute(input: { id: string; paymentStatus: string; transactionId?: string; notes?: string }): Promise<OrderResponseDTO> {
+    let order = await this.orderRepo.findById(input.id);
+    if (!order) order = await this.orderRepo.findByOrderNumber(input.id);
+    if (!order) throw new Error('Order not found');
+    const prevPaymentStatus = order.paymentStatus;
+    order.updatePaymentStatus(input.paymentStatus.toUpperCase(), input.transactionId);
+    if (input.notes) {
+      order.updateStatus(order.orderStatus, input.notes);
+    }
+    const saved = await this.orderRepo.save(order);
+
+    AuditLogService.getInstance()?.record({
+      action: input.paymentStatus.toUpperCase() === 'REFUNDED' ? AuditAction.REFUND_COMPLETED : AuditAction.PAYMENT_VERIFIED,
+      resourceType: 'ORDER',
+      resourceId: saved.id,
+      description: `Order #${saved.orderNumber} payment status updated to ${input.paymentStatus.toUpperCase()}${input.transactionId ? ` (TXN: ${input.transactionId})` : ''}`,
+      before: { paymentStatus: prevPaymentStatus },
+      after: { paymentStatus: input.paymentStatus.toUpperCase(), paymentId: input.transactionId },
+    });
+
+    return mapToOrderResponseDTO(saved);
+  }
+}

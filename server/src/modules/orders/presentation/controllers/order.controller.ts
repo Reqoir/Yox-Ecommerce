@@ -18,6 +18,7 @@ import {
   OutForDeliveryUseCase,
   DeliverOrderUseCase,
   UpdateOrderStatusUseCase,
+  UpdateOrderPaymentStatusUseCase,
 } from '../../application/use-cases/order.use-cases';
 
 const roleRepository = new RoleRepository();
@@ -33,7 +34,8 @@ export class OrderController {
     private readonly shipOrderUseCase: ShipOrderUseCase,
     private readonly outForDeliveryUseCase: OutForDeliveryUseCase,
     private readonly deliverOrderUseCase: DeliverOrderUseCase,
-    private readonly updateOrderStatusUseCase: UpdateOrderStatusUseCase
+    private readonly updateOrderStatusUseCase: UpdateOrderStatusUseCase,
+    private readonly updateOrderPaymentStatusUseCase: UpdateOrderPaymentStatusUseCase
   ) {}
 
   private async checkIsAdmin(req: Request): Promise<boolean> {
@@ -155,6 +157,21 @@ export class OrderController {
     try {
       const order = await this.updateOrderStatusUseCase.execute({ id: req.params.id as string, data: req.body });
       ApiResponse.success(res, order, 'Order status updated successfully');
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updatePaymentStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { paymentStatus, transactionId, notes } = req.body;
+      const order = await this.updateOrderPaymentStatusUseCase.execute({
+        id: req.params.id as string,
+        paymentStatus,
+        transactionId,
+        notes,
+      });
+      ApiResponse.success(res, order, 'Order payment status updated successfully');
     } catch (error) {
       next(error);
     }

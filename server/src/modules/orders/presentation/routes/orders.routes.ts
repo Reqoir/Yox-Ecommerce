@@ -22,6 +22,7 @@ import {
   OutForDeliveryUseCase,
   DeliverOrderUseCase,
   UpdateOrderStatusUseCase,
+  UpdateOrderPaymentStatusUseCase,
 } from '../../application/use-cases/order.use-cases';
 import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
 import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
@@ -47,6 +48,7 @@ const shipOrderUseCase = new ShipOrderUseCase(orderRepo);
 const outForDeliveryUseCase = new OutForDeliveryUseCase(orderRepo);
 const deliverOrderUseCase = new DeliverOrderUseCase(orderRepo, inventoryRepo, stockLogRepo);
 const updateOrderStatusUseCase = new UpdateOrderStatusUseCase(orderRepo);
+const updateOrderPaymentStatusUseCase = new UpdateOrderPaymentStatusUseCase(orderRepo);
 
 // 3. Instantiate Controller
 const orderController = new OrderController(
@@ -59,7 +61,8 @@ const orderController = new OrderController(
   shipOrderUseCase,
   outForDeliveryUseCase,
   deliverOrderUseCase,
-  updateOrderStatusUseCase
+  updateOrderStatusUseCase,
+  updateOrderPaymentStatusUseCase
 );
 
 // ── User & General Protected Routes ──────────────────────────────────────────
@@ -79,5 +82,6 @@ router.patch('/:id/ship', adminPermission, orderController.shipOrder);
 router.patch('/:id/out-for-delivery', adminPermission, orderController.outForDelivery);
 router.patch('/:id/deliver', adminPermission, orderController.deliverOrder);
 router.patch('/:id/status', adminPermission, orderController.updateStatus);
+router.patch('/:id/payment-status', adminPermission, orderController.updatePaymentStatus);
 
 export { router as ordersRouter };
