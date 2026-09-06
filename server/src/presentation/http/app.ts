@@ -38,7 +38,14 @@ export const createApp = (): Application => {
   // ── CORS ──────────────────────────────────────────────────────────────────
   app.use(
     cors({
-      origin: env.ALLOWED_ORIGINS,
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (env.ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+        if (env.NODE_ENV === 'development') {
+          return callback(null, true);
+        }
+        return callback(new Error('Not allowed by CORS'));
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],

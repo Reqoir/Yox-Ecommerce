@@ -15,9 +15,8 @@ import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import Swal from 'sweetalert2';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Notification } from '@/api/admin/notifications';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5001/api/v1';
+import { Notification, notificationApi } from '@/api/admin/notifications';
+import { getApiBaseUrl } from '@/lib/axios';
 
 interface RealtimeNotification {
   id: string;
@@ -110,6 +109,7 @@ export function useRealtimeNotifications() {
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectDelayRef = useRef(3000); // Start at 3s, back off
+  const seenNotificationIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     // Close any existing connection first
@@ -136,7 +136,8 @@ export function useRealtimeNotifications() {
 
       console.debug('[SSE] Connecting to notification stream...');
 
-      const es = new EventSource(`${API_BASE_URL}/notifications/stream`, {
+      const apiBase = getApiBaseUrl();
+      const es = new EventSource(`${apiBase}/notifications/stream`, {
         withCredentials: true,
       });
       eventSourceRef.current = es;
@@ -177,6 +178,9 @@ export function useRealtimeNotifications() {
     };
 
     const handleNotification = (notification: RealtimeNotification) => {
+      if (seenNotificationIdsRef.current.has(notification.id)) return;
+      seenNotificationIdsRef.current.add(notification.id);
+
       // 1. Synchronously update ALL TanStack Query notification caches
       //    This makes the sidebar badge AND notification page list update
       //    at the exact same instant in the same React render tick!
@@ -299,10 +303,44 @@ export function useRealtimeNotifications() {
       });
     };
 
+    // Seed already existing notifications on initial mount so we don't show popups for old ones
+    notificationApi
+      .getAll({ limit: 10 })
+      .then((res) => {
+        if (res?.data) {
+          for (const n of res.data) {
+            seenNotificationIdsRef.current.add(n.id);
+          }
+        }
+      })
+      .catch(() => {});
+
     connect();
+
+    // Periodic safety check for new unread notifications across devices/servers
+    const syncInterval = setInterval(async () => {
+      if (!isMounted) return;
+      try {
+        const res = await notificationApi.getAll({ limit: 5 });
+        if (res?.data && res.data.length > 0) {
+          for (const item of res.data) {
+            if (!seenNotificationIdsRef.current.has(item.id) && !item.isRead) {
+              const ageMs = Date.now() - new Date(item.createdAt).getTime();
+              if (ageMs < 120_000) {
+                console.debug('[Realtime] New notification detected from poll:', item.type, item.title);
+                handleNotification(item as unknown as RealtimeNotification);
+              } else {
+                seenNotificationIdsRef.current.add(item.id);
+              }
+            }
+          }
+        }
+      } catch {}
+    }, 4_000);
 
     return () => {
       isMounted = false;
+      clearInterval(syncInterval);
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;

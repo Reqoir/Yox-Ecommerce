@@ -8,7 +8,24 @@
 
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5001/api/v1';
+export const getApiBaseUrl = (): string => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5001/api/v1';
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host && host !== 'localhost' && host !== '127.0.0.1') {
+      try {
+        const url = new URL(envUrl);
+        if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+          url.hostname = host;
+          return url.toString().replace(/\/$/, '');
+        }
+      } catch {}
+    }
+  }
+  return envUrl;
+};
+
+export const API_BASE_URL = getApiBaseUrl();
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
