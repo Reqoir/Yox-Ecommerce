@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import Image from 'next/image';
 import { categoryApi, Category } from '@/api/admin/categories';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function StyleSeekers() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -41,8 +42,24 @@ export function StyleSeekers() {
 
   if (isLoading) {
     return (
-      <section className="w-full mt-8 py-16 bg-white overflow-hidden flex justify-center min-h-[500px] items-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      <section className="w-full mt-8 py-16 bg-white overflow-hidden animate-in fade-in duration-500">
+        {/* Skeleton Header Section */}
+        <div className="flex flex-col items-center text-center mb-12 px-4 md:px-8 max-w-7xl mx-auto">
+          <Skeleton className="h-4 w-40 mb-4 rounded" />
+          <Skeleton className="h-8 w-full max-w-2xl mb-3 rounded" />
+          <Skeleton className="h-8 w-full max-w-xl mb-8 rounded" />
+          <Skeleton className="h-10 w-40 rounded-full" />
+        </div>
+
+        {/* Skeleton Image Grid Marquee (Not animated, just static) */}
+        <div className="flex w-max items-end gap-4 px-2">
+          {Array.from({ length: 6 }).map((_, idx) => (
+            <Skeleton 
+              key={idx} 
+              className={`flex-shrink-0 w-[240px] md:w-[280px] lg:w-[320px] ${idx % 2 === 0 ? 'h-[450px]' : 'h-[300px]'} rounded-sm`} 
+            />
+          ))}
+        </div>
       </section>
     );
   }

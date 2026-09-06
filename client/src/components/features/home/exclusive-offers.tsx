@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { settingsApi } from '@/api/admin/settings';
 import { offersApi, Offer } from '@/api/admin/offers';
 import { Loader2, ArrowRight, Sparkles, Flame } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function ExclusiveOffers() {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
@@ -97,8 +98,27 @@ export function ExclusiveOffers() {
 
   if (isLoading) {
     return (
-      <section className="w-full bg-[#F1EFEA] py-16 border-t border-gray-200 min-h-[400px] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#4B4239]" />
+      <section className="w-full bg-[#F1EFEA] py-16 border-t border-gray-200">
+        <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-0">
+          <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-6">
+            <Skeleton className="h-8 w-64 rounded" />
+            <div className="flex gap-4">
+              <Skeleton className="h-16 w-16 rounded-lg" />
+              <Skeleton className="h-16 w-16 rounded-lg" />
+              <Skeleton className="h-16 w-16 rounded-lg" />
+              <Skeleton className="h-16 w-16 rounded-lg" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <div key={idx} className="flex flex-col gap-3">
+                <Skeleton className="w-full aspect-[3/4] rounded-md" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/4" />
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
     );
   }

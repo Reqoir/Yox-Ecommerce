@@ -8,6 +8,7 @@ import { MobileBottomBar } from '@/components/features/shop/mobile-bottom-bar';
 import { MobileFilterModal } from '@/components/features/shop/mobile-filter-modal';
 import { MobileSortModal } from '@/components/features/shop/mobile-sort-modal';
 import { useProductFilters } from '@/hooks/useProductFilters';
+import { ShopSkeleton } from '@/components/features/shop/shop-skeleton';
 
 function ShopContent() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -20,13 +21,8 @@ function ShopContent() {
     <main className="w-full bg-white min-h-screen pb-16 lg:pb-16 relative">
 
       <div className="w-[98%] max-w-[1500px] mx-auto flex items-start pt-0 lg:pt-8">
-        {/* Sidebar Filter Area */}
-        <div className="w-64 hidden lg:block flex-shrink-0">
-          <FilterSidebar />
-        </div>
-
-        {/* Product Grid Area */}
-        <div className="w-full flex-1">
+        {/* Product Grid Area - Now Full Width on Desktop */}
+        <div className="w-full">
           <ProductGrid />
         </div>
       </div>
@@ -52,11 +48,7 @@ function ShopContent() {
 
 export default function ShopPage() {
   return (
-    <Suspense fallback={
-      <div className="w-full min-h-[60vh] flex items-center justify-center text-sm text-gray-500">
-        Loading Men&apos;s Fashion collection...
-      </div>
-    }>
+    <Suspense fallback={<ShopSkeleton />}>
       <ShopContent />
     </Suspense>
   );

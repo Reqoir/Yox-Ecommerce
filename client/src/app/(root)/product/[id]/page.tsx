@@ -3,6 +3,7 @@
 import React, { useState, use, useEffect } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Heart, 
   Tag, 
@@ -113,8 +114,30 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
   if (isLoading) {
     return (
-      <div className="w-full min-h-screen flex items-center justify-center bg-white">
-        <Loader2 className="animate-spin text-[#1A2E4C]" size={40} />
+      <div className="w-full max-w-[1500px] mx-auto px-4 md:px-8 py-8 lg:py-12 animate-in fade-in duration-500">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr,450px] xl:grid-cols-[1fr,500px] gap-10 lg:gap-16">
+          <Skeleton className="w-full h-[600px] md:h-[800px] rounded-lg" />
+          <div className="flex flex-col gap-6 pt-4">
+            <Skeleton className="w-24 h-4 rounded-md" />
+            <Skeleton className="w-3/4 h-10 rounded-md" />
+            <Skeleton className="w-1/4 h-8 rounded-md" />
+            <Skeleton className="w-full h-px mt-4" />
+            <Skeleton className="w-1/3 h-6 mt-4" />
+            <div className="flex gap-2">
+              <Skeleton className="w-12 h-12 rounded-full" />
+              <Skeleton className="w-12 h-12 rounded-full" />
+            </div>
+            <Skeleton className="w-1/3 h-6 mt-4" />
+            <div className="grid grid-cols-4 gap-2">
+              <Skeleton className="w-full h-12 rounded-md" />
+              <Skeleton className="w-full h-12 rounded-md" />
+              <Skeleton className="w-full h-12 rounded-md" />
+              <Skeleton className="w-full h-12 rounded-md" />
+            </div>
+            <Skeleton className="w-full h-14 mt-6 rounded-md" />
+            <Skeleton className="w-full h-40 mt-4 rounded-md" />
+          </div>
+        </div>
       </div>
     );
   }

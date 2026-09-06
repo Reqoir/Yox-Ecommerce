@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { categoryApi, Category } from '@/api/admin/categories';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function CategoryStrip() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -32,12 +33,24 @@ export function CategoryStrip() {
     fetchCategories();
   }, []);
 
-  if (isLoading || categories.length === 0) {
+  if (isLoading) {
     return (
-      <div className="w-full bg-white border-b min-h-[128px] flex items-center justify-center">
-        {isLoading && <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />}
+      <div className="w-full bg-white border-b animate-in fade-in duration-500">
+        <div className="w-full lg:w-[98%] lg:max-w-[1500px] px-4 lg:px-0 mx-auto flex overflow-x-auto lg:flex-wrap items-center justify-start lg:justify-center gap-8 lg:gap-12 py-6 lg:py-8 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {Array.from({ length: 8 }).map((_, idx) => (
+            <div key={idx} className="flex flex-col items-center gap-2 flex-shrink-0 snap-center">
+              <Skeleton className="w-20 h-20 rounded-full border border-gray-100 shadow-sm" />
+              <Skeleton className="h-3 w-16 rounded mt-1" />
+            </div>
+          ))}
+        </div>
       </div>
     );
+  }
+
+  // Hide entirely if no categories (but not loading)
+  if (categories.length === 0) {
+    return null;
   }
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Heart, X, RefreshCw, ShoppingBag, ChevronDown, WifiOff } from 'lucide-react';
+import { Heart, X, RefreshCw, ShoppingBag, ChevronDown, WifiOff, SlidersHorizontal, ArrowDownUp } from 'lucide-react';
 import Link from 'next/link';
 import { useProductFilters } from '@/hooks/useProductFilters';
 import { useCategories } from '@/hooks/admin/useCategories';
@@ -10,6 +10,9 @@ import { toast } from 'sonner';
 import { SORT_OPTIONS_LIST } from '@/constants/products';
 import { SortOption } from '@/types/product';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { FilterSidebar } from '@/components/features/shop/filter-sidebar';
 
 export function ProductGrid() {
   const {
@@ -120,49 +123,74 @@ export function ProductGrid() {
       {/* Top Meta Area */}
       <div className="mb-6 lg:mb-8">
         
-        {/* Title and Sort */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-[22px] font-extrabold text-black uppercase tracking-wide">
-            {subCategory 
-              ? subCategory 
-              : category 
-              ? category 
-              : searchQuery 
-              ? `SEARCH: ${searchQuery}` 
-              : "ALL PRODUCTS"}
-          </h1>
-          
-          <div className="w-[200px] hidden lg:block">
+        {/* Title */}
+        <h1 className="text-[22px] font-extrabold text-black uppercase tracking-wide mb-6">
+          {subCategory 
+            ? subCategory 
+            : category 
+            ? category 
+            : searchQuery 
+            ? `SEARCH: ${searchQuery}` 
+            : "ALL PRODUCTS"}
+        </h1>
+        
+        {/* Tabs and Sort */}
+        <div className="flex items-center justify-between gap-4">
+          {/* Horizontal Tabs - Parent categories only */}
+          <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-1 flex-1">
+            {isLoading ? (
+               Array.from({ length: 7 }).map((_, idx) => (
+                 <Skeleton key={idx} className="h-8 w-24 rounded-none shrink-0" />
+               ))
+            ) : tabs.map((tabItem) => (
+              <button
+                key={tabItem.label}
+                onClick={() => handleTabClick(tabItem)}
+                className={`px-3 py-1.5 text-[10px] tracking-widest uppercase transition-colors border cursor-pointer shrink-0 ${
+                  activeTab === tabItem.label
+                    ? 'bg-black text-white border-black font-medium'
+                    : 'bg-white text-gray-800 border-gray-800 hover:bg-gray-100 font-normal'
+                }`}
+              >
+                {tabItem.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Filters and Sort */}
+          <div className="hidden lg:flex items-center gap-6 shrink-0">
+            {/* Filter Drawer */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <button className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-900 hover:text-black transition-colors cursor-pointer">
+                  <SlidersHorizontal size={14} strokeWidth={1.5} />
+                  <span>Filters</span>
+                </button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[350px] sm:w-[400px] p-0 border-l border-gray-200">
+                <div className="h-full overflow-y-auto">
+                  <FilterSidebar />
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            {/* Sort Dropdown */}
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-              <SelectTrigger className="border-gray-200 rounded-none h-10 text-[13px] font-medium text-gray-800 bg-white focus:ring-0 focus:ring-offset-0 hover:bg-gray-50 transition-colors cursor-pointer">
-                <SelectValue placeholder="Sort" />
+              <SelectTrigger className="border-0 focus:ring-0 focus:ring-offset-0 p-0 h-auto bg-transparent hover:bg-transparent shadow-none [&>svg]:hidden">
+                <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-900 hover:text-black transition-colors cursor-pointer">
+                  <ArrowDownUp size={14} strokeWidth={1.5} />
+                  <span>Sort By</span>
+                </div>
               </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 rounded-none">
+              <SelectContent align="end" className="bg-white border border-gray-200 rounded-none">
                 {SORT_OPTIONS_LIST.map((option) => (
-                  <SelectItem key={option} value={option} className="text-[13px] text-gray-800 cursor-pointer rounded-none">
-                    {option}
+                  <SelectItem key={option} value={option} className="text-xs capitalize text-gray-800 cursor-pointer rounded-none">
+                    {option.toLowerCase()}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-        </div>
-
-        {/* Horizontal Tabs - Parent categories only */}
-        <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-1">
-          {tabs.map((tabItem) => (
-            <button
-              key={tabItem.label}
-              onClick={() => handleTabClick(tabItem)}
-              className={`px-3 py-1.5 text-[10px] font-semibold tracking-widest uppercase transition-colors border cursor-pointer shrink-0 ${
-                activeTab === tabItem.label
-                  ? 'bg-black text-white border-black'
-                  : 'bg-white text-gray-800 border-gray-800 hover:bg-gray-100'
-              }`}
-            >
-              {tabItem.label}
-            </button>
-          ))}
         </div>
 
         {/* Contextual Subcategories Pill Bar (Shown when selected category has subcategories) */}

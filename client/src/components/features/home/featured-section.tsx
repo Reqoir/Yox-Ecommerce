@@ -8,6 +8,7 @@ import { useProducts } from '@/hooks/admin/useProducts';
 import { useQuery } from '@tanstack/react-query';
 import { offersApi } from '@/api/admin/offers';
 import { calculateBestOffer } from '@/lib/offers';
+import { SkeletonProductCard } from '@/components/features/shop/skeleton-product-card';
 
 export function FeaturedSection() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -132,29 +133,24 @@ export function FeaturedSection() {
           </div>
         </div>
 
-        {/* Products Scroll Container / Skeletons */}
-        {isLoading ? (
-          <div className="flex overflow-x-auto gap-4 md:gap-6 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="flex-shrink-0 w-[260px] md:w-[300px] lg:w-[calc(25%-18px)] flex flex-col gap-2.5 animate-pulse">
-                <div className="aspect-[3/4] bg-gray-100 rounded-xs" />
-                <div className="h-3.5 bg-gray-100 rounded-xs w-3/4" />
-                <div className="h-3 bg-gray-100 rounded-xs w-1/2" />
+        {/* Products Scroll Container / Skeleton */}
+        <div 
+          ref={scrollContainerRef}
+          className="flex overflow-x-auto gap-4 md:gap-6 pb-4 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden animate-in fade-in duration-500"
+        >
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, idx) => (
+              <div key={idx} className="flex-shrink-0 w-[260px] md:w-[300px] lg:w-[calc(25%-18px)] snap-start">
+                <SkeletonProductCard />
               </div>
-            ))}
-          </div>
-        ) : (
-          <div 
-            ref={scrollContainerRef}
-            className="flex overflow-x-auto gap-4 md:gap-6 pb-4 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            {featuredList.map((product) => (
+            ))
+          ) : featuredList.map((product) => (
             <div key={product.id} className="flex-shrink-0 w-[260px] md:w-[300px] lg:w-[calc(25%-18px)] snap-start group">
               <Link href={product.href} className="block">
                 {/* Image Container */}
                 <div className="relative aspect-[3/4] bg-[#F2F2F2] mb-3 overflow-hidden rounded-[2px]">
                   <Image
-                    src={product.image}
+                    src={product.image || 'https://placehold.co/400x600'}
                     alt={product.name}
                     fill
                     sizes="(max-width: 768px) 260px, (max-width: 1024px) 300px, 25vw"
@@ -164,7 +160,7 @@ export function FeaturedSection() {
                   {/* Badge */}
                   {product.badge && (
                     <div className="absolute top-3 left-3 bg-white px-2 py-1 text-[10px] font-bold rounded-sm shadow-sm">
-                      <span className={product.badgeColor}>{product.badge}</span>
+                      <span className={product.badgeColor || "text-gray-800"}>{product.badge}</span>
                     </div>
                   )}
 
@@ -180,17 +176,13 @@ export function FeaturedSection() {
                     {product.name}
                   </h3>
                   <div className="flex items-center gap-2 text-[11px] font-medium text-gray-600">
-                    <span>From Rs. {product.price} INR</span>
-                    {product.comparePrice && (
-                      <span className="text-[#C15849] line-through">Rs. {product.comparePrice} INR</span>
-                    )}
+                    <span>₹{product.price || 0} INR</span>
                   </div>
                 </div>
               </Link>
             </div>
           ))}
-          </div>
-        )}
+        </div>
       </div>
     </section>
   );

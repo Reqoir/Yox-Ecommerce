@@ -127,9 +127,13 @@ export function NewAndPopular() {
             NEW AND POPULAR
           </h2>
           
-          {/* Tabs */}
+          {/* Tabs / Skeletons */}
           <div className="flex flex-wrap justify-center gap-2 md:gap-3">
-            {tabs.map((tab) => (
+            {isProductsLoading ? (
+               Array.from({ length: 6 }).map((_, idx) => (
+                 <div key={idx} className="h-8 w-20 bg-gray-100 animate-pulse border border-transparent" />
+               ))
+            ) : tabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
