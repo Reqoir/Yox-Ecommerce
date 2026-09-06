@@ -206,32 +206,30 @@ function AdminOrdersContent() {
   const [returnPage, setReturnPage] = useState(1);
   const [returnItemsPerPage, setReturnItemsPerPage] = useState(10);
 
-  const fetchAllOrders = async () => {
+  const fetchAllOrders = async (quiet = false) => {
     try {
-      setIsLoading(true);
+      if (!quiet) setIsLoading(true);
       const res = await ordersApi.getAllOrdersAdmin(1, 150);
-      setOrders((prev) => {
-        const fetchedIds = new Set((res.orders || []).map((o) => o.id));
-        const kept = prev.filter((o) => !fetchedIds.has(o.id));
-        return [...kept, ...(res.orders || [])];
-      });
+      setOrders(res.orders || []);
     } catch (error: any) {
-      console.error('Failed to fetch admin orders:', error);
-      toast.error(error?.response?.data?.message || 'Failed to retrieve orders list.');
+      if (!quiet) {
+        console.error('Failed to fetch admin orders:', error);
+        toast.error(error?.response?.data?.message || 'Failed to retrieve orders list.');
+      }
     } finally {
-      setIsLoading(false);
+      if (!quiet) setIsLoading(false);
     }
   };
 
-  const fetchAllReturns = async () => {
+  const fetchAllReturns = async (quiet = false) => {
     try {
-      setLoadingReturns(true);
+      if (!quiet) setLoadingReturns(true);
       const res = await returnsApi.getAllReturnsAdmin(1, 100);
-      setReturns(res.data);
+      setReturns(res.data || []);
     } catch (error: any) {
-      console.error('Failed to fetch admin returns:', error);
+      if (!quiet) console.error('Failed to fetch admin returns:', error);
     } finally {
-      setLoadingReturns(false);
+      if (!quiet) setLoadingReturns(false);
     }
   };
 
@@ -243,7 +241,7 @@ function AdminOrdersContent() {
   // Update selected order in-sync if orders list is updated
   useEffect(() => {
     if (selectedOrder) {
-      const refreshed = orders.find((o) => o.id === selectedOrder.id);
+      const refreshed = orders.find((o) => o.id === selectedOrder.id || o.orderNumber === selectedOrder.orderNumber);
       if (refreshed) setSelectedOrder(refreshed);
     }
   }, [orders]);
@@ -255,7 +253,7 @@ function AdminOrdersContent() {
 
     setActiveTab('orders');
 
-    // 1. Check if already present in state
+    // 1. Show existing version immediately if present for fast responsiveness
     const matched = orders.find(
       (o) =>
         o.id.toLowerCase() === cleanLower ||
@@ -265,17 +263,21 @@ function AdminOrdersContent() {
 
     if (matched) {
       setSelectedOrder(matched);
-      return;
     }
 
-    // 2. Fetch directly from server (e.g. newly placed order)
+    // 2. ALWAYS fetch fresh order state from server to reflect latest status (e.g. CANCELLED, RETURNED, CONFIRMED)
     try {
       const fetched = await ordersApi.getOrderById(cleanKey);
       if (fetched && (fetched.id || fetched.orderNumber)) {
         setSelectedOrder(fetched);
         setOrders((prev) => {
-          if (prev.some((o) => o.id === fetched.id || o.orderNumber === fetched.orderNumber)) {
-            return prev;
+          const index = prev.findIndex(
+            (o) => o.id === fetched.id || o.orderNumber === fetched.orderNumber
+          );
+          if (index !== -1) {
+            const updated = [...prev];
+            updated[index] = fetched;
+            return updated;
           }
           return [fetched, ...prev];
         });
@@ -316,6 +318,51 @@ function AdminOrdersContent() {
       window.removeEventListener('admin:open-order', handleOpenOrderEvent);
     };
   }, [orders]);
+
+  // Listen for real-time order / return updates from SSE & notifications
+  useEffect(() => {
+    const handleOrderUpdateEvent = async (e: Event) => {
+      const customEvent = e as CustomEvent<{ type?: string; orderId?: string }>;
+      const { orderId } = customEvent.detail || {};
+
+      // Refetch orders & returns lists quietly in real time
+      await fetchAllOrders(true);
+      await fetchAllReturns(true);
+
+      // If this specific order is currently open in the dialog, refresh it immediately
+      if (orderId) {
+        const cleanId = String(orderId).replace(/^#/, '');
+        try {
+          const fresh = await ordersApi.getOrderById(cleanId);
+          if (fresh) {
+            setSelectedOrder((current) => {
+              if (
+                current &&
+                (current.id === fresh.id || current.orderNumber === fresh.orderNumber)
+              ) {
+                return fresh;
+              }
+              return current;
+            });
+          }
+        } catch {}
+      }
+    };
+
+    window.addEventListener('admin:order-updated', handleOrderUpdateEvent);
+    return () => {
+      window.removeEventListener('admin:order-updated', handleOrderUpdateEvent);
+    };
+  }, []);
+
+  // Auto-refresh orders and returns quietly every 10s so orders page stays live
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchAllOrders(true);
+      fetchAllReturns(true);
+    }, 10_000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Auto-paginate and scroll to return when returnIdParam or orderIdParam is present on returns tab
   useEffect(() => {

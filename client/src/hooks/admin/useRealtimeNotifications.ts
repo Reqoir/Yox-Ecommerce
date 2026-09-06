@@ -230,6 +230,21 @@ export function useRealtimeNotifications() {
       void queryClient.invalidateQueries({ queryKey: ['notifications'] });
       void queryClient.invalidateQueries({ queryKey: ['orders'] });
 
+      // 3b. Dispatch window event so non-React-Query pages (like admin orders) refresh immediately
+      if (typeof window !== 'undefined') {
+        const meta = notification.metadata as any;
+        window.dispatchEvent(
+          new CustomEvent('admin:order-updated', {
+            detail: {
+              type: notification.type,
+              metadata: meta,
+              orderId: meta?.orderNumber || meta?.orderId,
+              returnId: meta?.returnId,
+            },
+          })
+        );
+      }
+
       // 4. Show SweetAlert2 popup
       const config = TYPE_CONFIG[notification.type] ?? TYPE_CONFIG.SYSTEM;
       const orderNumber = notification.metadata?.orderNumber as string | undefined;
