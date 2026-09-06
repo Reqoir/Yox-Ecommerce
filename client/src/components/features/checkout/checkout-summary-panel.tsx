@@ -1,34 +1,49 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ShieldCheck, Lock, CreditCard, Banknote, ArrowRight } from 'lucide-react';
+import { ShieldCheck, Lock, CreditCard, Banknote, ArrowRight, AlertCircle } from 'lucide-react';
 import { useCartStore } from '@/store/useCartStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useCheckoutStore } from '@/store/useCheckoutStore';
+import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
 import { ordersApi } from '@/lib/api/orders';
 import { toast } from 'sonner';
 
 export function CheckoutSummaryPanel() {
   const { getSubtotal, getSavingsTotal, getItemCount, clearCart } = useCartStore();
+  const { config } = useStoreSettingsStore();
   const {
     addresses,
     selectedAddressId,
     paymentMethod,
     setOrderSuccess,
   } = useCheckoutStore();
+  const { user } = useAuthStore();
 
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const userRole = (user as any)?.role || user?.roleId || '';
+  const userRoleUpper = typeof userRole === 'string' ? userRole.toUpperCase() : '';
+  const isAdmin = userRoleUpper.includes('ADMIN') || (user?.permissions || []).includes('*');
+  const isMaintenance = config.maintenanceMode && !isAdmin;
 
   const subtotal = getSubtotal();
   const savings = getSavingsTotal();
   const itemCount = getItemCount();
 
-  const freeShippingThreshold = 699;
-  const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : 99;
+  const freeShippingThreshold = config.freeShippingThreshold || 699;
+  const standardShippingFee = config.standardShippingFee ?? 99;
+  const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : standardShippingFee;
   const grandTotal = subtotal + shippingFee;
 
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
 
   const handlePlaceOrder = async () => {
+    if (isMaintenance) {
+      toast.error('Store maintenance is currently active. Order placement is temporarily suspended.');
+      return;
+    }
+
     if (!selectedAddress) {
       toast.error('Please select or add a delivery address first');
       return;
@@ -56,9 +71,10 @@ export function CheckoutSummaryPanel() {
         paymentMethod: paymentMethod,
       });
 
-      // Delivery date estimation (3-5 business days)
+      // Delivery date estimation based on store settings
+      const deliveryDays = config.estimatedDeliveryDaysMax || 4;
       const deliveryDate = new Date();
-      deliveryDate.setDate(deliveryDate.getDate() + 4);
+      deliveryDate.setDate(deliveryDate.getDate() + deliveryDays);
       const formattedDate = deliveryDate.toLocaleDateString('en-US', {
         weekday: 'short',
         month: 'short',
@@ -141,13 +157,23 @@ export function CheckoutSummaryPanel() {
         </div>
       </div>
 
+      {/* Maintenance Notice */}
+      {isMaintenance && (
+        <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800 flex items-start gap-2">
+          <AlertCircle size={15} className="text-amber-600 mt-0.5 shrink-0" />
+          <span>Checkout is currently paused for scheduled maintenance.</span>
+        </div>
+      )}
+
       {/* Dynamic CTA Button */}
       <button
         onClick={handlePlaceOrder}
-        disabled={isProcessing || !selectedAddress || itemCount === 0}
+        disabled={isProcessing || !selectedAddress || itemCount === 0 || isMaintenance}
         className="w-full flex items-center justify-center gap-2 bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-bold tracking-wider py-4 rounded transition-colors shadow-sm mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isProcessing ? (
+        {isMaintenance ? (
+          <span>CHECKOUT TEMPORARILY PAUSED</span>
+        ) : isProcessing ? (
           <span>PROCESSING ORDER...</span>
         ) : paymentMethod === 'RAZORPAY' ? (
           <>

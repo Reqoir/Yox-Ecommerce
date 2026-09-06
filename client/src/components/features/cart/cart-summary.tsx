@@ -2,27 +2,35 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ShieldCheck, Truck, ArrowRight, Tag } from 'lucide-react';
+import { ShieldCheck, Truck, ArrowRight, Tag, AlertCircle } from 'lucide-react';
 import { useCartStore } from '@/store/useCartStore';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
 
 export function CartSummary() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const { getSubtotal, getSavingsTotal, getItemCount } = useCartStore();
+  const { config } = useStoreSettingsStore();
   const [promoCode, setPromoCode] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
+
+  const userRole = (user as any)?.role || user?.roleId || '';
+  const userRoleUpper = typeof userRole === 'string' ? userRole.toUpperCase() : '';
+  const isAdmin = userRoleUpper.includes('ADMIN') || (user?.permissions || []).includes('*');
+  const isMaintenance = config.maintenanceMode && !isAdmin;
 
   const subtotal = getSubtotal();
   const savings = getSavingsTotal();
   const itemCount = getItemCount();
 
-  // Free shipping threshold above 699
-  const freeShippingThreshold = 699;
-  const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : 99;
+  // Dynamic free shipping threshold & standard shipping fee from store settings
+  const freeShippingThreshold = config.freeShippingThreshold || 699;
+  const standardShippingFee = config.standardShippingFee ?? 99;
+  const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : standardShippingFee;
   const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
 
   const handleApplyPromo = (e: React.FormEvent) => {
@@ -40,6 +48,10 @@ export function CartSummary() {
   };
 
   const handleProceedToCheckout = () => {
+    if (isMaintenance) {
+      toast.error('Store maintenance is currently active. Checkout is temporarily paused.');
+      return;
+    }
     if (!isAuthenticated) {
       toast.error('Please log in to proceed to checkout');
       router.push('/login?callbackUrl=/checkout');
@@ -138,14 +150,22 @@ export function CartSummary() {
         </div>
       </form>
 
+      {/* Maintenance alert if active */}
+      {isMaintenance && (
+        <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800 flex items-start gap-2 leading-relaxed">
+          <AlertCircle size={15} className="text-amber-600 mt-0.5 shrink-0" />
+          <span>Checkout is paused for scheduled maintenance. Items in your cart remain saved.</span>
+        </div>
+      )}
+
       {/* Checkout CTA */}
       <button
         onClick={handleProceedToCheckout}
-        disabled={itemCount === 0}
+        disabled={itemCount === 0 || isMaintenance}
         className="w-full flex items-center justify-center gap-2 bg-black hover:bg-gray-900 text-white text-xs font-bold tracking-wider py-4 rounded-none transition-colors shadow-sm mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <span>PROCEED TO CHECKOUT</span>
-        <ArrowRight size={16} />
+        <span>{isMaintenance ? 'CHECKOUT PAUSED (MAINTENANCE)' : 'PROCEED TO CHECKOUT'}</span>
+        {!isMaintenance && <ArrowRight size={16} />}
       </button>
 
       {/* Security Guarantee */}

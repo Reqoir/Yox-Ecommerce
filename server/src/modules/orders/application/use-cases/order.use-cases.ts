@@ -26,6 +26,7 @@ import {
 import { UserModel } from '../../../users/infrastructure/models/user.model';
 import { ProductModel } from '../../../products/infrastructure/models/product.model';
 import { ProductVariantModel } from '../../../products/infrastructure/models/product-variant.model';
+import { SettingsModel } from '../../../settings/infrastructure/models/settings.model';
 
 export function mapToOrderResponseDTO(order: Order): OrderResponseDTO {
   return {
@@ -61,7 +62,7 @@ export function mapToOrderResponseDTO(order: Order): OrderResponseDTO {
   };
 }
 
-export class PlaceOrderUseCase implements IUseCase<{ userId: string; data: PlaceOrderRequestDTO }, OrderResponseDTO> {
+export class PlaceOrderUseCase implements IUseCase<{ userId: string; data: PlaceOrderRequestDTO; isAdmin?: boolean }, OrderResponseDTO> {
   constructor(
     private readonly orderRepo: IOrderRepository,
     private readonly cartRepo: ICartRepository,
@@ -71,8 +72,20 @@ export class PlaceOrderUseCase implements IUseCase<{ userId: string; data: Place
     private readonly addressRepo: IAddressRepository
   ) {}
 
-  async execute(input: { userId: string; data: PlaceOrderRequestDTO }): Promise<OrderResponseDTO> {
-    const { userId, data } = input;
+  async execute(input: { userId: string; data: PlaceOrderRequestDTO; isAdmin?: boolean }): Promise<OrderResponseDTO> {
+    const { userId, data, isAdmin } = input;
+
+    // 0. Maintenance Mode Check
+    try {
+      const storeSetting = await SettingsModel.findOne({ key: 'store_config' }).lean();
+      if (storeSetting?.value?.maintenanceMode && !isAdmin) {
+        throw new Error('The store is currently undergoing scheduled maintenance. Order placement is temporarily paused. Please check back shortly.');
+      }
+    } catch (err: any) {
+      if (err.message && err.message.includes('maintenance')) {
+        throw err;
+      }
+    }
 
     // 1. Fetch User Cart
     const cart = await this.cartRepo.findByUserId(userId);
@@ -163,7 +176,44 @@ export class PlaceOrderUseCase implements IUseCase<{ userId: string; data: Place
 
     // 4. Calculate Order Financials
     const subtotal = orderItems.reduce((sum, i) => sum + i.subtotal, 0);
-    const shippingCharge = subtotal >= 699 || subtotal === 0 ? 0 : 99;
+
+    // Fetch dynamic store configuration
+    let freeShippingThreshold = 699;
+    let standardShippingFee = 99;
+    let codEnabled = true;
+    let codMaxLimit = 5000;
+
+    try {
+      const storeSetting = await SettingsModel.findOne({ key: 'store_config' }).lean();
+      if (storeSetting?.value) {
+        if (typeof storeSetting.value.freeShippingThreshold === 'number') {
+          freeShippingThreshold = storeSetting.value.freeShippingThreshold;
+        }
+        if (typeof storeSetting.value.standardShippingFee === 'number') {
+          standardShippingFee = storeSetting.value.standardShippingFee;
+        }
+        if (typeof storeSetting.value.codEnabled === 'boolean') {
+          codEnabled = storeSetting.value.codEnabled;
+        }
+        if (typeof storeSetting.value.codMaxLimit === 'number') {
+          codMaxLimit = storeSetting.value.codMaxLimit;
+        }
+      }
+    } catch (err) {
+      // Fallback to defaults
+    }
+
+    const paymentMethodUpper = (data.paymentMethod || 'COD').toUpperCase();
+    if (paymentMethodUpper === 'COD') {
+      if (!codEnabled) {
+        throw new Error('Cash on Delivery is currently unavailable. Please select an online payment method.');
+      }
+      if (subtotal > codMaxLimit) {
+        throw new Error(`Cash on Delivery is only available for orders up to ₹${codMaxLimit}. Please pay online.`);
+      }
+    }
+
+    const shippingCharge = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : standardShippingFee;
     const discount = 0;
     const tax = 0; // Inclusive of all taxes
     const totalAmount = Math.max(0, subtotal + shippingCharge - discount);

@@ -27,6 +27,7 @@ import { productsApi } from '@/lib/api/products';
 import { offersApi } from '@/api/admin/offers';
 import { useCartStore } from '@/store/useCartStore';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
+import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
 import { toast } from 'sonner';
 import { ProductReviews } from '@/components/features/product/product-reviews';
 import { ProductImagePreviewModal } from '@/components/features/product/product-image-preview-modal';
@@ -67,6 +68,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
   const addItem = useCartStore((state) => state.addItem);
   const cartItems = useCartStore((state) => state.items);
+  const { config } = useStoreSettingsStore();
   const { isFavourite, toggleFavourite } = useFavouritesStore();
   const isFav = product ? isFavourite(product.id, selectedColor) : false;
 
@@ -427,7 +429,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             )}
             
             <div className="text-[11px] text-gray-600 mb-5 border-b border-gray-200 pb-4">
-              <span className="underline cursor-pointer hover:text-black decoration-gray-400">Shipping</span> calculated at checkout. Free shipping on orders over Rs. 699.
+              <span className="underline cursor-pointer hover:text-black decoration-gray-400">Shipping</span> calculated at checkout. Free shipping on orders over {config.currencySymbol}{config.freeShippingThreshold}.
             </div>
 
             {/* Color Selector */}
@@ -630,7 +632,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     <div className="mt-3 text-[12px] text-gray-600 leading-relaxed pr-4">
                       {tab === 'FABRIC & CARE' ? 'Crafted from premium fabrics designed for durability and comfort. We recommend cold washing and laying flat to dry.'
                        : tab === 'FIT & SIZING' ? 'True to size. Order your regular size for a relaxed fit, or size down for a slimmer silhouette.'
-                       : 'Free shipping on orders above ₹699. 14-day hassle-free return policy.'}
+                       : `Free shipping on orders above ${config.currencySymbol}${config.freeShippingThreshold}. ${config.returnWindowDays}-day hassle-free return policy.`}
                     </div>
                   )}
                 </div>

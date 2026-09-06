@@ -1,10 +1,34 @@
-import { ReactNode } from 'react';
+'use client';
+
+import { ReactNode, useEffect } from 'react';
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
 import { AdminHeader } from '@/components/layout/AdminHeader';
 import { AdminGuard } from '@/components/auth/AdminGuard';
 import { RealtimeNotificationsProvider } from '@/components/providers/RealtimeNotificationsProvider';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
+  useEffect(() => {
+    // Prevent document/window-level scrolling so fixed layout headers never get shifted or pushed off-screen
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalBodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    window.scrollTo(0, 0);
+
+    const handleScroll = () => {
+      if (window.scrollY !== 0 || window.scrollX !== 0) {
+        window.scrollTo(0, 0);
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.body.style.overflow = originalBodyOverflow;
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   return (
     <AdminGuard>
       {/* Real-time SSE notification listener */}

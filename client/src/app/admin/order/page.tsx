@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo, Suspense } from 'react';
+import React, { useEffect, useState, useMemo, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ordersApi, BackendOrder, OrderStatus, PaymentStatus } from '@/lib/api/orders';
 import { returnsApi, BackendReturn, InspectionResult } from '@/lib/api/returns';
@@ -39,6 +39,8 @@ import {
   ShieldCheck,
   Building2,
   Navigation,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -53,6 +55,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Pagination } from '@/components/ui/pagination';
 import { toast } from 'sonner';
+import {
+  ReturnDetailsDialog,
+  RETURN_STATUS_CONFIG as RET_STATUS_CONFIG,
+  RETURN_REASON_MAP,
+} from '@/components/admin/return-details-dialog';
 
 // Status styling configuration
 const STATUS_CONFIG: Record<
@@ -180,6 +187,12 @@ function AdminOrdersContent() {
   const [returns, setReturns] = useState<BackendReturn[]>([]);
   const [loadingReturns, setLoadingReturns] = useState(false);
   const [previewPhotos, setPreviewPhotos] = useState<string[] | null>(null);
+  const [selectedReturn, setSelectedReturn] = useState<BackendReturn | null>(null);
+  const [returnSearchQuery, setReturnSearchQuery] = useState('');
+  const [returnStatusFilter, setReturnStatusFilter] = useState<string>('all');
+  const [returnReasonFilter, setReturnReasonFilter] = useState<string>('all');
+  const [returnInspectionFilter, setReturnInspectionFilter] = useState<string>('all');
+  const [returnViewMode, setReturnViewMode] = useState<'cards' | 'table'>('cards');
 
   // Ship Order Modal State
   const [shippingOrder, setShippingOrder] = useState<BackendOrder | null>(null);
@@ -253,6 +266,14 @@ function AdminOrdersContent() {
     }
   }, [orders]);
 
+  // Update selected return in-sync if returns list is updated
+  useEffect(() => {
+    if (selectedReturn) {
+      const refreshed = returns.find((r) => r.id === selectedReturn.id);
+      if (refreshed) setSelectedReturn(refreshed);
+    }
+  }, [returns]);
+
   const openSpecificOrder = async (key: string) => {
     if (!key) return;
     const cleanKey = key.replace(/^#/, '').trim();
@@ -296,19 +317,72 @@ function AdminOrdersContent() {
 
   const handleCloseOrderModal = () => {
     setSelectedOrder(null);
-    if (typeof window !== 'undefined' && window.location.search.includes('orderId')) {
-      const url = new URL(window.location.href);
-      url.searchParams.delete('orderId');
-      window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+    if (typeof window !== 'undefined') {
+      if (window.location.search.includes('orderId')) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('orderId');
+        window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+      }
+      if (window.scrollY !== 0) {
+        window.scrollTo(0, 0);
+      }
     }
   };
+
+  const handleCloseReturnModal = () => {
+    setSelectedReturn(null);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      let changed = false;
+      if (url.searchParams.has('returnId')) {
+        url.searchParams.delete('returnId');
+        changed = true;
+      }
+      if (url.searchParams.has('orderId')) {
+        url.searchParams.delete('orderId');
+        changed = true;
+      }
+      if (changed) {
+        window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+      }
+      if (window.scrollY !== 0) {
+        window.scrollTo(0, 0);
+      }
+    }
+  };
+
+  const handleTabChange = (tab: 'orders' | 'returns') => {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (tab === 'returns') {
+        url.searchParams.set('tab', 'returns');
+      } else {
+        url.searchParams.delete('tab');
+      }
+      url.searchParams.delete('returnId');
+      url.searchParams.delete('orderId');
+      window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+      if (window.scrollY !== 0) {
+        window.scrollTo(0, 0);
+      }
+    }
+  };
+
+  // Track auto-opened returns and orders to prevent repetitive re-opening loops from polling
+  const autoOpenedReturnKeyRef = useRef<string | null>(null);
+  const autoOpenedOrderKeyRef = useRef<string | null>(null);
 
   // Auto-open specific order modal when orderIdParam is present
   useEffect(() => {
     if (orderIdParam && activeTab !== 'returns') {
-      openSpecificOrder(orderIdParam);
+      const cleanKey = orderIdParam.replace(/^#/, '').toLowerCase();
+      if (autoOpenedOrderKeyRef.current !== cleanKey) {
+        autoOpenedOrderKeyRef.current = cleanKey;
+        openSpecificOrder(orderIdParam);
+      }
     }
-  }, [orderIdParam, orders.length]);
+  }, [orderIdParam, orders.length, activeTab]);
 
   // Listen for direct open event from notification dropdown
   useEffect(() => {
@@ -376,21 +450,45 @@ function AdminOrdersContent() {
     if (activeTab === 'returns' && returns.length > 0 && (returnIdParam || orderIdParam)) {
       const cleanReturnId = returnIdParam?.toLowerCase();
       const cleanOrderId = orderIdParam?.replace(/^#/, '').toLowerCase();
+      const key = `${cleanReturnId || ''}_${cleanOrderId || ''}`;
+
+      // Prevent re-opening or re-scrolling repeatedly when returns list is refreshed by polling
+      if (autoOpenedReturnKeyRef.current === key) {
+        return;
+      }
 
       const idx = returns.findIndex((r) => {
-        const matchReturn = cleanReturnId && (r.id.toLowerCase() === cleanReturnId || r.id.toLowerCase().startsWith(cleanReturnId));
-        const matchOrder = cleanOrderId && (r.orderId.toLowerCase() === cleanOrderId || r.orderId.toLowerCase().includes(cleanOrderId));
+        const matchReturn =
+          cleanReturnId &&
+          (r.id.toLowerCase() === cleanReturnId || r.id.toLowerCase().startsWith(cleanReturnId));
+        const matchOrder =
+          cleanOrderId &&
+          (r.orderId.toLowerCase() === cleanOrderId || r.orderId.toLowerCase().includes(cleanOrderId));
         return matchReturn || matchOrder;
       });
 
       if (idx !== -1) {
+        autoOpenedReturnKeyRef.current = key;
         const targetPage = Math.floor(idx / returnItemsPerPage) + 1;
         setReturnPage(targetPage);
         const targetReturn = returns[idx];
+        setSelectedReturn(targetReturn);
         setTimeout(() => {
           const el = document.getElementById(`return-row-${targetReturn.id}`);
           if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const mainEl = el.closest('main');
+            if (mainEl) {
+              const mainRect = mainEl.getBoundingClientRect();
+              const elRect = el.getBoundingClientRect();
+              const relativeTop = elRect.top - mainRect.top + mainEl.scrollTop;
+              mainEl.scrollTo({
+                top: Math.max(0, relativeTop - 100),
+                behavior: 'smooth',
+              });
+            }
+          }
+          if (typeof window !== 'undefined' && window.scrollY !== 0) {
+            window.scrollTo(0, 0);
           }
         }, 200);
       }
@@ -474,12 +572,112 @@ function AdminOrdersContent() {
     return filteredOrders.slice(start, start + orderItemsPerPage);
   }, [filteredOrders, orderPage, orderItemsPerPage]);
 
+  // Return Summary Metrics
+  const returnStats = useMemo(() => {
+    const total = returns.length;
+    const requested = returns.filter((r) => r.status === 'REQUESTED').length;
+    const inTransit = returns.filter((r) =>
+      ['RETURN_SHIPPED', 'PICKUP_SCHEDULED', 'PICKED_UP'].includes(r.status)
+    ).length;
+    const needsInspection = returns.filter((r) => r.status === 'RECEIVED').length;
+    const readyForRefund = returns.filter((r) =>
+      ['INSPECTED', 'REFUND_PENDING'].includes(r.status)
+    ).length;
+    const refunded = returns.filter((r) => r.status === 'REFUNDED').length;
+    const totalRefundedAmt = returns
+      .filter((r) => r.status === 'REFUNDED')
+      .reduce((sum, r) => sum + (r.refundAmount || 0), 0);
+
+    return {
+      total,
+      requested,
+      inTransit,
+      needsInspection,
+      readyForRefund,
+      refunded,
+      totalRefundedAmt,
+    };
+  }, [returns]);
+
+  // Return Counts by Status
+  const returnStatusCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: returns.length };
+    returns.forEach((r) => {
+      counts[r.status] = (counts[r.status] || 0) + 1;
+    });
+    return counts;
+  }, [returns]);
+
+  // Filtered Returns
+  const filteredReturns = useMemo(() => {
+    let list = [...returns];
+
+    if (returnStatusFilter !== 'all') {
+      list = list.filter((r) => r.status === returnStatusFilter);
+    }
+
+    if (returnReasonFilter !== 'all') {
+      list = list.filter((r) => r.reason === returnReasonFilter);
+    }
+
+    if (returnInspectionFilter !== 'all') {
+      if (returnInspectionFilter === 'PENDING') {
+        list = list.filter((r) => !r.inspectionResult);
+      } else {
+        list = list.filter((r) => r.inspectionResult === returnInspectionFilter);
+      }
+    }
+
+    if (returnSearchQuery.trim()) {
+      const q = returnSearchQuery.toLowerCase();
+      list = list.filter((r) => {
+        const retId = r.id.toLowerCase();
+        const ordId = r.orderId.toLowerCase();
+        const reason = (r.reason || '').toLowerCase();
+        const note = (r.customerNote || '').toLowerCase();
+        const trk = (r.courierTrackingNumber || '').toLowerCase();
+        const courier = (r.courierName || '').toLowerCase();
+        const acctName = (r.refundBankDetails?.accountHolderName || '').toLowerCase();
+
+        // Also search within matched order details
+        const ord = orders.find((o) => o.id === r.orderId || o.orderNumber === r.orderId);
+        const ordNum = (ord?.orderNumber || '').toLowerCase();
+        const custName = (ord?.customer?.fullName || ord?.shippingAddress?.fullName || '').toLowerCase();
+        const custEmail = (ord?.customer?.email || '').toLowerCase();
+        const itemNames = ord?.items?.map((it) => it.productName.toLowerCase()).join(' ') || '';
+
+        return (
+          retId.includes(q) ||
+          ordId.includes(q) ||
+          ordNum.includes(q) ||
+          custName.includes(q) ||
+          custEmail.includes(q) ||
+          itemNames.includes(q) ||
+          reason.includes(q) ||
+          note.includes(q) ||
+          trk.includes(q) ||
+          courier.includes(q) ||
+          acctName.includes(q)
+        );
+      });
+    }
+
+    return list;
+  }, [
+    returns,
+    returnStatusFilter,
+    returnReasonFilter,
+    returnInspectionFilter,
+    returnSearchQuery,
+    orders,
+  ]);
+
   // Pagination for Returns
-  const totalReturnPages = Math.max(1, Math.ceil(returns.length / returnItemsPerPage));
+  const totalReturnPages = Math.max(1, Math.ceil(filteredReturns.length / returnItemsPerPage));
   const paginatedReturns = useMemo(() => {
     const start = (returnPage - 1) * returnItemsPerPage;
-    return returns.slice(start, start + returnItemsPerPage);
-  }, [returns, returnPage, returnItemsPerPage]);
+    return filteredReturns.slice(start, start + returnItemsPerPage);
+  }, [filteredReturns, returnPage, returnItemsPerPage]);
 
   // Advance Order status along state machine
   const advanceOrder = async (id: string, currentStatus: OrderStatus) => {
@@ -611,6 +809,7 @@ function AdminOrdersContent() {
       const updated = await returnsApi.approveReturn(id);
       toast.success('Return request approved');
       setReturns((prev) => prev.map((r) => (r.id === id ? updated : r)));
+      setSelectedReturn((prev) => (prev?.id === id ? updated : prev));
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to approve return request.');
     }
@@ -623,6 +822,7 @@ function AdminOrdersContent() {
       const updated = await returnsApi.rejectReturn(id, reason);
       toast.success('Return request rejected');
       setReturns((prev) => prev.map((r) => (r.id === id ? updated : r)));
+      setSelectedReturn((prev) => (prev?.id === id ? updated : prev));
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to reject return request.');
     }
@@ -649,6 +849,7 @@ function AdminOrdersContent() {
       });
       toast.success('Return pickup scheduled with delivery executive assigned!');
       setReturns((prev) => prev.map((r) => (r.id === schedulingReturn.id ? updated : r)));
+      setSelectedReturn((prev) => (prev?.id === schedulingReturn.id ? updated : prev));
       setSchedulingReturn(null);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to schedule pickup.');
@@ -662,6 +863,7 @@ function AdminOrdersContent() {
       const updated = await returnsApi.receiveReturn(id);
       toast.success('Return marked as received at warehouse');
       setReturns((prev) => prev.map((r) => (r.id === id ? updated : r)));
+      setSelectedReturn((prev) => (prev?.id === id ? updated : prev));
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to mark received.');
     }
@@ -672,6 +874,7 @@ function AdminOrdersContent() {
       const updated = await returnsApi.inspectReturn(id, condition);
       toast.success(`Return inspected as ${condition}. Inventory updated!`);
       setReturns((prev) => prev.map((r) => (r.id === id ? updated : r)));
+      setSelectedReturn((prev) => (prev?.id === id ? updated : prev));
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to record inspection.');
     }
@@ -679,7 +882,10 @@ function AdminOrdersContent() {
 
   const handleOpenProcessRefund = (ret: BackendReturn) => {
     setRefundingReturn(ret);
-    setRefundAmountInput(ret.refundAmount || 799);
+    const ord = orders.find((o) => o.id === ret.orderId || o.orderNumber === ret.orderId);
+    const itm = ord?.items?.find((i) => i.variantId === ret.orderItemId || (i as any).id === ret.orderItemId || i.productId === ret.orderItemId) || ord?.items?.[0];
+    const calculatedRefund = ret.refundAmount || (itm?.unitPrice ? itm.unitPrice * ret.quantity : 799);
+    setRefundAmountInput(calculatedRefund);
     setRefundMethodInput('UPI / Original Payment Method');
     setRefundTxnIdInput(`REF-${Date.now().toString().substring(5)}`);
   };
@@ -695,6 +901,7 @@ function AdminOrdersContent() {
       });
       toast.success(`Refund of ₹${refundAmountInput} processed successfully!`);
       setReturns((prev) => prev.map((r) => (r.id === refundingReturn.id ? updated : r)));
+      setSelectedReturn((prev) => (prev?.id === refundingReturn.id ? updated : prev));
       setRefundingReturn(null);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to process refund.');
@@ -882,7 +1089,7 @@ function AdminOrdersContent() {
       <div className="flex items-center justify-between border-b pb-0">
         <div className="flex items-center gap-6">
           <button
-            onClick={() => setActiveTab('orders')}
+            onClick={() => handleTabChange('orders')}
             className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${
               activeTab === 'orders'
                 ? 'border-primary text-primary'
@@ -901,7 +1108,7 @@ function AdminOrdersContent() {
           </button>
 
           <button
-            onClick={() => setActiveTab('returns')}
+            onClick={() => handleTabChange('returns')}
             className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${
               activeTab === 'returns'
                 ? 'border-primary text-primary'
@@ -1302,21 +1509,611 @@ function AdminOrdersContent() {
         </div>
       ) : (
         /* RETURNS & REFUNDS TAB CONTENT */
-        <div className="space-y-4">
-          {loadingReturns ? (
-            <div className="flex flex-col items-center justify-center min-h-[300px] border rounded-2xl bg-card p-8">
-              <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
-              <p className="text-xs text-muted-foreground">Loading customer returns...</p>
+        <div className="space-y-6">
+          {/* Summary Metric Cards for Returns */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="bg-card border rounded-2xl p-4 shadow-2xs">
+              <span className="text-[11px] text-muted-foreground font-semibold flex items-center gap-1.5">
+                <RotateCcw size={13} className="text-primary" /> Total Returns
+              </span>
+              <div className="text-xl font-black mt-1 text-foreground">{returnStats.total}</div>
             </div>
-          ) : returns.length === 0 ? (
-            <div className="border rounded-2xl bg-card p-12 text-center max-w-md mx-auto shadow-xs">
-              <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-3 text-muted-foreground">
-                <RotateCcw size={22} />
+
+            <div className="bg-card border rounded-2xl p-4 shadow-2xs">
+              <span className="text-[11px] text-muted-foreground font-semibold flex items-center gap-1.5">
+                <Clock size={13} className="text-amber-500" /> Action Required
+              </span>
+              <div className="text-xl font-black mt-1 text-amber-500">{returnStats.requested}</div>
+            </div>
+
+            <div className="bg-card border rounded-2xl p-4 shadow-2xs">
+              <span className="text-[11px] text-muted-foreground font-semibold flex items-center gap-1.5">
+                <Truck size={13} className="text-indigo-500" /> In Transit
+              </span>
+              <div className="text-xl font-black mt-1 text-indigo-500">{returnStats.inTransit}</div>
+            </div>
+
+            <div className="bg-card border rounded-2xl p-4 shadow-2xs">
+              <span className="text-[11px] text-muted-foreground font-semibold flex items-center gap-1.5">
+                <ShieldCheck size={13} className="text-violet-500" /> Quality Check
+              </span>
+              <div className="text-xl font-black mt-1 text-violet-500">{returnStats.needsInspection}</div>
+            </div>
+
+            <div className="bg-card border rounded-2xl p-4 shadow-2xs">
+              <span className="text-[11px] text-muted-foreground font-semibold flex items-center gap-1.5">
+                <CreditCard size={13} className="text-purple-500" /> Ready for Refund
+              </span>
+              <div className="text-xl font-black mt-1 text-purple-500">{returnStats.readyForRefund}</div>
+            </div>
+
+            <div className="bg-card border rounded-2xl p-4 shadow-2xs">
+              <span className="text-[11px] text-muted-foreground font-semibold flex items-center gap-1.5">
+                <CheckCircle2 size={13} className="text-emerald-500" /> Total Refunded
+              </span>
+              <div className="text-xl font-black mt-1 text-emerald-500">
+                ₹{returnStats.totalRefundedAmt.toLocaleString('en-IN')}
               </div>
-              <h3 className="text-base font-bold">No return requests</h3>
-              <p className="text-xs text-muted-foreground mt-1">There are no active customer return requests to review.</p>
+            </div>
+          </div>
+
+          {/* Top Controls Bar: Search, Filters & View Toggle */}
+          <div className="bg-card border rounded-2xl p-4 shadow-xs space-y-4">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+              <div className="relative flex-1 max-w-lg">
+                <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+                <Input
+                  placeholder="Search return #, order #, customer, courier, tracking..."
+                  value={returnSearchQuery}
+                  onChange={(e) => {
+                    setReturnSearchQuery(e.target.value);
+                    setReturnPage(1);
+                  }}
+                  className="pl-9 h-10 bg-background text-sm"
+                />
+                {returnSearchQuery && (
+                  <button
+                    onClick={() => setReturnSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {/* Reason Filter */}
+                <select
+                  value={returnReasonFilter}
+                  onChange={(e) => {
+                    setReturnReasonFilter(e.target.value);
+                    setReturnPage(1);
+                  }}
+                  className="h-10 text-xs font-semibold border rounded-lg px-3 bg-background text-foreground"
+                >
+                  <option value="all">All Return Reasons</option>
+                  <option value="WRONG_SIZE">Wrong Size / Fit Issue</option>
+                  <option value="WRONG_PRODUCT">Incorrect Item Received</option>
+                  <option value="DAMAGED">Damaged in Transit</option>
+                  <option value="DEFECTIVE">Defective / Quality Issue</option>
+                  <option value="NOT_AS_EXPECTED">Not as Expected</option>
+                  <option value="CHANGED_MIND">Changed Mind</option>
+                  <option value="OTHER">Other Reason</option>
+                </select>
+
+                {/* Inspection Filter */}
+                <select
+                  value={returnInspectionFilter}
+                  onChange={(e) => {
+                    setReturnInspectionFilter(e.target.value);
+                    setReturnPage(1);
+                  }}
+                  className="h-10 text-xs font-semibold border rounded-lg px-3 bg-background text-foreground"
+                >
+                  <option value="all">All Inspection States</option>
+                  <option value="RESELLABLE">Passed (Resellable)</option>
+                  <option value="DAMAGED">Failed (Damaged)</option>
+                  <option value="PENDING">Pending Inspection</option>
+                </select>
+
+                {/* View Mode Toggle: Cards vs Table */}
+                <div className="flex items-center border rounded-lg p-0.5 bg-muted/40">
+                  <button
+                    type="button"
+                    onClick={() => setReturnViewMode('cards')}
+                    className={`p-1.5 rounded-md transition-all ${
+                      returnViewMode === 'cards'
+                        ? 'bg-background shadow-xs text-foreground font-bold'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    title="Card View (Like Orders)"
+                  >
+                    <LayoutGrid size={15} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReturnViewMode('table')}
+                    className={`p-1.5 rounded-md transition-all ${
+                      returnViewMode === 'table'
+                        ? 'bg-background shadow-xs text-foreground font-bold'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    title="Dense Table View"
+                  >
+                    <List size={15} />
+                  </button>
+                </div>
+
+                {(returnStatusFilter !== 'all' ||
+                  returnReasonFilter !== 'all' ||
+                  returnInspectionFilter !== 'all' ||
+                  returnSearchQuery) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setReturnStatusFilter('all');
+                      setReturnReasonFilter('all');
+                      setReturnInspectionFilter('all');
+                      setReturnSearchQuery('');
+                      setReturnPage(1);
+                    }}
+                    className="h-10 text-xs text-muted-foreground hover:text-foreground font-medium"
+                  >
+                    Reset
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Bar: Status Badges Carousel / Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 no-scrollbar text-xs">
+              <button
+                onClick={() => {
+                  setReturnStatusFilter('all');
+                  setReturnPage(1);
+                }}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  returnStatusFilter === 'all'
+                    ? 'bg-primary text-primary-foreground shadow-xs'
+                    : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}
+              >
+                <span>All Returns</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10 dark:bg-white/15">
+                  {returns.length}
+                </span>
+              </button>
+
+              {[
+                { key: 'REQUESTED', label: 'Requested' },
+                { key: 'APPROVED', label: 'Awaiting Shipment' },
+                { key: 'RETURN_SHIPPED', label: 'Shipped' },
+                { key: 'RECEIVED', label: 'Received' },
+                { key: 'INSPECTED', label: 'Inspected' },
+                { key: 'REFUND_PENDING', label: 'Refund Pending' },
+                { key: 'REFUNDED', label: 'Refunded' },
+                { key: 'REJECTED', label: 'Rejected' },
+              ].map(({ key, label }) => {
+                const count = returnStatusCounts[key] || 0;
+                const isSelected = returnStatusFilter === key;
+
+                return (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      setReturnStatusFilter(key);
+                      setReturnPage(1);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                      isSelected
+                        ? 'bg-primary text-primary-foreground shadow-xs'
+                        : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground'
+                    }`}
+                  >
+                    <span>{label}</span>
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                        isSelected
+                          ? 'bg-black/15 dark:bg-white/20'
+                          : 'bg-background text-muted-foreground border'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Returns Presentation (Loading / Empty / Cards / Table) */}
+          {loadingReturns ? (
+            <div className="flex flex-col items-center justify-center min-h-[380px] border rounded-2xl bg-card p-12 shadow-xs">
+              <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
+              <p className="text-sm font-medium text-muted-foreground">Loading customer returns...</p>
+            </div>
+          ) : filteredReturns.length === 0 ? (
+            <div className="border rounded-2xl bg-card p-16 text-center max-w-lg mx-auto shadow-xs">
+              <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4 text-muted-foreground">
+                <RotateCcw size={28} />
+              </div>
+              <h3 className="text-lg font-bold">No return requests found</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                {returnSearchQuery || returnStatusFilter !== 'all' || returnReasonFilter !== 'all' || returnInspectionFilter !== 'all'
+                  ? 'No return records match your active search or filter criteria.'
+                  : 'There are currently no customer return requests in the system.'}
+              </p>
+              {(returnSearchQuery || returnStatusFilter !== 'all' || returnReasonFilter !== 'all' || returnInspectionFilter !== 'all') && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setReturnStatusFilter('all');
+                    setReturnReasonFilter('all');
+                    setReturnInspectionFilter('all');
+                    setReturnSearchQuery('');
+                    setReturnPage(1);
+                  }}
+                  className="mt-4 font-semibold text-xs rounded-xl"
+                >
+                  Clear All Filters
+                </Button>
+              )}
+            </div>
+          ) : returnViewMode === 'cards' ? (
+            /* CARD ROW VIEW (Identical to Orders Page Design!) */
+            <div className="space-y-4">
+              <div className="space-y-3">
+                {paginatedReturns.map((ret) => {
+                  const cfg = RET_STATUS_CONFIG[ret.status] || RET_STATUS_CONFIG.REQUESTED;
+                  const StatusIcon = cfg.icon;
+
+                  const linkedOrder = orders.find(
+                    (o) => o.id === ret.orderId || o.orderNumber === ret.orderId
+                  );
+                  const linkedItem =
+                    linkedOrder?.items?.find(
+                      (it) =>
+                        it.variantId === ret.orderItemId ||
+                        (it as any).id === ret.orderItemId ||
+                        it.productId === ret.orderItemId
+                    ) || linkedOrder?.items?.[0];
+
+                  const customerName =
+                    linkedOrder?.customer?.fullName || linkedOrder?.shippingAddress?.fullName || 'Customer';
+                  const customerContact =
+                    linkedOrder?.customer?.email || linkedOrder?.shippingAddress?.phone || ret.userId;
+                  const customerCity = linkedOrder?.shippingAddress?.city;
+                  const customerState = linkedOrder?.shippingAddress?.state;
+
+                  const initials =
+                    customerName
+                      .trim()
+                      .split(' ')
+                      .map((n) => n[0])
+                      .slice(0, 2)
+                      .join('')
+                      .toUpperCase() || 'CU';
+
+                  const unitPrice = linkedItem?.unitPrice || 0;
+                  const refundAmount =
+                    ret.refundAmount || (unitPrice > 0 ? unitPrice * ret.quantity : 799);
+
+                  const isHighlighted =
+                    (returnIdParam &&
+                      (ret.id.toLowerCase() === returnIdParam.toLowerCase() ||
+                        ret.id.toLowerCase().startsWith(returnIdParam.toLowerCase()))) ||
+                    (orderIdParam &&
+                      (ret.orderId.toLowerCase() === orderIdParam.replace(/^#/, '').toLowerCase() ||
+                        ret.orderId.toLowerCase().includes(orderIdParam.replace(/^#/, '').toLowerCase())));
+
+                  return (
+                    <div
+                      key={ret.id}
+                      id={`return-row-${ret.id}`}
+                      onClick={() => setSelectedReturn(ret)}
+                      className={`bg-card border rounded-2xl p-5 hover:border-primary/50 hover:shadow-xs transition-all cursor-pointer group space-y-4 ${
+                        isHighlighted ? 'border-primary/60 ring-2 ring-primary/20' : ''
+                      }`}
+                    >
+                      {/* Top Header Bar */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/50">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <span className="font-mono font-bold text-sm text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5">
+                            <RotateCcw size={14} className="text-primary" />
+                            <span>Return #{ret.id.substring(0, 8)}</span>
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (linkedOrder) {
+                                setSelectedOrder(linkedOrder);
+                              }
+                            }}
+                            className="text-xs font-mono font-bold text-muted-foreground bg-muted/80 hover:text-foreground hover:bg-muted px-2.5 py-0.5 rounded-md flex items-center gap-1 transition-colors"
+                            title="View original order"
+                          >
+                            <ShoppingBag size={11} />
+                            <span>Order #{linkedOrder?.orderNumber || ret.orderId.substring(0, 8)}</span>
+                          </button>
+
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${cfg.badge}`}
+                          >
+                            <StatusIcon size={12} strokeWidth={2.5} />
+                            <span>{cfg.label}</span>
+                          </span>
+
+                          {ret.courierTrackingNumber && (
+                            <span className="text-[11px] font-mono text-muted-foreground bg-muted/80 px-2 py-0.5 rounded-md flex items-center gap-1">
+                              <Truck size={11} />
+                              <span>
+                                {ret.courierName ? `${ret.courierName}: ` : ''}
+                                {ret.courierTrackingNumber}
+                              </span>
+                            </span>
+                          )}
+
+                          <span className="text-xs text-muted-foreground">
+                            • Requested on{' '}
+                            {new Date(ret.createdAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
+                          </span>
+                        </div>
+
+                        {/* Top-Right Action Buttons */}
+                        <div
+                          className="flex items-center gap-2"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {ret.status === 'REQUESTED' && (
+                            <>
+                              <Button
+                                size="sm"
+                                disabled={isUpdating}
+                                onClick={() => handleApproveReturn(ret.id)}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-8 px-3 text-xs rounded-xl shadow-2xs"
+                              >
+                                <Check size={13} className="mr-1.5" />
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={isUpdating}
+                                onClick={() => handleRejectReturn(ret.id)}
+                                className="text-rose-600 border-rose-200 dark:border-rose-900 hover:bg-rose-50 dark:hover:bg-rose-950/30 font-semibold h-8 px-3 text-xs rounded-xl"
+                              >
+                                Reject
+                              </Button>
+                            </>
+                          )}
+
+                          {ret.status === 'APPROVED' && (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-xl">
+                              <Clock size={13} /> Awaiting Shipment
+                            </span>
+                          )}
+
+                          {(ret.status === 'RETURN_SHIPPED' ||
+                            ret.status === 'PICKUP_SCHEDULED' ||
+                            ret.status === 'PICKED_UP') && (
+                            <Button
+                              size="sm"
+                              disabled={isUpdating}
+                              onClick={() => handleReceiveReturn(ret.id)}
+                              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-8 px-3 text-xs rounded-xl shadow-2xs"
+                            >
+                              <Package size={13} className="mr-1.5" />
+                              Mark Received
+                            </Button>
+                          )}
+
+                          {ret.status === 'RECEIVED' && (
+                            <div className="flex items-center gap-1.5">
+                              <Button
+                                size="sm"
+                                disabled={isUpdating}
+                                onClick={() => handleInspectReturn(ret.id, 'RESELLABLE')}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-8 px-3 text-xs rounded-xl shadow-2xs"
+                              >
+                                <CheckCircle2 size={13} className="mr-1.5" />
+                                Pass (Resellable)
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={isUpdating}
+                                onClick={() => handleInspectReturn(ret.id, 'DAMAGED')}
+                                className="text-rose-600 border-rose-200 dark:border-rose-900 hover:bg-rose-50 dark:hover:bg-rose-950/30 font-semibold h-8 px-3 text-xs rounded-xl"
+                              >
+                                Fail (Damaged)
+                              </Button>
+                            </div>
+                          )}
+
+                          {(ret.status === 'INSPECTED' || ret.status === 'REFUND_PENDING') && (
+                            <Button
+                              size="sm"
+                              disabled={isUpdating}
+                              onClick={() => handleOpenProcessRefund(ret)}
+                              className="bg-purple-600 hover:bg-purple-700 text-white font-bold h-8 px-3 text-xs rounded-xl shadow-2xs"
+                            >
+                              <CreditCard size={13} className="mr-1.5" />
+                              Issue Refund
+                            </Button>
+                          )}
+
+                          {ret.status === 'REFUNDED' && (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl">
+                              <CheckCircle2 size={14} /> Refunded ₹{refundAmount}
+                            </span>
+                          )}
+
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setSelectedReturn(ret)}
+                            className="h-8 px-3 text-xs font-semibold rounded-xl hover:bg-muted"
+                          >
+                            <Eye size={13} className="mr-1.5" />
+                            <span>Details</span>
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Main Card Content: Customer Info, Product Snapshot, and Financials */}
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                        {/* 1. Customer Details (4 cols) */}
+                        <div className="md:col-span-4 flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary font-black text-xs flex items-center justify-center shrink-0 border border-primary/20">
+                            {initials}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-bold text-sm text-foreground truncate">
+                              {customerName}
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              {customerContact}
+                            </div>
+                            {customerCity && (
+                              <div className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                                <MapPin size={11} className="shrink-0 text-muted-foreground/70" />
+                                <span className="truncate">
+                                  {customerCity}
+                                  {customerState ? `, ${customerState}` : ''}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 2. Product Snapshot & Return Reason (5 cols) */}
+                        <div className="md:col-span-5 flex items-start gap-3 border-t md:border-t-0 md:border-l md:pl-4 pt-3 md:pt-0">
+                          <div className="w-12 h-12 rounded-xl border bg-muted/40 overflow-hidden shrink-0 shadow-2xs flex items-center justify-center">
+                            {linkedItem?.imageUrl ? (
+                              <img
+                                src={linkedItem.imageUrl}
+                                alt={linkedItem.productName}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <ImageIcon size={18} className="text-muted-foreground/40" />
+                            )}
+                          </div>
+
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div
+                              className="text-xs font-bold text-foreground truncate"
+                              title={linkedItem?.productName}
+                            >
+                              {linkedItem?.productName || 'Catalog Product'}
+                            </div>
+
+                            <div className="flex items-center gap-1.5 flex-wrap text-[10px]">
+                              {linkedItem?.size && (
+                                <span className="bg-muted px-1.5 py-0.5 rounded font-semibold text-muted-foreground">
+                                  Size: {linkedItem.size}
+                                </span>
+                              )}
+                              {linkedItem?.color && (
+                                <span className="bg-muted px-1.5 py-0.5 rounded font-semibold text-muted-foreground truncate max-w-[90px]">
+                                  {linkedItem.color}
+                                </span>
+                              )}
+                              <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">
+                                Return Qty: {ret.quantity}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 flex-wrap text-[11px] pt-0.5">
+                              <span className="font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 text-[10px]">
+                                {RETURN_REASON_MAP[ret.reason] || ret.reason}
+                              </span>
+
+                              {ret.images && ret.images.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPreviewPhotos(ret.images!);
+                                  }}
+                                  className="inline-flex items-center gap-1 text-[10px] font-semibold text-muted-foreground hover:text-foreground bg-muted hover:bg-muted/80 px-2 py-0.5 rounded border transition-colors"
+                                >
+                                  <ImageIcon size={11} className="text-primary" />
+                                  <span>{ret.images.length} Photos</span>
+                                </button>
+                              )}
+                            </div>
+
+                            {ret.customerNote && (
+                              <p className="text-[10px] text-muted-foreground italic truncate">
+                                "{ret.customerNote}"
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 3. Logistics, Inspection & Financials (3 cols) */}
+                        <div className="md:col-span-3 border-t md:border-t-0 md:border-l md:pl-4 pt-3 md:pt-0 flex md:flex-col justify-between items-center md:items-end space-y-1">
+                          <div className="text-left md:text-right">
+                            <span className="text-[11px] text-muted-foreground block">
+                              Refund Eligible
+                            </span>
+                            <div className="font-black text-lg text-foreground tracking-tight">
+                              ₹{refundAmount.toLocaleString('en-IN')}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                            {ret.inspectionResult ? (
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                                  ret.inspectionResult === 'RESELLABLE'
+                                    ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                                    : 'bg-rose-500/10 text-rose-600 border-rose-500/20'
+                                }`}
+                              >
+                                {ret.inspectionResult}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                                Pending Check
+                              </span>
+                            )}
+
+                            {ret.refundBankDetails?.accountNumber && (
+                              <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                                A/C: ••••{ret.refundBankDetails.accountNumber.slice(-4)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Pagination */}
+              <Pagination
+                currentPage={returnPage}
+                totalPages={totalReturnPages}
+                totalItems={filteredReturns.length}
+                itemsPerPage={returnItemsPerPage}
+                onPageChange={setReturnPage}
+                onItemsPerPageChange={setReturnItemsPerPage}
+                itemsPerPageOptions={[10, 25, 50, 100]}
+              />
             </div>
           ) : (
+            /* DENSE TABLE VIEW (Upgraded Modern Dark-Mode Table!) */
             <div className="space-y-4">
               <div className="border rounded-2xl bg-card overflow-hidden shadow-xs">
                 <div className="overflow-x-auto">
@@ -1324,200 +2121,194 @@ function AdminOrdersContent() {
                     <thead>
                       <tr className="border-b bg-muted/40 text-[11px] text-muted-foreground uppercase font-bold tracking-wider">
                         <th className="p-4">Return ID</th>
-                        <th className="p-4">Order ID</th>
-                        <th className="p-4">Quantity & Reason</th>
+                        <th className="p-4">Order Ref</th>
+                        <th className="p-4">Customer</th>
+                        <th className="p-4">Item & Reason</th>
                         <th className="p-4">Photos</th>
                         <th className="p-4">Status</th>
                         <th className="p-4">Inspection</th>
+                        <th className="p-4">Refund</th>
                         <th className="p-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/60">
                       {paginatedReturns.map((ret) => {
-                        const isHighlighted =
-                          (returnIdParam && (ret.id.toLowerCase() === returnIdParam.toLowerCase() || ret.id.toLowerCase().startsWith(returnIdParam.toLowerCase()))) ||
-                          (orderIdParam && (ret.orderId.toLowerCase() === orderIdParam.replace(/^#/, '').toLowerCase() || ret.orderId.toLowerCase().includes(orderIdParam.replace(/^#/, '').toLowerCase())));
+                        const cfg = RET_STATUS_CONFIG[ret.status] || RET_STATUS_CONFIG.REQUESTED;
+                        const linkedOrder = orders.find(
+                          (o) => o.id === ret.orderId || o.orderNumber === ret.orderId
+                        );
+                        const linkedItem =
+                          linkedOrder?.items?.find(
+                            (it) =>
+                              it.variantId === ret.orderItemId ||
+                              (it as any).id === ret.orderItemId ||
+                              it.productId === ret.orderItemId
+                          ) || linkedOrder?.items?.[0];
+
+                        const customerName =
+                          linkedOrder?.customer?.fullName || linkedOrder?.shippingAddress?.fullName || 'Customer';
+                        const unitPrice = linkedItem?.unitPrice || 0;
+                        const refundAmount =
+                          ret.refundAmount || (unitPrice > 0 ? unitPrice * ret.quantity : 799);
 
                         return (
                           <tr
                             key={ret.id}
                             id={`return-row-${ret.id}`}
-                            className={`transition-all text-xs ${
-                              isHighlighted
-                                ? 'bg-amber-500/15 border-l-4 border-l-amber-500 font-medium'
-                                : 'hover:bg-muted/30'
-                            }`}
+                            onClick={() => setSelectedReturn(ret)}
+                            className="hover:bg-muted/30 transition-colors cursor-pointer text-xs group"
                           >
-                            <td className="p-4 font-mono font-bold text-foreground">
-                              {ret.id.substring(0, 8)}...
-                              {isHighlighted && (
-                                <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-white shadow-xs animate-pulse">
-                                  Selected
+                            <td className="p-4 font-mono font-bold text-foreground group-hover:text-primary transition-colors">
+                              #{ret.id.substring(0, 8)}
+                            </td>
+                            <td className="p-4 font-mono font-bold text-muted-foreground">
+                              #{linkedOrder?.orderNumber || ret.orderId.substring(0, 8)}
+                            </td>
+                            <td className="p-4">
+                              <div className="font-bold text-foreground truncate max-w-[120px]">
+                                {customerName}
+                              </div>
+                              <div className="text-[10px] text-muted-foreground truncate max-w-[120px]">
+                                {linkedOrder?.customer?.email || ret.userId.substring(0, 8)}
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="font-bold text-foreground truncate max-w-[160px]">
+                                {linkedItem?.productName || 'Catalog Product'}
+                              </div>
+                              <div className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">
+                                {RETURN_REASON_MAP[ret.reason] || ret.reason} (Qty: {ret.quantity})
+                              </div>
+                            </td>
+                            <td className="p-4" onClick={(e) => e.stopPropagation()}>
+                              {ret.images && ret.images.length > 0 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setPreviewPhotos(ret.images!)}
+                                  className="flex items-center gap-1 px-2.5 py-1 bg-muted hover:bg-muted/80 rounded-lg border text-xs font-semibold transition-colors"
+                                >
+                                  <ImageIcon size={13} className="text-primary" />
+                                  <span>{ret.images.length}</span>
+                                </button>
+                              ) : (
+                                <span className="text-muted-foreground italic text-[11px]">-</span>
+                              )}
+                            </td>
+                            <td className="p-4">
+                              <span
+                                className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border ${cfg.badge}`}
+                              >
+                                {cfg.label}
+                              </span>
+                            </td>
+                            <td className="p-4">
+                              {ret.inspectionResult ? (
+                                <span
+                                  className={`font-bold text-[11px] ${
+                                    ret.inspectionResult === 'RESELLABLE'
+                                      ? 'text-emerald-600 dark:text-emerald-400'
+                                      : 'text-rose-600 dark:text-rose-400'
+                                  }`}
+                                >
+                                  {ret.inspectionResult}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground italic text-[11px]">
+                                  Pending
                                 </span>
                               )}
                             </td>
-                            <td className="p-4 font-mono text-primary font-bold">
-                              {ret.orderId}
-                            </td>
-                          <td className="p-4">
-                            <div className="font-bold text-foreground">Qty: {ret.quantity}</div>
-                            <div className="text-muted-foreground text-[11px]">Reason: {ret.reason}</div>
-                            {ret.customerNote && (
-                              <div className="italic text-gray-500 text-[10px] mt-0.5">"{ret.customerNote}"</div>
-                            )}
-                            {ret.courierTrackingNumber && (
-                              <div className="mt-1.5 p-1.5 bg-blue-50/80 border border-blue-200 rounded text-[10px] text-blue-900 space-y-0.5">
-                                <div className="font-bold flex items-center gap-1 text-blue-800">
-                                  <Truck size={11} />
-                                  <span>{ret.courierName || 'Courier'}: {ret.courierTrackingNumber}</span>
+                            <td className="p-4">
+                              <div className="font-bold text-foreground">₹{refundAmount}</div>
+                              {ret.refundTransactionId && (
+                                <div className="text-[10px] text-muted-foreground font-mono truncate max-w-[90px]">
+                                  {ret.refundTransactionId}
                                 </div>
-                              </div>
-                            )}
-                            {ret.refundBankDetails && (
-                              <div className="mt-1 p-1.5 bg-amber-50/80 border border-amber-200 rounded text-[10px] text-amber-950">
-                                <span className="font-bold block text-amber-900">Refund A/C:</span>
-                                <span>{ret.refundBankDetails.accountHolderName} • A/C: ••••{ret.refundBankDetails.accountNumber?.slice(-4)} ({ret.refundBankDetails.ifscCode})</span>
-                              </div>
-                            )}
-                          </td>
-                          <td className="p-4">
-                            {ret.images && ret.images.length > 0 ? (
-                              <button
-                                onClick={() => setPreviewPhotos(ret.images!)}
-                                className="flex items-center gap-1 px-2.5 py-1 bg-muted hover:bg-muted/80 rounded-lg border text-xs font-semibold transition-colors"
-                              >
-                                <ImageIcon size={13} className="text-primary" />
-                                <span>{ret.images.length} Photos</span>
-                              </button>
-                            ) : (
-                              <span className="text-muted-foreground italic text-[11px]">No photos</span>
-                            )}
-                          </td>
-                          <td className="p-4">
-                            <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${
-                              ret.status === 'REFUNDED'
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                : ret.status === 'REJECTED'
-                                ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                : ret.status === 'RETURN_SHIPPED'
-                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                                : ret.status === 'APPROVED'
-                                ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                : 'bg-amber-50 text-amber-700 border-amber-200'
-                            }`}>
-                              {ret.status === 'APPROVED'
-                                ? 'Awaiting Shipment'
-                                : ret.status === 'RETURN_SHIPPED'
-                                ? 'Package Shipped'
-                                : ret.status.replace(/_/g, ' ')}
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            {ret.inspectionResult ? (
-                              <span
-                                className={`font-bold text-[11px] ${
-                                  ret.inspectionResult === 'RESELLABLE'
-                                    ? 'text-emerald-700'
-                                    : 'text-rose-600'
-                                }`}
-                              >
-                                {ret.inspectionResult}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground italic text-[11px]">Pending</span>
-                            )}
-                          </td>
-                          <td className="p-4 text-right space-x-1.5">
-                            {ret.status === 'REQUESTED' && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleApproveReturn(ret.id)}
-                                  className="bg-emerald-600 hover:bg-emerald-700 text-white h-7 text-xs font-semibold"
-                                >
-                                  Approve
-                                </Button>
+                              )}
+                            </td>
+                            <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-end gap-1.5">
+                                {ret.status === 'REQUESTED' && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      disabled={isUpdating}
+                                      onClick={() => handleApproveReturn(ret.id)}
+                                      className="bg-emerald-600 hover:bg-emerald-700 text-white h-7 text-xs font-semibold rounded-lg"
+                                    >
+                                      Approve
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      disabled={isUpdating}
+                                      onClick={() => handleRejectReturn(ret.id)}
+                                      className="text-rose-600 border-rose-200 dark:border-rose-900 hover:bg-rose-50 dark:hover:bg-rose-950/30 h-7 text-xs font-semibold rounded-lg"
+                                    >
+                                      Reject
+                                    </Button>
+                                  </>
+                                )}
+
+                                {(ret.status === 'RETURN_SHIPPED' ||
+                                  ret.status === 'PICKUP_SCHEDULED' ||
+                                  ret.status === 'PICKED_UP') && (
+                                  <Button
+                                    size="sm"
+                                    disabled={isUpdating}
+                                    onClick={() => handleReceiveReturn(ret.id)}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white h-7 text-xs font-bold rounded-lg"
+                                  >
+                                    Receive
+                                  </Button>
+                                )}
+
+                                {ret.status === 'RECEIVED' && (
+                                  <Button
+                                    size="sm"
+                                    disabled={isUpdating}
+                                    onClick={() => handleInspectReturn(ret.id, 'RESELLABLE')}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white h-7 text-xs font-semibold rounded-lg"
+                                  >
+                                    Pass
+                                  </Button>
+                                )}
+
+                                {(ret.status === 'INSPECTED' || ret.status === 'REFUND_PENDING') && (
+                                  <Button
+                                    size="sm"
+                                    disabled={isUpdating}
+                                    onClick={() => handleOpenProcessRefund(ret)}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white h-7 text-xs font-bold rounded-lg"
+                                  >
+                                    Refund
+                                  </Button>
+                                )}
+
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleRejectReturn(ret.id)}
-                                  className="text-rose-600 border-rose-200 hover:bg-rose-50 h-7 text-xs font-semibold"
+                                  onClick={() => setSelectedReturn(ret)}
+                                  className="h-7 px-2 text-xs font-semibold rounded-lg"
                                 >
-                                  Reject
-                                </Button>
-                              </>
-                            )}
-
-                            {ret.status === 'APPROVED' && (
-                              <span className="text-[11px] text-muted-foreground italic font-medium">
-                                Awaiting customer shipment
-                              </span>
-                            )}
-
-                            {(ret.status === 'RETURN_SHIPPED' || ret.status === 'PICKUP_SCHEDULED' || ret.status === 'PICKED_UP') && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleReceiveReturn(ret.id)}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white h-7 text-xs font-bold"
-                              >
-                                Mark Package Received
-                              </Button>
-                            )}
-
-                            {ret.status === 'RECEIVED' && (
-                              <div className="inline-flex gap-1">
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleInspectReturn(ret.id, 'RESELLABLE')}
-                                  className="bg-emerald-600 hover:bg-emerald-700 text-white h-7 text-xs font-semibold"
-                                >
-                                  Pass (Resellable)
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleInspectReturn(ret.id, 'DAMAGED')}
-                                  className="bg-rose-600 hover:bg-rose-700 text-white h-7 text-xs font-semibold"
-                                >
-                                  Fail (Damaged)
+                                  <Eye size={12} className="mr-1" />
+                                  Details
                                 </Button>
                               </div>
-                            )}
-
-                            {(ret.status === 'REFUND_PENDING' || ret.status === 'INSPECTED') && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleOpenProcessRefund(ret)}
-                                className="bg-purple-600 hover:bg-purple-700 text-white h-7 text-xs font-bold"
-                              >
-                                Issue Refund
-                              </Button>
-                            )}
-
-                            {ret.status === 'REFUNDED' && (
-                              <div className="text-emerald-700 font-bold text-right text-[11px]">
-                                <div className="flex items-center justify-end gap-1">
-                                  <Check size={14} /> Refunded ₹{ret.refundAmount || 0}
-                                </div>
-                                {ret.refundTransactionId && (
-                                  <div className="text-[10px] text-muted-foreground font-mono">
-                                    TXN: {ret.refundTransactionId}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
               </div>
 
+              {/* Table Pagination */}
               <Pagination
                 currentPage={returnPage}
                 totalPages={totalReturnPages}
-                totalItems={returns.length}
+                totalItems={filteredReturns.length}
                 itemsPerPage={returnItemsPerPage}
                 onPageChange={setReturnPage}
                 onItemsPerPageChange={setReturnItemsPerPage}
@@ -2442,6 +3233,28 @@ Bank: ${refundingOrder.cancellationBankDetails?.bankName || 'N/A'}`;
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ========================================================================= */}
+      {/* COMPREHENSIVE RETURN & REFUND DETAILS DIALOG */}
+      {/* ========================================================================= */}
+      <ReturnDetailsDialog
+        returnItem={selectedReturn}
+        order={orders.find((o) => o.id === selectedReturn?.orderId || o.orderNumber === selectedReturn?.orderId)}
+        isOpen={!!selectedReturn}
+        onClose={handleCloseReturnModal}
+        onApprove={handleApproveReturn}
+        onReject={handleRejectReturn}
+        onReceive={handleReceiveReturn}
+        onInspect={handleInspectReturn}
+        onOpenRefund={handleOpenProcessRefund}
+        onOpenSchedulePickup={handleOpenSchedulePickup}
+        onViewOrder={(ord) => {
+          handleCloseReturnModal();
+          setSelectedOrder(ord);
+        }}
+        onPreviewPhotos={(imgs) => setPreviewPhotos(imgs)}
+        isUpdating={isUpdating}
+      />
     </div>
   );
 }

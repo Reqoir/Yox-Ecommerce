@@ -11,6 +11,7 @@ import { IProductVariantRepository } from '../../../products/domain/repositories
 import { IProductRepository } from '../../../products/domain/repositories/product.repository.interface';
 import { CheckoutSummaryResponseDTO } from '../dtos/checkout.dto';
 import { CartItemResponseDTO } from '../../../cart/application/dtos/cart.dto';
+import { SettingsModel } from '../../../settings/infrastructure/models/settings.model';
 
 export class GetCheckoutSummaryUseCase implements IUseCase<string, CheckoutSummaryResponseDTO> {
   constructor(
@@ -83,12 +84,34 @@ export class GetCheckoutSummaryUseCase implements IUseCase<string, CheckoutSumma
     const subtotal = cart.totalAmount;
     const discountAmount = cart.discountAmount || 0;
     
-    // Simple business logic: Free shipping over $500, otherwise $50
-    const shippingAmount = subtotal >= 500 ? 0 : 50;
+    // Fetch dynamic store configuration
+    let freeShippingThreshold = 699;
+    let standardShippingFee = 99;
+    let isTaxInclusive = true;
+    let taxRatePercent = 18;
 
-    // 10% standard tax on discounted total
+    try {
+      const storeSetting = await SettingsModel.findOne({ key: 'store_config' }).lean();
+      if (storeSetting?.value) {
+        if (typeof storeSetting.value.freeShippingThreshold === 'number') {
+          freeShippingThreshold = storeSetting.value.freeShippingThreshold;
+        }
+        if (typeof storeSetting.value.standardShippingFee === 'number') {
+          standardShippingFee = storeSetting.value.standardShippingFee;
+        }
+        if (typeof storeSetting.value.isTaxInclusive === 'boolean') {
+          isTaxInclusive = storeSetting.value.isTaxInclusive;
+        }
+        if (typeof storeSetting.value.taxRatePercent === 'number') {
+          taxRatePercent = storeSetting.value.taxRatePercent;
+        }
+      }
+    } catch (e) {}
+
+    const shippingAmount = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : standardShippingFee;
+
     const taxableAmount = Math.max(0, subtotal - discountAmount);
-    const taxAmount = parseFloat((taxableAmount * 0.10).toFixed(2));
+    const taxAmount = isTaxInclusive ? 0 : parseFloat(((taxableAmount * taxRatePercent) / 100).toFixed(2));
 
     const total = parseFloat((taxableAmount + shippingAmount + taxAmount).toFixed(2));
 

@@ -9,6 +9,7 @@ import { returnsApi, BackendReturn, ReturnReason } from '@/lib/api/returns';
 import { ReturnStatusTracker } from '@/components/features/orders/ReturnStatusTracker';
 import { ManualShipmentCard } from '@/components/features/orders/ManualShipmentCard';
 import { useCartStore } from '@/store/useCartStore';
+import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
 import {
   Package,
   Truck,
@@ -372,11 +373,16 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     );
   }
 
+  const { config } = useStoreSettingsStore();
+  const returnWindowDays = config.returnWindowDays || 7;
+  const returnsEnabled = config.returnsEnabled ?? true;
+  const minEvidencePhotos = config.minEvidencePhotos || 3;
+
   const canCancel = ['PLACED', 'CONFIRMED'].includes(order.orderStatus);
   const isDelivered = order.orderStatus === 'DELIVERED';
   const isTerminated = ['DELIVERED', 'CANCELLED', 'RETURNED'].includes(order.orderStatus);
 
-  // 7-day return policy calculation
+  // Dynamic return policy calculation based on store settings
   const deliveryDate = order.deliveredAt
     ? new Date(order.deliveredAt)
     : (order.orderStatus === 'DELIVERED' ? new Date(order.placedAt) : null);
@@ -385,8 +391,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     ? (Date.now() - deliveryDate.getTime()) / (1000 * 60 * 60 * 24)
     : Infinity;
 
-  const isWithin7Days = isDelivered && daysSinceDelivery <= 7;
-  const returnDaysRemaining = deliveryDate ? Math.max(0, Math.ceil(7 - daysSinceDelivery)) : 0;
+  const isWithinReturnWindow = isDelivered && returnsEnabled && daysSinceDelivery <= returnWindowDays;
+  const returnDaysRemaining = deliveryDate ? Math.max(0, Math.ceil(returnWindowDays - daysSinceDelivery)) : 0;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300 print:p-0 print:space-y-4">
@@ -624,7 +630,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* SEPARATE SECTION: RETURN & REFUND MANAGEMENT (WHEN DELIVERED & WITHIN 7 DAYS / HAS RETURN) */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {(isWithin7Days || userReturns.length > 0) && (
+      {(isWithinReturnWindow || userReturns.length > 0) && (
         <div className="bg-white border border-amber-200/80 rounded-2xl p-6 lg:p-7 shadow-xs space-y-6 print:hidden">
           <div className="flex items-center justify-between border-b border-gray-100 pb-3">
             <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
@@ -634,9 +640,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             <span className="text-xs font-semibold text-gray-500">
               {userReturns.length > 0
                 ? `${userReturns.length} Return Request Active`
-                : isWithin7Days
+                : isWithinReturnWindow
                 ? `Eligible for Return (${returnDaysRemaining} day${returnDaysRemaining === 1 ? '' : 's'} remaining)`
-                : '7-Day Return Policy Expired'}
+                : `${returnWindowDays}-Day Return Policy Expired`}
             </span>
           </div>
 
@@ -664,7 +670,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                     </div>
 
                     {!existingReturn ? (
-                      isWithin7Days ? (
+                      isWithinReturnWindow ? (
                         <button
                           onClick={() => handleOpenReturnModal(item)}
                           className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-bold rounded-lg transition-colors shadow-2xs"
@@ -674,7 +680,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                         </button>
                       ) : (
                         <span className="text-xs text-gray-400 font-medium italic">
-                          Return window closed (exceeded 7 days)
+                          Return window closed (exceeded {returnWindowDays} days)
                         </span>
                       )
                     ) : (
@@ -960,15 +966,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                     Attach Item Photos <span className="text-red-500">*</span>
                   </label>
                   <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                    returnImages.length >= 3 
+                    returnImages.length >= minEvidencePhotos 
                       ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
                       : 'bg-amber-100 text-amber-800 border border-amber-300'
                   }`}>
-                    {returnImages.length >= 3 ? '✓ 3 of 3 attached' : `${returnImages.length}/3 mandatory photos`}
+                    {returnImages.length >= minEvidencePhotos ? `✓ ${returnImages.length} of ${minEvidencePhotos} attached` : `${returnImages.length}/${minEvidencePhotos} mandatory photos`}
                   </span>
                 </div>
                 <p className="text-[11px] text-gray-500 mb-2">
-                  At least 3 photos are mandatory (e.g. front view, back view, tag/defect) to submit a return request.
+                  At least {minEvidencePhotos} photos are mandatory (e.g. front view, back view, tag/defect) to submit a return request.
                 </p>
 
                 <input
@@ -1028,13 +1034,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               <button
                 type="button"
                 onClick={handleSubmitReturn}
-                disabled={isSubmittingReturn || returnImages.length < 3}
+                disabled={isSubmittingReturn || returnImages.length < minEvidencePhotos}
                 className="px-5 py-2 bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-bold rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {isSubmittingReturn
                   ? 'Submitting...'
-                  : returnImages.length < 3
-                  ? `Attach ${3 - returnImages.length} More Photo${3 - returnImages.length > 1 ? 's' : ''}`
+                  : returnImages.length < minEvidencePhotos
+                  ? `Attach ${minEvidencePhotos - returnImages.length} More Photo${minEvidencePhotos - returnImages.length > 1 ? 's' : ''}`
                   : 'Submit Return Request'}
               </button>
             </div>

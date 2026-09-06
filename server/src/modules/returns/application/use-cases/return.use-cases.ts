@@ -16,6 +16,7 @@ import { AuditLogService } from '../../../audit-logs/application/services/audit-
 import { AuditAction } from '../../../audit-logs/domain/entities/audit-log.entity';
 import { NotificationService } from '../../../notifications/application/services/notification.service';
 import { UserModel } from '../../../users/infrastructure/models/user.model';
+import { SettingsModel } from '../../../settings/infrastructure/models/settings.model';
 import {
   CreateReturnRequestDTO,
   SubmitReturnShipmentRequestDTO,
@@ -81,13 +82,38 @@ export class CreateReturnUseCase implements IUseCase<{ userId: string; data: Cre
       throw new Error(`Cannot request return for order in status: ${order.orderStatus}. Order must be DELIVERED.`);
     }
 
-    // Strict 7-Day Return Policy Enforcement
+    // Dynamic Store Policy Enforcement
+    let returnsEnabled = true;
+    let returnWindowDays = 7;
+    let minEvidencePhotos = 3;
+
+    try {
+      const storeSetting = await SettingsModel.findOne({ key: 'store_config' }).lean();
+      if (storeSetting?.value) {
+        if (typeof storeSetting.value.returnsEnabled === 'boolean') {
+          returnsEnabled = storeSetting.value.returnsEnabled;
+        }
+        if (typeof storeSetting.value.returnWindowDays === 'number') {
+          returnWindowDays = storeSetting.value.returnWindowDays;
+        }
+        if (typeof storeSetting.value.minEvidencePhotos === 'number') {
+          minEvidencePhotos = storeSetting.value.minEvidencePhotos;
+        }
+      }
+    } catch (err) {
+      // Fallback to defaults
+    }
+
+    if (!returnsEnabled) {
+      throw new Error('Returns are currently not being accepted by store administration.');
+    }
+
     const deliveryDate = order.deliveredAt || order.updatedAt || order.placedAt;
-    const returnWindowMs = 7 * 24 * 60 * 60 * 1000;
+    const returnWindowMs = returnWindowDays * 24 * 60 * 60 * 1000;
     const returnDeadline = new Date(deliveryDate.getTime() + returnWindowMs);
     if (new Date().getTime() > returnDeadline.getTime()) {
       throw new Error(
-        `Return window expired: The 7-day return policy for this order expired on ${returnDeadline.toLocaleDateString('en-US', {
+        `Return window expired: The ${returnWindowDays}-day return policy for this order expired on ${returnDeadline.toLocaleDateString('en-US', {
           month: 'short',
           day: 'numeric',
           year: 'numeric',
@@ -95,14 +121,14 @@ export class CreateReturnUseCase implements IUseCase<{ userId: string; data: Cre
       );
     }
 
-    // Strict Mandatory 3 Images Validation
+    // Dynamic Mandatory Images Validation
     const validImages = Array.isArray(data.images)
       ? data.images.filter((img) => typeof img === 'string' && img.trim().length > 0)
       : [];
 
-    if (validImages.length < 3) {
+    if (validImages.length < minEvidencePhotos) {
       throw new Error(
-        `At least 3 photos of the item are mandatory to submit a return request (e.g. front, back, tag/defect). Provided: ${validImages.length}.`
+        `At least ${minEvidencePhotos} photos of the item are mandatory to submit a return request (e.g. front, back, tag/defect). Provided: ${validImages.length}.`
       );
     }
 

@@ -1,11 +1,25 @@
 'use client';
 
-import React from 'react';
-import { CreditCard, Banknote, ShieldCheck, CheckCircle2, Lock } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { CreditCard, Banknote, ShieldCheck, CheckCircle2, Lock, AlertCircle } from 'lucide-react';
 import { useCheckoutStore, PaymentMethod } from '@/store/useCheckoutStore';
+import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
+import { useCartStore } from '@/store/useCartStore';
 
 export function PaymentSection() {
   const { paymentMethod, setPaymentMethod } = useCheckoutStore();
+  const { config } = useStoreSettingsStore();
+  const { getSubtotal } = useCartStore();
+
+  const subtotal = getSubtotal();
+  const isCodAllowed = config.codEnabled && (config.codMaxLimit ? subtotal <= config.codMaxLimit : true);
+
+  // If currently selected payment method is COD but COD is disallowed, switch to online payment
+  useEffect(() => {
+    if (paymentMethod === 'COD' && !isCodAllowed) {
+      setPaymentMethod('RAZORPAY');
+    }
+  }, [paymentMethod, isCodAllowed, setPaymentMethod]);
 
   return (
     <div className="w-full bg-white border border-gray-200 rounded p-5 lg:p-6 mb-6">
@@ -25,7 +39,7 @@ export function PaymentSection() {
           onClick={() => setPaymentMethod('RAZORPAY')}
           className={`cursor-pointer rounded border p-4 transition-all relative ${
             paymentMethod === 'RAZORPAY'
-              ? 'border-black bg-white'
+              ? 'border-black bg-white shadow-xs'
               : 'border-gray-200 hover:border-gray-300 bg-white'
           }`}
         >
@@ -70,32 +84,55 @@ export function PaymentSection() {
 
         {/* Cash on Delivery Option */}
         <div
-          onClick={() => setPaymentMethod('COD')}
-          className={`cursor-pointer rounded border p-4 transition-all relative ${
-            paymentMethod === 'COD'
-              ? 'border-black bg-white'
-              : 'border-gray-200 hover:border-gray-300 bg-white'
+          onClick={() => {
+            if (isCodAllowed) {
+              setPaymentMethod('COD');
+            }
+          }}
+          className={`rounded border p-4 transition-all relative ${
+            !isCodAllowed
+              ? 'opacity-60 bg-gray-50 border-gray-200 cursor-not-allowed'
+              : paymentMethod === 'COD'
+              ? 'border-black bg-white shadow-xs cursor-pointer'
+              : 'border-gray-200 hover:border-gray-300 bg-white cursor-pointer'
           }`}
         >
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded bg-emerald-700 text-white flex items-center justify-center font-bold text-xs">
+              <div className={`w-10 h-10 rounded flex items-center justify-center font-bold text-xs ${
+                isCodAllowed ? 'bg-emerald-700 text-white' : 'bg-gray-400 text-white'
+              }`}>
                 <Banknote size={22} />
               </div>
               <div>
-                <span className="font-bold text-sm text-gray-900">Cash on Delivery (COD)</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-sm text-gray-900">Cash on Delivery (COD)</span>
+                  {!config.codEnabled ? (
+                    <span className="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded">
+                      DISABLED BY STORE
+                    </span>
+                  ) : subtotal > config.codMaxLimit ? (
+                    <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">
+                      MAX LIMIT EXCEEDED
+                    </span>
+                  ) : null}
+                </div>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Pay cash at your doorstep when your order arrives.
+                  {!config.codEnabled
+                    ? 'Cash on Delivery is currently paused for all orders.'
+                    : subtotal > config.codMaxLimit
+                    ? `COD is available on orders up to ${config.currencySymbol}${config.codMaxLimit}. Please pay online for higher orders.`
+                    : 'Pay cash at your doorstep when your order arrives.'}
                 </p>
               </div>
             </div>
 
-            {paymentMethod === 'COD' && (
+            {paymentMethod === 'COD' && isCodAllowed && (
               <CheckCircle2 size={20} className="text-green-600 flex-shrink-0 mt-1" />
             )}
           </div>
 
-          {paymentMethod === 'COD' && (
+          {paymentMethod === 'COD' && isCodAllowed && (
             <div className="mt-3 pt-3 border-t border-gray-200/60 text-[11px] text-amber-800 bg-amber-50 p-2.5 rounded">
               <span className="font-bold">Note:</span> Please keep exact cash amount ready at the time of delivery.
             </div>

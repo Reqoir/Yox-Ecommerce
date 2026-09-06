@@ -63,7 +63,8 @@ export class OrderController {
   placeOrder = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user!.id;
-      const order = await this.placeOrderUseCase.execute({ userId, data: req.body });
+      const isAdmin = await this.checkIsAdmin(req);
+      const order = await this.placeOrderUseCase.execute({ userId, data: req.body, isAdmin });
       ApiResponse.success(res, order, 'Order placed successfully', HttpStatus.CREATED);
     } catch (error) {
       next(error);

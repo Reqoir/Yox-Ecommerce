@@ -3,7 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Truck, ShieldCheck, Award, RefreshCw, Mail, Phone } from 'lucide-react';
+import { Truck, ShieldCheck, Award, RefreshCw, Mail, Phone, MapPin } from 'lucide-react';
+import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
 import { 
   FaFacebookF, 
   FaInstagram, 
@@ -18,6 +19,8 @@ import {
 } from 'react-icons/fa';
 
 export function Footer() {
+  const { config } = useStoreSettingsStore();
+
   return (
     <footer className="w-full bg-[#E5DCC5] text-gray-900">
       {/* Top Features Section */}
@@ -26,7 +29,9 @@ export function Footer() {
           <Truck size={36} className="text-gray-700 opacity-80" strokeWidth={1} />
           <div>
             <h4 className="font-bold text-[14px] tracking-wide mb-0.5 text-gray-900">Free Shipping</h4>
-            <p className="text-gray-600 text-[12px]">On Order Above $26</p>
+            <p className="text-gray-600 text-[12px]">
+              On Orders Above {config.currencySymbol}{config.freeShippingThreshold}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -40,14 +45,16 @@ export function Footer() {
           <Award size={36} className="text-gray-700 opacity-80" strokeWidth={1} />
           <div>
             <h4 className="font-bold text-[14px] tracking-wide mb-0.5 text-gray-900">Member Offers</h4>
-            <p className="text-gray-600 text-[12px]">Orders $50 or more</p>
+            <p className="text-gray-600 text-[12px]">Special discounts with codes</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
           <RefreshCw size={36} className="text-gray-700 opacity-80" strokeWidth={1} />
           <div>
-            <h4 className="font-bold text-[14px] tracking-wide mb-0.5 text-gray-900">Easy 7-Day Returns</h4>
-            <p className="text-gray-600 text-[12px]">Returns Within 7 Days.</p>
+            <h4 className="font-bold text-[14px] tracking-wide mb-0.5 text-gray-900">
+              Easy {config.returnWindowDays}-Day Returns
+            </h4>
+            <p className="text-gray-600 text-[12px]">Hassle-free return window.</p>
           </div>
         </div>
       </div>
@@ -68,15 +75,25 @@ export function Footer() {
             />
           </Link>
           <p className="text-gray-600 text-[13px] leading-relaxed lg:pr-8 font-medium">
-            Style meets comfort. Discover elevated essentials and standout pieces designed for everyday confidence.
+            {config.tagline || 'Style meets comfort. Discover elevated essentials and standout pieces designed for everyday confidence.'}
           </p>
           <div className="flex flex-col gap-3 text-[13px] text-gray-600 font-medium">
-            <div className="flex items-center gap-2 hover:text-black cursor-pointer transition-colors">
-              <Phone size={16} className="opacity-80 text-gray-700" /> 0123-456-789
-            </div>
-            <div className="flex items-center gap-2 hover:text-black cursor-pointer transition-colors">
-              <Mail size={16} className="opacity-80 text-gray-700" /> demo@demo.com
-            </div>
+            {config.supportPhone && (
+              <a href={`tel:${config.supportPhone}`} className="flex items-center gap-2 hover:text-black cursor-pointer transition-colors">
+                <Phone size={16} className="opacity-80 text-gray-700" /> {config.supportPhone}
+              </a>
+            )}
+            {config.supportEmail && (
+              <a href={`mailto:${config.supportEmail}`} className="flex items-center gap-2 hover:text-black cursor-pointer transition-colors">
+                <Mail size={16} className="opacity-80 text-gray-700" /> {config.supportEmail}
+              </a>
+            )}
+            {config.storeAddress && (
+              <div className="flex items-start gap-2 text-gray-600">
+                <MapPin size={16} className="opacity-80 text-gray-700 shrink-0 mt-0.5" />
+                <span className="text-xs">{config.storeAddress}</span>
+              </div>
+            )}
           </div>
         </div>
 
