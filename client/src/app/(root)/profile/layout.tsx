@@ -14,7 +14,7 @@ const sidebarLinks = [
   { name: 'Personal Info', href: '/profile/personal-info', icon: User, description: 'Manage personal details & phone' },
   { name: 'My Orders', href: '/profile/orders', icon: Package, description: 'Track orders, returns & receipts' },
   { name: 'Saved Addresses', href: '/profile/addresses', icon: MapPin, description: 'Manage shipping & billing locations' },
-  { name: 'My Favourites', href: '/favourites', icon: Heart, description: 'View your wishlist items' },
+  { name: 'My Favourites', href: '/profile/favourites', icon: Heart, description: 'View your wishlist items' },
   { name: 'Account Settings', href: '/profile/settings', icon: Settings, description: 'Security & notification preferences' },
 ];
 

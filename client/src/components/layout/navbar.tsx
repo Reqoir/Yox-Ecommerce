@@ -327,7 +327,7 @@ export function Navbar() {
                     <span>Saved Addresses</span>
                   </Link>
                   <Link
-                    href="/favourites"
+                    href="/profile/favourites"
                     onClick={() => setIsUserDropdownOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
                   >
@@ -368,7 +368,7 @@ export function Navbar() {
           </div>
 
           {/* Wishlist Icon */}
-          <Link href="/favourites" className="flex items-center relative text-black hover:opacity-70 transition-opacity" title="Wishlist">
+          <Link href="/profile/favourites" className="flex items-center relative text-black hover:opacity-70 transition-opacity" title="Wishlist">
             <div className="relative">
               <Heart size={21} />
               {mounted && favouritesCount > 0 && (
