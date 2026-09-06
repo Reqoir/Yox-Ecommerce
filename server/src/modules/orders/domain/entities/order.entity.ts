@@ -145,49 +145,52 @@ export class Order extends BaseEntity<OrderProps> {
 
   // State machine validations and transitions
   public confirm(): void {
-    if (this._props.orderStatus !== 'PLACED') {
-      throw new Error(`Cannot confirm order from status: ${this._props.orderStatus}`);
+    if (['CONFIRMED', 'PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(this._props.orderStatus)) {
+      return;
     }
     this._props.orderStatus = 'CONFIRMED';
-    this._props.confirmedAt = new Date();
+    if (!this._props.confirmedAt) this._props.confirmedAt = new Date();
     this._props.updatedAt = new Date();
   }
 
   public pack(): void {
-    if (this._props.orderStatus !== 'CONFIRMED' && this._props.orderStatus !== 'PLACED') {
+    if (['PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(this._props.orderStatus)) {
+      return;
+    }
+    if (this._props.orderStatus === 'CANCELLED' || this._props.orderStatus === 'RETURNED') {
       throw new Error(`Cannot pack order from status: ${this._props.orderStatus}`);
     }
     this._props.orderStatus = 'PACKED';
-    this._props.packedAt = new Date();
+    if (!this._props.packedAt) this._props.packedAt = new Date();
     this._props.updatedAt = new Date();
   }
 
   public ship(trackingNumber?: string, deliveryPartnerId?: string): void {
-    if (this._props.orderStatus !== 'PACKED' && this._props.orderStatus !== 'CONFIRMED') {
+    if (this._props.orderStatus === 'CANCELLED' || this._props.orderStatus === 'RETURNED' || this._props.orderStatus === 'DELIVERED') {
       throw new Error(`Cannot ship order from status: ${this._props.orderStatus}`);
     }
     this._props.orderStatus = 'SHIPPED';
     if (trackingNumber) this._props.trackingNumber = trackingNumber;
     if (deliveryPartnerId) this._props.deliveryPartnerId = deliveryPartnerId;
-    this._props.shippedAt = new Date();
+    if (!this._props.shippedAt) this._props.shippedAt = new Date();
     this._props.updatedAt = new Date();
   }
 
   public outForDelivery(): void {
-    if (this._props.orderStatus !== 'SHIPPED') {
+    if (this._props.orderStatus === 'CANCELLED' || this._props.orderStatus === 'RETURNED' || this._props.orderStatus === 'DELIVERED') {
       throw new Error(`Cannot mark order out for delivery from status: ${this._props.orderStatus}`);
     }
     this._props.orderStatus = 'OUT_FOR_DELIVERY';
-    this._props.outForDeliveryAt = new Date();
+    if (!this._props.outForDeliveryAt) this._props.outForDeliveryAt = new Date();
     this._props.updatedAt = new Date();
   }
 
   public deliver(): void {
-    if (this._props.orderStatus !== 'OUT_FOR_DELIVERY' && this._props.orderStatus !== 'SHIPPED') {
+    if (this._props.orderStatus === 'CANCELLED' || this._props.orderStatus === 'RETURNED') {
       throw new Error(`Cannot deliver order from status: ${this._props.orderStatus}`);
     }
     this._props.orderStatus = 'DELIVERED';
-    this._props.deliveredAt = new Date();
+    if (!this._props.deliveredAt) this._props.deliveredAt = new Date();
     if (this._props.paymentMethod === 'COD' && this._props.paymentStatus === 'PENDING') {
       this._props.paymentStatus = 'PAID';
     }
@@ -220,17 +223,27 @@ export class Order extends BaseEntity<OrderProps> {
   }
 
   public updateStatus(newStatus: OrderStatus | string, notes?: string): void {
-    if (this._props.orderStatus === 'DELIVERED' && newStatus !== 'RETURNED') {
+    if (this._props.orderStatus === 'DELIVERED' && newStatus !== 'RETURNED' && newStatus !== 'DELIVERED') {
       throw new Error('Cannot change status of an order that has already been delivered. Delivered orders are final.');
     }
-    if (this._props.orderStatus === 'CANCELLED') {
+    if (this._props.orderStatus === 'CANCELLED' && newStatus !== 'CANCELLED') {
       throw new Error('Cannot change status of a cancelled order.');
     }
     const validStatuses: string[] = ['PLACED', 'CONFIRMED', 'PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'RETURNED'];
     if (!validStatuses.includes(newStatus)) {
       throw new Error(`Invalid order status: ${newStatus}`);
     }
-    this._props.orderStatus = newStatus;
+    this._props.orderStatus = newStatus as OrderStatus;
+    if (newStatus === 'CONFIRMED' && !this._props.confirmedAt) this._props.confirmedAt = new Date();
+    if (newStatus === 'PACKED' && !this._props.packedAt) this._props.packedAt = new Date();
+    if (newStatus === 'SHIPPED' && !this._props.shippedAt) this._props.shippedAt = new Date();
+    if (newStatus === 'OUT_FOR_DELIVERY' && !this._props.outForDeliveryAt) this._props.outForDeliveryAt = new Date();
+    if (newStatus === 'DELIVERED') {
+      if (!this._props.deliveredAt) this._props.deliveredAt = new Date();
+      if (this._props.paymentMethod === 'COD' && this._props.paymentStatus === 'PENDING') {
+        this._props.paymentStatus = 'PAID';
+      }
+    }
     if (notes) {
       this._props.notes = this._props.notes ? `${this._props.notes} | ${notes}` : notes;
     }

@@ -451,14 +451,16 @@ export class ConfirmOrderUseCase implements IUseCase<{ id: string }, OrderRespon
     order.confirm();
     const saved = await this.orderRepo.save(order);
 
-    AuditLogService.getInstance()?.record({
-      action: AuditAction.ORDER_STATUS_CHANGED,
-      resourceType: 'ORDER',
-      resourceId: saved.id,
-      description: `Order #${saved.orderNumber} confirmed`,
-      before: { status: prevStatus },
-      after: { status: 'CONFIRMED' },
-    });
+    try {
+      await AuditLogService.getInstance()?.record({
+        action: AuditAction.ORDER_STATUS_CHANGED,
+        resourceType: 'ORDER',
+        resourceId: saved.id,
+        description: `Order #${saved.orderNumber} confirmed`,
+        before: { status: prevStatus },
+        after: { status: 'CONFIRMED' },
+      });
+    } catch {}
 
     return mapToOrderResponseDTO(saved);
   }
@@ -474,14 +476,16 @@ export class PackOrderUseCase implements IUseCase<{ id: string }, OrderResponseD
     order.pack();
     const saved = await this.orderRepo.save(order);
 
-    AuditLogService.getInstance()?.record({
-      action: AuditAction.ORDER_STATUS_CHANGED,
-      resourceType: 'ORDER',
-      resourceId: saved.id,
-      description: `Order #${saved.orderNumber} packed`,
-      before: { status: prevStatus },
-      after: { status: 'PACKED' },
-    });
+    try {
+      await AuditLogService.getInstance()?.record({
+        action: AuditAction.ORDER_STATUS_CHANGED,
+        resourceType: 'ORDER',
+        resourceId: saved.id,
+        description: `Order #${saved.orderNumber} packed`,
+        before: { status: prevStatus },
+        after: { status: 'PACKED' },
+      });
+    } catch {}
 
     return mapToOrderResponseDTO(saved);
   }
@@ -497,14 +501,16 @@ export class ShipOrderUseCase implements IUseCase<{ id: string; data: ShipOrderR
     order.ship(input.data?.trackingNumber, input.data?.deliveryPartnerId);
     const saved = await this.orderRepo.save(order);
 
-    AuditLogService.getInstance()?.record({
-      action: AuditAction.ORDER_STATUS_CHANGED,
-      resourceType: 'ORDER',
-      resourceId: saved.id,
-      description: `Order #${saved.orderNumber} shipped via ${input.data?.deliveryPartnerId || 'Carrier'} (Tracking: ${input.data?.trackingNumber})`,
-      before: { status: prevStatus },
-      after: { status: 'SHIPPED', trackingNumber: input.data?.trackingNumber },
-    });
+    try {
+      await AuditLogService.getInstance()?.record({
+        action: AuditAction.ORDER_STATUS_CHANGED,
+        resourceType: 'ORDER',
+        resourceId: saved.id,
+        description: `Order #${saved.orderNumber} shipped via ${input.data?.deliveryPartnerId || 'Carrier'} (Tracking: ${input.data?.trackingNumber})`,
+        before: { status: prevStatus },
+        after: { status: 'SHIPPED', trackingNumber: input.data?.trackingNumber },
+      });
+    } catch {}
 
     return mapToOrderResponseDTO(saved);
   }
@@ -520,14 +526,16 @@ export class OutForDeliveryUseCase implements IUseCase<{ id: string }, OrderResp
     order.outForDelivery();
     const saved = await this.orderRepo.save(order);
 
-    AuditLogService.getInstance()?.record({
-      action: AuditAction.ORDER_STATUS_CHANGED,
-      resourceType: 'ORDER',
-      resourceId: saved.id,
-      description: `Order #${saved.orderNumber} marked out for delivery`,
-      before: { status: prevStatus },
-      after: { status: 'OUT_FOR_DELIVERY' },
-    });
+    try {
+      await AuditLogService.getInstance()?.record({
+        action: AuditAction.ORDER_STATUS_CHANGED,
+        resourceType: 'ORDER',
+        resourceId: saved.id,
+        description: `Order #${saved.orderNumber} marked out for delivery`,
+        before: { status: prevStatus },
+        after: { status: 'OUT_FOR_DELIVERY' },
+      });
+    } catch {}
 
     return mapToOrderResponseDTO(saved);
   }
@@ -548,36 +556,40 @@ export class DeliverOrderUseCase implements IUseCase<{ id: string }, OrderRespon
     const savedOrder = await this.orderRepo.save(order);
 
     // Consume reserved stock permanently
-    for (const item of savedOrder.items) {
-      const inventory = await this.inventoryRepo.findByVariantId(item.variantId);
-      if (inventory && inventory.reservedStock >= item.quantity) {
-        const updatedInv = Inventory.reconstitute({
-          ...inventory.toJSON(),
-          reservedStock: inventory.reservedStock - item.quantity,
-          updatedAt: new Date(),
-        });
-        const savedInv = await this.inventoryRepo.save(updatedInv);
-        const log = StockLog.create({
-          inventoryId: savedInv.id,
-          type: 'OUT',
-          amount: item.quantity,
-          previousStock: savedInv.availableStock,
-          newStock: savedInv.availableStock,
-          reason: 'Reserved stock fulfilled on order delivery',
-          reference: savedOrder.orderNumber,
-        });
-        await this.stockLogRepo.save(log);
+    try {
+      for (const item of savedOrder.items) {
+        const inventory = await this.inventoryRepo.findByVariantId(item.variantId);
+        if (inventory && inventory.reservedStock >= item.quantity) {
+          const updatedInv = Inventory.reconstitute({
+            ...inventory.toJSON(),
+            reservedStock: inventory.reservedStock - item.quantity,
+            updatedAt: new Date(),
+          });
+          const savedInv = await this.inventoryRepo.save(updatedInv);
+          const log = StockLog.create({
+            inventoryId: savedInv.id,
+            type: 'OUT',
+            amount: item.quantity,
+            previousStock: savedInv.availableStock,
+            newStock: savedInv.availableStock,
+            reason: 'Reserved stock fulfilled on order delivery',
+            reference: savedOrder.orderNumber,
+          });
+          await this.stockLogRepo.save(log);
+        }
       }
-    }
+    } catch {}
 
-    AuditLogService.getInstance()?.record({
-      action: AuditAction.ORDER_STATUS_CHANGED,
-      resourceType: 'ORDER',
-      resourceId: savedOrder.id,
-      description: `Order #${savedOrder.orderNumber} marked delivered`,
-      before: { status: prevStatus },
-      after: { status: 'DELIVERED' },
-    });
+    try {
+      await AuditLogService.getInstance()?.record({
+        action: AuditAction.ORDER_STATUS_CHANGED,
+        resourceType: 'ORDER',
+        resourceId: savedOrder.id,
+        description: `Order #${savedOrder.orderNumber} marked delivered`,
+        before: { status: prevStatus },
+        after: { status: 'DELIVERED' },
+      });
+    } catch {}
 
     return mapToOrderResponseDTO(savedOrder);
   }
@@ -593,14 +605,16 @@ export class UpdateOrderStatusUseCase implements IUseCase<{ id: string; data: Up
     order.updateStatus(input.data.status.toUpperCase(), input.data.notes);
     const saved = await this.orderRepo.save(order);
 
-    AuditLogService.getInstance()?.record({
-      action: AuditAction.ORDER_STATUS_CHANGED,
-      resourceType: 'ORDER',
-      resourceId: saved.id,
-      description: `Order #${saved.orderNumber} status updated to ${input.data.status.toUpperCase()}`,
-      before: { status: prevStatus },
-      after: { status: input.data.status.toUpperCase() },
-    });
+    try {
+      await AuditLogService.getInstance()?.record({
+        action: AuditAction.ORDER_STATUS_CHANGED,
+        resourceType: 'ORDER',
+        resourceId: saved.id,
+        description: `Order #${saved.orderNumber} status updated to ${input.data.status.toUpperCase()}`,
+        before: { status: prevStatus },
+        after: { status: input.data.status.toUpperCase() },
+      });
+    } catch {}
 
     return mapToOrderResponseDTO(saved);
   }
@@ -619,14 +633,16 @@ export class UpdateOrderPaymentStatusUseCase implements IUseCase<{ id: string; p
     }
     const saved = await this.orderRepo.save(order);
 
-    AuditLogService.getInstance()?.record({
-      action: input.paymentStatus.toUpperCase() === 'REFUNDED' ? AuditAction.REFUND_COMPLETED : AuditAction.PAYMENT_VERIFIED,
-      resourceType: 'ORDER',
-      resourceId: saved.id,
-      description: `Order #${saved.orderNumber} payment status updated to ${input.paymentStatus.toUpperCase()}${input.transactionId ? ` (TXN: ${input.transactionId})` : ''}`,
-      before: { paymentStatus: prevPaymentStatus },
-      after: { paymentStatus: input.paymentStatus.toUpperCase(), paymentId: input.transactionId },
-    });
+    try {
+      await AuditLogService.getInstance()?.record({
+        action: input.paymentStatus.toUpperCase() === 'REFUNDED' ? AuditAction.REFUND_COMPLETED : AuditAction.PAYMENT_VERIFIED,
+        resourceType: 'ORDER',
+        resourceId: saved.id,
+        description: `Order #${saved.orderNumber} payment status updated to ${input.paymentStatus.toUpperCase()}${input.transactionId ? ` (TXN: ${input.transactionId})` : ''}`,
+        before: { paymentStatus: prevPaymentStatus },
+        after: { paymentStatus: input.paymentStatus.toUpperCase(), paymentId: input.transactionId },
+      });
+    } catch {}
 
     return mapToOrderResponseDTO(saved);
   }
