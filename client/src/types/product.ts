@@ -28,6 +28,7 @@ export interface Product {
   category: ProductCategory;
   subCategory?: string;
   image: string;
+  secondImage?: string | null;
   images?: string[];
   price: number;
   originalPrice?: number | null;

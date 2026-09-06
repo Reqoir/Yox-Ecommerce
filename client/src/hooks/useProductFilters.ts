@@ -11,6 +11,7 @@ import { productApi } from '@/api/admin/products';
 import { calculateBestOffer } from '@/lib/offers';
 import { matchesProductSearch } from '@/lib/search';
 import { Product, ProductFit, ProductSize, ProductTag, SortOption } from '@/types/product';
+import { optimizeCloudinaryUrl } from '@/lib/utils';
 
 export function useProductFilters() {
   const searchParams = useSearchParams();
@@ -76,6 +77,14 @@ export function useProductFilters() {
 
         // If no variants exist or no colors defined
         if (colorMap.size === 0) {
+          const allVariantImages = variants.flatMap(v => v.images || []).filter(Boolean);
+          const allImgs = Array.from(new Set([
+            ...(p.thumbnail ? [p.thumbnail] : []),
+            ...allVariantImages,
+          ]));
+          const primaryImg = allImgs[0] || p.thumbnail || '/images/product-1.jpeg';
+          const secondImg = allImgs.length > 1 ? allImgs[1] : null;
+
           expanded.push({
             id: (p.id as any) || idx + 100,
             productId: p.id,
@@ -86,7 +95,9 @@ export function useProductFilters() {
             subCategoryId: p.subCategoryId,
             category: catName as any,
             subCategory: subCatName,
-            image: p.thumbnail || '/images/product-1.jpeg',
+            image: optimizeCloudinaryUrl(primaryImg),
+            secondImage: secondImg ? optimizeCloudinaryUrl(secondImg) : null,
+            images: allImgs.length > 0 ? allImgs.map(img => optimizeCloudinaryUrl(img)) : [optimizeCloudinaryUrl(primaryImg)],
             price: 999,
             bestPrice: 899,
             tag: (p.tag as ProductTag) || undefined,
@@ -121,7 +132,19 @@ export function useProductFilters() {
 
           // First image of this color variant group, falling back to p.thumbnail
           const variantImages = colorVariants.flatMap(v => v.images || []).filter(Boolean);
-          const firstImage = variantImages[0] || p.thumbnail || '/images/product-1.jpeg';
+          const allVariantImages = variants.flatMap(v => v.images || []).filter(Boolean);
+          const firstImage = variantImages[0] || p.thumbnail || allVariantImages[0] || '/images/product-1.jpeg';
+
+          // Second image: use second image of this color variant; fallback to other variants or thumbnail
+          const secondImage = 
+            variantImages.find((img) => img !== firstImage) ||
+            allVariantImages.find((img) => img !== firstImage) ||
+            (p.thumbnail && p.thumbnail !== firstImage ? p.thumbnail : null) ||
+            null;
+
+          const combinedImages = Array.from(
+            new Set([firstImage, ...(secondImage ? [secondImage] : []), ...variantImages])
+          );
 
           const isDefaultColor = colorName.toLowerCase() === 'default';
           const href = isDefaultColor
@@ -146,8 +169,9 @@ export function useProductFilters() {
             subCategoryId: p.subCategoryId,
             category: catName as any,
             subCategory: subCatName,
-            image: firstImage,
-            images: variantImages.length > 0 ? variantImages : [firstImage],
+            image: optimizeCloudinaryUrl(firstImage),
+            secondImage: secondImage ? optimizeCloudinaryUrl(secondImage) : null,
+            images: combinedImages.map(img => optimizeCloudinaryUrl(img)),
             price: finalCardPrice,
             originalPrice: finalStrikePrice,
             bestPrice: Math.round(finalCardPrice * 0.9),

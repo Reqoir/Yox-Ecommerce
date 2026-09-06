@@ -86,6 +86,8 @@ export interface OfferProductItem {
   name: string;
   slug: string;
   thumbnail: string | null;
+  images?: string[];
+  secondImage?: string | null;
   categoryId?: string | null;
   brandId?: string | null;
   originalPrice: number;

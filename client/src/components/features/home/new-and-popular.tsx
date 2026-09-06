@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { offersApi } from '@/api/admin/offers';
 import { calculateBestOffer } from '@/lib/offers';
 import { getColorHex } from '@/constants/products';
+import { optimizeCloudinaryUrl } from '@/lib/utils';
 
 const DEFAULT_TABS = ['ALL', 'SHIRTS', 'T-SHIRTS', 'JEANS', 'TROUSERS', 'SHOES'];
 
@@ -76,11 +77,17 @@ export function NewAndPopular() {
           ? offerResult.originalPrice 
           : (comparePrice && comparePrice > minPrice ? comparePrice : null);
 
-        const image =
-          firstVariant?.images?.[0] ||
-          p.thumbnail ||
-          variants.flatMap((v) => v.images || [])[0] ||
-          '/images/product-1.jpeg';
+        const variantImages = (firstVariant?.images || []).filter(Boolean);
+        const allVariantImages = variants.flatMap((v) => v.images || []).filter(Boolean);
+        const allImages = Array.from(
+          new Set([
+            ...variantImages,
+            ...(p.thumbnail ? [p.thumbnail] : []),
+            ...allVariantImages,
+          ])
+        );
+        const image = allImages[0] ? optimizeCloudinaryUrl(allImages[0]) : '/images/product-1.jpeg';
+        const secondImage = allImages[1] ? optimizeCloudinaryUrl(allImages[1]) : null;
 
         const allColors = Array.from(new Set(variants.map(v => v.color).filter(Boolean))) as string[];
         if (firstVariant?.color && allColors.includes(firstVariant.color)) {
@@ -96,6 +103,7 @@ export function NewAndPopular() {
           offerBadge: offerResult.hasOffer ? offerResult.badgeText : null,
           offerSavings: offerResult.hasOffer ? offerResult.savings : null,
           image,
+          secondImage,
           href: `/product/${p.slug || p.id}`,
           colors: allColors,
         };
@@ -199,8 +207,19 @@ export function NewAndPopular() {
                     alt={product.name}
                     fill
                     sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                    className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                    className={`object-cover object-top transition-opacity duration-300 ${
+                      product.secondImage && product.secondImage !== product.image ? 'group-hover:opacity-0' : ''
+                    }`}
                   />
+                  {product.secondImage && product.secondImage !== product.image && (
+                    <Image
+                      src={product.secondImage}
+                      alt={`${product.name} alternate view`}
+                      fill
+                      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                      className="object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                    />
+                  )}
                   <button 
                     type="button"
                     className="absolute top-2 right-2 p-1.5 text-gray-600 hover:text-red-500 transition-colors z-10 cursor-pointer bg-white/60 hover:bg-white rounded-full backdrop-blur-xs"

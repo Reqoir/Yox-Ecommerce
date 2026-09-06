@@ -30,6 +30,7 @@ import { offersApi, OfferProductItem } from '@/api/admin/offers';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { Pagination } from '@/components/ui/pagination';
 import { toast } from 'sonner';
+import { optimizeCloudinaryUrl } from '@/lib/utils';
 
 type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'discount-desc';
 
@@ -384,13 +385,26 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
                 >
                   {/* Image Container with 3:4 High-Fashion Ratio */}
                   <div className="relative aspect-[3/4] bg-[#F4F4F4] overflow-hidden">
-                    <Link href={`/product/${product.slug || product.id}`} className="block w-full h-full">
+                    <Link href={`/product/${product.slug || product.id}`} className="block w-full h-full relative">
                       {product.thumbnail ? (
-                        <img
-                          src={product.thumbnail}
-                          alt={product.name}
-                          className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700 ease-out"
-                        />
+                        <>
+                          <img
+                            src={optimizeCloudinaryUrl(product.thumbnail)}
+                            alt={product.name}
+                            className={`w-full h-full object-cover object-top transition-opacity duration-300 ${
+                              (product.secondImage || (product.images && product.images.length > 1 && product.images[1] !== product.thumbnail))
+                                ? 'group-hover:opacity-0'
+                                : ''
+                            }`}
+                          />
+                          {(product.secondImage || (product.images && product.images.length > 1 && product.images[1] !== product.thumbnail)) && (
+                            <img
+                              src={optimizeCloudinaryUrl(product.secondImage || product.images![1])}
+                              alt={`${product.name} alternate view`}
+                              className="absolute inset-0 w-full h-full object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                            />
+                          )}
+                        </>
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-xs text-gray-400 font-medium">
                           No Preview Available

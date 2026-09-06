@@ -7,6 +7,7 @@ import { settingsApi } from '@/api/admin/settings';
 import { offersApi, Offer } from '@/api/admin/offers';
 import { Loader2, ArrowRight, Sparkles, Flame } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { optimizeCloudinaryUrl } from '@/lib/utils';
 
 export function ExclusiveOffers() {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
@@ -38,7 +39,10 @@ export function ExclusiveOffers() {
                 price: p.discountedPrice,
                 oldPrice: p.originalPrice > p.discountedPrice ? p.originalPrice : null,
                 title: p.name,
-                image: p.thumbnail || '/images/product-1.jpeg',
+                image: p.thumbnail ? optimizeCloudinaryUrl(p.thumbnail) : '/images/product-1.jpeg',
+                secondImage: (p.secondImage || p.images?.[1]) 
+                  ? optimizeCloudinaryUrl(p.secondImage || p.images?.[1]) 
+                  : null,
                 slug: p.slug || p.id,
                 discountPercentage: p.discountPercentage,
               }))
@@ -182,13 +186,23 @@ export function ExclusiveOffers() {
               key={offer.id} 
               className="flex items-center group cursor-pointer transition-transform hover:-translate-y-1"
             >
-              <div className="w-[110px] md:w-[130px] shrink-0 relative aspect-[3/4] mix-blend-multiply bg-transparent">
+              <div className="w-[110px] md:w-[130px] shrink-0 relative aspect-[3/4] bg-transparent overflow-hidden">
                  <Image 
                    src={offer.image} 
                    fill 
-                   className="object-cover object-top" 
+                   className={`object-cover object-top transition-opacity duration-300 ${
+                     offer.secondImage && offer.secondImage !== offer.image ? 'group-hover:opacity-0' : ''
+                   }`} 
                    alt={offer.title} 
                  />
+                 {offer.secondImage && offer.secondImage !== offer.image && (
+                   <Image 
+                     src={offer.secondImage} 
+                     fill 
+                     className="object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" 
+                     alt={`${offer.title} alternate view`} 
+                   />
+                 )}
               </div>
               <div className="flex flex-col justify-center pl-4 py-2 flex-1">
                 <span className="text-[11px] text-gray-500 mb-1">{offer.category}</span>

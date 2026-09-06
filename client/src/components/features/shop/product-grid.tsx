@@ -294,8 +294,17 @@ export function ProductGrid() {
                   <img 
                     src={product.image} 
                     alt={`${product.name}${cardColor ? ` - ${cardColor}` : ''}`} 
-                    className="w-full h-full object-cover object-top mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
+                    className={`w-full h-full object-cover object-top transition-opacity duration-300 ${
+                      product.secondImage && product.secondImage !== product.image ? 'group-hover:opacity-0' : ''
+                    }`}
                   />
+                  {product.secondImage && product.secondImage !== product.image && (
+                    <img 
+                      src={product.secondImage} 
+                      alt={`${product.name}${cardColor ? ` - ${cardColor}` : ''} alternate view`} 
+                      className="absolute inset-0 w-full h-full object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                    />
+                  )}
                   
                   {/* Offer Badge if available */}
                   {product.offerBadge && (

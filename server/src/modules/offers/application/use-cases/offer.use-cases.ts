@@ -234,6 +234,8 @@ export interface OfferProductItemDTO {
   name: string;
   slug: string;
   thumbnail: string | null;
+  images?: string[];
+  secondImage?: string | null;
   categoryId?: string | null;
   brandId?: string | null;
   originalPrice: number;
@@ -304,11 +306,22 @@ export class GetOfferWithProductsUseCase implements IUseCase<string, OfferWithPr
           ? Math.round(((originalPrice - discountedPrice) / originalPrice) * 100) 
           : (basePrice > 0 ? Math.round((discount / basePrice) * 100) : 0);
 
+        const variantImages = variants.flatMap((v) => v.images || []).filter(Boolean);
+        const allImages = Array.from(
+          new Set([
+            ...(p.thumbnail ? [p.thumbnail] : []),
+            ...variantImages,
+          ])
+        );
+        const secondImage = allImages.length > 1 ? allImages[1] : null;
+
         return {
           id: prodId,
           name: p.name,
           slug: p.slug,
           thumbnail: p.thumbnail || null,
+          images: allImages,
+          secondImage,
           categoryId: p.categoryId,
           brandId: p.brandId,
           originalPrice,

@@ -10,6 +10,7 @@ import { offersApi } from '@/api/admin/offers';
 import { calculateBestOffer } from '@/lib/offers';
 import { SkeletonProductCard } from '@/components/features/shop/skeleton-product-card';
 import { getColorHex } from '@/constants/products';
+import { optimizeCloudinaryUrl } from '@/lib/utils';
 
 export function FeaturedSection() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -68,11 +69,17 @@ export function FeaturedSection() {
           badgeColor = 'text-amber-700';
         }
 
-        const image =
-          firstVariant?.images?.[0] ||
-          p.thumbnail ||
-          variants.flatMap((v) => v.images || [])[0] ||
-          '/images/product-1.jpeg';
+        const variantImages = (firstVariant?.images || []).filter(Boolean);
+        const allVariantImages = variants.flatMap((v) => v.images || []).filter(Boolean);
+        const allImages = Array.from(
+          new Set([
+            ...variantImages,
+            ...(p.thumbnail ? [p.thumbnail] : []),
+            ...allVariantImages,
+          ])
+        );
+        const image = allImages[0] ? optimizeCloudinaryUrl(allImages[0]) : '/images/product-1.jpeg';
+        const secondImage = allImages[1] ? optimizeCloudinaryUrl(allImages[1]) : null;
 
         const allColors = Array.from(new Set(variants.map(v => v.color).filter(Boolean))) as string[];
         if (firstVariant?.color && allColors.includes(firstVariant.color)) {
@@ -89,6 +96,7 @@ export function FeaturedSection() {
           badge,
           badgeColor,
           image,
+          secondImage,
           href: `/product/${p.slug || p.id}`,
           colors: allColors,
         };
@@ -161,8 +169,19 @@ export function FeaturedSection() {
                     alt={product.name}
                     fill
                     sizes="(max-width: 768px) 260px, (max-width: 1024px) 300px, 25vw"
-                    className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                    className={`object-cover object-center transition-opacity duration-300 ${
+                      product.secondImage && product.secondImage !== product.image ? 'group-hover:opacity-0' : ''
+                    }`}
                   />
+                  {product.secondImage && product.secondImage !== product.image && (
+                    <Image
+                      src={product.secondImage}
+                      alt={`${product.name} alternate view`}
+                      fill
+                      sizes="(max-width: 768px) 260px, (max-width: 1024px) 300px, 25vw"
+                      className="object-cover object-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                    />
+                  )}
                   
                   {/* Badge */}
                   {product.badge && (
