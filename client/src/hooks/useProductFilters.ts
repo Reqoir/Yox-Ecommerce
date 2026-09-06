@@ -199,11 +199,14 @@ export function useProductFilters() {
   const searchQuery = searchParams.get('search') || '';
   const category = searchParams.get('category') || null;
   const subCategory = searchParams.get('subcategory') || null;
-  const minPrice = Number(searchParams.get('minPrice')) || 0;
-  const maxPrice = Number(searchParams.get('maxPrice')) || 10000;
+  const rawMinPrice = searchParams.get('minprice') || searchParams.get('minPrice');
+  const minPrice = rawMinPrice && !isNaN(Number(rawMinPrice)) ? Number(rawMinPrice) : 0;
+  
+  const rawMaxPrice = searchParams.get('maxprice') || searchParams.get('maxPrice');
+  const maxPrice = rawMaxPrice && !isNaN(Number(rawMaxPrice)) ? Number(rawMaxPrice) : 10000;
   const sortBy = (searchParams.get('sort') as SortOption) || 'Relevance';
-  const inStockOnly = searchParams.get('inStock') === 'true';
-  const onSaleOnly = searchParams.get('onSale') === 'true';
+  const inStockOnly = (searchParams.get('instock') || searchParams.get('inStock')) === 'true';
+  const onSaleOnly = (searchParams.get('onsale') || searchParams.get('onSale')) === 'true';
 
   const selectedSizes = useMemo(() => {
     const raw = searchParams.get('sizes');

@@ -243,7 +243,7 @@ export function MobileFilterModal({ isOpen, onClose }: MobileFilterModalProps) {
                     placeholder="Min"
                     value={localMin}
                     onChange={(e) => setLocalMin(e.target.value)}
-                    className="w-full px-3 py-2 text-xs border border-gray-300 rounded focus:border-black"
+                    className="w-full px-3 py-2 text-xs text-gray-900 bg-white placeholder:text-gray-400 border border-gray-300 rounded focus:outline-none focus:border-black focus:ring-1 focus:ring-black font-medium"
                   />
                   <span className="text-gray-400">-</span>
                   <input
@@ -251,7 +251,7 @@ export function MobileFilterModal({ isOpen, onClose }: MobileFilterModalProps) {
                     placeholder="Max"
                     value={localMax}
                     onChange={(e) => setLocalMax(e.target.value)}
-                    className="w-full px-3 py-2 text-xs border border-gray-300 rounded focus:border-black"
+                    className="w-full px-3 py-2 text-xs text-gray-900 bg-white placeholder:text-gray-400 border border-gray-300 rounded focus:outline-none focus:border-black focus:ring-1 focus:ring-black font-medium"
                   />
                 </div>
                 <button

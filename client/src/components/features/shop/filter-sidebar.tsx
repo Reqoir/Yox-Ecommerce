@@ -442,24 +442,24 @@ export function FilterSidebar() {
               <form onSubmit={handleApplyPriceInputs} className="pt-2 border-t border-gray-100">
                 <div className="flex items-center gap-1.5">
                   <div className="relative flex-1">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">₹</span>
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-600 font-semibold select-none">₹</span>
                     <input
                       type="number"
                       placeholder="Min"
                       value={inputMin}
                       onChange={(e) => setInputMin(e.target.value)}
-                      className="w-full pl-5 pr-1.5 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-black"
+                      className="w-full pl-5 pr-1.5 py-1 text-xs text-gray-900 bg-white placeholder:text-gray-400 border border-gray-300 rounded focus:outline-none focus:border-black focus:ring-1 focus:ring-black font-medium"
                     />
                   </div>
-                  <span className="text-gray-400 text-xs">-</span>
+                  <span className="text-gray-500 text-xs font-medium">-</span>
                   <div className="relative flex-1">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">₹</span>
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-600 font-semibold select-none">₹</span>
                     <input
                       type="number"
                       placeholder="Max"
                       value={inputMax}
                       onChange={(e) => setInputMax(e.target.value)}
-                      className="w-full pl-5 pr-1.5 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-black"
+                      className="w-full pl-5 pr-1.5 py-1 text-xs text-gray-900 bg-white placeholder:text-gray-400 border border-gray-300 rounded focus:outline-none focus:border-black focus:ring-1 focus:ring-black font-medium"
                     />
                   </div>
                   <button
