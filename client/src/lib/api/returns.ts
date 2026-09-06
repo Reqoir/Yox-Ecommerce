@@ -102,7 +102,12 @@ export interface ProcessRefundPayload {
 
 export interface SubmitReturnShipmentPayload {
   courierTrackingNumber: string;
+  trackingNumber?: string;
   courierName?: string;
+  accountHolderName?: string;
+  accountNumber?: string;
+  ifscCode?: string;
+  bankName?: string;
   bankDetails: {
     accountHolderName: string;
     accountNumber: string;

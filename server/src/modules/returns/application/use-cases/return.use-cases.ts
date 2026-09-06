@@ -140,38 +140,43 @@ export class CreateReturnUseCase implements IUseCase<{ userId: string; data: Cre
 
     const saved = await this.returnRepo.save(returnEntity);
 
-    AuditLogService.getInstance()?.record({
-      actorId: userId,
-      actorRole: 'CUSTOMER',
-      action: AuditAction.RETURN_CREATED,
-      resourceType: 'RETURN',
-      resourceId: saved.id,
-      description: `Return requested for order #${order.orderNumber} item (${data.quantity} units)`,
-      after: { orderId: order.id, quantity: data.quantity, reason: data.reason },
-    });
+    try {
+      await AuditLogService.getInstance()?.record({
+        actorId: userId,
+        actorRole: 'CUSTOMER',
+        action: AuditAction.RETURN_CREATED,
+        resourceType: 'RETURN',
+        resourceId: saved.id,
+        description: `Return requested for order #${order.orderNumber} item (${data.quantity} units)`,
+        after: { orderId: order.id, quantity: data.quantity, reason: data.reason },
+      });
+    } catch {}
 
     // 🔔 Real-time admin notification for return request
-    let customerName = 'A customer';
     try {
-      const u = await UserModel.findById(userId).select('fullName email').lean();
-      if (u?.fullName) customerName = u.fullName as string;
+      let customerName = 'A customer';
+      try {
+        const u = await UserModel.findById(userId).select('fullName email').lean();
+        if (u?.fullName) customerName = u.fullName as string;
+      } catch {}
+
+      await NotificationService.getInstance().notify({
+        userId: null,
+        type: 'RETURN_REQUEST',
+        title: '📦 Return Request Received',
+        message: `${customerName} requested a return for order #${order.orderNumber}. Reason: ${data.reason}${data.customerNote ? ` — Note: “${data.customerNote}”` : ''}`,
+        metadata: {
+          returnId: saved.id,
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          customerId: userId,
+          customerName,
+          reason: data.reason,
+          customerNote: data.customerNote || null,
+          quantity: data.quantity,
+        },
+      });
     } catch {}
-    await NotificationService.getInstance().notify({
-      userId: null,
-      type: 'RETURN_REQUEST',
-      title: '📦 Return Request Received',
-      message: `${customerName} requested a return for order #${order.orderNumber}. Reason: ${data.reason}${data.customerNote ? ` — Note: “${data.customerNote}”` : ''}`,
-      metadata: {
-        returnId: saved.id,
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        customerId: userId,
-        customerName,
-        reason: data.reason,
-        customerNote: data.customerNote || null,
-        quantity: data.quantity,
-      },
-    });
 
     return mapToReturnResponseDTO(saved);
   }
@@ -211,13 +216,15 @@ export class ApproveReturnUseCase implements IUseCase<string, ReturnResponseDTO>
     returnEntity.approve();
     const saved = await this.returnRepo.save(returnEntity);
 
-    AuditLogService.getInstance()?.record({
-      action: AuditAction.RETURN_APPROVED,
-      resourceType: 'RETURN',
-      resourceId: saved.id,
-      description: `Return #${saved.id.substring(0, 8)} approved by admin`,
-      after: { status: 'APPROVED' },
-    });
+    try {
+      await AuditLogService.getInstance()?.record({
+        action: AuditAction.RETURN_APPROVED,
+        resourceType: 'RETURN',
+        resourceId: saved.id,
+        description: `Return #${saved.id.substring(0, 8)} approved by admin`,
+        after: { status: 'APPROVED' },
+      });
+    } catch {}
 
     return mapToReturnResponseDTO(saved);
   }
@@ -233,13 +240,15 @@ export class RejectReturnUseCase implements IUseCase<{ id: string; data: RejectR
     returnEntity.reject(input.data?.reason);
     const saved = await this.returnRepo.save(returnEntity);
 
-    AuditLogService.getInstance()?.record({
-      action: AuditAction.RETURN_REJECTED,
-      resourceType: 'RETURN',
-      resourceId: saved.id,
-      description: `Return #${saved.id.substring(0, 8)} rejected. Reason: ${input.data?.reason}`,
-      after: { status: 'REJECTED', rejectionReason: input.data?.reason },
-    });
+    try {
+      await AuditLogService.getInstance()?.record({
+        action: AuditAction.RETURN_REJECTED,
+        resourceType: 'RETURN',
+        resourceId: saved.id,
+        description: `Return #${saved.id.substring(0, 8)} rejected. Reason: ${input.data?.reason}`,
+        after: { status: 'REJECTED', rejectionReason: input.data?.reason },
+      });
+    } catch {}
 
     return mapToReturnResponseDTO(saved);
   }
@@ -259,44 +268,54 @@ export class SubmitReturnShipmentUseCase implements IUseCase<{ id: string; userI
       throw new Error('Forbidden: You can only submit shipment details for your own return requests');
     }
 
+    const tracking = (data.courierTrackingNumber || data.trackingNumber || '').trim();
+    const accHolder = (data.bankDetails?.accountHolderName || data.accountHolderName || '').trim();
+    const accNum = (data.bankDetails?.accountNumber || data.accountNumber || '').trim();
+    const ifsc = (data.bankDetails?.ifscCode || data.ifscCode || '').trim().toUpperCase();
+    const bank = (data.bankDetails?.bankName || data.bankName || '').trim() || undefined;
+
     returnEntity.submitCustomerShipment({
-      courierTrackingNumber: data.trackingNumber,
-      courierName: data.courierName,
+      courierTrackingNumber: tracking,
+      courierName: data.courierName || 'India Post',
       refundBankDetails: {
-        accountHolderName: data.accountHolderName,
-        accountNumber: data.accountNumber,
-        ifscCode: data.ifscCode,
-        bankName: data.bankName,
+        accountHolderName: accHolder,
+        accountNumber: accNum,
+        ifscCode: ifsc,
+        bankName: bank,
       },
     });
 
     const saved = await this.returnRepo.save(returnEntity);
 
-    AuditLogService.getInstance()?.record({
-      actorId: userId,
-      actorRole: 'CUSTOMER',
-      action: AuditAction.RETURN_SHIPPED,
-      resourceType: 'RETURN',
-      resourceId: saved.id,
-      description: `Customer submitted return shipment via ${data.courierName || 'Courier'} with tracking #${data.trackingNumber}`,
-      after: { status: 'RETURN_SHIPPED', trackingNumber: data.trackingNumber },
-    });
+    try {
+      await AuditLogService.getInstance()?.record({
+        actorId: userId,
+        actorRole: 'CUSTOMER',
+        action: AuditAction.RETURN_SHIPPED,
+        resourceType: 'RETURN',
+        resourceId: saved.id,
+        description: `Customer submitted return shipment via ${data.courierName || 'Courier'} with tracking #${tracking}`,
+        after: { status: 'RETURN_SHIPPED', trackingNumber: tracking },
+      });
+    } catch {}
 
     try {
       let customerName = 'Customer';
-      const u = await UserModel.findById(userId).select('fullName email').lean();
-      if (u?.fullName) customerName = u.fullName as string;
+      try {
+        const u = await UserModel.findById(userId).select('fullName email').lean();
+        if (u?.fullName) customerName = u.fullName as string;
+      } catch {}
 
       await NotificationService.getInstance().notify({
         userId: null,
         type: 'RETURN_REQUEST',
         title: '📦 Return Package Dispatched by Customer',
-        message: `${customerName} dispatched return package for return #${saved.id.substring(0, 8)} with consignment #${data.trackingNumber}`,
+        message: `${customerName} dispatched return package for return #${saved.id.substring(0, 8)} with consignment #${tracking}`,
         metadata: {
           returnId: saved.id,
           orderId: saved.orderId,
-          trackingNumber: data.trackingNumber,
-          courierName: data.courierName,
+          trackingNumber: tracking,
+          courierName: data.courierName || 'India Post',
         },
       });
     } catch {}

@@ -72,7 +72,12 @@ Phone: ${YOX_RETURN_ADDRESS.contactPhone}`;
       setIsSubmitting(true);
       const updated = await returnsApi.submitReturnShipment(returnRecord.id, {
         courierTrackingNumber: courierTrackingNumber.trim(),
+        trackingNumber: courierTrackingNumber.trim(),
         courierName: courierName.trim() || 'India Post',
+        accountHolderName: accountHolderName.trim(),
+        accountNumber: accountNumber.trim(),
+        ifscCode: ifscCode.trim().toUpperCase(),
+        bankName: bankName.trim() || undefined,
         bankDetails: {
           accountHolderName: accountHolderName.trim(),
           accountNumber: accountNumber.trim(),

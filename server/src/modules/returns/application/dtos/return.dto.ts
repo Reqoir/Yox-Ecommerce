@@ -15,12 +15,19 @@ export interface CreateReturnRequestDTO {
 }
 
 export interface SubmitReturnShipmentRequestDTO {
-  trackingNumber: string; // Courier tracking / consignment number
+  trackingNumber?: string; // Courier tracking / consignment number
+  courierTrackingNumber?: string;
   courierName?: string;
-  accountHolderName: string;
-  accountNumber: string;
-  ifscCode: string;
+  accountHolderName?: string;
+  accountNumber?: string;
+  ifscCode?: string;
   bankName?: string;
+  bankDetails?: {
+    accountHolderName: string;
+    accountNumber: string;
+    ifscCode: string;
+    bankName?: string;
+  };
 }
 
 export interface RejectReturnRequestDTO {

@@ -239,18 +239,68 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     setImageUrlInput('');
   };
 
-  const handleAddImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      files.forEach((file) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          if (typeof reader.result === 'string') {
-            setReturnImages((prev) => [...prev, reader.result as string]);
+  const compressImageFile = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = Math.round((height * MAX_WIDTH) / width);
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = Math.round((width * MAX_HEIGHT) / height);
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', 0.8));
+          } else {
+            resolve(e.target?.result as string);
           }
         };
-        reader.readAsDataURL(file);
-      });
+        img.onerror = () => resolve(e.target?.result as string);
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleAddImageFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      for (const file of files) {
+        try {
+          const compressed = await compressImageFile(file);
+          if (compressed) {
+            setReturnImages((prev) => [...prev, compressed]);
+          }
+        } catch {
+          // fallback
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            if (typeof reader.result === 'string') {
+              setReturnImages((prev) => [...prev, reader.result as string]);
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      }
     }
   };
 
@@ -275,15 +325,21 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       setIsSubmittingReturn(true);
       const res = await returnsApi.createReturn({
         orderId: returnModalTarget.orderId,
-        orderItemId: returnModalTarget.item.variantId || returnModalTarget.item.productId,
+        orderItemId: returnModalTarget.item.variantId || returnModalTarget.item.productId || returnModalTarget.item.id,
         quantity: returnQuantity,
         reason: returnReason,
         customerNote,
         images: returnImages,
       });
       toast.success('Return request submitted successfully!');
-      setUserReturns((prev) => [res, ...prev]);
+      if (res) {
+        setUserReturns((prev) => [res, ...(prev || []).filter((r) => r.id !== res.id)]);
+      }
       setReturnModalTarget(null);
+      // Background re-fetch to ensure fresh server state
+      returnsApi.getMyReturns().then((data) => {
+        if (order) setUserReturns(data.filter((r) => r.orderId === order.id));
+      }).catch(() => {});
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to submit return request.');
     } finally {
