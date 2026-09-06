@@ -10,6 +10,7 @@ import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { useQuery } from '@tanstack/react-query';
 import { offersApi } from '@/api/admin/offers';
 import { calculateBestOffer } from '@/lib/offers';
+import { getColorHex } from '@/constants/products';
 
 const DEFAULT_TABS = ['ALL', 'SHIRTS', 'T-SHIRTS', 'JEANS', 'TROUSERS', 'SHOES'];
 
@@ -81,6 +82,11 @@ export function NewAndPopular() {
           variants.flatMap((v) => v.images || [])[0] ||
           '/images/product-1.jpeg';
 
+        const allColors = Array.from(new Set(variants.map(v => v.color).filter(Boolean))) as string[];
+        if (firstVariant?.color && allColors.includes(firstVariant.color)) {
+          allColors.sort((a, b) => a === firstVariant.color ? -1 : b === firstVariant.color ? 1 : 0);
+        }
+
         return {
           id: p.id,
           name: p.name,
@@ -91,6 +97,7 @@ export function NewAndPopular() {
           offerSavings: offerResult.hasOffer ? offerResult.savings : null,
           image,
           href: `/product/${p.slug || p.id}`,
+          colors: allColors,
         };
       });
 
@@ -241,6 +248,23 @@ export function NewAndPopular() {
                       </>
                     )}
                   </div>
+                  {product.colors && product.colors.length > 1 && (
+                    <div className="flex flex-wrap items-center gap-1.5 mt-0.5 mb-0.5">
+                      {product.colors.slice(0, 4).map((c: string) => (
+                        <div 
+                          key={c}
+                          title={c}
+                          className="w-2 h-2 shadow-xs shrink-0"
+                          style={{ backgroundColor: getColorHex(c) }}
+                        />
+                      ))}
+                      {product.colors.length > 4 && (
+                        <span className="text-[9px] font-medium text-gray-500 ml-0.5">
+                          +{product.colors.length - 4}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </Link>
             );

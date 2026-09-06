@@ -372,7 +372,7 @@ export function Navbar() {
             <div className="relative">
               <Heart size={21} />
               {mounted && favouritesCount > 0 && (
-                <span className="absolute -top-1 -right-2 bg-black text-white text-[10px] font-bold h-4 px-1 min-w-[16px] rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold h-4 px-1 min-w-[16px] rounded-full flex items-center justify-center">
                   {favouritesCount}
                 </span>
               )}
@@ -392,7 +392,7 @@ export function Navbar() {
             <div className="relative">
               <BsHandbag size={22} />
               {mounted && cartCount > 0 && (
-                <span className="absolute -top-1 -right-2 bg-black text-white text-[10px] font-bold h-4 px-1 min-w-[16px] rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold h-4 px-1 min-w-[16px] rounded-full flex items-center justify-center">
                   {cartCount}
                 </span>
               )}

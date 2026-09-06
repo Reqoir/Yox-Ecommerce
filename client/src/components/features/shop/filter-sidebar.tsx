@@ -111,7 +111,7 @@ export function FilterSidebar() {
           <button
             type="button"
             onClick={clearAllFilters}
-            className="text-[11px] font-medium text-gray-500 hover:text-black tracking-wider uppercase transition-colors cursor-pointer"
+            className="text-xs font-medium text-gray-500 hover:text-black tracking-wider uppercase transition-colors cursor-pointer"
           >
             Clear All
           </button>
@@ -261,7 +261,7 @@ export function FilterSidebar() {
             className="w-full flex items-center justify-between group hover:opacity-75 transition-opacity cursor-pointer"
             onClick={() => toggleSection('CATEGORY')}
           >
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-900">
+            <span className="text-xs font-semibold uppercase tracking-wider text-gray-900">
               Category
             </span>
             {openSections.CATEGORY ? (
@@ -334,7 +334,7 @@ export function FilterSidebar() {
                         <button
                           type="button"
                           onClick={() => setCategory(cat.slug || cat.name)}
-                          className={`w-full flex items-center justify-between py-1 px-1.5 rounded text-[11px] transition-colors cursor-pointer ${!subCategory && (category?.toLowerCase() === cat.slug.toLowerCase() || category?.toLowerCase() === cat.name.toLowerCase())
+                          className={`w-full flex items-center justify-between py-1 px-1.5 rounded text-xs transition-colors cursor-pointer ${!subCategory && (category?.toLowerCase() === cat.slug.toLowerCase() || category?.toLowerCase() === cat.name.toLowerCase())
                               ? 'bg-gray-100 font-medium text-black'
                               : 'text-gray-500 hover:text-black hover:bg-gray-50'
                             }`}
@@ -370,7 +370,7 @@ export function FilterSidebar() {
                                   setCategory(sub.slug || sub.name);
                                 }
                               }}
-                              className={`w-full flex items-center justify-between py-1 px-1.5 rounded text-[11px] transition-colors cursor-pointer ${isSubSelected
+                              className={`w-full flex items-center justify-between py-1 px-1.5 rounded text-xs transition-colors cursor-pointer ${isSubSelected
                                   ? 'bg-black text-white font-medium'
                                   : 'text-gray-600 hover:text-black hover:bg-gray-50'
                                 }`}
@@ -401,7 +401,7 @@ export function FilterSidebar() {
             className="w-full flex items-center justify-between group hover:opacity-75 transition-opacity cursor-pointer"
             onClick={() => toggleSection('PRICE')}
           >
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-900">
+            <span className="text-xs font-semibold uppercase tracking-wider text-gray-900">
               Price (₹)
             </span>
             {openSections.PRICE ? (
@@ -427,7 +427,7 @@ export function FilterSidebar() {
                           ? setPriceRange([0, 10000])
                           : setPriceRange(preset.range)
                       }
-                      className={`w-full text-left text-[11px] py-1 px-2 rounded transition-colors cursor-pointer ${isCurrent
+                      className={`w-full text-left text-xs py-1 px-2 rounded transition-colors cursor-pointer ${isCurrent
                           ? 'bg-gray-900 text-white font-medium'
                           : 'text-gray-600 hover:text-black hover:bg-gray-50'
                         }`}
@@ -482,7 +482,7 @@ export function FilterSidebar() {
             onClick={() => toggleSection('SIZE')}
           >
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-900">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-900">
                 Size
               </span>
               {selectedSizes.length > 0 && (
@@ -539,7 +539,7 @@ export function FilterSidebar() {
             onClick={() => toggleSection('FIT')}
           >
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-900">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-900">
                 Fit
               </span>
               {selectedFits.length > 0 && (
@@ -599,7 +599,7 @@ export function FilterSidebar() {
             onClick={() => toggleSection('COLOR')}
           >
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-900">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-900">
                 Color
               </span>
               {selectedColors.length > 0 && (
@@ -616,7 +616,7 @@ export function FilterSidebar() {
           </button>
 
           {openSections.COLOR && (
-            <div className="mt-3 space-y-1.5 max-h-48 overflow-y-auto [scrollbar-width:none]">
+            <div className="mt-3 flex flex-wrap gap-2 max-h-60 overflow-y-auto [scrollbar-width:none]">
               {(filterFacets?.colors || availableColors.map((c) => ({ value: c, count: 0 }))).map(
                 (colorItem: any) => {
                   const colorName = colorItem.value;
@@ -627,31 +627,17 @@ export function FilterSidebar() {
                     <label
                       key={colorName}
                       onClick={() => toggleColor(colorName)}
-                      className="flex items-center justify-between py-1 px-1 rounded hover:bg-gray-50 transition-colors cursor-pointer group"
+                      className={`flex items-center gap-2 py-1.5 px-2.5 border rounded-sm transition-colors cursor-pointer bg-white ${
+                        isSelected ? 'border-gray-500 shadow-sm' : 'border-gray-200 hover:border-gray-300'
+                      }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`w-3.5 h-3.5 rounded-full border shadow-2xs flex items-center justify-center shrink-0 ${isSelected ? 'ring-2 ring-black ring-offset-1' : 'border-gray-300'
-                            }`}
-                          style={{ backgroundColor: swatch }}
-                        >
-                          {isSelected && (
-                            <Check
-                              size={9}
-                              strokeWidth={3}
-                              className={swatch === '#FFFFFF' ? 'text-black' : 'text-white'}
-                            />
-                          )}
-                        </div>
-                        <span className="text-xs text-gray-800 capitalize truncate max-w-[130px]">
-                          {colorName}
-                        </span>
-                      </div>
-                      {colorItem.count > 0 && (
-                        <span className="text-[10px] text-gray-400 font-mono">
-                          {colorItem.count}
-                        </span>
-                      )}
+                      <div
+                        className="w-3.5 h-3.5 shrink-0 border border-gray-200/50"
+                        style={{ backgroundColor: swatch }}
+                      />
+                      <span className="text-xs font-normal text-gray-800 capitalize">
+                        {colorName}
+                      </span>
                     </label>
                   );
                 }
@@ -668,7 +654,7 @@ export function FilterSidebar() {
             onClick={() => toggleSection('TAGS')}
           >
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-900">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-900">
                 Collections & Tags
               </span>
               {selectedTags.length > 0 && (
@@ -720,7 +706,7 @@ export function FilterSidebar() {
             className="w-full flex items-center justify-between group hover:opacity-75 transition-opacity cursor-pointer"
             onClick={() => toggleSection('AVAILABILITY')}
           >
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-900">
+            <span className="text-xs font-semibold uppercase tracking-wider text-gray-900">
               Availability & Deals
             </span>
             {openSections.AVAILABILITY ? (

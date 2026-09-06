@@ -232,11 +232,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       comparePrice: originalPrice || undefined,
       inStock: !isOutOfStock,
     });
-    if (isFav) {
-      toast.info(`Removed ${product.name}${currentColor ? ` (${currentColor})` : ''} from wishlist`);
-    } else {
-      toast.success(`Added ${product.name}${currentColor ? ` (${currentColor})` : ''} to wishlist`);
-    }
+
   };
 
   const handleQuantity = (type: 'inc' | 'dec') => {

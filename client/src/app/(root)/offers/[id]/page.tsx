@@ -422,11 +422,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
                           comparePrice: product.originalPrice,
                           inStock: true,
                         });
-                        if (isFav) {
-                          toast.info(`Removed ${product.name} from wishlist`);
-                        } else {
-                          toast.success(`Saved ${product.name} to wishlist`);
-                        }
+
                       }}
                       className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/80 hover:bg-white backdrop-blur-xs flex items-center justify-center text-gray-700 hover:text-rose-600 transition-all shadow-xs z-10 cursor-pointer"
                     >

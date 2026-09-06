@@ -7,7 +7,7 @@ import { useProductFilters } from '@/hooks/useProductFilters';
 import { useCategories } from '@/hooks/admin/useCategories';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { toast } from 'sonner';
-import { SORT_OPTIONS_LIST } from '@/constants/products';
+import { SORT_OPTIONS_LIST, getColorHex } from '@/constants/products';
 import { SortOption } from '@/types/product';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -161,11 +161,9 @@ export function ProductGrid() {
           <div className="hidden lg:flex items-center gap-6 shrink-0">
             {/* Filter Drawer */}
             <Sheet>
-              <SheetTrigger asChild>
-                <button className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-900 hover:text-black transition-colors cursor-pointer">
-                  <SlidersHorizontal size={14} strokeWidth={1.5} />
-                  <span>Filters</span>
-                </button>
+              <SheetTrigger className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-900 hover:text-black transition-colors cursor-pointer">
+                <SlidersHorizontal size={14} strokeWidth={1.5} />
+                <span>Filters</span>
               </SheetTrigger>
               <SheetContent side="right" className="w-[350px] sm:w-[400px] p-0 border-l border-gray-200">
                 <div className="h-full overflow-y-auto">
@@ -331,11 +329,7 @@ export function ProductGrid() {
                         comparePrice: product.originalPrice || undefined,
                         inStock: product.inStock !== false,
                       });
-                      if (isFav) {
-                        toast.info(`Removed ${product.name}${cardColor ? ` (${cardColor})` : ''} from wishlist`);
-                      } else {
-                        toast.success(`Added ${product.name}${cardColor ? ` (${cardColor})` : ''} to wishlist`);
-                      }
+
                     }}
                   >
                     <Heart 
@@ -351,11 +345,6 @@ export function ProductGrid() {
                   <h3 className="text-[12px] font-medium text-gray-800 line-clamp-1 truncate" title={product.name}>
                     {product.name}
                   </h3>
-                  {product.currentColor && (
-                    <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                      {product.currentColor}
-                    </span>
-                  )}
                   <div className="flex items-baseline gap-2">
                     <span className="text-[13px] font-bold text-gray-900">
                       ₹{product.price}
@@ -373,6 +362,32 @@ export function ProductGrid() {
                       </>
                     )}
                   </div>
+                  {product.colors && product.colors.length > 1 && (() => {
+                    const displayColors = product.currentColor 
+                      ? [
+                          product.colors.find((c: string) => c.toLowerCase() === product.currentColor?.toLowerCase()) || product.currentColor,
+                          ...product.colors.filter((c: string) => c.toLowerCase() !== product.currentColor?.toLowerCase())
+                        ]
+                      : product.colors;
+                    
+                    return (
+                      <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                        {displayColors.slice(0, 4).map((c: string) => (
+                          <div 
+                            key={c}
+                            title={c}
+                            className="w-2 h-2 shadow-xs shrink-0"
+                            style={{ backgroundColor: getColorHex(c) }}
+                          />
+                        ))}
+                        {displayColors.length > 4 && (
+                          <span className="text-[10px] font-medium text-gray-500 ml-0.5">
+                            +{displayColors.length - 4}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </Link>
             );

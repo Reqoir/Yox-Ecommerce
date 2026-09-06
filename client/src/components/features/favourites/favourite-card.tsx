@@ -44,7 +44,6 @@ export function FavouriteCard({ item }: FavouriteCardProps) {
     e.preventDefault();
     e.stopPropagation();
     removeFavourite(item.productId || item.id, item.color);
-    toast.info(`Removed ${item.name}${item.color ? ` (${item.color})` : ''} from wishlist`);
   };
 
   const discountPercentage = item.comparePrice && item.comparePrice > item.price

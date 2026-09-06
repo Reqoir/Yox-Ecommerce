@@ -59,6 +59,9 @@ export const ALL_COLORS = [
 export function getColorHex(colorName: string): string {
   if (!colorName) return '#9CA3AF';
   const cleanName = colorName.trim().toLowerCase();
+  
+  if (cleanName.startsWith('#')) return cleanName;
+  
   const match = ALL_COLORS.find(c => c.name.toLowerCase() === cleanName);
   if (match) return match.hex;
   
