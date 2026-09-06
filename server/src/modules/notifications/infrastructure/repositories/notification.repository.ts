@@ -94,8 +94,33 @@ export class NotificationRepository implements INotificationRepository {
     await NotificationModel.updateMany(filter, { isRead: true, updatedAt: new Date() }).exec();
   }
 
+  async markManyRead(ids: string[]): Promise<void> {
+    const validIds = ids.filter((id) => Types.ObjectId.isValid(id));
+    if (validIds.length > 0) {
+      await NotificationModel.updateMany(
+        { _id: { $in: validIds } },
+        { isRead: true, updatedAt: new Date() }
+      ).exec();
+    }
+  }
+
   async delete(id: string): Promise<void> {
     if (!Types.ObjectId.isValid(id)) throw new Error('Invalid notification ID');
     await NotificationModel.findByIdAndDelete(id).exec();
+  }
+
+  async deleteMany(ids: string[]): Promise<void> {
+    const validIds = ids.filter((id) => Types.ObjectId.isValid(id));
+    if (validIds.length > 0) {
+      await NotificationModel.deleteMany({ _id: { $in: validIds } }).exec();
+    }
+  }
+
+  async deleteAll(userId: string | null): Promise<void> {
+    const filter: any = userId
+      ? { $or: [{ userId }, { userId: null }] }
+      : { userId: null };
+
+    await NotificationModel.deleteMany(filter).exec();
   }
 }

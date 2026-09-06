@@ -9,7 +9,10 @@ import {
   GetNotificationsUseCase,
   MarkNotificationReadUseCase,
   MarkAllNotificationsReadUseCase,
+  MarkManyNotificationsReadUseCase,
   DeleteNotificationUseCase,
+  DeleteManyNotificationsUseCase,
+  DeleteAllNotificationsUseCase,
 } from '../../application/use-cases/notification.use-cases';
 import { notificationListQuerySchema } from '../validators/notification.validator';
 import { validateRequest } from '@shared/utils/validation.helper';
@@ -22,7 +25,10 @@ export class NotificationController {
     private readonly getNotificationsUseCase: GetNotificationsUseCase,
     private readonly markReadUseCase: MarkNotificationReadUseCase,
     private readonly markAllReadUseCase: MarkAllNotificationsReadUseCase,
-    private readonly deleteUseCase: DeleteNotificationUseCase
+    private readonly markManyReadUseCase: MarkManyNotificationsReadUseCase,
+    private readonly deleteUseCase: DeleteNotificationUseCase,
+    private readonly deleteManyUseCase: DeleteManyNotificationsUseCase,
+    private readonly deleteAllUseCase: DeleteAllNotificationsUseCase
   ) {}
 
   /**
@@ -76,6 +82,43 @@ export class NotificationController {
       const userId = req.user!.id;
       await this.markAllReadUseCase.execute({ userId });
       ApiResponse.success(res, null, 'All notifications marked as read', HttpStatus.OK);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /** PATCH /notifications/bulk-read */
+  public markManyRead = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { ids } = req.body;
+      if (Array.isArray(ids) && ids.length > 0) {
+        await this.markManyReadUseCase.execute({ ids });
+      }
+      ApiResponse.success(res, null, 'Selected notifications marked as read', HttpStatus.OK);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /** DELETE /notifications/bulk-delete */
+  public bulkDelete = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { ids } = req.body;
+      if (Array.isArray(ids) && ids.length > 0) {
+        await this.deleteManyUseCase.execute({ ids });
+      }
+      ApiResponse.success(res, null, 'Selected notifications deleted', HttpStatus.OK);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /** DELETE /notifications/delete-all */
+  public deleteAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user!.id;
+      await this.deleteAllUseCase.execute({ userId });
+      ApiResponse.success(res, null, 'All notifications deleted', HttpStatus.OK);
     } catch (error) {
       next(error);
     }

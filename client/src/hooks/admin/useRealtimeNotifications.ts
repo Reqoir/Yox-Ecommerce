@@ -11,10 +11,11 @@
  */
 
 import { useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import Swal from 'sweetalert2';
 import { useAuthStore } from '@/store/useAuthStore';
-import { playNotificationChime } from '@/lib/audio';
+import { Notification } from '@/api/admin/notifications';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5001/api/v1';
 
@@ -49,7 +50,7 @@ const TYPE_CONFIG = {
     icon: '📦',
     color: '#f59e0b',
     confirmText: 'View Returns',
-    href: '/admin/order',
+    href: '/admin/order?tab=returns',
     bgColor: '#fffbeb',
     borderColor: '#fcd34d',
   },
@@ -85,6 +86,7 @@ const TYPE_CONFIG = {
  */
 function isAdminUser(permissions: string[]): boolean {
   if (!permissions || permissions.length === 0) return false;
+  if (permissions.includes('*')) return true;
   // If they have ANY of these permissions, they're at least staff
   const adminPerms = [
     'manage_orders',
@@ -96,6 +98,7 @@ function isAdminUser(permissions: string[]): boolean {
     'manage_roles',
     'manage_settings',
     'view_orders',
+    'manage_notifications',
   ];
   return adminPerms.some(p => permissions.includes(p));
 }
@@ -103,6 +106,7 @@ function isAdminUser(permissions: string[]): boolean {
 export function useRealtimeNotifications() {
   const { isAuthenticated, user } = useAuthStore();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectDelayRef = useRef(3000); // Start at 3s, back off
@@ -110,6 +114,7 @@ export function useRealtimeNotifications() {
   useEffect(() => {
     // Close any existing connection first
     if (eventSourceRef.current) {
+      eventSourceRef.current.onerror = null;
       eventSourceRef.current.close();
       eventSourceRef.current = null;
     }
@@ -124,7 +129,9 @@ export function useRealtimeNotifications() {
     const connect = () => {
       if (!isMounted) return;
       if (eventSourceRef.current) {
+        eventSourceRef.current.onerror = null;
         eventSourceRef.current.close();
+        eventSourceRef.current = null;
       }
 
       console.debug('[SSE] Connecting to notification stream...');
@@ -149,32 +156,77 @@ export function useRealtimeNotifications() {
         }
       });
 
-      es.onerror = (err) => {
-        console.warn('[SSE] Connection error — will reconnect in', reconnectDelayRef.current, 'ms');
+      es.onerror = () => {
+        // If unmounted or closed, do not trigger reconnect loop
+        if (!isMounted) return;
+
+        // Cleanly detach handler before closing to prevent secondary error event
+        es.onerror = null;
         es.close();
         eventSourceRef.current = null;
 
-        if (isMounted) {
-          reconnectTimeoutRef.current = setTimeout(() => {
-            if (isMounted) {
-              // Exponential backoff capped at 30s
-              reconnectDelayRef.current = Math.min(reconnectDelayRef.current * 1.5, 30000);
-              connect();
-            }
-          }, reconnectDelayRef.current);
-        }
+        const delay = reconnectDelayRef.current;
+        reconnectDelayRef.current = Math.min(reconnectDelayRef.current * 1.5, 30000);
+
+        reconnectTimeoutRef.current = setTimeout(() => {
+          if (isMounted) {
+            connect();
+          }
+        }, delay);
       };
     };
 
     const handleNotification = (notification: RealtimeNotification) => {
-      // 1. Play chime
-      playNotificationChime();
+      // 1. Synchronously update ALL TanStack Query notification caches
+      //    This makes the sidebar badge AND notification page list update
+      //    at the exact same instant in the same React render tick!
+      const queries = queryClient.getQueriesData<{ data: Notification[]; total: number; unreadCount: number }>({
+        queryKey: ['notifications'],
+      });
 
-      // 2. Invalidate queries immediately so UI updates
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      const isUnread = !(notification.isRead ?? false);
+      const newItem: Notification = {
+        id: notification.id,
+        userId: null,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        isRead: notification.isRead ?? false,
+        metadata: notification.metadata ?? null,
+        createdAt: notification.createdAt || new Date().toISOString(),
+        updatedAt: notification.createdAt || new Date().toISOString(),
+      };
 
-      // 3. Show SweetAlert2 popup
+      if (queries.length === 0) {
+        queryClient.setQueryData(['notifications', 'list'], {
+          data: [newItem],
+          total: 1,
+          unreadCount: isUnread ? 1 : 0,
+        });
+      } else {
+        for (const [key, old] of queries) {
+          if (!old) continue;
+          const filter = (key[2] as { type?: string; isRead?: string } | undefined) || {};
+          const matchesType = !filter.type || filter.type === notification.type;
+          const matchesRead = !filter.isRead || (filter.isRead === 'false' && isUnread);
+
+          const existingList = old.data || [];
+          if (existingList.some((item) => item.id === notification.id)) continue;
+
+          queryClient.setQueryData(key, {
+            ...old,
+            total: matchesType && matchesRead ? (old.total || 0) + 1 : old.total,
+            unreadCount: (old.unreadCount || 0) + (isUnread ? 1 : 0),
+            data: matchesType && matchesRead ? [newItem, ...existingList] : existingList,
+          });
+        }
+      }
+
+      // 3. Background refetch to ensure database consistency
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      void queryClient.invalidateQueries({ queryKey: ['orders'] });
+
+      // 4. Show SweetAlert2 popup
       const config = TYPE_CONFIG[notification.type] ?? TYPE_CONFIG.SYSTEM;
       const orderNumber = notification.metadata?.orderNumber as string | undefined;
       const customerNote = notification.metadata?.customerNote as string | undefined;
@@ -195,6 +247,30 @@ export function useRealtimeNotifications() {
         extraHtml += `<div style="margin-top:8px;padding:8px 12px;background:#f8fafc;border-left:3px solid ${config.color};border-radius:4px;text-align:left;font-size:13px;color:#374151;font-style:italic;">"${customerNote}"</div>`;
       }
 
+      let targetHref = config.href;
+      let confirmText = config.confirmText;
+      const orderId = notification.metadata?.orderId as string | undefined;
+      const returnId = notification.metadata?.returnId as string | undefined;
+
+      if (notification.type === 'RETURN_REQUEST') {
+        const queryParts = ['tab=returns'];
+        if (returnId) queryParts.push(`returnId=${encodeURIComponent(returnId)}`);
+        if (orderNumber) queryParts.push(`orderId=${encodeURIComponent(orderNumber)}`);
+        else if (orderId) queryParts.push(`orderId=${encodeURIComponent(orderId)}`);
+        targetHref = `/admin/order?${queryParts.join('&')}`;
+        confirmText = orderNumber ? `View Return #${orderNumber}` : 'View Return';
+      } else if (
+        notification.type === 'NEW_ORDER' ||
+        notification.type === 'ORDER_CANCELLED' ||
+        notification.type === 'ORDER_STATUS'
+      ) {
+        const orderKey = orderNumber || orderId;
+        if (orderKey) {
+          targetHref = `/admin/order?orderId=${encodeURIComponent(orderKey)}`;
+          confirmText = `View Order #${orderKey}`;
+        }
+      }
+
       void Swal.fire({
         title: `<span style="font-size:18px;font-weight:700;">${notification.title}</span>`,
         html: `
@@ -205,8 +281,8 @@ export function useRealtimeNotifications() {
         `,
         icon: undefined,
         iconHtml: `<span style="font-size:40px;line-height:1;">${config.icon}</span>`,
-        confirmButtonText: config.confirmText,
-        showCancelButton: config.href !== null,
+        confirmButtonText: confirmText,
+        showCancelButton: targetHref !== null,
         cancelButtonText: 'Dismiss',
         confirmButtonColor: config.color,
         cancelButtonColor: '#9ca3af',
@@ -217,8 +293,8 @@ export function useRealtimeNotifications() {
         width: '380px',
         padding: '16px',
       }).then((result) => {
-        if (result.isConfirmed && config.href) {
-          window.location.href = config.href;
+        if (result.isConfirmed && targetHref) {
+          router.push(targetHref);
         }
       });
     };
@@ -232,10 +308,11 @@ export function useRealtimeNotifications() {
         reconnectTimeoutRef.current = null;
       }
       if (eventSourceRef.current) {
+        eventSourceRef.current.onerror = null;
         eventSourceRef.current.close();
         eventSourceRef.current = null;
       }
     };
-  }, [isAuthenticated, user?.id, queryClient]);
+  }, [isAuthenticated, user?.id]);
   // NOTE: using user?.id (not user object) to avoid re-connecting on every render
 }

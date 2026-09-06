@@ -46,7 +46,11 @@ export class ShipmentController {
   getShipmentByOrder = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const shipment = await this.getShipmentByOrderUseCase.execute(req.params.orderId as string);
-      ApiResponse.success(res, shipment, 'Shipment details for order retrieved');
+      ApiResponse.success(
+        res,
+        shipment,
+        shipment ? 'Shipment details for order retrieved' : 'No shipment record found for this order'
+      );
     } catch (error) {
       next(error);
     }

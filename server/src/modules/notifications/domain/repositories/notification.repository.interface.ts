@@ -16,5 +16,8 @@ export interface INotificationRepository {
   /** Count unread notifications for a user (includes broadcasts) */
   countUnread(userId: string | null): Promise<number>;
   markAllRead(userId: string | null): Promise<void>;
+  markManyRead(ids: string[]): Promise<void>;
   delete(id: string): Promise<void>;
+  deleteMany(ids: string[]): Promise<void>;
+  deleteAll(userId: string | null): Promise<void>;
 }

@@ -63,7 +63,16 @@ export const createApp = (): Application => {
   app.use(cookieParser());
 
   // ── Compression ───────────────────────────────────────────────────────────
-  app.use(compression());
+  app.use(
+    compression({
+      filter: (req, res) => {
+        if (req.headers.accept === 'text/event-stream') {
+          return false;
+        }
+        return compression.filter(req, res);
+      },
+    }),
+  );
 
   // ── HTTP Request Logging ──────────────────────────────────────────────────
   app.use(

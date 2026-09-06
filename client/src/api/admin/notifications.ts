@@ -29,7 +29,19 @@ export const notificationApi = {
     await apiClient.patch('/notifications/read-all');
   },
 
+  markManyRead: async (ids: string[]) => {
+    await apiClient.patch('/notifications/bulk-read', { ids });
+  },
+
   delete: async (id: string) => {
     await apiClient.delete(`/notifications/${id}`);
+  },
+
+  deleteMany: async (ids: string[]) => {
+    await apiClient.delete('/notifications/bulk-delete', { data: { ids } });
+  },
+
+  deleteAll: async () => {
+    await apiClient.delete('/notifications/delete-all');
   },
 };

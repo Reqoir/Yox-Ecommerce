@@ -24,6 +24,10 @@ export const requireAuth = (req: Request, _res: Response, next: NextFunction): v
     else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
       token = req.headers.authorization.split(' ')[1];
     }
+    // 3. Fallback to query parameter (for SSE streams and websockets)
+    else if (req.query && typeof req.query.token === 'string') {
+      token = req.query.token;
+    }
 
     if (!token) {
       throw ApiError.unauthorized('Authentication required. Please log in.');

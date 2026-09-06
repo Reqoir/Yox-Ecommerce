@@ -150,6 +150,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                 <div className="my-2 border-t border-gray-100" />
 
                 <button
+                  suppressHydrationWarning
                   onClick={handleLogout}
                   className="w-full flex items-center justify-between px-4 py-3 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors text-left"
                 >

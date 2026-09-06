@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ordersApi, BackendOrder, OrderStatus, PaymentStatus } from '@/lib/api/orders';
 import { returnsApi, BackendReturn, InspectionResult } from '@/lib/api/returns';
 import { shipmentsApi } from '@/lib/api/shipments';
@@ -148,8 +149,23 @@ const FULFILLMENT_STEPS: OrderStatus[] = [
   'DELIVERED',
 ];
 
-export default function AdminOrdersPage() {
-  const [activeTab, setActiveTab] = useState<'orders' | 'returns'>('orders');
+function AdminOrdersContent() {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const orderIdParam = searchParams.get('orderId');
+  const returnIdParam = searchParams.get('returnId');
+
+  const [activeTab, setActiveTab] = useState<'orders' | 'returns'>(() =>
+    tabParam === 'returns' ? 'returns' : 'orders'
+  );
+
+  useEffect(() => {
+    if (tabParam === 'returns') {
+      setActiveTab('returns');
+    } else if (tabParam === 'orders' || (!tabParam && orderIdParam)) {
+      setActiveTab('orders');
+    }
+  }, [tabParam, orderIdParam]);
 
   // Orders State
   const [orders, setOrders] = useState<BackendOrder[]>([]);
@@ -194,7 +210,11 @@ export default function AdminOrdersPage() {
     try {
       setIsLoading(true);
       const res = await ordersApi.getAllOrdersAdmin(1, 150);
-      setOrders(res.orders);
+      setOrders((prev) => {
+        const fetchedIds = new Set((res.orders || []).map((o) => o.id));
+        const kept = prev.filter((o) => !fetchedIds.has(o.id));
+        return [...kept, ...(res.orders || [])];
+      });
     } catch (error: any) {
       console.error('Failed to fetch admin orders:', error);
       toast.error(error?.response?.data?.message || 'Failed to retrieve orders list.');
@@ -227,6 +247,101 @@ export default function AdminOrdersPage() {
       if (refreshed) setSelectedOrder(refreshed);
     }
   }, [orders]);
+
+  const openSpecificOrder = async (key: string) => {
+    if (!key) return;
+    const cleanKey = key.replace(/^#/, '').trim();
+    const cleanLower = cleanKey.toLowerCase();
+
+    setActiveTab('orders');
+
+    // 1. Check if already present in state
+    const matched = orders.find(
+      (o) =>
+        o.id.toLowerCase() === cleanLower ||
+        o.orderNumber?.toLowerCase() === cleanLower ||
+        o.orderNumber?.replace(/^#/, '').toLowerCase() === cleanLower
+    );
+
+    if (matched) {
+      setSelectedOrder(matched);
+      return;
+    }
+
+    // 2. Fetch directly from server (e.g. newly placed order)
+    try {
+      const fetched = await ordersApi.getOrderById(cleanKey);
+      if (fetched && (fetched.id || fetched.orderNumber)) {
+        setSelectedOrder(fetched);
+        setOrders((prev) => {
+          if (prev.some((o) => o.id === fetched.id || o.orderNumber === fetched.orderNumber)) {
+            return prev;
+          }
+          return [fetched, ...prev];
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch specific order for modal:', err);
+    }
+  };
+
+  const handleCloseOrderModal = () => {
+    setSelectedOrder(null);
+    if (typeof window !== 'undefined' && window.location.search.includes('orderId')) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('orderId');
+      window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+    }
+  };
+
+  // Auto-open specific order modal when orderIdParam is present
+  useEffect(() => {
+    if (orderIdParam && activeTab !== 'returns') {
+      openSpecificOrder(orderIdParam);
+    }
+  }, [orderIdParam, orders.length]);
+
+  // Listen for direct open event from notification dropdown
+  useEffect(() => {
+    const handleOpenOrderEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ orderId?: string }>;
+      const orderId = customEvent.detail?.orderId;
+      if (orderId) {
+        openSpecificOrder(orderId);
+      }
+    };
+
+    window.addEventListener('admin:open-order', handleOpenOrderEvent);
+    return () => {
+      window.removeEventListener('admin:open-order', handleOpenOrderEvent);
+    };
+  }, [orders]);
+
+  // Auto-paginate and scroll to return when returnIdParam or orderIdParam is present on returns tab
+  useEffect(() => {
+    if (activeTab === 'returns' && returns.length > 0 && (returnIdParam || orderIdParam)) {
+      const cleanReturnId = returnIdParam?.toLowerCase();
+      const cleanOrderId = orderIdParam?.replace(/^#/, '').toLowerCase();
+
+      const idx = returns.findIndex((r) => {
+        const matchReturn = cleanReturnId && (r.id.toLowerCase() === cleanReturnId || r.id.toLowerCase().startsWith(cleanReturnId));
+        const matchOrder = cleanOrderId && (r.orderId.toLowerCase() === cleanOrderId || r.orderId.toLowerCase().includes(cleanOrderId));
+        return matchReturn || matchOrder;
+      });
+
+      if (idx !== -1) {
+        const targetPage = Math.floor(idx / returnItemsPerPage) + 1;
+        setReturnPage(targetPage);
+        const targetReturn = returns[idx];
+        setTimeout(() => {
+          const el = document.getElementById(`return-row-${targetReturn.id}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 200);
+      }
+    }
+  }, [activeTab, returnIdParam, orderIdParam, returns, returnItemsPerPage]);
 
   // Summary Metrics
   const stats = useMemo(() => {
@@ -1119,14 +1234,32 @@ export default function AdminOrdersPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/60">
-                      {paginatedReturns.map((ret) => (
-                        <tr key={ret.id} className="hover:bg-muted/30 text-xs transition-colors">
-                          <td className="p-4 font-mono font-bold text-foreground">
-                            {ret.id.substring(0, 8)}...
-                          </td>
-                          <td className="p-4 font-mono text-primary font-bold">
-                            {ret.orderId}
-                          </td>
+                      {paginatedReturns.map((ret) => {
+                        const isHighlighted =
+                          (returnIdParam && (ret.id.toLowerCase() === returnIdParam.toLowerCase() || ret.id.toLowerCase().startsWith(returnIdParam.toLowerCase()))) ||
+                          (orderIdParam && (ret.orderId.toLowerCase() === orderIdParam.replace(/^#/, '').toLowerCase() || ret.orderId.toLowerCase().includes(orderIdParam.replace(/^#/, '').toLowerCase())));
+
+                        return (
+                          <tr
+                            key={ret.id}
+                            id={`return-row-${ret.id}`}
+                            className={`transition-all text-xs ${
+                              isHighlighted
+                                ? 'bg-amber-500/15 border-l-4 border-l-amber-500 font-medium'
+                                : 'hover:bg-muted/30'
+                            }`}
+                          >
+                            <td className="p-4 font-mono font-bold text-foreground">
+                              {ret.id.substring(0, 8)}...
+                              {isHighlighted && (
+                                <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-white shadow-xs animate-pulse">
+                                  Selected
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-4 font-mono text-primary font-bold">
+                              {ret.orderId}
+                            </td>
                           <td className="p-4">
                             <div className="font-bold text-foreground">Qty: {ret.quantity}</div>
                             <div className="text-muted-foreground text-[11px]">Reason: {ret.reason}</div>
@@ -1260,7 +1393,8 @@ export default function AdminOrdersPage() {
                             )}
                           </td>
                         </tr>
-                      ))}
+                      );
+                    })}
                     </tbody>
                   </table>
                 </div>
@@ -1283,7 +1417,7 @@ export default function AdminOrdersPage() {
       {/* ========================================================================= */}
       {/* COMPREHENSIVE ORDER DETAILS DIALOG (Very good way!) */}
       {/* ========================================================================= */}
-      <Dialog open={!!selectedOrder} onOpenChange={(val) => !val && setSelectedOrder(null)}>
+      <Dialog open={!!selectedOrder} onOpenChange={(val) => !val && handleCloseOrderModal()}>
         <DialogContent className="sm:max-w-4xl max-w-4xl max-h-[92vh] overflow-y-auto p-0 rounded-2xl">
           {selectedOrder && (
             <div className="space-y-0">
@@ -1739,7 +1873,7 @@ export default function AdminOrdersPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setSelectedOrder(null)}
+                    onClick={() => handleCloseOrderModal()}
                     className="text-xs font-semibold"
                   >
                     Close
@@ -2026,5 +2160,19 @@ export default function AdminOrdersPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function AdminOrdersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <AdminOrdersContent />
+    </Suspense>
   );
 }

@@ -58,7 +58,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${figtree.variable} font-sans h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <body suppressHydrationWarning className="min-h-full flex flex-col bg-background text-foreground">
         <ThemeProvider>
           <QueryProvider>
             <AuthProvider>

@@ -13,14 +13,17 @@ import {
   ShoppingBag,
   XCircle,
   RotateCcw,
-  Volume2,
+  CheckSquare,
+  Square,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNotifications } from '@/hooks/admin/useNotifications';
 import { Notification } from '@/api/admin/notifications';
-import { playNotificationChime } from '@/lib/audio';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import Swal from 'sweetalert2';
 
 type TypeFilter = 'all' | 'LOW_STOCK' | 'ORDER_STATUS' | 'SYSTEM' | 'NEW_ORDER' | 'ORDER_CANCELLED' | 'RETURN_REQUEST';
 
@@ -83,22 +86,144 @@ const FILTER_TABS: { key: TypeFilter; label: string }[] = [
 ];
 
 export default function AdminNotificationsPage() {
+  const router = useRouter();
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [readFilter, setReadFilter] = useState<'all' | 'unread'>('all');
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const { notifications, total, unreadCount, isLoading, markRead, markAllRead, isMarkingAllRead, deleteNotification } =
-    useNotifications({
-      type: typeFilter === 'all' ? undefined : typeFilter,
-      isRead: readFilter === 'unread' ? 'false' : undefined,
+  const {
+    notifications,
+    total,
+    unreadCount,
+    isLoading,
+    markRead,
+    markAllRead,
+    isMarkingAllRead,
+    markManyRead,
+    isMarkingManyRead,
+    deleteNotification,
+    deleteManyNotifications,
+    isDeletingMany,
+    deleteAllNotifications,
+    isDeletingAll,
+  } = useNotifications({
+    type: typeFilter === 'all' ? undefined : typeFilter,
+    isRead: readFilter === 'unread' ? 'false' : undefined,
+  });
+
+  const handleNotificationClick = (n: Notification) => {
+    if (!n.isRead) markRead(n.id);
+    let meta = n.metadata as any;
+    if (typeof meta === 'string') {
+      try {
+        meta = JSON.parse(meta);
+      } catch {}
+    }
+    if (n.type === 'RETURN_REQUEST') {
+      const query = ['tab=returns'];
+      if (meta?.returnId) query.push(`returnId=${encodeURIComponent(String(meta.returnId))}`);
+      if (meta?.orderNumber) query.push(`orderId=${encodeURIComponent(String(meta.orderNumber))}`);
+      else if (meta?.orderId) query.push(`orderId=${encodeURIComponent(String(meta.orderId))}`);
+      router.push(`/admin/order?${query.join('&')}`);
+    } else if (n.type === 'NEW_ORDER' || n.type === 'ORDER_CANCELLED' || n.type === 'ORDER_STATUS') {
+      let orderKey = meta?.orderNumber || meta?.orderId;
+      if (!orderKey && n.message) {
+        const match = n.message.match(/#(YOX-[A-Za-z0-9-]+)/i);
+        if (match) orderKey = match[1];
+      }
+      if (orderKey) {
+        const cleanKey = String(orderKey).replace(/^#/, '');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('admin:open-order', { detail: { orderId: cleanKey } }));
+        }
+        router.push(`/admin/order?orderId=${encodeURIComponent(cleanKey)}`);
+      } else {
+        router.push('/admin/order');
+      }
+    } else if (n.type === 'LOW_STOCK') {
+      router.push('/admin/inventory');
+    }
+  };
+
+  const handleCardClick = (n: Notification) => {
+    if (isSelectionMode) {
+      toggleSelect(n.id);
+    } else {
+      handleNotificationClick(n);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === notifications.length && notifications.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(notifications.map((n) => n.id));
+    }
+  };
+
+  const handleMarkSelectedRead = () => {
+    if (selectedIds.length === 0) return;
+    markManyRead(selectedIds, {
+      onSuccess: () => {
+        setSelectedIds([]);
+      },
+    });
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.length === 0) return;
+
+    const count = selectedIds.length;
+    const result = await Swal.fire({
+      title: `Delete ${count} Notification${count > 1 ? 's' : ''}?`,
+      text: `Are you sure you want to delete ${count} selected notification${count > 1 ? 's' : ''}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, delete',
+      cancelButtonText: 'Cancel',
     });
 
-  const handleMarkRead = (n: Notification) => {
-    if (!n.isRead) markRead(n.id);
+    if (result.isConfirmed) {
+      deleteManyNotifications(selectedIds, {
+        onSuccess: () => setSelectedIds([]),
+      });
+    }
   };
 
-  const handleTestChime = () => {
-    playNotificationChime();
+  const handleDeleteAll = async () => {
+    if (notifications.length === 0) return;
+
+    const result = await Swal.fire({
+      title: 'Delete All Notifications?',
+      text: 'This will permanently delete all your notifications. This action cannot be undone.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, delete all',
+      cancelButtonText: 'Cancel',
+    });
+
+    if (result.isConfirmed) {
+      deleteAllNotifications(undefined, {
+        onSuccess: () => {
+          setSelectedIds([]);
+          setIsSelectionMode(false);
+        },
+      });
+    }
   };
+
+  const isAllSelected = notifications.length > 0 && selectedIds.length === notifications.length;
 
   return (
     <div className="space-y-6">
@@ -118,18 +243,35 @@ export default function AdminNotificationsPage() {
             Real-time alerts for new orders, cancellations, returns, and stock issues
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
-            variant="outline"
+            variant={isSelectionMode ? 'secondary' : 'outline'}
             size="sm"
-            onClick={handleTestChime}
-            title="Test notification sound"
+            onClick={() => {
+              if (isSelectionMode) {
+                setIsSelectionMode(false);
+                setSelectedIds([]);
+              } else {
+                setIsSelectionMode(true);
+              }
+            }}
+            disabled={notifications.length === 0}
           >
-            <Volume2 className="h-4 w-4 mr-2" />
-            Test Sound
+            {isSelectionMode ? (
+              <>
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </>
+            ) : (
+              <>
+                <CheckSquare className="h-4 w-4 mr-2" />
+                Select
+              </>
+            )}
           </Button>
           <Button
             variant="outline"
+            size="sm"
             onClick={() => markAllRead()}
             disabled={isMarkingAllRead || unreadCount === 0}
           >
@@ -139,6 +281,20 @@ export default function AdminNotificationsPage() {
               <CheckCheck className="h-4 w-4 mr-2" />
             )}
             Mark all read
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 border-red-200 dark:border-red-900/50"
+            onClick={handleDeleteAll}
+            disabled={isDeletingAll || notifications.length === 0}
+          >
+            {isDeletingAll ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4 mr-2" />
+            )}
+            Delete All
           </Button>
         </div>
       </div>
@@ -152,7 +308,10 @@ export default function AdminNotificationsPage() {
               key={key}
               size="sm"
               variant={typeFilter === key ? 'default' : 'outline'}
-              onClick={() => setTypeFilter(key)}
+              onClick={() => {
+                setTypeFilter(key);
+                setSelectedIds([]);
+              }}
               className="text-xs"
             >
               {label}
@@ -163,19 +322,101 @@ export default function AdminNotificationsPage() {
           <Button
             size="sm"
             variant={readFilter === 'all' ? 'default' : 'outline'}
-            onClick={() => setReadFilter('all')}
+            onClick={() => {
+              setReadFilter('all');
+              setSelectedIds([]);
+            }}
           >
             All
           </Button>
           <Button
             size="sm"
             variant={readFilter === 'unread' ? 'default' : 'outline'}
-            onClick={() => setReadFilter('unread')}
+            onClick={() => {
+              setReadFilter('unread');
+              setSelectedIds([]);
+            }}
           >
             Unread
           </Button>
         </div>
       </div>
+
+      {/* Selection Mode Action Bar */}
+      {isSelectionMode && notifications.length > 0 && (
+        <div className="flex items-center justify-between bg-primary/5 dark:bg-primary/10 p-3 rounded-xl border border-primary/20 flex-wrap gap-3 text-sm shadow-sm animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSelectAll}
+              className="h-8 text-xs font-medium"
+            >
+              {isAllSelected ? (
+                <>
+                  <Square className="h-3.5 w-3.5 mr-1.5" />
+                  Deselect All
+                </>
+              ) : (
+                <>
+                  <CheckSquare className="h-3.5 w-3.5 mr-1.5" />
+                  Select Whole ({notifications.length})
+                </>
+              )}
+            </Button>
+            <Badge variant="secondary" className="px-2.5 py-1 text-xs font-semibold">
+              {selectedIds.length} of {notifications.length} selected
+            </Badge>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Mark Selected as Read */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleMarkSelectedRead}
+              disabled={selectedIds.length === 0 || isMarkingManyRead}
+              className="h-8 text-xs font-medium"
+            >
+              {isMarkingManyRead ? (
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <CheckCheck className="h-3.5 w-3.5 mr-1.5 text-blue-600" />
+              )}
+              Mark as read {selectedIds.length > 0 ? `(${selectedIds.length})` : ''}
+            </Button>
+
+            {/* Delete Selected */}
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteSelected}
+              disabled={selectedIds.length === 0 || isDeletingMany}
+              className="h-8 text-xs font-medium"
+            >
+              {isDeletingMany ? (
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              Delete selected {selectedIds.length > 0 ? `(${selectedIds.length})` : ''}
+            </Button>
+
+            {/* Done button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setIsSelectionMode(false);
+                setSelectedIds([]);
+              }}
+              className="h-8 text-xs text-muted-foreground hover:text-foreground"
+            >
+              Done
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Notification List */}
       {isLoading ? (
@@ -196,15 +437,38 @@ export default function AdminNotificationsPage() {
             const config = TYPE_CONFIG[n.type] ?? TYPE_CONFIG.SYSTEM;
             const Icon = config.icon;
             const meta = n.metadata as any;
+            const isSelected = selectedIds.includes(n.id);
 
             return (
               <div
                 key={n.id}
-                className={`relative flex items-start gap-4 p-4 rounded-xl border-l-4 border border-border/60 transition-all cursor-pointer ${
+                className={`relative flex items-start gap-3 p-4 rounded-xl border-l-4 border transition-all cursor-pointer ${
                   config.bg
-                } ${n.isRead ? 'opacity-60 bg-muted/20' : 'bg-card shadow-sm hover:shadow-md'}`}
-                onClick={() => handleMarkRead(n)}
+                } ${
+                  isSelected
+                    ? 'border-primary ring-2 ring-primary/40 bg-primary/[0.04]'
+                    : 'border-border/60'
+                } ${
+                  n.isRead && !isSelected ? 'opacity-60 bg-muted/20' : !isSelected ? 'bg-card shadow-sm hover:shadow-md' : ''
+                }`}
+                onClick={() => handleCardClick(n)}
               >
+                {/* Checkbox (visible in selection mode) */}
+                {isSelectionMode && (
+                  <div
+                    className="pt-0.5 shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSelect(n.id)}
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer accent-primary"
+                      aria-label={`Select notification ${n.title}`}
+                    />
+                  </div>
+                )}
+
                 {/* Unread dot */}
                 {!n.isRead && (
                   <span className="absolute top-4 right-12 h-2 w-2 rounded-full bg-blue-500" />
@@ -322,22 +586,36 @@ export default function AdminNotificationsPage() {
                       )}
 
                       {/* Action links */}
-                      {(n.type === 'NEW_ORDER' || n.type === 'ORDER_CANCELLED') && (
+                      {(n.type === 'NEW_ORDER' || n.type === 'ORDER_CANCELLED' || n.type === 'ORDER_STATUS') && (
                         <Link
-                          href="/admin/order"
+                          href={
+                            meta?.orderNumber
+                              ? `/admin/order?orderId=${encodeURIComponent(String(meta.orderNumber))}`
+                              : meta?.orderId
+                              ? `/admin/order?orderId=${encodeURIComponent(String(meta.orderId))}`
+                              : '/admin/order'
+                          }
                           className="mt-2 inline-block text-xs font-medium text-blue-600 hover:underline"
-                          onClick={e => e.stopPropagation()}
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          View Orders →
+                          View Order {meta?.orderNumber ? `#${meta.orderNumber}` : ''} →
                         </Link>
                       )}
                       {n.type === 'RETURN_REQUEST' && (
                         <Link
-                          href="/admin/order"
+                          href={
+                            `/admin/order?tab=returns` +
+                            (meta?.returnId ? `&returnId=${encodeURIComponent(String(meta.returnId))}` : '') +
+                            (meta?.orderNumber
+                              ? `&orderId=${encodeURIComponent(String(meta.orderNumber))}`
+                              : meta?.orderId
+                              ? `&orderId=${encodeURIComponent(String(meta.orderId))}`
+                              : '')
+                          }
                           className="mt-2 inline-block text-xs font-medium text-amber-600 hover:underline"
-                          onClick={e => e.stopPropagation()}
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          View Returns →
+                          View Return {meta?.orderNumber ? `for #${meta.orderNumber}` : ''} →
                         </Link>
                       )}
                     </div>
@@ -357,6 +635,7 @@ export default function AdminNotificationsPage() {
                         className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
                         onClick={(e) => {
                           e.stopPropagation();
+                          setSelectedIds((prev) => prev.filter((id) => id !== n.id));
                           deleteNotification(n.id);
                         }}
                       >

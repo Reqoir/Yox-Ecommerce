@@ -36,7 +36,7 @@ export class NotificationStreamService {
   public addClient(clientId: string, userId: string, res: Response): () => void {
     // Set SSE headers
     res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('X-Accel-Buffering', 'no'); // Disable Nginx buffering
     res.flushHeaders();
@@ -53,6 +53,9 @@ export class NotificationStreamService {
     const heartbeat = setInterval(() => {
       try {
         res.write(': ping\n\n');
+        if (typeof (res as any).flush === 'function') {
+          (res as any).flush();
+        }
       } catch {
         // Client gone, clean up
         clearInterval(heartbeat);
@@ -89,6 +92,9 @@ export class NotificationStreamService {
     try {
       client.res.write(`event: ${event}\n`);
       client.res.write(`data: ${JSON.stringify(data)}\n\n`);
+      if (typeof (client.res as any).flush === 'function') {
+        (client.res as any).flush();
+      }
     } catch (err) {
       logger.warn({ clientId: client.id }, 'Failed to send SSE event, removing client');
       this.removeClient(client.id);

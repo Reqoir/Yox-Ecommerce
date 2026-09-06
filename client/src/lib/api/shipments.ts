@@ -26,9 +26,9 @@ export interface BackendShipment {
 }
 
 export const shipmentsApi = {
-  getShipmentByOrder: async (orderId: string): Promise<BackendShipment> => {
-    const response = await apiClient.get<{ data: BackendShipment }>(`/shipments/order/${orderId}`);
-    return response.data?.data;
+  getShipmentByOrder: async (orderId: string): Promise<BackendShipment | null> => {
+    const response = await apiClient.get<{ data: BackendShipment | null }>(`/shipments/order/${orderId}`);
+    return response.data?.data ?? null;
   },
 
   trackShipment: async (trackingNumber: string): Promise<BackendShipment> => {

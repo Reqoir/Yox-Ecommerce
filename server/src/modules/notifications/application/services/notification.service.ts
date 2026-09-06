@@ -50,6 +50,9 @@ export class NotificationService {
 
       const saved = await this.repo.save(notification);
 
+      console.log(`[Notification] ✅ Saved: [${saved.type}] "${saved.title}" (id=${saved.id})`);
+      console.log(`[Notification] 📡 Broadcasting to ${this.stream.getClientCount()} SSE client(s)`);
+
       // Broadcast via SSE immediately
       this.stream.broadcastNotification({
         id: saved.id,
@@ -60,7 +63,9 @@ export class NotificationService {
         createdAt: saved.createdAt,
         isRead: false,
       });
-    } catch (err) {
+    } catch (err: any) {
+      console.error('[Notification] ❌ notify() FAILED:', err?.message || err);
+      console.error('[Notification] Params were:', JSON.stringify({ type: params.type, title: params.title }));
       logger.error({ err }, 'NotificationService.notify failed');
     }
   }

@@ -105,6 +105,16 @@ export class MarkAllNotificationsReadUseCase
   }
 }
 
+export class MarkManyNotificationsReadUseCase
+  implements IUseCase<{ ids: string[] }, void>
+{
+  constructor(private readonly notificationRepo: INotificationRepository) {}
+
+  async execute(input: { ids: string[] }): Promise<void> {
+    await this.notificationRepo.markManyRead(input.ids);
+  }
+}
+
 export class DeleteNotificationUseCase
   implements IUseCase<{ id: string; userId: string | null; isAdmin: boolean }, void>
 {
@@ -128,5 +138,25 @@ export class DeleteNotificationUseCase
     }
 
     await this.notificationRepo.delete(input.id);
+  }
+}
+
+export class DeleteManyNotificationsUseCase
+  implements IUseCase<{ ids: string[] }, void>
+{
+  constructor(private readonly notificationRepo: INotificationRepository) {}
+
+  async execute(input: { ids: string[] }): Promise<void> {
+    await this.notificationRepo.deleteMany(input.ids);
+  }
+}
+
+export class DeleteAllNotificationsUseCase
+  implements IUseCase<{ userId: string | null }, void>
+{
+  constructor(private readonly notificationRepo: INotificationRepository) {}
+
+  async execute(input: { userId: string | null }): Promise<void> {
+    await this.notificationRepo.deleteAll(input.userId);
   }
 }

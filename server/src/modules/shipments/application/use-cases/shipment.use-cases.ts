@@ -76,12 +76,12 @@ export class GetShipmentByIdUseCase implements IUseCase<string, ShipmentResponse
   }
 }
 
-export class GetShipmentByOrderUseCase implements IUseCase<string, ShipmentResponseDTO> {
+export class GetShipmentByOrderUseCase implements IUseCase<string, ShipmentResponseDTO | null> {
   constructor(private readonly shipmentRepo: IShipmentRepository) {}
 
-  async execute(orderId: string): Promise<ShipmentResponseDTO> {
+  async execute(orderId: string): Promise<ShipmentResponseDTO | null> {
     const shipment = await this.shipmentRepo.findByOrderId(orderId);
-    if (!shipment) throw new Error('No shipment record found for this order');
+    if (!shipment) return null;
     return mapToShipmentResponseDTO(shipment);
   }
 }

@@ -407,9 +407,11 @@ export class CancelOrderUseCase implements IUseCase<{ id: string; userId?: strin
       after: { status: 'CANCELLED' },
     });
 
-    // 🔔 Real-time admin notification (only when customer cancels, not admin)
-    if (!input.isAdmin) {
-      let cancellerName = 'A customer';
+    // 🔔 Real-time admin notification for ALL cancellations (customer OR admin)
+    {
+      const isCustomer = !input.isAdmin || order.userId === input.userId;
+      const cancelledBy = isCustomer ? 'Customer' : 'Admin';
+      let cancellerName = isCustomer ? 'Customer' : 'Admin';
       try {
         const u = await UserModel.findById(input.userId).select('fullName').lean();
         if (u?.fullName) cancellerName = u.fullName as string;
@@ -417,13 +419,14 @@ export class CancelOrderUseCase implements IUseCase<{ id: string; userId?: strin
       await NotificationService.getInstance().notify({
         userId: null,
         type: 'ORDER_CANCELLED',
-        title: '❌ Order Cancelled by Customer',
+        title: `❌ Order Cancelled by ${cancelledBy}`,
         message: `${cancellerName} cancelled order #${savedOrder.orderNumber}. Reason: ${input.data?.reason || 'No reason provided'}`,
         metadata: {
           orderId: savedOrder.id,
           orderNumber: savedOrder.orderNumber,
           cancelledBy: input.userId,
           cancellerName,
+          cancelledByRole: cancelledBy,
           reason: input.data?.reason || null,
         },
       });

@@ -63,7 +63,8 @@ export function Footer() {
               alt="YOX Logo" 
               width={110} 
               height={40} 
-              className="object-contain" 
+              className="w-auto h-auto object-contain"
+              style={{ width: 'auto', height: 'auto' }}
             />
           </Link>
           <p className="text-gray-600 text-[13px] leading-relaxed lg:pr-8 font-medium">
@@ -112,11 +113,13 @@ export function Footer() {
           </p>
           <form className="flex items-center gap-3" onSubmit={(e) => e.preventDefault()}>
             <input 
+              suppressHydrationWarning
               type="email" 
               placeholder="Email" 
               className="flex-1 bg-transparent border border-[#C4BA9D] rounded-[24px] px-5 py-2.5 text-[13px] outline-none focus:border-black transition-colors text-gray-900 placeholder-gray-600"
             />
             <button 
+              suppressHydrationWarning
               type="submit" 
               className="bg-gray-900 text-white font-bold text-[13px] tracking-wide px-7 py-2.5 rounded-[24px] hover:bg-black transition-colors"
             >
@@ -134,8 +137,8 @@ export function Footer() {
         <div className="flex flex-col items-center md:items-start gap-2.5">
           <span className="text-[14px] font-bold tracking-wide text-gray-900">Language & Currency</span>
           <div className="flex items-center gap-6 text-[12px] font-bold text-gray-600">
-            <button className="flex items-center gap-1.5 hover:text-black transition-colors">EN <span className="text-[9px]">▼</span></button>
-            <button className="flex items-center gap-1.5 hover:text-black transition-colors">
+            <button suppressHydrationWarning className="flex items-center gap-1.5 hover:text-black transition-colors">EN <span className="text-[9px]">▼</span></button>
+            <button suppressHydrationWarning className="flex items-center gap-1.5 hover:text-black transition-colors">
               <span className="text-[14px] leading-none mr-0.5">🇮🇳</span> INR ₹ <span className="text-[9px]">▼</span>
             </button>
           </div>
