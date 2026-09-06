@@ -39,6 +39,22 @@ export default function MyOrdersPage() {
     const orderReturn = userReturns.find((r) => r.orderId === order.id);
 
     if (order.orderStatus === 'CANCELLED') {
+      if (order.paymentStatus === 'REFUNDED') {
+        return {
+          text: `Cancelled & Refunded`,
+          subText: `Refund of ₹${order.totalAmount} completed to bank account`,
+          colorClass: 'text-purple-700 font-bold',
+          badgeBg: 'bg-purple-50 border-purple-200 text-purple-800',
+        };
+      }
+      if (order.paymentStatus === 'REFUND_PROCESSING' || order.cancellationBankDetails) {
+        return {
+          text: `Cancelled (Refund Processing)`,
+          subText: `Refund of ₹${order.totalAmount} will be credited within 2 business days`,
+          colorClass: 'text-amber-700 font-bold',
+          badgeBg: 'bg-amber-50 border-amber-200 text-amber-800',
+        };
+      }
       return {
         text: `Cancelled`,
         subText: order.cancelledReason ? `Reason: ${order.cancelledReason}` : `Order was cancelled`,

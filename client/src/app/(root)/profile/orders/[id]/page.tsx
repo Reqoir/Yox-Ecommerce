@@ -393,11 +393,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               order.orderStatus === 'DELIVERED'
                 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
                 : order.orderStatus === 'CANCELLED'
-                ? 'bg-rose-500/20 text-rose-300 border-rose-400/30'
+                ? order.paymentStatus === 'REFUNDED'
+                  ? 'bg-purple-500/20 text-purple-200 border-purple-400/30'
+                  : 'bg-rose-500/20 text-rose-300 border-rose-400/30'
                 : 'bg-amber-500/20 text-amber-300 border-amber-400/30'
             }`}
           >
-            {order.orderStatus.replace(/_/g, ' ')}
+            {order.orderStatus === 'CANCELLED' && order.paymentStatus === 'REFUNDED'
+              ? 'CANCELLED & REFUNDED'
+              : order.orderStatus.replace(/_/g, ' ')}
           </span>
         </div>
       </div>
@@ -412,7 +416,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             Order Tracking Progress
           </h3>
           <span className="text-xs font-semibold text-gray-500">
-            {order.orderStatus === 'CANCELLED' ? 'Order Cancelled' : `Stage: ${order.orderStatus.replace(/_/g, ' ')}`}
+            {order.orderStatus === 'CANCELLED'
+              ? order.paymentStatus === 'REFUNDED'
+                ? 'Order Cancelled & Refunded'
+                : 'Order Cancelled (Refund Processing)'
+              : `Stage: ${order.orderStatus.replace(/_/g, ' ')}`}
           </span>
         </div>
 
@@ -452,7 +460,50 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               })}
             </div>
           </div>
+        ) : order.paymentStatus === 'REFUNDED' ? (
+          /* Cancelled & Refunded Banner */
+          <div className="p-5 bg-gradient-to-br from-emerald-50/90 via-white to-purple-50/40 border-2 border-emerald-300/90 rounded-2xl text-xs space-y-3 shadow-2xs">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-100 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 shadow-2xs">
+                  <CheckCircle2 size={22} />
+                </div>
+                <div>
+                  <p className="font-bold text-sm text-gray-900">Order Cancelled & Refund Completed</p>
+                  <p className="text-[11px] text-gray-600 mt-0.5">Reason: {order.cancelledReason || 'Cancelled by customer'}</p>
+                </div>
+              </div>
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                ✓ Refunded
+              </span>
+            </div>
+
+            {order.cancellationBankDetails && (
+              <div className="p-3.5 bg-white rounded-xl border border-gray-200 text-xs space-y-1.5 text-gray-800 shadow-2xs">
+                <div className="flex items-center justify-between font-bold text-emerald-900">
+                  <span className="flex items-center gap-1.5">
+                    <CreditCard size={14} className="text-emerald-700" />
+                    Refund Bank Details
+                  </span>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-mono font-bold">
+                    Direct Transfer
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-700">
+                  Account Holder: <strong>{order.cancellationBankDetails.accountHolderName}</strong>
+                </p>
+                <p className="text-[11px] text-gray-700">
+                  A/C: <strong className="font-mono">••••{order.cancellationBankDetails.accountNumber.slice(-4)}</strong> | IFSC: <strong className="font-mono">{order.cancellationBankDetails.ifscCode}</strong>
+                </p>
+                <div className="p-2.5 bg-emerald-50 rounded-lg border border-emerald-200 text-[11px] text-emerald-800 font-bold flex items-center gap-2 mt-2">
+                  <Check size={14} className="text-emerald-600 shrink-0" />
+                  <span>Refund of ₹{order.totalAmount} has been successfully processed and credited to your bank account.</span>
+                </div>
+              </div>
+            )}
+          </div>
         ) : (
+          /* Cancelled & Refund Processing Banner */
           <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 space-y-2">
             <div className="flex items-center gap-3">
               <XCircle size={20} className="text-rose-600 shrink-0" />
@@ -466,8 +517,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <span className="font-bold text-rose-900 block">Refund Bank Details Submitted:</span>
                 <p>Account Holder: {order.cancellationBankDetails.accountHolderName}</p>
                 <p>A/C: ••••{order.cancellationBankDetails.accountNumber.slice(-4)} | IFSC: {order.cancellationBankDetails.ifscCode}</p>
-                <p className="text-[11px] text-emerald-700 font-semibold pt-0.5">
-                  Refund will be credited within 2 business days.
+                <p className="text-[11px] text-amber-700 font-semibold pt-0.5 flex items-center gap-1">
+                  <Clock size={12} className="text-amber-600" />
+                  <span>Refund is being processed and will be credited to your bank account within 2 business days.</span>
                 </p>
               </div>
             )}
