@@ -43,10 +43,13 @@ export class AuthController {
       // 2. Execute Use Case
       const result = await this.registerUseCase.execute(validBody);
 
+      // Set cookies securely so user is automatically authenticated
+      setAuthCookies(res, result.accessToken, result.refreshToken);
+
       // 3. Return response
       ApiResponse.success(
         res,
-        result,
+        { user: result.user },
         'User registered successfully',
         HttpStatus.CREATED
       );

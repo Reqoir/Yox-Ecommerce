@@ -11,6 +11,7 @@ import { IUserRepository } from '../../../users/domain/repositories/user.reposit
 import { IRoleRepository } from '../../../roles/domain/repositories/role.repository.interface';
 import { User } from '../../../users/domain/entities/user.entity';
 import { RegisterUserRequestDTO, RegisterUserResponseDTO } from '../dtos/register.dto';
+import { signAccessToken, signRefreshToken } from '@shared/utils/jwt.helper';
 
 export class RegisterUserUseCase implements IUseCase<RegisterUserRequestDTO, RegisterUserResponseDTO> {
   constructor(
@@ -43,14 +44,30 @@ export class RegisterUserUseCase implements IUseCase<RegisterUserRequestDTO, Reg
     // 3. Persist to Infrastructure (Database)
     const savedUser = await this.userRepository.create(userEntity);
 
-    // 4. Return safe DTO
-    return {
-      id: savedUser.id,
-      fullName: savedUser.fullName,
+    // 4. Generate auth tokens
+    const tokenPayload = {
+      sub: savedUser.id,
       email: savedUser.email,
-      roleId: savedUser.roleId,
-      status: savedUser.status,
-      createdAt: savedUser.createdAt,
+      role: savedUser.roleId,
+    };
+
+    const accessToken = signAccessToken(tokenPayload);
+    const refreshToken = signRefreshToken(tokenPayload);
+
+    // 5. Return safe DTO with user object and tokens
+    return {
+      user: {
+        id: savedUser.id,
+        fullName: savedUser.fullName,
+        email: savedUser.email,
+        roleId: savedUser.roleId,
+        permissions: customerRole.permissions || [],
+        phone: savedUser.phone ?? undefined,
+        status: savedUser.status,
+        createdAt: savedUser.createdAt,
+      },
+      accessToken,
+      refreshToken,
     };
   }
 }

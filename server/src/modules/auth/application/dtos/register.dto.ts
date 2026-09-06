@@ -13,10 +13,16 @@ export interface RegisterUserRequestDTO {
 }
 
 export interface RegisterUserResponseDTO {
-  id: string;
-  fullName: string;
-  email: string;
-  roleId: string;
-  status: string;
-  createdAt: Date;
+  user: {
+    id: string;
+    fullName: string;
+    email: string;
+    roleId: string;
+    permissions: string[];
+    phone?: string;
+    status: string;
+    createdAt: Date;
+  };
+  accessToken: string;
+  refreshToken: string;
 }
