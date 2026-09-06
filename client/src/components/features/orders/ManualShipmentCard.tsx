@@ -70,7 +70,13 @@ Phone: ${YOX_RETURN_ADDRESS.contactPhone}`;
 
     try {
       setIsSubmitting(true);
-      const updated = await returnsApi.submitReturnShipment(returnRecord.id, {
+      const targetId = returnRecord.id || (returnRecord as any)._id;
+      if (!targetId) {
+        toast.error('Return record ID is missing.');
+        return;
+      }
+
+      const updated = await returnsApi.submitReturnShipment(targetId, {
         courierTrackingNumber: courierTrackingNumber.trim(),
         trackingNumber: courierTrackingNumber.trim(),
         courierName: courierName.trim() || 'India Post',
@@ -89,7 +95,9 @@ Phone: ${YOX_RETURN_ADDRESS.contactPhone}`;
       toast.success('Shipment & Refund details submitted successfully! We will verify once received.');
       onShipmentSubmitted(updated);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to submit shipment details.');
+      console.error('submitReturnShipment error:', error);
+      const msg = error?.response?.data?.message || error?.message || 'Failed to submit shipment details.';
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }

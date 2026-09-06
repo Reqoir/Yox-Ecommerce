@@ -3,6 +3,7 @@
  * @layer Infrastructure › Repositories
  */
 
+import { Types } from 'mongoose';
 import { IReturnRepository } from '../../domain/repositories/return.repository.interface';
 import { Return } from '../../domain/entities/return.entity';
 import { ReturnModel, IReturnDocument } from '../models/return.model';
@@ -43,8 +44,13 @@ export class ReturnRepository implements IReturnRepository {
   }
 
   async findById(id: string): Promise<Return | null> {
-    const doc = await ReturnModel.findById(id).exec();
-    return doc ? this.toDomain(doc) : null;
+    if (!id || typeof id !== 'string') return null;
+    if (Types.ObjectId.isValid(id)) {
+      const doc = await ReturnModel.findById(id).exec();
+      if (doc) return this.toDomain(doc);
+    }
+    const fallbackDoc = await ReturnModel.findOne({ $or: [{ orderId: id }, { orderItemId: id }] }).exec();
+    return fallbackDoc ? this.toDomain(fallbackDoc) : null;
   }
 
   async findByOrderId(orderId: string): Promise<Return[]> {

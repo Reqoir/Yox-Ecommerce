@@ -138,7 +138,8 @@ export class Return extends BaseEntity<ReturnProps> {
     courierName?: string;
     refundBankDetails: RefundBankDetails;
   }): void {
-    if (this._props.status !== 'APPROVED') {
+    const allowedStatuses = ['APPROVED', 'AWAITING_CUSTOMER_SHIPMENT', 'RETURN_APPROVED', 'REQUESTED', 'PENDING_ADMIN_APPROVAL'];
+    if (!allowedStatuses.includes(this._props.status)) {
       throw new Error(`Cannot submit shipment details for return in status: ${this._props.status}. Return must be APPROVED.`);
     }
     if (!params.courierTrackingNumber || !params.courierTrackingNumber.trim()) {
