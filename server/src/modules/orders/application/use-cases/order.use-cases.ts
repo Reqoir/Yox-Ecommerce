@@ -53,6 +53,7 @@ export function mapToOrderResponseDTO(order: Order): OrderResponseDTO {
     deliveredAt: order.deliveredAt,
     cancelledAt: order.cancelledAt,
     cancelledReason: order.cancelledReason,
+    cancellationBankDetails: order.cancellationBankDetails,
     trackingNumber: order.trackingNumber,
     deliveryPartnerId: order.deliveryPartnerId,
     createdAt: order.createdAt,
@@ -360,7 +361,11 @@ export class CancelOrderUseCase implements IUseCase<{ id: string; userId?: strin
     }
 
     const prevStatus = order.orderStatus;
-    order.cancel(input.data?.reason || 'Cancelled by user', input.isAdmin);
+    order.cancel({
+      reason: input.data?.reason || 'Cancelled by user',
+      bankDetails: input.data?.bankDetails,
+      isAdmin: input.isAdmin,
+    });
     const savedOrder = await this.orderRepo.save(order);
 
     // Restore stock back to variants and inventory

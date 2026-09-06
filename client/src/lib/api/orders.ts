@@ -26,7 +26,15 @@ export interface ShippingAddressSnapshot {
 }
 
 export type OrderStatus = 'PLACED' | 'CONFIRMED' | 'PACKED' | 'SHIPPED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED' | 'RETURNED';
-export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
+export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED' | 'REFUND_PROCESSING';
+
+export interface CancellationBankDetails {
+  accountHolderName: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName?: string;
+  submittedAt?: string;
+}
 
 export interface BackendOrder {
   id: string;
@@ -53,6 +61,7 @@ export interface BackendOrder {
   deliveredAt?: string | null;
   cancelledAt?: string | null;
   cancelledReason?: string | null;
+  cancellationBankDetails?: CancellationBankDetails | null;
   trackingNumber?: string | null;
   deliveryPartnerId?: string | null;
   customer?: {
@@ -113,8 +122,11 @@ export const ordersApi = {
     return response.data?.data;
   },
 
-  cancelOrder: async (id: string, reason?: string): Promise<BackendOrder> => {
-    const response = await apiClient.patch<{ data: BackendOrder }>(`/orders/${id}/cancel`, { reason: reason || 'Cancelled by user' });
+  cancelOrder: async (id: string, reason?: string, bankDetails?: CancellationBankDetails): Promise<BackendOrder> => {
+    const response = await apiClient.patch<{ data: BackendOrder }>(`/orders/${id}/cancel`, {
+      reason: reason || 'Cancelled by user',
+      bankDetails,
+    });
     return response.data?.data;
   },
 

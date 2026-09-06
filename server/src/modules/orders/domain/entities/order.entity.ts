@@ -47,6 +47,13 @@ export interface ShippingAddressSnapshot {
   addressType?: string | null;
 }
 
+export interface RefundBankDetails {
+  accountHolderName: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName?: string | null;
+}
+
 export interface OrderProps extends EntityProps {
   orderNumber: string;
   userId: string;
@@ -71,6 +78,7 @@ export interface OrderProps extends EntityProps {
   deliveredAt?: Date | null;
   cancelledAt?: Date | null;
   cancelledReason?: string | null;
+  cancellationBankDetails?: RefundBankDetails | null;
   trackingNumber?: string | null;
   deliveryPartnerId?: string | null;
 }
@@ -81,6 +89,7 @@ export class Order extends BaseEntity<OrderProps> {
       ...props,
       shippingAddress: { ...props.shippingAddress },
       items: props.items ? props.items.map(item => ({ ...item })) : [],
+      cancellationBankDetails: props.cancellationBankDetails ? { ...props.cancellationBankDetails } : null,
     });
   }
 
@@ -107,6 +116,7 @@ export class Order extends BaseEntity<OrderProps> {
   get deliveredAt(): Date | null | undefined { return this._props.deliveredAt; }
   get cancelledAt(): Date | null | undefined { return this._props.cancelledAt; }
   get cancelledReason(): string | null | undefined { return this._props.cancelledReason; }
+  get cancellationBankDetails(): RefundBankDetails | null | undefined { return this._props.cancellationBankDetails; }
   get trackingNumber(): string | null | undefined { return this._props.trackingNumber; }
   get deliveryPartnerId(): string | null | undefined { return this._props.deliveryPartnerId; }
 
@@ -184,10 +194,15 @@ export class Order extends BaseEntity<OrderProps> {
     this._props.updatedAt = new Date();
   }
 
-  public cancel(reason: string, isAdmin = false): void {
-    const nonCancellableStatuses: string[] = ['SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'RETURNED'];
+  public cancel(params: { reason?: string; bankDetails?: RefundBankDetails | null; isAdmin?: boolean } | string, legacyIsAdmin = false): void {
+    const reason = typeof params === 'string' ? params : params?.reason;
+    const bankDetails = typeof params === 'object' ? params?.bankDetails : null;
+    const isAdmin = typeof params === 'object' ? !!params?.isAdmin : legacyIsAdmin;
+
+    // Strict Cancellation Rule: Not allowed once packed or shipped
+    const nonCancellableStatuses: string[] = ['PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'RETURNED'];
     if (!isAdmin && nonCancellableStatuses.includes(this._props.orderStatus)) {
-      throw new Error(`Cannot cancel order from current status: ${this._props.orderStatus}`);
+      throw new Error(`Cannot cancel order from current stage (${this._props.orderStatus}). Cancellation is only available before packaging and shipment.`);
     }
     if (this._props.orderStatus === 'CANCELLED') {
       throw new Error('Order is already cancelled');
@@ -195,8 +210,11 @@ export class Order extends BaseEntity<OrderProps> {
     this._props.orderStatus = 'CANCELLED';
     this._props.cancelledReason = reason || 'No reason provided';
     this._props.cancelledAt = new Date();
+    if (bankDetails) {
+      this._props.cancellationBankDetails = { ...bankDetails };
+    }
     if (this._props.paymentStatus === 'PAID') {
-      this._props.paymentStatus = 'REFUNDED';
+      this._props.paymentStatus = 'REFUND_PROCESSING';
     }
     this._props.updatedAt = new Date();
   }

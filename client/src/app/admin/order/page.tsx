@@ -137,6 +137,7 @@ const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { label: string; badge: strin
   PAID: { label: 'Paid', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900' },
   PENDING: { label: 'Pending', badge: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900' },
   FAILED: { label: 'Failed', badge: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900' },
+  REFUND_PROCESSING: { label: 'Refund Processing', badge: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-900' },
   REFUNDED: { label: 'Refunded', badge: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-900' },
 };
 
@@ -1313,6 +1314,20 @@ function AdminOrdersContent() {
                             {ret.customerNote && (
                               <div className="italic text-gray-500 text-[10px] mt-0.5">"{ret.customerNote}"</div>
                             )}
+                            {ret.courierTrackingNumber && (
+                              <div className="mt-1.5 p-1.5 bg-blue-50/80 border border-blue-200 rounded text-[10px] text-blue-900 space-y-0.5">
+                                <div className="font-bold flex items-center gap-1 text-blue-800">
+                                  <Truck size={11} />
+                                  <span>{ret.courierName || 'Courier'}: {ret.courierTrackingNumber}</span>
+                                </div>
+                              </div>
+                            )}
+                            {ret.refundBankDetails && (
+                              <div className="mt-1 p-1.5 bg-amber-50/80 border border-amber-200 rounded text-[10px] text-amber-950">
+                                <span className="font-bold block text-amber-900">Refund A/C:</span>
+                                <span>{ret.refundBankDetails.accountHolderName} • A/C: ••••{ret.refundBankDetails.accountNumber?.slice(-4)} ({ret.refundBankDetails.ifscCode})</span>
+                              </div>
+                            )}
                           </td>
                           <td className="p-4">
                             {ret.images && ret.images.length > 0 ? (
@@ -1328,8 +1343,22 @@ function AdminOrdersContent() {
                             )}
                           </td>
                           <td className="p-4">
-                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                              {ret.status.replace(/_/g, ' ')}
+                            <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+                              ret.status === 'REFUNDED'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : ret.status === 'REJECTED'
+                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : ret.status === 'RETURN_SHIPPED'
+                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                : ret.status === 'APPROVED'
+                                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                : 'bg-amber-50 text-amber-700 border-amber-200'
+                            }`}>
+                              {ret.status === 'APPROVED'
+                                ? 'Awaiting Shipment'
+                                : ret.status === 'RETURN_SHIPPED'
+                                ? 'Package Shipped'
+                                : ret.status.replace(/_/g, ' ')}
                             </span>
                           </td>
                           <td className="p-4">
@@ -1368,32 +1397,19 @@ function AdminOrdersContent() {
                               </>
                             )}
 
-                            {(ret.status === 'APPROVED' || ret.status === 'PICKUP_SCHEDULED') && (
-                              <div className="inline-flex gap-1.5 items-center">
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleOpenSchedulePickup(ret)}
-                                  className="bg-amber-600 hover:bg-amber-700 text-white h-7 text-xs font-semibold"
-                                >
-                                  {ret.pickupAgentName ? 'Re-Schedule Pickup' : 'Schedule Pickup & Agent'}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleReceiveReturn(ret.id)}
-                                  className="bg-indigo-600 hover:bg-indigo-700 text-white h-7 text-xs font-semibold"
-                                >
-                                  Mark Received
-                                </Button>
-                              </div>
+                            {ret.status === 'APPROVED' && (
+                              <span className="text-[11px] text-muted-foreground italic font-medium">
+                                Awaiting customer shipment
+                              </span>
                             )}
 
-                            {ret.status === 'PICKED_UP' && (
+                            {(ret.status === 'RETURN_SHIPPED' || ret.status === 'PICKUP_SCHEDULED' || ret.status === 'PICKED_UP') && (
                               <Button
                                 size="sm"
                                 onClick={() => handleReceiveReturn(ret.id)}
                                 className="bg-indigo-600 hover:bg-indigo-700 text-white h-7 text-xs font-bold"
                               >
-                                Mark Received at Warehouse
+                                Mark Package Received
                               </Button>
                             )}
 
@@ -1895,6 +1911,27 @@ function AdminOrdersContent() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Cancellation Refund Bank Details Card (If present) */}
+                    {selectedOrder.cancellationBankDetails && (
+                      <div className="border border-rose-200 bg-rose-50/50 rounded-2xl p-4 shadow-xs space-y-2 text-xs">
+                        <div className="flex items-center gap-2 border-b border-rose-200/70 pb-2 text-rose-900 font-bold">
+                          <CreditCard size={15} className="text-rose-700" />
+                          <span>Cancellation Refund Bank Details</span>
+                        </div>
+                        <div className="space-y-1 text-gray-800 text-[11px]">
+                          <p><span className="text-muted-foreground">Account Holder:</span> <strong>{selectedOrder.cancellationBankDetails.accountHolderName}</strong></p>
+                          <p><span className="text-muted-foreground">Account Number:</span> <strong className="font-mono">{selectedOrder.cancellationBankDetails.accountNumber}</strong></p>
+                          <p><span className="text-muted-foreground">IFSC Code:</span> <strong className="font-mono">{selectedOrder.cancellationBankDetails.ifscCode}</strong></p>
+                          {selectedOrder.cancellationBankDetails.bankName && (
+                            <p><span className="text-muted-foreground">Bank:</span> {selectedOrder.cancellationBankDetails.bankName}</p>
+                          )}
+                          <div className="pt-1 text-[10px] text-rose-700 font-semibold">
+                            Reason: {selectedOrder.cancelledReason || 'Cancelled by customer'}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -2148,6 +2185,28 @@ function AdminOrdersContent() {
           </DialogHeader>
 
           <div className="space-y-4 py-2 text-xs">
+            {refundingReturn?.refundBankDetails && (
+              <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl space-y-1 text-xs text-amber-950">
+                <div className="flex items-center justify-between font-bold text-amber-900 border-b border-amber-200/60 pb-1">
+                  <span className="flex items-center gap-1.5">
+                    <CreditCard size={13} className="text-amber-700" />
+                    Customer Bank Account Details
+                  </span>
+                  <span className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded font-mono font-bold">
+                    Direct NEFT/IMPS
+                  </span>
+                </div>
+                <div className="space-y-0.5 pt-1 text-[11px]">
+                  <p><span className="text-muted-foreground">Account Holder:</span> <strong>{refundingReturn.refundBankDetails.accountHolderName}</strong></p>
+                  <p><span className="text-muted-foreground">Account Number:</span> <strong className="font-mono">{refundingReturn.refundBankDetails.accountNumber}</strong></p>
+                  <p><span className="text-muted-foreground">IFSC Code:</span> <strong className="font-mono">{refundingReturn.refundBankDetails.ifscCode}</strong></p>
+                  {refundingReturn.refundBankDetails.bankName && (
+                    <p><span className="text-muted-foreground">Bank:</span> {refundingReturn.refundBankDetails.bankName}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div>
               <Label htmlFor="refundAmt" className="font-semibold text-xs">
                 Refund Amount (₹) *

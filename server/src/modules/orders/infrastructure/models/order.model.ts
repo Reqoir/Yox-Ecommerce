@@ -7,6 +7,13 @@ import { Schema, model, Document } from 'mongoose';
 import { baseSchemaOptions } from '@core/infrastructure/database/mongoose/base.schema';
 import { OrderItemSnapshot, ShippingAddressSnapshot } from '../../domain/entities/order.entity';
 
+export interface IOrderCancellationBankDetails {
+  accountHolderName: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName?: string | null;
+}
+
 export interface IOrderDocument extends Document {
   orderNumber: string;
   userId: string;
@@ -31,11 +38,22 @@ export interface IOrderDocument extends Document {
   deliveredAt?: Date | null;
   cancelledAt?: Date | null;
   cancelledReason?: string | null;
+  cancellationBankDetails?: IOrderCancellationBankDetails | null;
   trackingNumber?: string | null;
   deliveryPartnerId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
+
+const cancellationBankDetailsSchema = new Schema(
+  {
+    accountHolderName: { type: String, required: true },
+    accountNumber: { type: String, required: true },
+    ifscCode: { type: String, required: true },
+    bankName: { type: String, default: null },
+  },
+  { _id: false }
+);
 
 const orderItemSchema = new Schema(
   {
@@ -95,6 +113,7 @@ const orderSchema = new Schema<IOrderDocument>(
     deliveredAt: { type: Date, default: null },
     cancelledAt: { type: Date, default: null },
     cancelledReason: { type: String, default: null },
+    cancellationBankDetails: { type: cancellationBankDetailsSchema, default: null },
     trackingNumber: { type: String, default: null },
     deliveryPartnerId: { type: String, default: null },
   },

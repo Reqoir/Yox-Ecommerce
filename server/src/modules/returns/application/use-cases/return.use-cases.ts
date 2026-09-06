@@ -18,6 +18,7 @@ import { NotificationService } from '../../../notifications/application/services
 import { UserModel } from '../../../users/infrastructure/models/user.model';
 import {
   CreateReturnRequestDTO,
+  SubmitReturnShipmentRequestDTO,
   RejectReturnRequestDTO,
   SchedulePickupRequestDTO,
   InspectReturnRequestDTO,
@@ -38,6 +39,10 @@ export function mapToReturnResponseDTO(returnEntity: Return): ReturnResponseDTO 
     status: returnEntity.status,
     inspectionResult: returnEntity.inspectionResult,
     rejectionReason: returnEntity.rejectionReason,
+    courierTrackingNumber: returnEntity.courierTrackingNumber,
+    courierName: returnEntity.courierName,
+    customerShippedAt: returnEntity.customerShippedAt,
+    refundBankDetails: returnEntity.refundBankDetails,
     refundId: returnEntity.refundId,
     refundAmount: returnEntity.refundAmount,
     refundMethod: returnEntity.refundMethod,
@@ -76,6 +81,31 @@ export class CreateReturnUseCase implements IUseCase<{ userId: string; data: Cre
       throw new Error(`Cannot request return for order in status: ${order.orderStatus}. Order must be DELIVERED.`);
     }
 
+    // Strict 7-Day Return Policy Enforcement
+    const deliveryDate = order.deliveredAt || order.updatedAt || order.placedAt;
+    const returnWindowMs = 7 * 24 * 60 * 60 * 1000;
+    const returnDeadline = new Date(deliveryDate.getTime() + returnWindowMs);
+    if (new Date().getTime() > returnDeadline.getTime()) {
+      throw new Error(
+        `Return window expired: The 7-day return policy for this order expired on ${returnDeadline.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        })}. Returns are no longer accepted.`
+      );
+    }
+
+    // Strict Mandatory 3 Images Validation
+    const validImages = Array.isArray(data.images)
+      ? data.images.filter((img) => typeof img === 'string' && img.trim().length > 0)
+      : [];
+
+    if (validImages.length < 3) {
+      throw new Error(
+        `At least 3 photos of the item are mandatory to submit a return request (e.g. front, back, tag/defect). Provided: ${validImages.length}.`
+      );
+    }
+
     // Match order item by variantId or id or sku
     const item = order.items.find(i => i.variantId === data.orderItemId || i.id === data.orderItemId || i.productId === data.orderItemId);
     if (!item) {
@@ -105,7 +135,7 @@ export class CreateReturnUseCase implements IUseCase<{ userId: string; data: Cre
       quantity: data.quantity,
       reason: data.reason,
       customerNote: data.customerNote,
-      images: data.images || [],
+      images: validImages,
     });
 
     const saved = await this.returnRepo.save(returnEntity);
@@ -210,6 +240,66 @@ export class RejectReturnUseCase implements IUseCase<{ id: string; data: RejectR
       description: `Return #${saved.id.substring(0, 8)} rejected. Reason: ${input.data?.reason}`,
       after: { status: 'REJECTED', rejectionReason: input.data?.reason },
     });
+
+    return mapToReturnResponseDTO(saved);
+  }
+}
+
+export class SubmitReturnShipmentUseCase implements IUseCase<{ id: string; userId: string; data: SubmitReturnShipmentRequestDTO }, ReturnResponseDTO> {
+  constructor(
+    private readonly returnRepo: IReturnRepository
+  ) {}
+
+  async execute(input: { id: string; userId: string; data: SubmitReturnShipmentRequestDTO }): Promise<ReturnResponseDTO> {
+    const { id, userId, data } = input;
+    const returnEntity = await this.returnRepo.findById(id);
+    if (!returnEntity) throw new Error('Return request not found');
+
+    if (returnEntity.userId !== userId) {
+      throw new Error('Forbidden: You can only submit shipment details for your own return requests');
+    }
+
+    returnEntity.submitCustomerShipment({
+      courierTrackingNumber: data.trackingNumber,
+      courierName: data.courierName,
+      refundBankDetails: {
+        accountHolderName: data.accountHolderName,
+        accountNumber: data.accountNumber,
+        ifscCode: data.ifscCode,
+        bankName: data.bankName,
+      },
+    });
+
+    const saved = await this.returnRepo.save(returnEntity);
+
+    AuditLogService.getInstance()?.record({
+      actorId: userId,
+      actorRole: 'CUSTOMER',
+      action: AuditAction.RETURN_SHIPPED,
+      resourceType: 'RETURN',
+      resourceId: saved.id,
+      description: `Customer submitted return shipment via ${data.courierName || 'Courier'} with tracking #${data.trackingNumber}`,
+      after: { status: 'RETURN_SHIPPED', trackingNumber: data.trackingNumber },
+    });
+
+    try {
+      let customerName = 'Customer';
+      const u = await UserModel.findById(userId).select('fullName email').lean();
+      if (u?.fullName) customerName = u.fullName as string;
+
+      await NotificationService.getInstance().notify({
+        userId: null,
+        type: 'RETURN_REQUEST',
+        title: '📦 Return Package Dispatched by Customer',
+        message: `${customerName} dispatched return package for return #${saved.id.substring(0, 8)} with consignment #${data.trackingNumber}`,
+        metadata: {
+          returnId: saved.id,
+          orderId: saved.orderId,
+          trackingNumber: data.trackingNumber,
+          courierName: data.courierName,
+        },
+      });
+    } catch {}
 
     return mapToReturnResponseDTO(saved);
   }

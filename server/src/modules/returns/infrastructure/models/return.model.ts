@@ -6,6 +6,13 @@
 import { Schema, model, Document } from 'mongoose';
 import { baseSchemaOptions } from '@core/infrastructure/database/mongoose/base.schema';
 
+export interface IRefundBankDetails {
+  accountHolderName: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName?: string | null;
+}
+
 export interface IReturnDocument extends Document {
   orderId: string;
   orderItemId: string;
@@ -17,6 +24,10 @@ export interface IReturnDocument extends Document {
   status: string;
   inspectionResult?: string | null;
   rejectionReason?: string | null;
+  courierTrackingNumber?: string | null;
+  courierName?: string | null;
+  customerShippedAt?: Date | null;
+  refundBankDetails?: IRefundBankDetails | null;
   refundId?: string | null;
   refundAmount?: number | null;
   refundMethod?: string | null;
@@ -33,6 +44,16 @@ export interface IReturnDocument extends Document {
   updatedAt: Date;
 }
 
+const refundBankDetailsSchema = new Schema(
+  {
+    accountHolderName: { type: String, required: true },
+    accountNumber: { type: String, required: true },
+    ifscCode: { type: String, required: true },
+    bankName: { type: String, default: null },
+  },
+  { _id: false }
+);
+
 const returnSchema = new Schema<IReturnDocument>(
   {
     orderId: { type: String, required: true, index: true },
@@ -45,6 +66,10 @@ const returnSchema = new Schema<IReturnDocument>(
     status: { type: String, required: true, default: 'REQUESTED', index: true },
     inspectionResult: { type: String, default: null },
     rejectionReason: { type: String, default: null },
+    courierTrackingNumber: { type: String, default: null, index: true },
+    courierName: { type: String, default: null },
+    customerShippedAt: { type: Date, default: null },
+    refundBankDetails: { type: refundBankDetailsSchema, default: null },
     refundId: { type: String, default: null },
     refundAmount: { type: Number, default: null },
     refundMethod: { type: String, default: null },

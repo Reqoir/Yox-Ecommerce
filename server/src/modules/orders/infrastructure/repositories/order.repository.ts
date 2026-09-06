@@ -49,6 +49,7 @@ export class OrderRepository implements IOrderRepository {
       deliveredAt: data.deliveredAt,
       cancelledAt: data.cancelledAt,
       cancelledReason: data.cancelledReason,
+      cancellationBankDetails: data.cancellationBankDetails,
       trackingNumber: data.trackingNumber,
       deliveryPartnerId: data.deliveryPartnerId,
       createdAt: data.createdAt || new Date(),

@@ -12,6 +12,7 @@ import { StockLogRepository } from '../../../inventory/infrastructure/repositori
 import { ProductVariantRepository } from '../../../products/infrastructure/repositories/product-variant.repository';
 import {
   CreateReturnUseCase,
+  SubmitReturnShipmentUseCase,
   GetUserReturnsUseCase,
   GetReturnByIdUseCase,
   ApproveReturnUseCase,
@@ -34,6 +35,7 @@ const stockLogRepo = new StockLogRepository();
 const variantRepo = new ProductVariantRepository();
 
 const createReturnUseCase = new CreateReturnUseCase(returnRepo, orderRepo);
+const submitReturnShipmentUseCase = new SubmitReturnShipmentUseCase(returnRepo);
 const getUserReturnsUseCase = new GetUserReturnsUseCase(returnRepo);
 const getReturnByIdUseCase = new GetReturnByIdUseCase(returnRepo);
 const approveReturnUseCase = new ApproveReturnUseCase(returnRepo);
@@ -46,6 +48,7 @@ const getAllReturnsUseCase = new GetAllReturnsUseCase(returnRepo);
 
 const returnController = new ReturnController(
   createReturnUseCase,
+  submitReturnShipmentUseCase,
   getUserReturnsUseCase,
   getReturnByIdUseCase,
   approveReturnUseCase,
@@ -63,6 +66,8 @@ router.use(requireAuth);
 router.post('/', returnController.createReturn);
 router.get('/', returnController.getUserReturns);
 router.get('/:id', returnController.getReturnById);
+router.patch('/:id/ship', returnController.submitShipment);
+router.post('/:id/ship', returnController.submitShipment);
 
 // Admin / Staff endpoints
 const adminPermission = requirePermission('manage_orders');

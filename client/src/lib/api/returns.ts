@@ -13,6 +13,7 @@ export type ReturnStatus =
   | 'REQUESTED'
   | 'APPROVED'
   | 'REJECTED'
+  | 'RETURN_SHIPPED'
   | 'PICKUP_SCHEDULED'
   | 'PICKED_UP'
   | 'RECEIVED'
@@ -21,6 +22,14 @@ export type ReturnStatus =
   | 'REFUNDED';
 
 export type InspectionResult = 'RESELLABLE' | 'DAMAGED';
+
+export interface RefundBankDetails {
+  accountHolderName: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName?: string;
+  submittedAt?: string;
+}
 
 export interface BackendReturn {
   id: string;
@@ -32,6 +41,10 @@ export interface BackendReturn {
   customerNote?: string | null;
   images?: string[];
   status: ReturnStatus | string;
+  courierTrackingNumber?: string | null;
+  courierName?: string | null;
+  customerShippedAt?: string | null;
+  refundBankDetails?: RefundBankDetails | null;
   inspectionResult?: InspectionResult | string | null;
   rejectionReason?: string | null;
   refundId?: string | null;
@@ -87,9 +100,25 @@ export interface ProcessRefundPayload {
   refundTransactionId?: string;
 }
 
+export interface SubmitReturnShipmentPayload {
+  courierTrackingNumber: string;
+  courierName?: string;
+  bankDetails: {
+    accountHolderName: string;
+    accountNumber: string;
+    ifscCode: string;
+    bankName?: string;
+  };
+}
+
 export const returnsApi = {
   createReturn: async (payload: CreateReturnPayload): Promise<BackendReturn> => {
     const response = await apiClient.post<{ data: BackendReturn }>('/returns', payload);
+    return response.data?.data;
+  },
+
+  submitReturnShipment: async (id: string, payload: SubmitReturnShipmentPayload): Promise<BackendReturn> => {
+    const response = await apiClient.patch<{ data: BackendReturn }>(`/returns/${id}/ship`, payload);
     return response.data?.data;
   },
 

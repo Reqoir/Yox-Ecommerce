@@ -11,7 +11,16 @@ export interface CreateReturnRequestDTO {
   quantity: number;
   reason: ReturnReason | string;
   customerNote?: string;
-  images?: string[];
+  images: string[]; // Mandatory: Minimum 3 images required
+}
+
+export interface SubmitReturnShipmentRequestDTO {
+  trackingNumber: string; // Courier tracking / consignment number
+  courierName?: string;
+  accountHolderName: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName?: string;
 }
 
 export interface RejectReturnRequestDTO {
@@ -48,6 +57,15 @@ export interface ReturnResponseDTO {
   status: string;
   inspectionResult?: string | null;
   rejectionReason?: string | null;
+  courierTrackingNumber?: string | null;
+  courierName?: string | null;
+  customerShippedAt?: Date | null;
+  refundBankDetails?: {
+    accountHolderName: string;
+    accountNumber: string;
+    ifscCode: string;
+    bankName?: string | null;
+  } | null;
   refundId?: string | null;
   refundAmount?: number | null;
   refundMethod?: string | null;

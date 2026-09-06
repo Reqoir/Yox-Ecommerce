@@ -29,7 +29,7 @@ export function ReturnStatusTracker({ returnRecord }: ReturnStatusTrackerProps) 
     {
       key: 'REQUESTED',
       label: 'Return Requested',
-      description: 'Request submitted with reason',
+      description: 'Request submitted with reason and images',
       timestamp: returnRecord.createdAt,
       icon: RotateCcw,
     },
@@ -38,61 +38,42 @@ export function ReturnStatusTracker({ returnRecord }: ReturnStatusTrackerProps) 
       label: isRejected ? 'Return Rejected' : 'Admin Approval',
       description: isRejected
         ? returnRecord.rejectionReason || 'Return request rejected by staff'
-        : 'Request verified and approved',
+        : 'Request verified and approved for manual shipment',
       timestamp: isRejected ? returnRecord.updatedAt : returnRecord.approvedAt,
       icon: isRejected ? XCircle : CheckCircle2,
       isDanger: isRejected,
     },
     {
-      key: 'PICKUP_SCHEDULED',
-      label: 'Pickup Scheduled',
-      description: returnRecord.pickupDate
-        ? `Scheduled for ${new Date(returnRecord.pickupDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`
-        : 'Pickup executive assignment in progress',
-      timestamp: returnRecord.pickupDate,
-      icon: Calendar,
-      extraInfo: returnRecord.pickupAgentName ? (
-        <div className="mt-2.5 p-3 bg-amber-50/80 border border-amber-200 rounded-lg text-xs space-y-1.5 text-amber-950">
-          <div className="font-bold flex items-center justify-between text-amber-900">
+      key: 'RETURN_SHIPPED',
+      label: 'Return Shipped',
+      description: returnRecord.courierTrackingNumber
+        ? `Shipped via ${returnRecord.courierName || 'Courier / India Post'} (Consignment #${returnRecord.courierTrackingNumber})`
+        : 'Package sent by customer to YOX return address',
+      timestamp: returnRecord.customerShippedAt,
+      icon: Truck,
+      extraInfo: returnRecord.courierTrackingNumber ? (
+        <div className="mt-2.5 p-3 bg-blue-50/80 border border-blue-200 rounded-lg text-xs space-y-1.5 text-blue-950">
+          <div className="font-bold flex items-center justify-between text-blue-900">
             <span className="flex items-center gap-1.5">
-              <Truck size={14} className="text-amber-700" />
-              Delivery Executive Assigned
+              <Truck size={14} className="text-blue-700" />
+              Courier Tracking Details
             </span>
-            <span className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded font-mono font-bold">
-              {returnRecord.pickupTimeSlot || '10:00 AM - 02:00 PM'}
+            <span className="text-[10px] bg-blue-200 text-blue-900 px-2 py-0.5 rounded font-mono font-bold">
+              {returnRecord.courierName || 'Courier'}
             </span>
           </div>
-          <div className="flex items-center gap-4 text-xs font-medium pt-0.5">
-            <div className="flex items-center gap-1">
-              <User size={13} className="text-amber-700" />
-              <span>{returnRecord.pickupAgentName}</span>
-            </div>
-            {returnRecord.pickupAgentPhone && (
-              <a
-                href={`tel:${returnRecord.pickupAgentPhone}`}
-                className="flex items-center gap-1 text-emerald-700 font-bold hover:underline bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200"
-              >
-                <Phone size={12} />
-                <span>{returnRecord.pickupAgentPhone}</span>
-              </a>
-            )}
+          <div className="text-xs font-mono font-semibold pt-0.5 text-blue-800">
+            Consignment / Tracking #: {returnRecord.courierTrackingNumber}
           </div>
         </div>
       ) : null,
     },
     {
-      key: 'PICKED_UP',
-      label: 'Item Picked Up',
-      description: 'Item collected by logistics executive',
-      timestamp: returnRecord.status === 'PICKED_UP' || returnRecord.receivedAt ? returnRecord.updatedAt : null,
-      icon: Truck,
-    },
-    {
       key: 'RECEIVED',
-      label: 'Received & Inspected',
+      label: 'Package Received & Verified',
       description: returnRecord.inspectionResult
         ? `Inspection: ${returnRecord.inspectionResult}`
-        : 'Item undergoing quality check at warehouse',
+        : 'Package physically received at YOX return facility',
       timestamp: returnRecord.inspectedAt || returnRecord.receivedAt,
       icon: PackageCheck,
     },
@@ -101,16 +82,22 @@ export function ReturnStatusTracker({ returnRecord }: ReturnStatusTrackerProps) 
       label: 'Refund Completed',
       description: returnRecord.refundAmount
         ? `Refund of ₹${returnRecord.refundAmount} issued`
-        : 'Refund processed to original payment method',
+        : 'Refund processed to customer bank account',
       timestamp: returnRecord.refundedAt,
       icon: CreditCard,
-      extraInfo: returnRecord.refundTransactionId ? (
-        <div className="mt-2.5 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs space-y-1 text-emerald-950">
+      extraInfo: returnRecord.refundTransactionId || returnRecord.refundBankDetails ? (
+        <div className="mt-2.5 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs space-y-1.5 text-emerald-950">
           <div className="flex items-center justify-between font-bold">
             <span className="text-emerald-800">Refund Amount: ₹{returnRecord.refundAmount || 0}</span>
-            <span className="text-[10px] text-emerald-700 font-mono">TXN: {returnRecord.refundTransactionId}</span>
+            {returnRecord.refundTransactionId && (
+              <span className="text-[10px] text-emerald-700 font-mono">TXN: {returnRecord.refundTransactionId}</span>
+            )}
           </div>
-          <p className="text-[11px] text-emerald-700">Method: {returnRecord.refundMethod || 'Original Payment Method'}</p>
+          {returnRecord.refundBankDetails && (
+            <p className="text-[11px] text-emerald-700">
+              Bank: {returnRecord.refundBankDetails.bankName || 'Direct Transfer'} (A/C: ••••{returnRecord.refundBankDetails.accountNumber?.slice(-4) || '****'})
+            </p>
+          )}
         </div>
       ) : null,
     },
@@ -122,12 +109,13 @@ export function ReturnStatusTracker({ returnRecord }: ReturnStatusTrackerProps) 
       case 'REQUESTED': return 0;
       case 'APPROVED': return 1;
       case 'REJECTED': return 1;
-      case 'PICKUP_SCHEDULED': return 2;
-      case 'PICKED_UP': return 3;
-      case 'RECEIVED': return 4;
-      case 'INSPECTED': return 4;
-      case 'REFUND_PENDING': return 4;
-      case 'REFUNDED': return 5;
+      case 'RETURN_SHIPPED':
+      case 'PICKUP_SCHEDULED':
+      case 'PICKED_UP': return 2;
+      case 'RECEIVED':
+      case 'INSPECTED':
+      case 'REFUND_PENDING': return 3;
+      case 'REFUNDED': return 4;
       default: return 0;
     }
   };

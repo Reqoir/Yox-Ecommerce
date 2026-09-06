@@ -10,6 +10,7 @@ export type ReturnStatus =
   | 'REQUESTED'
   | 'APPROVED'
   | 'REJECTED'
+  | 'RETURN_SHIPPED'
   | 'PICKUP_SCHEDULED'
   | 'PICKED_UP'
   | 'RECEIVED'
@@ -28,6 +29,13 @@ export type ReturnReason =
 
 export type InspectionResult = 'RESELLABLE' | 'DAMAGED';
 
+export interface RefundBankDetails {
+  accountHolderName: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName?: string | null;
+}
+
 export interface ReturnProps extends EntityProps {
   orderId: string;
   orderItemId: string; // ProductVariant ID or Snapshot item ID
@@ -39,6 +47,10 @@ export interface ReturnProps extends EntityProps {
   status: ReturnStatus | string;
   inspectionResult?: InspectionResult | string | null;
   rejectionReason?: string | null;
+  courierTrackingNumber?: string | null;
+  courierName?: string | null;
+  customerShippedAt?: Date | null;
+  refundBankDetails?: RefundBankDetails | null;
   refundId?: string | null;
   refundAmount?: number | null;
   refundMethod?: string | null;
@@ -68,6 +80,10 @@ export class Return extends BaseEntity<ReturnProps> {
   get status(): string { return this._props.status; }
   get inspectionResult(): string | null | undefined { return this._props.inspectionResult; }
   get rejectionReason(): string | null | undefined { return this._props.rejectionReason; }
+  get courierTrackingNumber(): string | null | undefined { return this._props.courierTrackingNumber; }
+  get courierName(): string | null | undefined { return this._props.courierName; }
+  get customerShippedAt(): Date | null | undefined { return this._props.customerShippedAt; }
+  get refundBankDetails(): RefundBankDetails | null | undefined { return this._props.refundBankDetails; }
   get refundId(): string | null | undefined { return this._props.refundId; }
   get refundAmount(): number | null | undefined { return this._props.refundAmount; }
   get refundMethod(): string | null | undefined { return this._props.refundMethod; }
@@ -117,6 +133,33 @@ export class Return extends BaseEntity<ReturnProps> {
     this._props.updatedAt = new Date();
   }
 
+  public submitCustomerShipment(params: {
+    courierTrackingNumber: string;
+    courierName?: string;
+    refundBankDetails: RefundBankDetails;
+  }): void {
+    if (this._props.status !== 'APPROVED') {
+      throw new Error(`Cannot submit shipment details for return in status: ${this._props.status}. Return must be APPROVED.`);
+    }
+    if (!params.courierTrackingNumber || !params.courierTrackingNumber.trim()) {
+      throw new Error('Courier tracking or consignment number is required.');
+    }
+    if (
+      !params.refundBankDetails ||
+      !params.refundBankDetails.accountHolderName ||
+      !params.refundBankDetails.accountNumber ||
+      !params.refundBankDetails.ifscCode
+    ) {
+      throw new Error('Complete refund bank details (Account Holder Name, Account Number, IFSC Code) are required.');
+    }
+    this._props.courierTrackingNumber = params.courierTrackingNumber.trim();
+    if (params.courierName) this._props.courierName = params.courierName.trim();
+    this._props.customerShippedAt = new Date();
+    this._props.refundBankDetails = { ...params.refundBankDetails };
+    this._props.status = 'RETURN_SHIPPED';
+    this._props.updatedAt = new Date();
+  }
+
   public schedulePickup(params: {
     pickupDate: Date;
     pickupTimeSlot?: string;
@@ -143,7 +186,8 @@ export class Return extends BaseEntity<ReturnProps> {
   }
 
   public markReceived(): void {
-    if (this._props.status !== 'PICKED_UP' && this._props.status !== 'APPROVED' && this._props.status !== 'PICKUP_SCHEDULED') {
+    const validStatuses = ['RETURN_SHIPPED', 'APPROVED', 'PICKED_UP', 'PICKUP_SCHEDULED'];
+    if (!validStatuses.includes(this._props.status)) {
       throw new Error(`Cannot mark received from status: ${this._props.status}`);
     }
     this._props.status = 'RECEIVED';
@@ -167,7 +211,8 @@ export class Return extends BaseEntity<ReturnProps> {
     refundMethod?: string;
     refundTransactionId?: string;
   }): void {
-    if (this._props.status !== 'REFUND_PENDING' && this._props.status !== 'INSPECTED' && this._props.status !== 'RECEIVED' && this._props.status !== 'APPROVED') {
+    const validStatuses = ['REFUND_PENDING', 'INSPECTED', 'RECEIVED', 'APPROVED', 'RETURN_SHIPPED'];
+    if (!validStatuses.includes(this._props.status)) {
       throw new Error(`Cannot mark refunded from status: ${this._props.status}`);
     }
     this._props.status = 'REFUNDED';

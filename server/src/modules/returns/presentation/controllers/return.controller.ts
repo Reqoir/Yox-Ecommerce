@@ -8,6 +8,7 @@ import { HttpStatus } from '../../../../shared/constants/http-status.constants';
 import { ApiResponse } from '../../../../shared/utils/api-response.util';
 import {
   CreateReturnUseCase,
+  SubmitReturnShipmentUseCase,
   GetUserReturnsUseCase,
   GetReturnByIdUseCase,
   ApproveReturnUseCase,
@@ -22,6 +23,7 @@ import {
 export class ReturnController {
   constructor(
     private readonly createReturnUseCase: CreateReturnUseCase,
+    private readonly submitReturnShipmentUseCase: SubmitReturnShipmentUseCase,
     private readonly getUserReturnsUseCase: GetUserReturnsUseCase,
     private readonly getReturnByIdUseCase: GetReturnByIdUseCase,
     private readonly approveReturnUseCase: ApproveReturnUseCase,
@@ -38,6 +40,20 @@ export class ReturnController {
       const userId = req.user!.id;
       const result = await this.createReturnUseCase.execute({ userId, data: req.body });
       ApiResponse.success(res, result, 'Return request submitted successfully', HttpStatus.CREATED);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  submitShipment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user!.id;
+      const result = await this.submitReturnShipmentUseCase.execute({
+        id: req.params.id as string,
+        userId,
+        data: req.body,
+      });
+      ApiResponse.success(res, result, 'Return shipment and refund details submitted successfully');
     } catch (error) {
       next(error);
     }

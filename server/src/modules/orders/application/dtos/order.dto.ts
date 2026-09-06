@@ -16,6 +16,12 @@ export interface PlaceOrderRequestDTO {
 
 export interface CancelOrderRequestDTO {
   reason?: string;
+  bankDetails?: {
+    accountHolderName: string;
+    accountNumber: string;
+    ifscCode: string;
+    bankName?: string;
+  };
 }
 
 export interface ShipOrderRequestDTO {
@@ -53,6 +59,13 @@ export interface OrderResponseDTO {
   deliveredAt?: Date | null;
   cancelledAt?: Date | null;
   cancelledReason?: string | null;
+  cancellationBankDetails?: {
+    accountHolderName: string;
+    accountNumber: string;
+    ifscCode: string;
+    bankName?: string | null;
+    submittedAt?: Date;
+  } | null;
   trackingNumber?: string | null;
   deliveryPartnerId?: string | null;
   customer?: {

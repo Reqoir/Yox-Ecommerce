@@ -7,6 +7,7 @@ import { ordersApi, BackendOrder } from '@/lib/api/orders';
 import { shipmentsApi, BackendShipment } from '@/lib/api/shipments';
 import { returnsApi, BackendReturn, ReturnReason } from '@/lib/api/returns';
 import { ReturnStatusTracker } from '@/components/features/orders/ReturnStatusTracker';
+import { ManualShipmentCard } from '@/components/features/orders/ManualShipmentCard';
 import { useCartStore } from '@/store/useCartStore';
 import {
   Package,
@@ -32,6 +33,8 @@ import {
   UploadCloud,
   ImageIcon,
   ShieldCheck,
+  Building2,
+  Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -54,6 +57,14 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [userReturns, setUserReturns] = useState<BackendReturn[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCancelling, setIsCancelling] = useState(false);
+
+  // Cancellation Modal State
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('Changed mind / Order placed by mistake');
+  const [cancelAccountHolder, setCancelAccountHolder] = useState('');
+  const [cancelAccountNumber, setCancelAccountNumber] = useState('');
+  const [cancelIfscCode, setCancelIfscCode] = useState('');
+  const [cancelBankName, setCancelBankName] = useState('');
 
   // Delivery Instructions Modal
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
@@ -132,15 +143,41 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  // Cancel order handler
-  const handleCancelOrder = async () => {
+  // Cancel order modal submission handler
+  const handleConfirmCancel = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!order) return;
-    if (!window.confirm('Are you sure you want to cancel this order?')) return;
+
+    const isPaid = order.paymentStatus === 'PAID' || (order.paymentMethod && order.paymentMethod.toUpperCase() !== 'COD');
+
+    if (isPaid) {
+      if (!cancelAccountHolder.trim() || !cancelAccountNumber.trim() || !cancelIfscCode.trim()) {
+        toast.error('Please enter complete bank account details for your refund.');
+        return;
+      }
+    }
+
     try {
       setIsCancelling(true);
-      const updated = await ordersApi.cancelOrder(order.id, 'Cancelled by customer from order detail page');
-      toast.success('Order cancelled successfully.');
+      const bankDetails = isPaid
+        ? {
+            accountHolderName: cancelAccountHolder.trim(),
+            accountNumber: cancelAccountNumber.trim(),
+            ifscCode: cancelIfscCode.trim().toUpperCase(),
+            bankName: cancelBankName.trim() || undefined,
+          }
+        : undefined;
+
+      const updated = await ordersApi.cancelOrder(order.id, cancelReason, bankDetails);
+      if (isPaid) {
+        toast.success('Your order has been cancelled successfully. Your refund will be processed and credited to your provided bank account within 2 business days.', {
+          duration: 6000,
+        });
+      } else {
+        toast.success('Order cancelled successfully.');
+      }
       setOrder(updated);
+      setIsCancelModalOpen(false);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Cannot cancel order at this current shipping stage.');
     } finally {
@@ -230,6 +267,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
   const handleSubmitReturn = async () => {
     if (!returnModalTarget) return;
+    if (returnImages.length < 3) {
+      toast.error('Please attach at least 3 photos of the item (e.g. front view, back view, tag/defect) to submit a return request.');
+      return;
+    }
     try {
       setIsSubmittingReturn(true);
       const res = await returnsApi.createReturn({
@@ -275,9 +316,21 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     );
   }
 
-  const canCancel = ['PLACED', 'CONFIRMED', 'PACKED'].includes(order.orderStatus);
+  const canCancel = ['PLACED', 'CONFIRMED'].includes(order.orderStatus);
   const isDelivered = order.orderStatus === 'DELIVERED';
   const isTerminated = ['DELIVERED', 'CANCELLED', 'RETURNED'].includes(order.orderStatus);
+
+  // 7-day return policy calculation
+  const deliveryDate = order.deliveredAt
+    ? new Date(order.deliveredAt)
+    : (order.orderStatus === 'DELIVERED' ? new Date(order.placedAt) : null);
+
+  const daysSinceDelivery = deliveryDate
+    ? (Date.now() - deliveryDate.getTime()) / (1000 * 60 * 60 * 24)
+    : Infinity;
+
+  const isWithin7Days = isDelivered && daysSinceDelivery <= 7;
+  const returnDaysRemaining = deliveryDate ? Math.max(0, Math.ceil(7 - daysSinceDelivery)) : 0;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300 print:p-0 print:space-y-4">
@@ -400,12 +453,24 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             </div>
           </div>
         ) : (
-          <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center gap-3">
-            <XCircle size={20} className="text-rose-600 shrink-0" />
-            <div>
-              <p className="font-bold">Order Was Cancelled</p>
-              <p className="text-[11px] text-rose-700 mt-0.5">Reason: {order.cancelledReason || 'Cancelled by customer'}</p>
+          <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 space-y-2">
+            <div className="flex items-center gap-3">
+              <XCircle size={20} className="text-rose-600 shrink-0" />
+              <div>
+                <p className="font-bold text-sm">Order Was Cancelled</p>
+                <p className="text-[11px] text-rose-700 mt-0.5">Reason: {order.cancelledReason || 'Cancelled by customer'}</p>
+              </div>
             </div>
+            {order.cancellationBankDetails && (
+              <div className="p-3 bg-white/80 border border-rose-200 rounded-lg text-xs space-y-1 text-gray-800">
+                <span className="font-bold text-rose-900 block">Refund Bank Details Submitted:</span>
+                <p>Account Holder: {order.cancellationBankDetails.accountHolderName}</p>
+                <p>A/C: ••••{order.cancellationBankDetails.accountNumber.slice(-4)} | IFSC: {order.cancellationBankDetails.ifscCode}</p>
+                <p className="text-[11px] text-emerald-700 font-semibold pt-0.5">
+                  Refund will be credited within 2 business days.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -414,12 +479,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           <div className="flex flex-wrap items-center gap-2.5">
             {canCancel && (
               <button
-                onClick={handleCancelOrder}
+                onClick={() => setIsCancelModalOpen(true)}
                 disabled={isCancelling}
                 className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-rose-50 border border-rose-300 text-rose-600 font-bold text-xs rounded-lg transition-colors shadow-2xs disabled:opacity-50"
               >
                 <XCircle size={14} />
-                <span>{isCancelling ? 'Cancelling...' : 'Cancel Order'}</span>
+                <span>Cancel Order</span>
               </button>
             )}
 
@@ -449,9 +514,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       </div>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* SEPARATE SECTION: RETURN & REFUND MANAGEMENT (WHEN DELIVERED / HAS RETURN) */}
+      {/* SEPARATE SECTION: RETURN & REFUND MANAGEMENT (WHEN DELIVERED & WITHIN 7 DAYS / HAS RETURN) */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {(isDelivered || userReturns.length > 0) && (
+      {(isWithin7Days || userReturns.length > 0) && (
         <div className="bg-white border border-amber-200/80 rounded-2xl p-6 lg:p-7 shadow-xs space-y-6 print:hidden">
           <div className="flex items-center justify-between border-b border-gray-100 pb-3">
             <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
@@ -459,7 +524,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               Return & Refund Journey Management
             </h3>
             <span className="text-xs font-semibold text-gray-500">
-              {userReturns.length > 0 ? `${userReturns.length} Return Request Active` : 'Eligible for Return'}
+              {userReturns.length > 0
+                ? `${userReturns.length} Return Request Active`
+                : isWithin7Days
+                ? `Eligible for Return (${returnDaysRemaining} day${returnDaysRemaining === 1 ? '' : 's'} remaining)`
+                : '7-Day Return Policy Expired'}
             </span>
           </div>
 
@@ -487,13 +556,19 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                     </div>
 
                     {!existingReturn ? (
-                      <button
-                        onClick={() => handleOpenReturnModal(item)}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-bold rounded-lg transition-colors shadow-2xs"
-                      >
-                        <RotateCcw size={14} />
-                        <span>Request Return & Refund</span>
-                      </button>
+                      isWithin7Days ? (
+                        <button
+                          onClick={() => handleOpenReturnModal(item)}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-bold rounded-lg transition-colors shadow-2xs"
+                        >
+                          <RotateCcw size={14} />
+                          <span>Request Return & Refund</span>
+                        </button>
+                      ) : (
+                        <span className="text-xs text-gray-400 font-medium italic">
+                          Return window closed (exceeded 7 days)
+                        </span>
+                      )
                     ) : (
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${
                         existingReturn.status === 'REFUNDED'
@@ -505,9 +580,19 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                     )}
                   </div>
 
-                  {/* Render Live Return Stepper Tracker if return exists for item */}
+                  {/* Render Manual Shipment Form or Live Stepper Tracker if return exists for item */}
                   {existingReturn && (
-                    <div className="pt-3 border-t border-gray-200/80">
+                    <div className="pt-3 border-t border-gray-200/80 space-y-4">
+                      {existingReturn.status === 'APPROVED' && (
+                        <ManualShipmentCard
+                          returnRecord={existingReturn}
+                          onShipmentSubmitted={(updated) => {
+                            setUserReturns((prev) =>
+                              prev.map((r) => (r.id === updated.id ? updated : r))
+                            );
+                          }}
+                        />
+                      )}
                       <ReturnStatusTracker returnRecord={existingReturn} />
                     </div>
                   )}
@@ -762,30 +847,58 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               </div>
 
               <div>
-                <label className="font-bold text-gray-800 block mb-1">Attach Item Photos</label>
-                <input type="file" accept="image/*" multiple onChange={handleAddImageFile} className="text-xs mb-2 block" />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-bold text-gray-800 block">
+                    Attach Item Photos <span className="text-red-500">*</span>
+                  </label>
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                    returnImages.length >= 3 
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
+                      : 'bg-amber-100 text-amber-800 border border-amber-300'
+                  }`}>
+                    {returnImages.length >= 3 ? '✓ 3 of 3 attached' : `${returnImages.length}/3 mandatory photos`}
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-500 mb-2">
+                  At least 3 photos are mandatory (e.g. front view, back view, tag/defect) to submit a return request.
+                </p>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleAddImageFile}
+                  className="text-xs mb-2 block file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                />
                 <div className="flex gap-2 items-center">
                   <input
                     type="text"
-                    placeholder="Or enter Image URL"
+                    placeholder="Or enter image URL"
                     value={imageUrlInput}
                     onChange={(e) => setImageUrlInput(e.target.value)}
                     className="flex-1 border border-gray-300 rounded-lg p-2 text-xs"
                   />
-                  <button type="button" onClick={handleAddImageUrl} className="px-3 py-2 bg-gray-100 text-xs font-bold rounded-lg hover:bg-gray-200">
+                  <button
+                    type="button"
+                    onClick={handleAddImageUrl}
+                    className="px-3 py-2 bg-gray-100 text-xs font-bold rounded-lg hover:bg-gray-200 transition-colors"
+                  >
                     Add
                   </button>
                 </div>
 
                 {returnImages.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3">
+                  <div className="flex flex-wrap gap-2.5 mt-3">
                     {returnImages.map((src, i) => (
-                      <div key={i} className="relative w-14 h-14 border rounded-lg overflow-hidden group">
-                        <img src={src} alt="Upload preview" className="w-full h-full object-cover" />
+                      <div key={i} className="relative w-16 h-16 border border-gray-300 rounded-lg overflow-hidden group shadow-2xs">
+                        <img src={src} alt={`Upload preview ${i + 1}`} className="w-full h-full object-cover" />
+                        <span className="absolute bottom-0 left-0 bg-black/70 text-white text-[9px] font-bold px-1 rounded-tr">
+                          #{i + 1}
+                        </span>
                         <button
                           type="button"
                           onClick={() => handleRemoveImage(i)}
-                          className="absolute top-0.5 right-0.5 bg-black/70 text-white rounded-full p-0.5"
+                          className="absolute top-0.5 right-0.5 bg-black/70 text-white rounded-full p-0.5 hover:bg-red-600 transition-colors"
                         >
                           <X size={10} />
                         </button>
@@ -807,12 +920,139 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               <button
                 type="button"
                 onClick={handleSubmitReturn}
-                disabled={isSubmittingReturn}
-                className="px-5 py-2 bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-bold rounded-lg shadow-sm disabled:opacity-50"
+                disabled={isSubmittingReturn || returnImages.length < 3}
+                className="px-5 py-2 bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-bold rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                {isSubmittingReturn ? 'Submitting...' : 'Submit Return Request'}
+                {isSubmittingReturn
+                  ? 'Submitting...'
+                  : returnImages.length < 3
+                  ? `Attach ${3 - returnImages.length} More Photo${3 - returnImages.length > 1 ? 's' : ''}`
+                  : 'Submit Return Request'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Order Modal */}
+      {isCancelModalOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-gray-200 text-gray-900 my-8">
+            <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                <XCircle className="text-rose-600" size={20} /> Cancel Order #{order.orderNumber}
+              </h3>
+              <button onClick={() => setIsCancelModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-sm">✕</button>
+            </div>
+
+            <form onSubmit={handleConfirmCancel} className="space-y-4 text-xs">
+              <div>
+                <label className="font-bold text-gray-800 block mb-1">Cancellation Reason *</label>
+                <select
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg p-2.5 text-xs bg-white focus:ring-2 focus:ring-[#1A2E4C]"
+                >
+                  <option value="Changed mind / Order placed by mistake">Changed mind / Order placed by mistake</option>
+                  <option value="Found a better price elsewhere">Found a better price elsewhere</option>
+                  <option value="Need to change shipping address or items">Need to change shipping address or items</option>
+                  <option value="Delivery time is too long">Delivery time is too long</option>
+                  <option value="Other Reason">Other Reason</option>
+                </select>
+              </div>
+
+              {/* If Order is Paid / Razorpay: Ask for Bank Account Details */}
+              {(order.paymentStatus === 'PAID' || (order.paymentMethod && order.paymentMethod.toUpperCase() !== 'COD')) && (
+                <div className="p-4 bg-amber-50/60 border border-amber-200 rounded-xl space-y-3">
+                  <div className="flex items-center gap-2 text-amber-900">
+                    <CreditCard size={16} className="text-amber-700" />
+                    <h4 className="font-bold text-xs">Refund Bank Account Details</h4>
+                  </div>
+                  <p className="text-[11px] text-amber-800">
+                    Your order was paid online. Please provide your bank account details so our financial team can credit your refund directly.
+                  </p>
+
+                  <div className="space-y-3 pt-1">
+                    <div>
+                      <label className="font-bold text-gray-800 block mb-1">
+                        Account Holder Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={cancelAccountHolder}
+                        onChange={(e) => setCancelAccountHolder(e.target.value)}
+                        placeholder="Full name as on bank passbook"
+                        className="w-full border border-gray-300 rounded-lg p-2.5 text-xs bg-white focus:ring-2 focus:ring-[#1A2E4C]"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="font-bold text-gray-800 block mb-1">
+                          Account Number <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={cancelAccountNumber}
+                          onChange={(e) => setCancelAccountNumber(e.target.value)}
+                          placeholder="Bank account number"
+                          className="w-full border border-gray-300 rounded-lg p-2.5 font-mono text-xs bg-white focus:ring-2 focus:ring-[#1A2E4C]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-gray-800 block mb-1">
+                          IFSC Code <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={cancelIfscCode}
+                          onChange={(e) => setCancelIfscCode(e.target.value.toUpperCase())}
+                          placeholder="e.g. SBIN0001234"
+                          className="w-full border border-gray-300 rounded-lg p-2.5 font-mono uppercase text-xs bg-white focus:ring-2 focus:ring-[#1A2E4C]"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="font-bold text-gray-800 block mb-1">Bank Name / Branch (Optional)</label>
+                      <input
+                        type="text"
+                        value={cancelBankName}
+                        onChange={(e) => setCancelBankName(e.target.value)}
+                        placeholder="e.g. HDFC Bank, MG Road"
+                        className="w-full border border-gray-300 rounded-lg p-2.5 text-xs bg-white focus:ring-2 focus:ring-[#1A2E4C]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-lg text-blue-900 flex items-start gap-2 text-[11px]">
+                    <Info size={14} className="text-blue-700 shrink-0 mt-0.5" />
+                    <span>Your refund will be processed and credited to your provided bank account within <strong>2 business days</strong>.</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setIsCancelModalOpen(false)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-50"
+                >
+                  Keep Order
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCancelling}
+                  className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg shadow-sm disabled:opacity-50 transition-colors"
+                >
+                  {isCancelling ? 'Processing...' : 'Confirm Cancellation'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
