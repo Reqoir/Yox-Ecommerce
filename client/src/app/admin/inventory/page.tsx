@@ -13,16 +13,10 @@ import {
   X,
   ClipboardList,
   Warehouse,
+  Settings,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+
 import {
   Dialog,
   DialogContent,
@@ -58,7 +52,7 @@ const LOG_TYPE_CONFIG: Record<LogType, { label: string; color: string }> = {
 
 export default function AdminInventoryPage() {
   const { inventory, lowStockItems, lowStockTotal, isLoading, updateInventory, adjustStock, isUpdating, isAdjusting } =
-    useInventory();
+    useInventory({ limit: 1000 });
 
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
@@ -253,136 +247,131 @@ export default function AdminInventoryPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-xl border shadow-sm overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead className="min-w-[220px]">Product & Variant</TableHead>
-              <TableHead>SKU / Details</TableHead>
-              <TableHead className="text-center">Available</TableHead>
-              <TableHead className="text-center">Reserved</TableHead>
-              <TableHead className="text-center">Damaged</TableHead>
-              <TableHead className="text-center">Threshold</TableHead>
-              <TableHead>Warehouse</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center py-16">
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
-                </TableCell>
-              </TableRow>
-            ) : displayedItems.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center py-16 text-muted-foreground">
-                  {filter === 'low-stock' ? '✅ No low-stock items!' : 'No inventory records found.'}
-                </TableCell>
-              </TableRow>
-            ) : (
-              paginatedItems.map((item) => (
-                <TableRow
-                  key={item.id}
-                  className={item.isLowStock ? 'bg-rose-500/5 hover:bg-rose-500/10' : ''}
-                >
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-muted border overflow-hidden flex-shrink-0 flex items-center justify-center">
-                        {item.productImage ? (
-                          <img
-                            src={item.productImage}
-                            alt={item.productName || 'Product'}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <Package className="h-5 w-5 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-medium text-sm text-foreground truncate max-w-[200px]" title={item.productName || item.variantTitle || undefined}>
-                          {item.productName || item.variantTitle || 'Unnamed Product'}
-                        </span>
-                        <span className="text-xs text-muted-foreground font-mono truncate max-w-[160px]" title={item.variantId}>
-                          ID: {item.variantId.slice(-8)}
-                        </span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      {item.sku ? (
-                        <span className="font-mono text-xs font-semibold text-foreground">{item.sku}</span>
-                      ) : (
-                        <span className="text-xs italic text-muted-foreground">No SKU</span>
-                      )}
-                      <span className="text-xs text-muted-foreground">
-                        {[item.variantTitle, item.color, item.size].filter(Boolean).join(' • ') || 'Default Variant'}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center font-semibold">{item.availableStock}</TableCell>
-                  <TableCell className="text-center text-blue-600">{item.reservedStock}</TableCell>
-                  <TableCell className="text-center text-amber-600">{item.damagedStock}</TableCell>
-                  <TableCell className="text-center text-muted-foreground">{item.lowStockThreshold}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {item.warehouseLocation ? (
-                      <span className="flex items-center gap-1">
-                        <Warehouse className="h-3.5 w-3.5" />
-                        {item.warehouseLocation}
+      {/* List Layout */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16 border rounded-xl bg-card shadow-sm">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : displayedItems.length === 0 ? (
+        <div className="flex items-center justify-center py-16 border rounded-xl bg-card shadow-sm text-muted-foreground">
+          {filter === 'low-stock' ? '✅ No low-stock items!' : 'No inventory records found.'}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {paginatedItems.map((item) => (
+            <div
+              key={item.id}
+              className={`p-4 rounded-xl border bg-card flex flex-col md:flex-row items-start md:items-center gap-4 shadow-sm hover:shadow-md transition-shadow ${
+                item.isLowStock ? 'ring-1 ring-rose-500/50' : ''
+              }`}
+            >
+              {/* Product Info (Left) */}
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                <div className="h-14 w-14 rounded-md bg-muted border overflow-hidden flex-shrink-0 flex items-center justify-center">
+                  {item.productImage ? (
+                    <img
+                      src={item.productImage}
+                      alt={item.productName || 'Product'}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <Package className="h-6 w-6 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span
+                    className="font-semibold text-sm text-foreground truncate"
+                    title={item.productName || item.variantTitle || undefined}
+                  >
+                    {item.productName || item.variantTitle || 'Unnamed Product'}
+                  </span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {item.sku ? (
+                      <span className="font-mono text-xs text-muted-foreground border-r pr-2">
+                        {item.sku}
                       </span>
                     ) : (
-                      <span className="text-xs italic">Not set</span>
+                      <span className="text-xs italic text-muted-foreground border-r pr-2">No SKU</span>
                     )}
-                  </TableCell>
-                  <TableCell>
-                    {item.isLowStock ? (
-                      <Badge className="bg-rose-500/15 text-rose-600 border-rose-500/30 border">
-                        <AlertTriangle className="h-3 w-3 mr-1" />
-                        Low Stock
-                      </Badge>
-                    ) : (
-                      <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 border">
-                        In Stock
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setLogsItem(item)}
-                        title="View stock logs"
-                      >
-                        <ClipboardList className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleOpenAdjust(item)}
-                        title="Adjust stock"
-                      >
-                        <Sliders className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleOpenEdit(item)}
-                        title="Edit settings"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {[item.variantTitle, item.color, item.size].filter(Boolean).join(' • ') ||
+                        'Default'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-1">
+                    <span className="flex items-center gap-1" title="Warehouse Location">
+                      <Warehouse className="h-3 w-3" />
+                      {item.warehouseLocation || 'Not set'}
+                    </span>
+                    <span>•</span>
+                    <span title="Low Stock Threshold">
+                      Alert: <strong>{item.lowStockThreshold}</strong>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stock Numbers (Middle) */}
+              <div className="flex items-center gap-6 justify-between w-full md:w-auto px-4 py-2 md:py-0 md:px-6 bg-muted/20 md:bg-transparent rounded-lg">
+                <div className="text-center">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Available</p>
+                  <p className="font-bold text-emerald-600 text-base">{item.availableStock}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Reserved</p>
+                  <p className="font-bold text-blue-600 text-base">{item.reservedStock}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Damaged</p>
+                  <p className="font-bold text-amber-600 text-base">{item.damagedStock}</p>
+                </div>
+              </div>
+
+              {/* Actions & Status (Right) */}
+              <div className="flex items-center gap-4 justify-between w-full md:w-auto mt-2 md:mt-0">
+                {item.isLowStock ? (
+                  <Badge className="bg-rose-500/15 text-rose-600 border-rose-500/30 border">
+                    Low Stock
+                  </Badge>
+                ) : (
+                  <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 border">
+                    In Stock
+                  </Badge>
+                )}
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setLogsItem(item)}
+                    title="View Logs"
+                  >
+                    <ClipboardList className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => handleOpenAdjust(item)}
+                    title="Adjust Stock"
+                  >
+                    <Sliders className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => handleOpenEdit(item)}
+                    title="Edit Settings"
+                  >
+                    <Settings className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <Pagination
         currentPage={currentPage}
