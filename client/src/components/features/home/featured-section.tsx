@@ -123,27 +123,27 @@ export function FeaturedSection() {
   }
 
   return (
-    <section className="w-full py-16 bg-white overflow-hidden">
+    <section className="w-full py-8 sm:py-16 bg-white overflow-hidden">
       <div className="w-[98%] mx-auto max-w-[1500px]">
         {/* Header */}
-        <div className="relative flex items-center justify-center mb-8">
-          <h2 className="text-[20px] font-bold text-gray-900 tracking-wide uppercase text-center">
+        <div className="relative flex items-center justify-between sm:justify-center mb-5 sm:mb-8">
+          <h2 className="text-base sm:text-[20px] font-bold text-gray-900 tracking-wide uppercase">
             FEATURED
           </h2>
-          <div className="absolute right-0 flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={scrollLeft}
-              className="w-8 h-8 rounded-full bg-[#EFECE8] flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#EFECE8] flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
               aria-label="Scroll left"
             >
-              <ChevronLeft size={18} />
+              <ChevronLeft size={16} />
             </button>
             <button
               onClick={scrollRight}
-              className="w-8 h-8 rounded-full bg-[#EFECE8] flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#EFECE8] flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
               aria-label="Scroll right"
             >
-              <ChevronRight size={18} />
+              <ChevronRight size={16} />
             </button>
           </div>
         </div>
@@ -151,16 +151,16 @@ export function FeaturedSection() {
         {/* Products Scroll Container / Skeleton */}
         <div 
           ref={scrollContainerRef}
-          className="flex overflow-x-auto gap-4 md:gap-6 pb-4 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden animate-in fade-in duration-500"
+          className="flex overflow-x-auto gap-3 sm:gap-4 md:gap-6 pb-3 sm:pb-4 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden animate-in fade-in duration-500"
         >
           {isLoading ? (
             Array.from({ length: 4 }).map((_, idx) => (
-              <div key={idx} className="flex-shrink-0 w-[260px] md:w-[300px] lg:w-[calc(25%-18px)] snap-start">
+              <div key={idx} className="flex-shrink-0 w-[160px] sm:w-[220px] md:w-[280px] lg:w-[calc(25%-18px)] snap-start">
                 <SkeletonProductCard />
               </div>
             ))
           ) : featuredList.map((product) => (
-            <div key={product.id} className="flex-shrink-0 w-[260px] md:w-[300px] lg:w-[calc(25%-18px)] snap-start group">
+            <div key={product.id} className="flex-shrink-0 w-[160px] sm:w-[220px] md:w-[280px] lg:w-[calc(25%-18px)] snap-start group">
               <Link href={product.href} className="block">
                 {/* Image Container */}
                 <div className="relative aspect-[3/4] bg-[#F2F2F2] mb-3 overflow-hidden rounded-[2px]">
