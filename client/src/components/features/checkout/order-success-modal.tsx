@@ -54,7 +54,7 @@ export function OrderSuccessModal() {
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-3">
           <Link
-            href="/profile"
+            href="/profile/orders"
             onClick={() => resetCheckout()}
             className="flex-1 inline-flex items-center justify-center gap-2 bg-[#1A2E4C] hover:bg-[#132238] text-white font-bold text-xs py-3 px-4 rounded transition-colors shadow-sm"
           >
