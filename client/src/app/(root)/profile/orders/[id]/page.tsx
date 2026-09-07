@@ -52,6 +52,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const resolvedParams = use(params);
   const router = useRouter();
   const addItemToCart = useCartStore((state) => state.addItem);
+  const { config } = useStoreSettingsStore();
 
   const [order, setOrder] = useState<BackendOrder | null>(null);
   const [shipment, setShipment] = useState<BackendShipment | null>(null);
@@ -373,7 +374,6 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     );
   }
 
-  const { config } = useStoreSettingsStore();
   const returnWindowDays = config.returnWindowDays || 7;
   const returnsEnabled = config.returnsEnabled ?? true;
   const minEvidencePhotos = config.minEvidencePhotos || 3;
