@@ -96,7 +96,7 @@ export function HeroBanner() {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="w-full sm:w-[98%] max-w-[1500px] mx-auto">
-        <div className="relative overflow-hidden shadow-none sm:shadow-lg border-0 sm:border sm:border-gray-100 bg-gray-950 aspect-[4/5] sm:aspect-[1440/680] min-h-[460px] sm:min-h-[400px] md:min-h-[500px]">
+        <div className="relative overflow-hidden shadow-none sm:shadow-lg border-0 sm:border sm:border-gray-100 bg-gray-950 h-auto aspect-auto sm:aspect-[1440/680] sm:min-h-[400px] md:min-h-[500px]">
           {/* Sliding Track Container */}
           <div
             className={`flex w-full h-full ${
@@ -120,7 +120,7 @@ export function HeroBanner() {
                       <img
                         src={slide.imageUrl || '/images/hero-banner.png'}
                         alt={slide.title || 'YOX Collection'}
-                        className="w-full h-full object-cover object-center"
+                        className="w-full h-auto sm:h-full object-contain sm:object-cover object-center"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = '/images/hero-banner.png';
                         }}
