@@ -25,7 +25,7 @@ export function StyleSeekers() {
             slug: cat.slug,
             label: cat.name.toUpperCase(),
             image: cat.image || 'https://placehold.co/400x600?text=No+Image',
-            height: index % 2 === 0 ? 'h-[280px] sm:h-[450px]' : 'h-[187px] sm:h-[300px]',
+            height: index % 2 === 0 ? 'h-[225px] sm:h-[450px]' : 'h-[150px] sm:h-[300px]',
           }));
         
         setCategories(mapped);
@@ -134,7 +134,7 @@ export function StyleSeekers() {
           <Link
             key={`${category.id}-${index}`}
             href={`/shop?category=${category.slug}`}
-            className={`relative flex-shrink-0 w-[200px] sm:w-[240px] md:w-[280px] lg:w-[320px] ${category.height} group overflow-hidden bg-gray-100 cursor-pointer rounded-sm block`}
+            className={`relative flex-shrink-0 w-[160px] sm:w-[240px] md:w-[280px] lg:w-[320px] ${category.height} group overflow-hidden bg-gray-100 cursor-pointer rounded-sm block`}
           >
             {/* Image */}
             <Image
