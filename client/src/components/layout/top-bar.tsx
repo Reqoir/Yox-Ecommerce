@@ -25,7 +25,7 @@ export function TopBar() {
       )}
 
       {/* Main Announcement & Store Features Bar */}
-      <div className={`w-full ${config.announcementBgColor || 'bg-black'} text-white h-10 flex items-center justify-center transition-colors duration-300 border-b border-white/10`}>
+      <div className="w-full bg-black text-white h-10 flex items-center justify-center transition-colors duration-300 border-b border-white/10">
         <div className="w-[98%] max-w-[1500px] px-4 md:px-0 mx-auto flex items-center justify-between text-[11px] sm:text-xs">
           
           {/* Left: Free Shipping Badge */}
