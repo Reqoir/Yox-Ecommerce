@@ -13,7 +13,7 @@ import { calculateBestOffer } from '@/lib/offers';
 import { getColorHex } from '@/constants/products';
 import { optimizeCloudinaryUrl } from '@/lib/utils';
 
-const DEFAULT_TABS = ['ALL', 'SHIRTS', 'T-SHIRTS', 'JEANS', 'TROUSERS', 'SHOES'];
+const DEFAULT_TABS = ['ALL', 'SHIRTS', 'PANTS', 'T-SHIRT', 'JACKET', 'ACCESSORIES'];
 
 export function NewAndPopular() {
   const [activeTab, setActiveTab] = useState('ALL');
@@ -98,6 +98,8 @@ export function NewAndPopular() {
           id: p.id,
           name: p.name,
           category: catName,
+          categoryId: p.categoryId,
+          subCategoryId: p.subCategoryId,
           price: finalPrice,
           comparePrice: strikePrice,
           offerBadge: offerResult.hasOffer ? offerResult.badgeText : null,
@@ -113,24 +115,45 @@ export function NewAndPopular() {
         return mapped.slice(0, 15);
       }
 
-      // Filter by category name or product name matching activeTab
       const tabUpper = activeTab.toUpperCase();
+
+      // Find matching category and child subcategories
+      const currentCat = (dbCategories || []).find(
+        (c) => c.name.toUpperCase() === tabUpper || c.slug?.toUpperCase() === tabUpper
+      );
+
+      const targetCategoryIds = new Set<string>();
+      if (currentCat) {
+        targetCategoryIds.add(currentCat.id);
+        (dbCategories || [])
+          .filter((c) => c.parentCategoryId === currentCat.id)
+          .forEach((child) => targetCategoryIds.add(child.id));
+      }
+
       const filtered = mapped.filter((p: any) => {
-        const catUpper = p.category.toUpperCase();
-        const nameUpper = p.name.toUpperCase();
+        // 1. Direct or child category ID match
+        if (targetCategoryIds.size > 0) {
+          if (p.categoryId && targetCategoryIds.has(p.categoryId)) return true;
+          if (p.subCategoryId && targetCategoryIds.has(p.subCategoryId)) return true;
+        }
+
+        // 2. Name / category string fallback match
+        const catUpper = (p.category || '').toUpperCase();
+        const nameUpper = (p.name || '').toUpperCase();
         return (
           catUpper === tabUpper ||
           catUpper.includes(tabUpper) ||
           tabUpper.includes(catUpper) ||
-          nameUpper.includes(tabUpper.replace(/S$/, '')) // e.g., 'SHIRT' matches 'SHIRTS'
+          nameUpper.includes(tabUpper.replace(/S$/, ''))
         );
       });
 
-      return filtered.length > 0 ? filtered.slice(0, 15) : mapped.slice(0, 15);
+      // Do NOT fallback to all products when a category is empty
+      return filtered.slice(0, 15);
     }
 
     return [];
-  }, [dbProducts, activeTab, categoryMap, activeOffers]);
+  }, [dbProducts, activeTab, categoryMap, dbCategories, activeOffers]);
 
   return (
     <section className="w-full py-16 bg-white overflow-hidden">

@@ -4,16 +4,43 @@ import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { useProducts } from '@/hooks/admin/useProducts';
+import { useCategories } from '@/hooks/admin/useCategories';
 import { optimizeCloudinaryUrl } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface MegaMenuProps {
+  categoryId?: string;
   categorySlug: string;
   categoryName: string;
 }
 
-export function MegaMenuMen({ categorySlug, categoryName }: MegaMenuProps) {
-  const { products, isLoading } = useProducts();
+export function MegaMenuMen({ categoryId, categorySlug, categoryName }: MegaMenuProps) {
+  const { products, isLoading: isProductsLoading } = useProducts();
+  const { categories = [], isLoading: isCategoriesLoading } = useCategories();
+
+  const isLoading = isProductsLoading || isCategoriesLoading;
+
+  // Resolve active category and any child subcategories
+  const currentCategory = useMemo(() => {
+    return (categories || []).find((c) => 
+      (categoryId && c.id === categoryId) ||
+      (categorySlug && c.slug?.toLowerCase() === categorySlug.toLowerCase()) ||
+      c.name.toLowerCase() === categoryName.toLowerCase()
+    );
+  }, [categories, categoryId, categorySlug, categoryName]);
+
+  const targetCategoryIds = useMemo(() => {
+    const set = new Set<string>();
+    if (currentCategory) {
+      set.add(currentCategory.id);
+      (categories || [])
+        .filter((c) => c.parentCategoryId === currentCategory.id)
+        .forEach((child) => set.add(child.id));
+    } else if (categoryId) {
+      set.add(categoryId);
+    }
+    return set;
+  }, [currentCategory, categories, categoryId]);
 
   const categoryProducts = useMemo(() => {
     if (!products || products.length === 0) return [];
@@ -21,24 +48,35 @@ export function MegaMenuMen({ categorySlug, categoryName }: MegaMenuProps) {
     // Filter active products
     const active = products.filter((p: any) => p.isActive !== false);
 
-    // Try matching category slug or category name
-    const q = categoryName.toLowerCase();
+    const q = categoryName.toLowerCase().trim();
+    const slugLower = categorySlug.toLowerCase().trim();
+
     const matched = active.filter((p: any) => {
-      const catName = typeof p.categoryId === 'string' ? p.categoryId.toLowerCase() : '';
-      const tag = p.tag ? p.tag.toLowerCase() : '';
-      const name = p.name ? p.name.toLowerCase() : '';
+      // 1. Direct or child category ID match
+      if (targetCategoryIds.size > 0) {
+        if (p.categoryId && targetCategoryIds.has(p.categoryId)) return true;
+        if (p.subCategoryId && targetCategoryIds.has(p.subCategoryId)) return true;
+      }
+
+      // 2. Name / slug fallback match
+      const pCat = (p.category || '').toLowerCase();
+      const pSub = (p.subCategory || '').toLowerCase();
+      const pTag = (p.tag || '').toLowerCase();
+      const pName = (p.name || '').toLowerCase();
+
       return (
-        catName.includes(q) ||
-        q.includes(catName) ||
-        tag.includes(q) ||
-        name.includes(q)
+        pCat === q ||
+        pCat === slugLower ||
+        pSub === q ||
+        pSub === slugLower ||
+        (q && pName.includes(q)) ||
+        (q && pTag.includes(q))
       );
     });
 
-    // If matching products found, return max 5; otherwise fallback to top 5 active products
-    const list = matched.length > 0 ? matched : active;
-    return list.slice(0, 5);
-  }, [products, categorySlug, categoryName]);
+    // Return matched products (max 5); strictly DO NOT fallback to unrelated active products!
+    return matched.slice(0, 5);
+  }, [products, targetCategoryIds, categoryName, categorySlug]);
 
   return (
     <div className="w-full bg-white border-b border-gray-200 shadow-[0_12px_24px_rgba(0,0,0,0.08)] cursor-default py-5 z-50 animate-in fade-in-50 duration-150">
@@ -51,7 +89,7 @@ export function MegaMenuMen({ categorySlug, categoryName }: MegaMenuProps) {
               {categoryName} COLLECTION
             </span>
             <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest bg-gray-100 px-2 py-0.5 rounded-full">
-              {categoryProducts.length} STYLES
+              {categoryProducts.length} {categoryProducts.length === 1 ? 'STYLE' : 'STYLES'}
             </span>
           </div>
 
@@ -122,8 +160,8 @@ export function MegaMenuMen({ categorySlug, categoryName }: MegaMenuProps) {
             })}
           </div>
         ) : (
-          <div className="py-8 text-center text-xs text-gray-500">
-            No products available for {categoryName} currently.
+          <div className="py-12 text-center text-xs text-gray-400 font-medium">
+            No products available in {categoryName} currently.
           </div>
         )}
 

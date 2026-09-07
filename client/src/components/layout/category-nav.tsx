@@ -7,13 +7,16 @@ import { ChevronDown } from 'lucide-react';
 import { MegaMenuMen } from './mega-menu-men';
 import { categoryApi } from '@/api/admin/categories';
 
-const DEFAULT_NAV_CATEGORIES = [
-  { name: 'LINEN', slug: 'linen' },
-  { name: 'OXFORD', slug: 'oxford' },
-  { name: 'T-SHIRT', slug: 't-shirts' },
-  { name: 'JACKET', slug: 'jackets' },
+interface NavCategory {
+  id?: string;
+  name: string;
+  slug: string;
+}
+
+const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
+  { name: 'T-SHIRT', slug: 't-shirt' },
+  { name: 'JACKET', slug: 'jacket' },
   { name: 'ACCESSORIES', slug: 'accessories' },
-  { name: 'CASUAL SHIRTS', slug: 'casual-shirts' },
   { name: 'PANTS', slug: 'pants' },
   { name: 'SHIRTS', slug: 'shirts' },
 ];
@@ -23,7 +26,7 @@ function CategoryNavContent() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [categories, setCategories] = useState<{name: string, slug: string}[]>(DEFAULT_NAV_CATEGORIES);
+  const [categories, setCategories] = useState<NavCategory[]>(DEFAULT_NAV_CATEGORIES);
   const [isLoading, setIsLoading] = useState(true);
   const [hoveredCat, setHoveredCat] = useState<string | null>(null);
 
@@ -32,9 +35,11 @@ function CategoryNavContent() {
       try {
         const data = await categoryApi.getAll();
         if (data && data.length > 0) {
+          // Filter out inactive categories and subcategories (show ONLY main parent categories)
           const mapped = data
-            .filter(cat => cat.isActive)
-            .map(cat => ({ name: cat.name.toUpperCase(), slug: cat.slug }));
+            .filter(cat => cat.isActive && !cat.parentCategoryId)
+            .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+            .map(cat => ({ id: cat.id, name: cat.name.toUpperCase(), slug: cat.slug }));
           if (mapped.length > 0) {
             setCategories(mapped);
           }
@@ -92,7 +97,11 @@ function CategoryNavContent() {
           onMouseEnter={() => setHoveredCat(hoveredCat)}
           onMouseLeave={() => setHoveredCat(null)}
         >
-          <MegaMenuMen categorySlug={activeCategoryObj.slug} categoryName={activeCategoryObj.name} />
+          <MegaMenuMen 
+            categoryId={activeCategoryObj.id} 
+            categorySlug={activeCategoryObj.slug} 
+            categoryName={activeCategoryObj.name} 
+          />
         </div>
       )}
     </div>
