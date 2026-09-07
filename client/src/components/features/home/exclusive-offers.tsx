@@ -102,23 +102,38 @@ export function ExclusiveOffers() {
 
   if (isLoading) {
     return (
-      <section className="w-full bg-[#F1EFEA] py-16 border-t border-gray-200">
+      <section className="w-full bg-[#F1EFEA] py-16 border-t border-gray-200 animate-in fade-in duration-300">
         <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-0">
+          {/* Header Section Skeleton */}
           <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-6">
-            <Skeleton className="h-8 w-64 rounded" />
-            <div className="flex gap-4">
-              <Skeleton className="h-16 w-16 rounded-lg" />
-              <Skeleton className="h-16 w-16 rounded-lg" />
-              <Skeleton className="h-16 w-16 rounded-lg" />
-              <Skeleton className="h-16 w-16 rounded-lg" />
+            <div>
+              <Skeleton className="h-8 w-64 md:w-80 rounded bg-gray-300/60 mb-2" />
+              <Skeleton className="h-4 w-48 rounded bg-gray-300/60" />
+            </div>
+
+            {/* Countdown Timer Skeleton */}
+            <div className="flex items-center gap-2 md:gap-3">
+              <Skeleton className="w-12 h-12 md:w-16 md:h-16 rounded-[2px] bg-gray-300/60" />
+              <span className="text-gray-400 font-bold">:</span>
+              <Skeleton className="w-12 h-12 md:w-16 md:h-16 rounded-[2px] bg-gray-300/60" />
+              <span className="text-gray-400 font-bold">:</span>
+              <Skeleton className="w-12 h-12 md:w-16 md:h-16 rounded-[2px] bg-gray-300/60" />
+              <span className="text-gray-400 font-bold">:</span>
+              <Skeleton className="w-12 h-12 md:w-16 md:h-16 rounded-[2px] bg-gray-300/60" />
             </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+
+          {/* Offers Horizontal Cards Grid Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-12 gap-x-6">
             {Array.from({ length: 4 }).map((_, idx) => (
-              <div key={idx} className="flex flex-col gap-3">
-                <Skeleton className="w-full aspect-[3/4] rounded-md" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-1/4" />
+              <div key={idx} className="flex items-center">
+                <Skeleton className="w-[110px] md:w-[130px] shrink-0 aspect-[3/4] rounded-none bg-gray-300/60" />
+                <div className="flex flex-col justify-center pl-4 py-2 flex-1 gap-2">
+                  <Skeleton className="h-3 w-20 rounded bg-gray-300/60" />
+                  <Skeleton className="h-4 w-24 rounded bg-gray-300/60" />
+                  <Skeleton className="h-3 w-16 rounded bg-gray-300/60" />
+                  <Skeleton className="h-4 w-32 rounded bg-gray-300/60 mt-1" />
+                </div>
               </div>
             ))}
           </div>

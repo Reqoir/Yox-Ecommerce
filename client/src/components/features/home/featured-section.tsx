@@ -23,27 +23,27 @@ export function FeaturedSection() {
   const featuredList = useMemo(() => {
     if (dbProducts && dbProducts.length > 0) {
       // Filter active products
-      const active = dbProducts.filter((p) => p.isActive !== false);
+      const active = dbProducts.filter((p: any) => p.isActive !== false);
 
       // Prioritize products marked isFeatured === true or with tag FEATURED / BESTSELLER
       const featuredOnly = active.filter(
-        (p) => p.isFeatured || p.tag?.toUpperCase() === 'FEATURED' || p.tag?.toUpperCase() === 'BESTSELLER'
+        (p: any) => p.isFeatured || p.tag?.toUpperCase() === 'FEATURED' || p.tag?.toUpperCase() === 'BESTSELLER'
       );
 
       // If we have featured items, use them; if fewer than 4, append other active products
       const combined = [...featuredOnly];
-      active.forEach((p) => {
-        if (!combined.some((item) => item.id === p.id)) {
+      active.forEach((p: any) => {
+        if (!combined.some((item: any) => item.id === p.id)) {
           combined.push(p);
         }
       });
 
-      return combined.slice(0, 10).map((p) => {
+      return combined.slice(0, 10).map((p: any) => {
         const variants = p.variants || [];
-        const firstVariant = variants.find((v) => v.isDefault) || variants[0];
+        const firstVariant = variants.find((v: any) => v.isDefault) || variants[0];
         const validPrices = variants
-          .map((v) => v.price)
-          .filter((pr) => typeof pr === 'number' && pr > 0);
+          .map((v: any) => v.price)
+          .filter((pr: any) => typeof pr === 'number' && pr > 0);
         const minPrice = validPrices.length > 0 ? Math.min(...validPrices) : firstVariant?.price || 999;
         const comparePrice = firstVariant?.comparePrice || null;
 
@@ -70,7 +70,7 @@ export function FeaturedSection() {
         }
 
         const variantImages = (firstVariant?.images || []).filter(Boolean);
-        const allVariantImages = variants.flatMap((v) => v.images || []).filter(Boolean);
+        const allVariantImages = variants.flatMap((v: any) => v.images || []).filter(Boolean);
         const allImages = Array.from(
           new Set([
             ...variantImages,
@@ -81,7 +81,7 @@ export function FeaturedSection() {
         const image = allImages[0] ? optimizeCloudinaryUrl(allImages[0]) : '/images/product-1.jpeg';
         const secondImage = allImages[1] ? optimizeCloudinaryUrl(allImages[1]) : null;
 
-        const allColors = Array.from(new Set(variants.map(v => v.color).filter(Boolean))) as string[];
+        const allColors = Array.from(new Set(variants.map((v: any) => v.color).filter(Boolean))) as string[];
         if (firstVariant?.color && allColors.includes(firstVariant.color)) {
           allColors.sort((a, b) => a === firstVariant.color ? -1 : b === firstVariant.color ? 1 : 0);
         }

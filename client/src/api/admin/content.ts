@@ -16,6 +16,9 @@ export interface HeroBannerSlide {
   overlayOpacity?: number; // 0 - 100
   isActive: boolean;
   order: number;
+  categoryId?: string;
+  categorySlug?: string;
+  showTextOverlay?: boolean;
 }
 
 export interface HeroBannersConfig {

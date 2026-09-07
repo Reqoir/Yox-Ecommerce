@@ -29,6 +29,7 @@ import {
 import { offersApi, OfferProductItem } from '@/api/admin/offers';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { Pagination } from '@/components/ui/pagination';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { optimizeCloudinaryUrl } from '@/lib/utils';
 
@@ -143,12 +144,83 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
 
   if (isLoading) {
     return (
-      <div className="min-h-[75vh] flex flex-col items-center justify-center gap-4 bg-[#FAFAFA]">
-        <div className="w-12 h-12 rounded-full border-2 border-gray-200 border-t-[#0F172A] animate-spin" />
-        <p className="text-xs font-semibold uppercase tracking-widest text-gray-500">
-          Loading Exclusive Event...
-        </p>
-      </div>
+      <main className="w-full bg-[#FAFAFA] min-h-screen pb-24 text-gray-900 antialiased animate-in fade-in duration-300">
+        {/* Breadcrumb Skeleton */}
+        <nav className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto pt-4 pb-3 flex items-center justify-between">
+          <Skeleton className="w-48 sm:w-64 h-4 rounded-xs bg-gray-200" />
+          <Skeleton className="w-24 h-7 rounded-full bg-gray-200" />
+        </nav>
+
+        {/* Hero Showcase Skeleton */}
+        <section className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto mb-10 sm:mb-14">
+          <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-gray-900 min-h-[380px] sm:min-h-[460px] md:min-h-[500px] flex flex-col justify-end p-6 sm:p-10 md:p-14">
+            <div className="flex items-center gap-2.5 mb-4">
+              <Skeleton className="w-32 h-7 rounded-full bg-gray-800" />
+              <Skeleton className="w-28 h-7 rounded-full bg-gray-800" />
+            </div>
+            <Skeleton className="w-3/4 max-w-2xl h-10 sm:h-14 rounded-md bg-gray-800 mb-3" />
+            <Skeleton className="w-2/3 max-w-xl h-5 sm:h-6 rounded-xs bg-gray-800 mb-6" />
+
+            {/* Countdown Clock Skeleton */}
+            <div className="pt-6 border-t border-white/10 flex items-center gap-2 sm:gap-2.5">
+              <Skeleton className="w-[50px] sm:w-[62px] h-[54px] rounded-xl bg-gray-800" />
+              <span className="text-gray-700 font-bold text-lg">:</span>
+              <Skeleton className="w-[50px] sm:w-[62px] h-[54px] rounded-xl bg-gray-800" />
+              <span className="text-gray-700 font-bold text-lg">:</span>
+              <Skeleton className="w-[50px] sm:w-[62px] h-[54px] rounded-xl bg-gray-800" />
+              <span className="text-gray-700 font-bold text-lg">:</span>
+              <Skeleton className="w-[50px] sm:w-[62px] h-[54px] rounded-xl bg-gray-800" />
+            </div>
+          </div>
+        </section>
+
+        {/* Catalog Showcase Header & Controls Skeleton */}
+        <section className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between gap-4 pb-6 mb-6 border-b border-gray-200">
+            <div>
+              <Skeleton className="w-56 h-7 rounded-md bg-gray-200 mb-2" />
+              <Skeleton className="w-80 h-4 rounded-xs bg-gray-200" />
+            </div>
+            <div className="flex gap-3">
+              <Skeleton className="w-48 h-9 rounded-lg bg-gray-200" />
+              <Skeleton className="w-36 h-9 rounded-lg bg-gray-200" />
+            </div>
+          </div>
+
+          {/* Product Grid Skeleton */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-3.5 sm:gap-6 lg:gap-7">
+            {Array.from({ length: 10 }).map((_, idx) => (
+              <div key={idx} className="flex flex-col bg-white rounded-xl overflow-hidden border border-gray-150">
+                <Skeleton className="w-full aspect-[3/4] rounded-none bg-gray-100" />
+                <div className="p-3.5 sm:p-4 flex flex-col gap-2">
+                  <Skeleton className="w-5/6 h-4 rounded-xs bg-gray-200" />
+                  <Skeleton className="w-2/3 h-4 rounded-xs bg-gray-200 mb-2" />
+                  <div className="pt-2 border-t border-gray-100 flex justify-between items-end">
+                    <div>
+                      <Skeleton className="w-24 h-5 rounded-xs bg-gray-200 mb-1" />
+                      <Skeleton className="w-16 h-3 rounded-xs bg-gray-200" />
+                    </div>
+                    <Skeleton className="w-12 h-4 rounded-xs bg-gray-200" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Brand Guarantees Skeleton */}
+          <div className="mt-20 pt-10 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <div key={idx} className="flex items-start gap-3.5">
+                <Skeleton className="w-10 h-10 rounded-full bg-gray-200 shrink-0" />
+                <div className="flex flex-col gap-1.5">
+                  <Skeleton className="w-32 h-4 rounded-xs bg-gray-200" />
+                  <Skeleton className="w-44 h-3 rounded-xs bg-gray-200" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
     );
   }
 

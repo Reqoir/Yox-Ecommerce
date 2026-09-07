@@ -31,13 +31,10 @@ import {
 } from '@/api/admin/content';
 import { toast } from 'sonner';
 
-const PRESET_IMAGES = [
-  { label: 'Hero Banner 1', url: '/images/hero-banner.png' },
-  { label: 'Hero Banner New', url: '/images/hero-banner-new.jpeg' },
-  { label: 'Linen Collection', url: '/images/linen-banner.png' },
-];
+import { useCategories } from '@/hooks/admin/useCategories';
 
 export default function AdminContentPage() {
+  const { categories } = useCategories();
   const [config, setConfig] = useState<HeroBannersConfig>(DEFAULT_HERO_CONFIG);
   const [selectedSlideId, setSelectedSlideId] = useState<string>('default-hero-1');
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -352,124 +349,193 @@ export default function AdminContentPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
-                {/* Badge / Tag & Text Alignment */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="sm:col-span-2 space-y-1.5">
-                    <Label className="text-xs font-semibold">Badge / Eyebrow Tag</Label>
-                    <Input
-                      value={currentSlide.badgeText || ''}
-                      onChange={(e) => updateCurrentSlide('badgeText', e.target.value)}
-                      placeholder="e.g. NEW ARRIVALS, SUMMER 2026, EXCLUSIVE"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">Text Alignment</Label>
-                    <select
-                      value={currentSlide.textAlign || 'left'}
-                      onChange={(e) => updateCurrentSlide('textAlign', e.target.value)}
-                      className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-primary"
-                    >
-                      <option value="left">Left</option>
-                      <option value="center">Center</option>
-                      <option value="right">Right</option>
-                    </select>
-                  </div>
+                {/* Category Selection for Banner Route */}
+                <div className="space-y-1.5 pt-2 border-t">
+                  <Label className="text-xs font-semibold">Banner Category Link</Label>
+                  <select
+                    value={currentSlide.categorySlug || ''}
+                    onChange={(e) => {
+                      const selectedSlug = e.target.value;
+                      const matchedCat = categories?.find((c) => c.slug === selectedSlug || c.id === selectedSlug) as any;
+                      setConfig((prev) => ({
+                        ...prev,
+                        slides: prev.slides.map((s) =>
+                          s.id === currentSlide.id
+                            ? {
+                                ...s,
+                                categoryId: matchedCat?.id || matchedCat?._id || '',
+                                categorySlug: selectedSlug,
+                                buttonLink: selectedSlug ? `/shop?category=${selectedSlug}` : s.buttonLink,
+                              }
+                            : s
+                        ),
+                      }));
+                    }}
+                    className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="">-- No Category Link (Custom URL) --</option>
+                    {categories?.map((cat) => (
+                      <option key={cat.id || (cat as any)._id || cat.slug} value={cat.slug}>
+                        {cat.name} ({cat.slug})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-muted-foreground">
+                    Selecting a category will automatically route users to that category page when clicking the banner image.
+                  </p>
                 </div>
 
-                {/* Title / Headline */}
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">
-                    Banner Title / Headline <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    value={currentSlide.title}
-                    onChange={(e) => updateCurrentSlide('title', e.target.value)}
-                    placeholder="e.g. THE ART OF EFFORTLESS LUXURY"
-                    className="font-medium"
+                {/* Show Text Overlay Toggle */}
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="show-text-overlay" className="text-xs font-semibold">
+                      Show Text Overlay on Banner
+                    </Label>
+                    <p className="text-[11px] text-muted-foreground">
+                      Turn off to display clean graphics without title, subtitle, or buttons overlaid on top of the image.
+                    </p>
+                  </div>
+                  <Switch
+                    id="show-text-overlay"
+                    checked={currentSlide.showTextOverlay ?? false}
+                    onCheckedChange={(val) => updateCurrentSlide('showTextOverlay', val)}
                   />
                 </div>
 
-                {/* Subtitle / Description */}
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Subtitle / Description</Label>
-                  <Textarea
-                    value={currentSlide.subtitle || ''}
-                    onChange={(e) => updateCurrentSlide('subtitle', e.target.value)}
-                    placeholder="Provide a brief compelling description of the collection or offer..."
-                    rows={3}
-                    className="resize-none text-sm"
-                  />
-                </div>
+                {/* Text fields (Badge, Title, Subtitle, Buttons) - conditionally disabled/dimmed or shown */}
+                {currentSlide.showTextOverlay && (
+                  <div className="space-y-5 pt-2 border-t animate-in fade-in duration-200">
+                    {/* Badge / Tag & Text Alignment */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="sm:col-span-2 space-y-1.5">
+                        <Label className="text-xs font-semibold">Badge / Eyebrow Tag</Label>
+                        <Input
+                          value={currentSlide.badgeText || ''}
+                          onChange={(e) => updateCurrentSlide('badgeText', e.target.value)}
+                          placeholder="e.g. NEW ARRIVALS, SUMMER 2026, EXCLUSIVE"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold">Text Alignment</Label>
+                        <select
+                          value={currentSlide.textAlign || 'left'}
+                          onChange={(e) => updateCurrentSlide('textAlign', e.target.value)}
+                          className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-primary"
+                        >
+                          <option value="left">Left</option>
+                          <option value="center">Center</option>
+                          <option value="right">Right</option>
+                        </select>
+                      </div>
+                    </div>
 
-                {/* Button 1 (Primary) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">
-                      Primary Button Text <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      value={currentSlide.buttonText}
-                      onChange={(e) => updateCurrentSlide('buttonText', e.target.value)}
-                      placeholder="e.g. Shop Collection"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">
-                      Primary Button Link URL <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      value={currentSlide.buttonLink}
-                      onChange={(e) => updateCurrentSlide('buttonLink', e.target.value)}
-                      placeholder="e.g. /shop or /shop?category=linen"
-                    />
-                  </div>
-                </div>
+                    {/* Title / Headline */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">
+                        Banner Title / Headline <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        value={currentSlide.title}
+                        onChange={(e) => updateCurrentSlide('title', e.target.value)}
+                        placeholder="e.g. THE ART OF EFFORTLESS LUXURY"
+                        className="font-medium"
+                      />
+                    </div>
 
-                {/* Button 2 (Secondary, Optional) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">
-                      Secondary Button Text <span className="text-muted-foreground font-normal">(Optional)</span>
-                    </Label>
-                    <Input
-                      value={currentSlide.secondaryButtonText || ''}
-                      onChange={(e) => updateCurrentSlide('secondaryButtonText', e.target.value)}
-                      placeholder="e.g. Explore Offers"
-                    />
+                    {/* Subtitle / Description */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Subtitle / Description</Label>
+                      <Textarea
+                        value={currentSlide.subtitle || ''}
+                        onChange={(e) => updateCurrentSlide('subtitle', e.target.value)}
+                        placeholder="Provide a brief compelling description of the collection or offer..."
+                        rows={3}
+                        className="resize-none text-sm"
+                      />
+                    </div>
+
+                    {/* Button 1 (Primary) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold">
+                          Primary Button Text <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          value={currentSlide.buttonText}
+                          onChange={(e) => updateCurrentSlide('buttonText', e.target.value)}
+                          placeholder="e.g. Shop Collection"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold">
+                          Primary Button Link URL <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          value={currentSlide.buttonLink}
+                          onChange={(e) => updateCurrentSlide('buttonLink', e.target.value)}
+                          placeholder="e.g. /shop or /shop?category=linen"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Button 2 (Secondary, Optional) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold">
+                          Secondary Button Text <span className="text-muted-foreground font-normal">(Optional)</span>
+                        </Label>
+                        <Input
+                          value={currentSlide.secondaryButtonText || ''}
+                          onChange={(e) => updateCurrentSlide('secondaryButtonText', e.target.value)}
+                          placeholder="e.g. Explore Offers"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold">
+                          Secondary Button Link URL <span className="text-muted-foreground font-normal">(Optional)</span>
+                        </Label>
+                        <Input
+                          value={currentSlide.secondaryButtonLink || ''}
+                          onChange={(e) => updateCurrentSlide('secondaryButtonLink', e.target.value)}
+                          placeholder="e.g. /offers"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">
-                      Secondary Button Link URL <span className="text-muted-foreground font-normal">(Optional)</span>
-                    </Label>
-                    <Input
-                      value={currentSlide.secondaryButtonLink || ''}
-                      onChange={(e) => updateCurrentSlide('secondaryButtonLink', e.target.value)}
-                      placeholder="e.g. /offers"
-                    />
-                  </div>
-                </div>
+                )}
 
                 {/* Banner Image Selection & Upload */}
                 <div className="space-y-3 pt-2 border-t">
                   <Label className="text-xs font-semibold">Banner Background Image</Label>
 
-                  {/* Image URL Input + File Uploader */}
-                  <div className="flex flex-col sm:flex-row items-center gap-3">
-                    <div className="relative flex-1 w-full">
-                      <Input
-                        value={currentSlide.imageUrl}
-                        onChange={(e) => updateCurrentSlide('imageUrl', e.target.value)}
-                        placeholder="Image URL (e.g. /images/hero-banner.png or https://...)"
-                        className="text-xs"
-                      />
+                  {/* Clean Image Card Preview & Uploader (Hides raw Cloudinary URL) */}
+                  <div className="flex items-center gap-4 p-3 border rounded-lg bg-card">
+                    <div className="relative w-24 h-16 rounded overflow-hidden bg-muted border flex items-center justify-center shrink-0">
+                      {currentSlide.imageUrl ? (
+                        <img
+                          src={currentSlide.imageUrl}
+                          alt="Banner Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                      )}
                     </div>
-                    <label className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 border rounded-md bg-secondary text-secondary-foreground text-xs font-medium cursor-pointer hover:bg-secondary/80 transition-colors shrink-0">
+                    <div className="flex-1 space-y-1">
+                      <p className="text-xs font-medium text-foreground">
+                        {currentSlide.imageUrl ? 'Image Attached' : 'No Image Uploaded'}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Upload banner image graphic (recommended aspect ratio 16:9 or 21:9).
+                      </p>
+                    </div>
+                    <label className="inline-flex items-center justify-center gap-2 px-3 py-1.5 border rounded-md bg-secondary text-secondary-foreground text-xs font-medium cursor-pointer hover:bg-secondary/80 transition-colors shrink-0">
                       {isUploading ? (
                         <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-secondary-foreground border-t-transparent" />
                       ) : (
                         <Upload className="h-3.5 w-3.5" />
                       )}
-                      <span>{isUploading ? 'Uploading...' : 'Upload Image'}</span>
+                      <span>{isUploading ? 'Uploading...' : 'Change Image'}</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -479,67 +545,48 @@ export default function AdminContentPage() {
                       />
                     </label>
                   </div>
-
-                  {/* Quick Preset Badges */}
-                  <div className="flex items-center gap-2 pt-1">
-                    <span className="text-[11px] text-muted-foreground">Quick Presets:</span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {PRESET_IMAGES.map((preset) => (
-                        <button
-                          key={preset.url}
-                          type="button"
-                          onClick={() => updateCurrentSlide('imageUrl', preset.url)}
-                          className={`text-[11px] px-2 py-0.5 rounded border transition-colors ${
-                            currentSlide.imageUrl === preset.url
-                              ? 'border-primary bg-primary/10 text-primary font-medium'
-                              : 'border-border text-muted-foreground hover:bg-muted'
-                          }`}
-                        >
-                          {preset.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
                 </div>
 
                 {/* Visual Overlay & Contrast Control */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs font-semibold">Overlay Darkness</Label>
-                      <span className="text-xs text-muted-foreground font-mono">
-                        {currentSlide.overlayOpacity ?? 45}%
-                      </span>
+                {currentSlide.showTextOverlay && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-semibold">Overlay Darkness</Label>
+                        <span className="text-xs text-muted-foreground font-mono">
+                          {currentSlide.overlayOpacity ?? 45}%
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        value={currentSlide.overlayOpacity ?? 45}
+                        onChange={(e) => updateCurrentSlide('overlayOpacity', Number(e.target.value))}
+                        min={0}
+                        max={90}
+                        step={5}
+                        className="w-full accent-primary h-2 bg-muted rounded-lg cursor-pointer"
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        Increases darkness to ensure white text stays crisp and readable over bright images.
+                      </p>
                     </div>
-                    <input
-                      type="range"
-                      value={currentSlide.overlayOpacity ?? 45}
-                      onChange={(e) => updateCurrentSlide('overlayOpacity', Number(e.target.value))}
-                      min={0}
-                      max={90}
-                      step={5}
-                      className="w-full accent-primary h-2 bg-muted rounded-lg cursor-pointer"
-                    />
-                    <p className="text-[11px] text-muted-foreground">
-                      Increases darkness to ensure white text stays crisp and readable over bright images.
-                    </p>
-                  </div>
 
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">Color Scheme Theme</Label>
-                    <select
-                      value={currentSlide.theme || 'dark'}
-                      onChange={(e) => updateCurrentSlide('theme', e.target.value)}
-                      className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-primary"
-                    >
-                      <option value="dark">Dark Overlay (Crisp White Text)</option>
-                      <option value="light">Light Overlay (Contrast Dark Text)</option>
-                    </select>
-                    <p className="text-[11px] text-muted-foreground">
-                      Choose dark overlay for fashion photography with prominent white headings.
-                    </p>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Color Scheme Theme</Label>
+                      <select
+                        value={currentSlide.theme || 'dark'}
+                        onChange={(e) => updateCurrentSlide('theme', e.target.value)}
+                        className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-primary"
+                      >
+                        <option value="dark">Dark Overlay (Crisp White Text)</option>
+                        <option value="light">Light Overlay (Contrast Dark Text)</option>
+                      </select>
+                      <p className="text-[11px] text-muted-foreground">
+                        Choose dark overlay for fashion photography with prominent white headings.
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -597,7 +644,7 @@ export default function AdminContentPage() {
                   }`}
                 >
                   {/* Banner Card Simulation */}
-                  <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] min-h-[260px] rounded-xl overflow-hidden shadow-md bg-gray-950 flex flex-col justify-center">
+                  <div className="relative w-full aspect-[1440/680] min-h-[240px] overflow-hidden shadow-md bg-gray-950 flex flex-col justify-center">
                     {/* Background Image */}
                     {currentSlide?.imageUrl ? (
                       <img
@@ -613,62 +660,66 @@ export default function AdminContentPage() {
                     )}
 
                     {/* Dynamic Gradient Overlay */}
-                    <div
-                      className={`absolute inset-0 transition-opacity duration-300 ${
-                        currentSlide?.theme === 'light'
-                          ? 'bg-gradient-to-r from-white via-white/80 to-transparent'
-                          : 'bg-gradient-to-r from-black via-black/60 to-transparent'
-                      }`}
-                      style={{
-                        opacity: (currentSlide?.overlayOpacity ?? 45) / 100,
-                      }}
-                    />
+                    {currentSlide?.showTextOverlay && (
+                      <div
+                        className={`absolute inset-0 transition-opacity duration-300 ${
+                          currentSlide?.theme === 'light'
+                            ? 'bg-gradient-to-r from-white via-white/80 to-transparent'
+                            : 'bg-gradient-to-r from-black via-black/60 to-transparent'
+                        }`}
+                        style={{
+                          opacity: (currentSlide?.overlayOpacity ?? 45) / 100,
+                        }}
+                      />
+                    )}
 
                     {/* Content Container */}
-                    <div
-                      className={`relative z-10 p-6 sm:p-8 flex flex-col ${
-                        currentSlide?.textAlign === 'center'
-                          ? 'items-center text-center'
-                          : currentSlide?.textAlign === 'right'
-                          ? 'items-end text-right'
-                          : 'items-start text-left'
-                      } ${currentSlide?.theme === 'light' ? 'text-gray-900' : 'text-white'}`}
-                    >
-                      {/* Badge */}
-                      {currentSlide?.badgeText && (
-                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-white/20 backdrop-blur-md border border-white/30 text-white mb-2 shadow-xs">
-                          <Sparkles className="h-3 w-3 text-amber-300" />
-                          <span>{currentSlide.badgeText}</span>
+                    {currentSlide?.showTextOverlay && (
+                      <div
+                        className={`relative z-10 p-6 sm:p-8 flex flex-col ${
+                          currentSlide?.textAlign === 'center'
+                            ? 'items-center text-center'
+                            : currentSlide?.textAlign === 'right'
+                            ? 'items-end text-right'
+                            : 'items-start text-left'
+                        } ${currentSlide?.theme === 'light' ? 'text-gray-900' : 'text-white'}`}
+                      >
+                        {/* Badge */}
+                        {currentSlide?.badgeText && (
+                          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-white/20 backdrop-blur-md border border-white/30 text-white mb-2 shadow-xs">
+                            <Sparkles className="h-3 w-3 text-amber-300" />
+                            <span>{currentSlide.badgeText}</span>
+                          </div>
+                        )}
+
+                        {/* Title */}
+                        <h2 className="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-tight leading-tight drop-shadow-md max-w-md">
+                          {currentSlide?.title || 'Your Banner Title'}
+                        </h2>
+
+                        {/* Subtitle */}
+                        {currentSlide?.subtitle && (
+                          <p className="text-xs sm:text-sm mt-1.5 opacity-90 line-clamp-3 max-w-sm drop-shadow-xs font-normal">
+                            {currentSlide.subtitle}
+                          </p>
+                        )}
+
+                        {/* Action Buttons */}
+                        <div className="flex flex-wrap items-center gap-2 mt-4">
+                          {currentSlide?.buttonText && (
+                            <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-white text-gray-950 text-xs font-bold shadow-md hover:bg-gray-100 transition-transform">
+                              <span>{currentSlide.buttonText}</span>
+                              <ArrowRight className="h-3.5 w-3.5" />
+                            </div>
+                          )}
+                          {currentSlide?.secondaryButtonText && (
+                            <div className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-black/40 backdrop-blur-md border border-white/30 text-white text-xs font-semibold hover:bg-black/60 transition-colors">
+                              <span>{currentSlide.secondaryButtonText}</span>
+                            </div>
+                          )}
                         </div>
-                      )}
-
-                      {/* Title */}
-                      <h2 className="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-tight leading-tight drop-shadow-md max-w-md">
-                        {currentSlide?.title || 'Your Banner Title'}
-                      </h2>
-
-                      {/* Subtitle */}
-                      {currentSlide?.subtitle && (
-                        <p className="text-xs sm:text-sm mt-1.5 opacity-90 line-clamp-3 max-w-sm drop-shadow-xs font-normal">
-                          {currentSlide.subtitle}
-                        </p>
-                      )}
-
-                      {/* Action Buttons */}
-                      <div className="flex flex-wrap items-center gap-2 mt-4">
-                        {currentSlide?.buttonText && (
-                          <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-white text-gray-950 text-xs font-bold shadow-md hover:bg-gray-100 transition-transform">
-                            <span>{currentSlide.buttonText}</span>
-                            <ArrowRight className="h-3.5 w-3.5" />
-                          </div>
-                        )}
-                        {currentSlide?.secondaryButtonText && (
-                          <div className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-black/40 backdrop-blur-md border border-white/30 text-white text-xs font-semibold hover:bg-black/60 transition-colors">
-                            <span>{currentSlide.secondaryButtonText}</span>
-                          </div>
-                        )}
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
 
@@ -689,3 +740,4 @@ export default function AdminContentPage() {
     </div>
   );
 }
+

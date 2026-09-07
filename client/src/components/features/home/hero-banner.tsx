@@ -13,6 +13,7 @@ import {
 export function HeroBanner() {
   const [config, setConfig] = useState<HeroBannersConfig>(DEFAULT_HERO_CONFIG);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [isTransitioning, setIsTransitioning] = useState<boolean>(true);
   const [isHovered, setIsHovered] = useState<boolean>(false);
 
   useEffect(() => {
@@ -39,144 +40,171 @@ export function HeroBanner() {
   const slidesToRender: HeroBannerSlide[] =
     activeSlides.length > 0 ? activeSlides : [DEFAULT_HERO_CONFIG.slides[0]];
 
-  // Autoplay carousel timer
-  useEffect(() => {
-    if (!config.autoPlay || slidesToRender.length <= 1 || isHovered) return;
+  // Build extended slides array (append duplicate of 1st slide at end for infinite loop)
+  const displaySlides =
+    slidesToRender.length > 1
+      ? [...slidesToRender, { ...slidesToRender[0], id: `${slidesToRender[0].id}-clone` }]
+      : slidesToRender;
 
-    const intervalSeconds = (config.autoPlayInterval || 6) * 1000;
+  // Autoplay sliding carousel timer (always right-to-left)
+  useEffect(() => {
+    if (slidesToRender.length <= 1) return;
+
+    const intervalSeconds = (config.autoPlayInterval || 4) * 1000;
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % slidesToRender.length);
+      setIsTransitioning(true);
+      setCurrentIndex((prev) => prev + 1);
     }, intervalSeconds);
 
     return () => clearInterval(timer);
-  }, [config.autoPlay, config.autoPlayInterval, slidesToRender.length, isHovered]);
+  }, [config.autoPlayInterval, slidesToRender.length]);
 
-  // Ensure currentIndex stays within bounds if slides change
-  const current = slidesToRender[currentIndex] || slidesToRender[0];
+  // Handle transition end for seamless instant wrap (clone -> index 0)
+  const handleTransitionEnd = () => {
+    if (currentIndex >= slidesToRender.length) {
+      setIsTransitioning(false);
+      setCurrentIndex(0);
+    }
+  };
 
   const handlePrev = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setCurrentIndex((prev) => (prev - 1 + slidesToRender.length) % slidesToRender.length);
+    setIsTransitioning(true);
+    if (currentIndex === 0) {
+      setIsTransitioning(false);
+      setCurrentIndex(slidesToRender.length - 1);
+    } else {
+      setCurrentIndex((prev) => prev - 1);
+    }
   };
 
   const handleNext = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setCurrentIndex((prev) => (prev + 1) % slidesToRender.length);
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => prev + 1);
   };
 
-  const isLight = current.theme === 'light';
-  const overlayOpacity = (current.overlayOpacity ?? 45) / 100;
+  const activeIndex = currentIndex % slidesToRender.length;
+  const current = slidesToRender[activeIndex] || slidesToRender[0];
 
   return (
     <section
-      className="w-full relative py-2 sm:py-4 overflow-hidden"
+      className="w-full relative py-2 sm:py-4 overflow-hidden flex justify-center items-center"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="w-[98%] max-w-[1500px] mx-auto">
-        <div className="relative rounded-2xl overflow-hidden shadow-lg border border-gray-100 bg-gray-950 aspect-[16/9] sm:aspect-[21/9] md:aspect-[24/9] min-h-[300px] sm:min-h-[360px] md:min-h-[440px] max-h-[520px]">
-          {/* Background Images with smooth fade transition */}
-          {slidesToRender.map((slide, idx) => (
-            <div
-              key={slide.id}
-              className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                idx === currentIndex ? 'opacity-100 z-0' : 'opacity-0 pointer-events-none'
-              }`}
-            >
-              <img
-                src={slide.imageUrl || '/images/hero-banner.png'}
-                alt={slide.title || 'YOX Collection'}
-                className="w-full h-full object-cover object-center transform scale-100 transition-transform duration-1000"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/images/hero-banner.png';
-                }}
-              />
-            </div>
-          ))}
-
-          {/* Dynamic Gradient Overlay */}
+        <div className="relative overflow-hidden shadow-lg border border-gray-100 bg-gray-950 aspect-[1440/680] min-h-[300px] sm:min-h-[400px] md:min-h-[500px]">
+          {/* Sliding Track Container */}
           <div
-            className={`absolute inset-0 z-10 transition-all duration-500 ${
-              isLight
-                ? 'bg-gradient-to-t sm:bg-gradient-to-r from-white via-white/80 to-transparent'
-                : 'bg-gradient-to-t sm:bg-gradient-to-r from-black/90 via-black/60 to-transparent'
+            className={`flex w-full h-full ${
+              isTransitioning ? 'transition-transform duration-1000 ease-in-out' : ''
             }`}
-            style={{ opacity: overlayOpacity }}
-          />
-
-          {/* Content Layer */}
-          <div
-            className={`absolute inset-0 z-20 flex flex-col justify-center px-6 sm:px-12 md:px-16 ${
-              current.textAlign === 'center'
-                ? 'items-center text-center'
-                : current.textAlign === 'right'
-                  ? 'items-end text-right'
-                  : 'items-start text-left'
-            } ${isLight ? 'text-gray-950' : 'text-white'}`}
+            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+            onTransitionEnd={handleTransitionEnd}
           >
-            {/* Badge / Tag */}
-            {current.badgeText && (
-              <div className="flex items-center gap-1.5 mb-2.5 sm:mb-3">
-                <span
-                  className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-xs ${
-                    isLight
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-white/20 backdrop-blur-md text-white border border-white/30'
-                  }`}
-                >
-                  <Sparkles size={12} className="text-amber-300" />
-                  {current.badgeText}
-                </span>
-              </div>
-            )}
+            {displaySlides.map((slide, idx) => {
+              const linkHref = slide.buttonLink || (slide.categorySlug ? `/shop?category=${slide.categorySlug}` : '/shop');
+              const slideIsLight = slide.theme === 'light';
+              const slideOverlayOpacity = (slide.overlayOpacity ?? 45) / 100;
 
-            {/* Headline / Title */}
-            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-none drop-shadow-md max-w-2xl">
-              {current.title}
-            </h1>
+              return (
+                <div key={`${slide.id}-${idx}`} className="relative w-full h-full shrink-0 overflow-hidden">
+                  <Link href={linkHref} className="block w-full h-full cursor-pointer relative">
+                    <img
+                      src={slide.imageUrl || '/images/hero-banner.png'}
+                      alt={slide.title || 'YOX Collection'}
+                      className="w-full h-full object-cover object-center"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/images/hero-banner.png';
+                      }}
+                    />
 
-            {/* Subtitle / Description */}
-            {current.subtitle && (
-              <p
-                className={`text-xs sm:text-base md:text-lg mt-2.5 sm:mt-3.5 max-w-xl font-normal leading-relaxed line-clamp-2 sm:line-clamp-3 drop-shadow-sm ${
-                  isLight ? 'text-gray-700' : 'text-gray-200'
-                }`}
-              >
-                {current.subtitle}
-              </p>
-            )}
+                    {/* Render Text Overlay per slide inside track */}
+                    {slide.showTextOverlay && (
+                      <>
+                        <div
+                          className={`absolute inset-0 z-10 pointer-events-none ${
+                            slideIsLight
+                              ? 'bg-gradient-to-t sm:bg-gradient-to-r from-white via-white/80 to-transparent'
+                              : 'bg-gradient-to-t sm:bg-gradient-to-r from-black/90 via-black/60 to-transparent'
+                          }`}
+                          style={{ opacity: slideOverlayOpacity }}
+                        />
 
-            {/* Call to Action Buttons */}
-            <div className="flex flex-wrap items-center gap-3 mt-5 sm:mt-7">
-              {current.buttonText && current.buttonLink && (
-                <Link
-                  href={current.buttonLink}
-                  className={`inline-flex items-center gap-2 font-bold text-xs sm:text-sm px-6 py-3 rounded-md shadow-lg transition-all transform hover:scale-105 active:scale-95 cursor-pointer ${
-                    isLight
-                      ? 'bg-gray-950 text-white hover:bg-gray-800'
-                      : 'bg-white text-gray-950 hover:bg-gray-100'
-                  }`}
-                >
-                  <span>{current.buttonText}</span>
-                  <ArrowRight size={15} />
-                </Link>
-              )}
+                        <div
+                          className={`absolute inset-0 z-20 flex flex-col justify-center px-6 sm:px-12 md:px-16 pointer-events-none ${
+                            slide.textAlign === 'center'
+                              ? 'items-center text-center'
+                              : slide.textAlign === 'right'
+                              ? 'items-end text-right'
+                              : 'items-start text-left'
+                          } ${slideIsLight ? 'text-gray-950' : 'text-white'}`}
+                        >
+                          {slide.badgeText && (
+                            <div className="flex items-center gap-1.5 mb-2.5 sm:mb-3">
+                              <span
+                                className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-xs ${
+                                  slideIsLight
+                                    ? 'bg-gray-900 text-white'
+                                    : 'bg-white/20 backdrop-blur-md text-white border border-white/30'
+                                }`}
+                              >
+                                <Sparkles size={12} className="text-amber-300" />
+                                {slide.badgeText}
+                              </span>
+                            </div>
+                          )}
 
-              {current.secondaryButtonText && current.secondaryButtonLink && (
-                <Link
-                  href={current.secondaryButtonLink}
-                  className={`inline-flex items-center gap-2 font-semibold text-xs sm:text-sm px-5 py-3 rounded-md backdrop-blur-md transition-all border ${
-                    isLight
-                      ? 'border-gray-400 bg-white/70 text-gray-900 hover:bg-white'
-                      : 'border-white/30 bg-black/40 text-white hover:bg-black/60'
-                  }`}
-                >
-                  <span>{current.secondaryButtonText}</span>
-                </Link>
-              )}
-            </div>
+                          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-none drop-shadow-md max-w-2xl">
+                            {slide.title}
+                          </h1>
+
+                          {slide.subtitle && (
+                            <p
+                              className={`text-xs sm:text-base md:text-lg mt-2.5 sm:mt-3.5 max-w-xl font-normal leading-relaxed line-clamp-2 sm:line-clamp-3 drop-shadow-sm ${
+                                slideIsLight ? 'text-gray-700' : 'text-gray-200'
+                              }`}
+                            >
+                              {slide.subtitle}
+                            </p>
+                          )}
+
+                          <div className="flex flex-wrap items-center gap-3 mt-5 sm:mt-7 pointer-events-auto">
+                            {slide.buttonText && slide.buttonLink && (
+                              <span
+                                className={`inline-flex items-center gap-2 font-bold text-xs sm:text-sm px-6 py-3 rounded-md shadow-lg transition-all ${
+                                  slideIsLight
+                                    ? 'bg-gray-950 text-white'
+                                    : 'bg-white text-gray-950'
+                                }`}
+                              >
+                                <span>{slide.buttonText}</span>
+                                <ArrowRight size={15} />
+                              </span>
+                            )}
+
+                            {slide.secondaryButtonText && slide.secondaryButtonLink && (
+                              <span
+                                className={`inline-flex items-center gap-2 font-semibold text-xs sm:text-sm px-5 py-3 rounded-md backdrop-blur-md border ${
+                                  slideIsLight
+                                    ? 'border-gray-400 bg-white/70 text-gray-900'
+                                    : 'border-white/30 bg-black/40 text-white'
+                                }`}
+                              >
+                                <span>{slide.secondaryButtonText}</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </Link>
+                </div>
+              );
+            })}
           </div>
 
           {/* Carousel Arrows (Only when > 1 slide) */}
@@ -202,11 +230,18 @@ export function HeroBanner() {
                 {slidesToRender.map((_, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setCurrentIndex(idx)}
+                    onClick={() => {
+                      setIsTransitioning(true);
+                      setCurrentIndex(idx);
+                    }}
                     className={`h-2 rounded-full transition-all cursor-pointer ${
+<<<<<<< HEAD
                       currentIndex === idx
                         ? 'w-7 bg-white shadow-md'
                         : 'w-2 bg-white/40 hover:bg-white/70'
+=======
+                      activeIndex === idx ? 'w-7 bg-white shadow-md' : 'w-2 bg-white/40 hover:bg-white/70'
+>>>>>>> 5043a5e (feat: enhance hero banner slide content, category routing, clean graphics, slow right-to-left infinite slider, and UI layout spacing)
                     }`}
                     aria-label={`Slide ${idx + 1}`}
                   />

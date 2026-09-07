@@ -7,12 +7,23 @@ import { ChevronDown } from 'lucide-react';
 import { MegaMenuMen } from './mega-menu-men';
 import { categoryApi } from '@/api/admin/categories';
 
+const DEFAULT_NAV_CATEGORIES = [
+  { name: 'LINEN', slug: 'linen' },
+  { name: 'OXFORD', slug: 'oxford' },
+  { name: 'T-SHIRT', slug: 't-shirts' },
+  { name: 'JACKET', slug: 'jackets' },
+  { name: 'ACCESSORIES', slug: 'accessories' },
+  { name: 'CASUAL SHIRTS', slug: 'casual-shirts' },
+  { name: 'PANTS', slug: 'pants' },
+  { name: 'SHIRTS', slug: 'shirts' },
+];
+
 function CategoryNavContent() {
   const { setCategory } = useProductFilters();
   const router = useRouter();
   const pathname = usePathname();
 
-  const [categories, setCategories] = useState<{name: string, slug: string}[]>([]);
+  const [categories, setCategories] = useState<{name: string, slug: string}[]>(DEFAULT_NAV_CATEGORIES);
   const [isLoading, setIsLoading] = useState(true);
   const [hoveredCat, setHoveredCat] = useState<string | null>(null);
 
@@ -20,10 +31,14 @@ function CategoryNavContent() {
     const fetchCategories = async () => {
       try {
         const data = await categoryApi.getAll();
-        const mapped = data
-          .filter(cat => cat.isActive)
-          .map(cat => ({ name: cat.name, slug: cat.slug }));
-        setCategories(mapped);
+        if (data && data.length > 0) {
+          const mapped = data
+            .filter(cat => cat.isActive)
+            .map(cat => ({ name: cat.name.toUpperCase(), slug: cat.slug }));
+          if (mapped.length > 0) {
+            setCategories(mapped);
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch categories', error);
       } finally {
@@ -45,38 +60,41 @@ function CategoryNavContent() {
     return null;
   }
 
-  if (isLoading || categories.length === 0) {
-    return (
-      <div className="hidden lg:block w-full h-[45px] border-b border-gray-100 bg-white sticky top-20 z-30 shadow-[0_2px_4px_rgba(0,0,0,0.02)]" />
-    );
-  }
+  const activeCategoryObj = categories.find(c => c.slug === hoveredCat);
 
   return (
-    <div className="hidden lg:flex w-full border-b border-gray-100 bg-white sticky top-20 z-30 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
-      <div className="w-[95%] max-w-7xl mx-auto flex items-center justify-center gap-10 text-[13px] font-bold text-gray-800">
+    <div 
+      className="hidden lg:flex w-full border-b border-gray-100 bg-white sticky top-20 z-30 shadow-[0_2px_4px_rgba(0,0,0,0.02)] relative"
+      onMouseLeave={() => setHoveredCat(null)}
+    >
+      <div className="w-[95%] max-w-7xl mx-auto flex items-center justify-center gap-7 lg:gap-9 text-[12px] font-medium text-gray-700 uppercase tracking-wider">
         {categories.map((cat) => (
           <div 
             key={cat.slug} 
             className="flex items-center h-full"
             onMouseEnter={() => setHoveredCat(cat.slug)}
-            onMouseLeave={() => setHoveredCat(null)}
           >
             <button
               onClick={() => handleCategoryClick(cat.slug)}
-              className="flex items-center gap-1 cursor-pointer hover:text-[#D2925D] transition-colors whitespace-nowrap py-4"
+              className="flex items-center gap-1 cursor-pointer hover:text-black transition-colors whitespace-nowrap py-3.5 font-medium uppercase tracking-wider text-[12px]"
             >
-              {cat.name}
-              <ChevronDown size={14} className={`transition-transform ${hoveredCat === cat.slug ? 'rotate-180 text-[#D2925D]' : 'text-gray-500'}`} />
+              {cat.name.toUpperCase()}
+              <ChevronDown size={13} className={`transition-transform duration-200 ${hoveredCat === cat.slug ? 'rotate-180 text-black' : 'text-gray-400'}`} />
             </button>
-            {/* Mega Menu Dropdown */}
-            {hoveredCat === cat.slug && (
-              <div className="absolute top-full left-0 right-0">
-                <MegaMenuMen />
-              </div>
-            )}
           </div>
         ))}
       </div>
+
+      {/* Centered Mega Menu Dropdown always positioned strictly in the center */}
+      {hoveredCat && activeCategoryObj && (
+        <div 
+          className="absolute top-full left-1/2 -translate-x-1/2 w-[90vw] max-w-[1250px] z-50 pt-1"
+          onMouseEnter={() => setHoveredCat(hoveredCat)}
+          onMouseLeave={() => setHoveredCat(null)}
+        >
+          <MegaMenuMen categorySlug={activeCategoryObj.slug} categoryName={activeCategoryObj.name} />
+        </div>
+      )}
     </div>
   );
 }

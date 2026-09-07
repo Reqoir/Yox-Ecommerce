@@ -57,17 +57,17 @@ export function useProductFilters() {
     if (dbProducts && dbProducts.length > 0) {
       const expanded: Product[] = [];
 
-      dbProducts.forEach((p, idx) => {
+      dbProducts.forEach((p: any, idx: number) => {
         const variants = p.variants || [];
         const catName = p.categoryId ? categoryMap.get(p.categoryId) || p.categoryId : 'Apparel';
         const subCatName = p.subCategoryId ? categoryMap.get(p.subCategoryId) || p.subCategoryId : undefined;
         const brandName = p.brandId ? brandMap.get(p.brandId) || (p as any).brand || (p as any).brandName : (p as any).brand || undefined;
-        const allProductColors = Array.from(new Set(variants.map(v => v.color).filter(Boolean)));
+        const allProductColors: string[] = Array.from(new Set(variants.map((v: any) => v.color).filter(Boolean))) as string[];
 
         // Group variants by color
         const colorMap = new Map<string, typeof variants>();
 
-        variants.forEach(v => {
+        variants.forEach((v: any) => {
           const colorKey = (v.color || 'Default').trim();
           if (!colorMap.has(colorKey)) {
             colorMap.set(colorKey, []);
@@ -77,7 +77,7 @@ export function useProductFilters() {
 
         // If no variants exist or no colors defined
         if (colorMap.size === 0) {
-          const allVariantImages = variants.flatMap(v => v.images || []).filter(Boolean);
+          const allVariantImages = variants.flatMap((v: any) => v.images || []).filter(Boolean);
           const allImgs = Array.from(new Set([
             ...(p.thumbnail ? [p.thumbnail] : []),
             ...allVariantImages,
@@ -113,32 +113,32 @@ export function useProductFilters() {
 
         // For each color group, create an individual product card
         colorMap.forEach((colorVariants, colorName) => {
-          const sizes = Array.from(new Set(colorVariants.map(v => v.size).filter(Boolean))) as ProductSize[];
+          const sizes = Array.from(new Set(colorVariants.map((v: any) => v.size).filter(Boolean))) as ProductSize[];
 
           let minPrice = 999;
           let originalPrice: number | undefined = undefined;
 
-          const validPrices = colorVariants.map(v => v.price).filter(price => typeof price === 'number' && price > 0);
+          const validPrices = colorVariants.map((v: any) => v.price).filter((price: any) => typeof price === 'number' && price > 0);
           if (validPrices.length > 0) {
             minPrice = Math.min(...validPrices);
           }
 
           const validComparePrices = colorVariants
-            .map(v => v.comparePrice)
-            .filter((cp): cp is number => typeof cp === 'number' && cp > 0);
+            .map((v: any) => v.comparePrice)
+            .filter((cp: any): cp is number => typeof cp === 'number' && cp > 0);
           if (validComparePrices.length > 0) {
             originalPrice = Math.max(...validComparePrices);
           }
 
           // First image of this color variant group, falling back to p.thumbnail
-          const variantImages = colorVariants.flatMap(v => v.images || []).filter(Boolean);
-          const allVariantImages = variants.flatMap(v => v.images || []).filter(Boolean);
+          const variantImages = colorVariants.flatMap((v: any) => v.images || []).filter(Boolean);
+          const allVariantImages = variants.flatMap((v: any) => v.images || []).filter(Boolean);
           const firstImage = variantImages[0] || p.thumbnail || allVariantImages[0] || '/images/product-1.jpeg';
 
           // Second image: use second image of this color variant; fallback to other variants or thumbnail
           const secondImage = 
-            variantImages.find((img) => img !== firstImage) ||
-            allVariantImages.find((img) => img !== firstImage) ||
+            variantImages.find((img: string) => img !== firstImage) ||
+            allVariantImages.find((img: string) => img !== firstImage) ||
             (p.thumbnail && p.thumbnail !== firstImage ? p.thumbnail : null) ||
             null;
 
@@ -181,10 +181,10 @@ export function useProductFilters() {
             offerSavings: offerResult.savings || undefined,
             offerDiscountPct: offerResult.discountPercentage || undefined,
             sizes: sizes,
-            colors: allProductColors.length > 0 ? allProductColors : [colorName],
+            colors: (allProductColors.length > 0 ? allProductColors : [colorName]) as string[],
             fit: (p.fit as ProductFit) || undefined,
             description: p.description || p.shortDescription || undefined,
-            inStock: p.isActive && colorVariants.some(v => (v.stock || 0) > 0),
+            inStock: p.isActive && colorVariants.some((v: any) => (v.stock || 0) > 0),
             href: href,
           });
         });

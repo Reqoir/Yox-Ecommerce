@@ -172,7 +172,7 @@ export default function AdminOffersPage() {
   const searchedModalProducts = useMemo(() => {
     if (!modalProductSearch.trim()) return availableModalProducts;
     const q = modalProductSearch.toLowerCase();
-    return availableModalProducts.filter((p) => p.name.toLowerCase().includes(q));
+    return availableModalProducts.filter((p: any) => p.name.toLowerCase().includes(q));
   }, [availableModalProducts, modalProductSearch]);
 
   // Fetch all offers
@@ -954,7 +954,7 @@ export default function AdminOffersPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            const idsToAdd = availableModalProducts.map((p) => p.id);
+                            const idsToAdd = availableModalProducts.map((p: any) => p.id);
                             setSelectedProductIds(Array.from(new Set([...selectedProductIds, ...idsToAdd])));
                           }}
                           className="text-[11px] text-[#1A2E4C] hover:underline font-semibold cursor-pointer"
@@ -965,7 +965,7 @@ export default function AdminOffersPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            const availableIds = new Set(availableModalProducts.map((p) => p.id));
+                            const availableIds = new Set(availableModalProducts.map((p: any) => p.id));
                             setSelectedProductIds(selectedProductIds.filter((id) => !availableIds.has(id)));
                           }}
                           className="text-[11px] text-gray-500 hover:underline cursor-pointer"
@@ -1015,7 +1015,7 @@ export default function AdminOffersPage() {
                       </div>
 
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 max-h-56 overflow-y-auto p-1 border rounded-md bg-gray-50/50">
-                        {searchedModalProducts.map((p) => {
+                        {searchedModalProducts.map((p: any) => {
                           const isSelected = selectedProductIds.includes(p.id);
                           return (
                             <div

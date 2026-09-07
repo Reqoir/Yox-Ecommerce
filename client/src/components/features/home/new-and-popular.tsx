@@ -58,15 +58,15 @@ export function NewAndPopular() {
   // Filter products based on activeTab
   const filteredProducts = useMemo(() => {
     if (dbProducts && dbProducts.length > 0) {
-      const active = dbProducts.filter((p) => p.isActive !== false);
+      const active = dbProducts.filter((p: any) => p.isActive !== false);
 
-      const mapped = active.map((p) => {
+      const mapped = active.map((p: any) => {
         const catName = p.categoryId ? categoryMap.get(p.categoryId) || p.categoryId : 'Apparel';
         const variants = p.variants || [];
-        const firstVariant = variants.find((v) => v.isDefault) || variants[0];
+        const firstVariant = variants.find((v: any) => v.isDefault) || variants[0];
         const validPrices = variants
-          .map((v) => v.price)
-          .filter((pr) => typeof pr === 'number' && pr > 0);
+          .map((v: any) => v.price)
+          .filter((pr: any) => typeof pr === 'number' && pr > 0);
         const minPrice = validPrices.length > 0 ? Math.min(...validPrices) : firstVariant?.price || 999;
         const comparePrice = firstVariant?.comparePrice || null;
 
@@ -78,7 +78,7 @@ export function NewAndPopular() {
           : (comparePrice && comparePrice > minPrice ? comparePrice : null);
 
         const variantImages = (firstVariant?.images || []).filter(Boolean);
-        const allVariantImages = variants.flatMap((v) => v.images || []).filter(Boolean);
+        const allVariantImages = variants.flatMap((v: any) => v.images || []).filter(Boolean);
         const allImages = Array.from(
           new Set([
             ...variantImages,
@@ -89,7 +89,7 @@ export function NewAndPopular() {
         const image = allImages[0] ? optimizeCloudinaryUrl(allImages[0]) : '/images/product-1.jpeg';
         const secondImage = allImages[1] ? optimizeCloudinaryUrl(allImages[1]) : null;
 
-        const allColors = Array.from(new Set(variants.map(v => v.color).filter(Boolean))) as string[];
+        const allColors = Array.from(new Set(variants.map((v: any) => v.color).filter(Boolean))) as string[];
         if (firstVariant?.color && allColors.includes(firstVariant.color)) {
           allColors.sort((a, b) => a === firstVariant.color ? -1 : b === firstVariant.color ? 1 : 0);
         }
@@ -115,7 +115,7 @@ export function NewAndPopular() {
 
       // Filter by category name or product name matching activeTab
       const tabUpper = activeTab.toUpperCase();
-      const filtered = mapped.filter((p) => {
+      const filtered = mapped.filter((p: any) => {
         const catUpper = p.category.toUpperCase();
         const nameUpper = p.name.toUpperCase();
         return (
@@ -187,7 +187,7 @@ export function NewAndPopular() {
           </div>
         ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-            {filteredProducts.map((product) => {
+            {filteredProducts.map((product: any) => {
               const isFav = isFavourite(product.id);
 
             return (

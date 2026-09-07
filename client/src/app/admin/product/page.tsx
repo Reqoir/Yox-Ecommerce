@@ -774,7 +774,7 @@ export default function AdminProductPage() {
   }, [formData.colorGroups, selectedMediaColorId]);
 
   // Filtering and Pagination
-  const filteredProducts = products.filter((product) => {
+  const filteredProducts = products.filter((product: any) => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           product.slug.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' 

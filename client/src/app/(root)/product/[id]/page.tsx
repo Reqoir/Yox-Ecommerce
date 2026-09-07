@@ -116,31 +116,125 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-[1500px] mx-auto px-4 md:px-8 py-8 lg:py-12 animate-in fade-in duration-500">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr,450px] xl:grid-cols-[1fr,500px] gap-10 lg:gap-16">
-          <Skeleton className="w-full h-[600px] md:h-[800px] rounded-lg" />
-          <div className="flex flex-col gap-6 pt-4">
-            <Skeleton className="w-24 h-4 rounded-md" />
-            <Skeleton className="w-3/4 h-10 rounded-md" />
-            <Skeleton className="w-1/4 h-8 rounded-md" />
-            <Skeleton className="w-full h-px mt-4" />
-            <Skeleton className="w-1/3 h-6 mt-4" />
-            <div className="flex gap-2">
-              <Skeleton className="w-12 h-12 rounded-full" />
-              <Skeleton className="w-12 h-12 rounded-full" />
+      <main className="w-full bg-white min-h-screen pb-20 relative animate-in fade-in duration-300">
+        <div className="flex flex-col lg:flex-row w-full items-start">
+          {/* Left Column: 65% Image Grid Skeleton */}
+          <div className="w-full lg:w-[65%] flex-shrink-0">
+            <div className="grid grid-cols-2 gap-1 lg:gap-2">
+              <Skeleton className="w-full aspect-[3/4] rounded-none bg-gray-100" />
+              <Skeleton className="w-full aspect-[3/4] rounded-none bg-gray-100" />
+              <Skeleton className="w-full aspect-[3/4] rounded-none bg-gray-100" />
+              <Skeleton className="w-full aspect-[3/4] rounded-none bg-gray-100" />
             </div>
-            <Skeleton className="w-1/3 h-6 mt-4" />
-            <div className="grid grid-cols-4 gap-2">
-              <Skeleton className="w-full h-12 rounded-md" />
-              <Skeleton className="w-full h-12 rounded-md" />
-              <Skeleton className="w-full h-12 rounded-md" />
-              <Skeleton className="w-full h-12 rounded-md" />
+          </div>
+
+          {/* Right Column: 35% Details & Actions Skeleton */}
+          <div className="w-full lg:w-[35%] lg:pl-10 lg:pr-14 pt-6 lg:pt-8 px-4 sm:px-6">
+            {/* Tag Skeleton */}
+            <Skeleton className="w-16 h-4 rounded-xs mb-3 bg-gray-100" />
+
+            {/* Title Skeleton */}
+            <Skeleton className="w-4/5 h-8 sm:h-9 rounded-sm mb-3 bg-gray-100" />
+
+            {/* Price Skeleton */}
+            <div className="flex items-baseline gap-2 mb-4">
+              <Skeleton className="w-40 h-7 rounded-sm bg-gray-100" />
+              <Skeleton className="w-20 h-5 rounded-sm bg-gray-100" />
             </div>
-            <Skeleton className="w-full h-14 mt-6 rounded-md" />
-            <Skeleton className="w-full h-40 mt-4 rounded-md" />
+
+            {/* Shipping Info Skeleton */}
+            <Skeleton className="w-3/4 h-4 rounded-xs mb-5 bg-gray-100" />
+            <div className="border-b border-gray-100 pb-2 mb-5" />
+
+            {/* Color Selector Skeleton */}
+            <div className="mb-5">
+              <Skeleton className="w-24 h-4 mb-2.5 rounded-xs bg-gray-100" />
+              <div className="flex gap-2.5">
+                <Skeleton className="w-14 aspect-[3/4] rounded-xs bg-gray-100" />
+                <Skeleton className="w-14 aspect-[3/4] rounded-xs bg-gray-100" />
+                <Skeleton className="w-14 aspect-[3/4] rounded-xs bg-gray-100" />
+              </div>
+            </div>
+
+            {/* Size Selector Skeleton */}
+            <div className="mb-5">
+              <Skeleton className="w-20 h-4 mb-2.5 rounded-xs bg-gray-100" />
+              <div className="flex gap-2">
+                <Skeleton className="w-12 h-9 rounded-xs bg-gray-100" />
+                <Skeleton className="w-12 h-9 rounded-xs bg-gray-100" />
+                <Skeleton className="w-12 h-9 rounded-xs bg-gray-100" />
+                <Skeleton className="w-12 h-9 rounded-xs bg-gray-100" />
+              </div>
+            </div>
+
+            {/* Quantity Selector Skeleton */}
+            <div className="mb-6">
+              <Skeleton className="w-16 h-4 mb-2.5 rounded-xs bg-gray-100" />
+              <Skeleton className="w-[114px] h-[36px] rounded-full bg-gray-100" />
+            </div>
+
+            {/* Action Buttons Skeleton */}
+            <div className="flex flex-col gap-3 mb-8">
+              <div className="flex items-center gap-3">
+                <Skeleton className="flex-1 h-[48px] rounded-xs bg-gray-100" />
+                <Skeleton className="flex-1 h-[48px] rounded-xs bg-gray-100" />
+                <Skeleton className="w-12 h-[48px] rounded-xs bg-gray-100 shrink-0" />
+              </div>
+            </div>
+
+            {/* Offer Card Skeleton */}
+            <Skeleton className="w-full h-24 rounded-xl mb-6 bg-gray-100" />
+
+            {/* Feature Highlights Skeleton */}
+            <div className="grid grid-cols-3 gap-2 py-6 border-t border-b border-gray-100 my-6">
+              <div className="flex flex-col items-center gap-2">
+                <Skeleton className="w-9 h-9 rounded-full bg-gray-100" />
+                <Skeleton className="w-16 h-3 rounded-xs bg-gray-100" />
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <Skeleton className="w-9 h-9 rounded-full bg-gray-100" />
+                <Skeleton className="w-16 h-3 rounded-xs bg-gray-100" />
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <Skeleton className="w-9 h-9 rounded-full bg-gray-100" />
+                <Skeleton className="w-16 h-3 rounded-xs bg-gray-100" />
+              </div>
+            </div>
+
+            {/* Accordion Skeletons */}
+            <div className="mb-6 flex flex-col divide-y divide-gray-100">
+              <div className="py-3.5 flex justify-between items-center">
+                <Skeleton className="w-32 h-4 rounded-xs bg-gray-100" />
+                <Skeleton className="w-4 h-4 rounded-xs bg-gray-100" />
+              </div>
+              <div className="py-3.5 flex justify-between items-center">
+                <Skeleton className="w-28 h-4 rounded-xs bg-gray-100" />
+                <Skeleton className="w-4 h-4 rounded-xs bg-gray-100" />
+              </div>
+              <div className="py-3.5 flex justify-between items-center">
+                <Skeleton className="w-40 h-4 rounded-xs bg-gray-100" />
+                <Skeleton className="w-4 h-4 rounded-xs bg-gray-100" />
+              </div>
+            </div>
+
+            {/* Description Skeleton */}
+            <div className="space-y-2 pb-6">
+              <Skeleton className="w-full h-3 rounded-xs bg-gray-100" />
+              <Skeleton className="w-5/6 h-3 rounded-xs bg-gray-100" />
+              <Skeleton className="w-2/3 h-3 rounded-xs bg-gray-100" />
+            </div>
           </div>
         </div>
-      </div>
+
+        {/* Bottom Reviews Skeleton */}
+        <div className="w-full max-w-7xl mx-auto px-4 mt-12 sm:mt-16">
+          <Skeleton className="w-44 h-7 mb-6 rounded-md bg-gray-100" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Skeleton className="w-full h-36 rounded-xl bg-gray-100" />
+            <Skeleton className="w-full h-36 rounded-xl bg-gray-100" />
+          </div>
+        </div>
+      </main>
     );
   }
 
@@ -438,9 +532,16 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 <div className="text-[12px] font-bold text-gray-800 mb-2.5">
                   Color: <span className="font-extrabold text-gray-900">{selectedColor || 'Select'}</span>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2.5">
                   {uniqueColors.map((color) => {
                     const isSelected = selectedColor === color;
+                    const colorVariant = variants.find(
+                      (v) => v.color === color && v.images && v.images.length > 0
+                    ) || variants.find((v) => v.color === color);
+                    const colorImg = (colorVariant?.images && colorVariant.images.length > 0)
+                      ? colorVariant.images[0]
+                      : product.thumbnail || '/images/product-1.jpeg';
+
                     return (
                       <button
                         key={color}
@@ -452,13 +553,19 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                             setSelectedSize(availableSizes[0] || null);
                           }
                         }}
-                        className={`min-w-[48px] px-3.5 h-[34px] flex items-center justify-center text-[11px] font-bold tracking-wider transition-all border rounded-xs cursor-pointer ${
+                        title={color}
+                        aria-label={`Select color ${color}`}
+                        className={`w-14 aspect-[3/4] relative rounded-xs overflow-hidden transition-all cursor-pointer bg-[#f7f7f7] ${
                           isSelected 
-                            ? 'bg-black text-white border-black shadow-xs' 
-                            : 'bg-white text-black border-gray-300 hover:border-black'
+                            ? 'border border-black shadow-xs' 
+                            : 'border border-gray-200 hover:border-gray-500 opacity-75 hover:opacity-100'
                         }`}
                       >
-                        {color}
+                        <img 
+                          src={colorImg} 
+                          alt={color} 
+                          className="w-full h-full object-cover object-top mix-blend-multiply"
+                        />
                       </button>
                     );
                   })}

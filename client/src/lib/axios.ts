@@ -97,7 +97,7 @@ apiClient.interceptors.response.use(
       !(statusCode === 400 || statusCode === 422);
 
     if (shouldLog) {
-      console.error('API Error Response:', error.response!.data);
+      console.error(`[API Error] ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url} (${statusCode}):`, error.response?.data);
     }
 
     if (is401 && originalRequest && !isAuthEndpoint) {

@@ -62,8 +62,11 @@ export interface UpdateProductDTO extends Partial<CreateProductDTO> {}
 
 export const productApi = {
   getAll: async (params?: Record<string, any>) => {
-    const response = await apiClient.get<{ data: { data: Product[]; total: number } }>('/products', { params });
-    return response.data.data.data || [];
+    const response = await apiClient.get<any>('/products', { params });
+    const payload = response.data?.data;
+    if (Array.isArray(payload)) return payload;
+    if (payload && Array.isArray(payload.data)) return payload.data;
+    return [];
   },
 
   getFilters: async (params?: Record<string, any>) => {
