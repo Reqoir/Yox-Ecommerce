@@ -115,7 +115,9 @@ export default function AdminContentPage() {
     toast.info('Slide removed');
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [uploadingField, setUploadingField] = useState<'desktop' | 'mobile' | null>(null);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'imageUrl' | 'mobileImageUrl') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -124,16 +126,18 @@ export default function AdminContentPage() {
       return;
     }
 
+    setUploadingField(field === 'mobileImageUrl' ? 'mobile' : 'desktop');
     setIsUploading(true);
     try {
       const url = await contentApi.uploadImage(file);
-      updateCurrentSlide('imageUrl', url);
-      toast.success('Image uploaded successfully');
+      updateCurrentSlide(field, url);
+      toast.success(`${field === 'mobileImageUrl' ? 'Mobile' : 'Desktop'} banner uploaded successfully`);
     } catch (err: any) {
       console.error('Image upload failed:', err);
       toast.error(err?.response?.data?.message || 'Failed to upload image');
     } finally {
       setIsUploading(false);
+      setUploadingField(null);
       e.target.value = '';
     }
   };
@@ -505,45 +509,101 @@ export default function AdminContentPage() {
                 )}
 
                 {/* Banner Image Selection & Upload */}
-                <div className="space-y-3 pt-2 border-t">
-                  <Label className="text-xs font-semibold">Banner Background Image</Label>
+                <div className="space-y-4 pt-2 border-t">
+                  <Label className="text-xs font-semibold">Banner Background Images</Label>
 
-                  {/* Clean Image Card Preview & Uploader (Hides raw Cloudinary URL) */}
-                  <div className="flex items-center gap-4 p-3 border rounded-lg bg-card">
-                    <div className="relative w-24 h-16 rounded overflow-hidden bg-muted border flex items-center justify-center shrink-0">
-                      {currentSlide.imageUrl ? (
-                        <img
-                          src={currentSlide.imageUrl}
-                          alt="Banner Preview"
-                          className="w-full h-full object-cover"
+                  {/* Desktop Banner Image Card */}
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-medium text-muted-foreground">Desktop Banner Graphic (Default)</span>
+                    <div className="flex items-center gap-4 p-3 border rounded-lg bg-card">
+                      <div className="relative w-24 h-14 rounded overflow-hidden bg-muted border flex items-center justify-center shrink-0">
+                        {currentSlide.imageUrl ? (
+                          <img
+                            src={currentSlide.imageUrl}
+                            alt="Desktop Banner Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-0.5">
+                        <p className="text-xs font-medium text-foreground">
+                          {currentSlide.imageUrl ? 'Desktop Image Attached' : 'No Desktop Image'}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          Used on desktop and wide screens (1440 x 680 ratio).
+                        </p>
+                      </div>
+                      <label className="inline-flex items-center justify-center gap-2 px-3 py-1.5 border rounded-md bg-secondary text-secondary-foreground text-xs font-medium cursor-pointer hover:bg-secondary/80 transition-colors shrink-0">
+                        {isUploading && uploadingField === 'desktop' ? (
+                          <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-secondary-foreground border-t-transparent" />
+                        ) : (
+                          <Upload className="h-3.5 w-3.5" />
+                        )}
+                        <span>{isUploading && uploadingField === 'desktop' ? 'Uploading...' : 'Upload Desktop'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageUpload(e, 'imageUrl')}
+                          className="hidden"
+                          disabled={isUploading}
                         />
-                      ) : (
-                        <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                      )}
+                      </label>
                     </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-xs font-medium text-foreground">
-                        {currentSlide.imageUrl ? 'Image Attached' : 'No Image Uploaded'}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        Upload banner image graphic (recommended aspect ratio 16:9 or 21:9).
-                      </p>
+                  </div>
+
+                  {/* Mobile Banner Image Card */}
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-medium text-muted-foreground">Mobile Banner Graphic (Optional)</span>
+                    <div className="flex items-center gap-4 p-3 border rounded-lg bg-card">
+                      <div className="relative w-16 h-20 rounded overflow-hidden bg-muted border flex items-center justify-center shrink-0">
+                        {currentSlide.mobileImageUrl || currentSlide.imageUrl ? (
+                          <img
+                            src={currentSlide.mobileImageUrl || currentSlide.imageUrl}
+                            alt="Mobile Banner Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-0.5">
+                        <p className="text-xs font-medium text-foreground">
+                          {currentSlide.mobileImageUrl ? 'Mobile Image Attached' : 'Using Desktop Fallback'}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          Upload portrait/square banner optimized specifically for smartphones.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {currentSlide.mobileImageUrl && (
+                          <button
+                            type="button"
+                            onClick={() => updateCurrentSlide('mobileImageUrl', '')}
+                            className="p-1.5 text-muted-foreground hover:text-destructive transition-colors text-xs"
+                            title="Remove Mobile Image"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                        <label className="inline-flex items-center justify-center gap-2 px-3 py-1.5 border rounded-md bg-secondary text-secondary-foreground text-xs font-medium cursor-pointer hover:bg-secondary/80 transition-colors">
+                          {isUploading && uploadingField === 'mobile' ? (
+                            <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-secondary-foreground border-t-transparent" />
+                          ) : (
+                            <Upload className="h-3.5 w-3.5" />
+                          )}
+                          <span>{isUploading && uploadingField === 'mobile' ? 'Uploading...' : 'Upload Mobile'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageUpload(e, 'mobileImageUrl')}
+                            className="hidden"
+                            disabled={isUploading}
+                          />
+                        </label>
+                      </div>
                     </div>
-                    <label className="inline-flex items-center justify-center gap-2 px-3 py-1.5 border rounded-md bg-secondary text-secondary-foreground text-xs font-medium cursor-pointer hover:bg-secondary/80 transition-colors shrink-0">
-                      {isUploading ? (
-                        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-secondary-foreground border-t-transparent" />
-                      ) : (
-                        <Upload className="h-3.5 w-3.5" />
-                      )}
-                      <span>{isUploading ? 'Uploading...' : 'Change Image'}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                        disabled={isUploading}
-                      />
-                    </label>
                   </div>
                 </div>
 
@@ -644,12 +704,20 @@ export default function AdminContentPage() {
                   }`}
                 >
                   {/* Banner Card Simulation */}
-                  <div className="relative w-full aspect-[1440/680] min-h-[240px] overflow-hidden shadow-md bg-gray-950 flex flex-col justify-center">
+                  <div
+                    className={`relative w-full overflow-hidden shadow-md bg-gray-950 flex flex-col justify-center ${
+                      previewMode === 'mobile' ? 'aspect-[4/5] min-h-[320px]' : 'aspect-[1440/680] min-h-[240px]'
+                    }`}
+                  >
                     {/* Background Image */}
-                    {currentSlide?.imageUrl ? (
+                    {(previewMode === 'mobile' && currentSlide?.mobileImageUrl) || currentSlide?.imageUrl ? (
                       <img
-                        src={currentSlide.imageUrl}
-                        alt={currentSlide.title || 'Banner'}
+                        src={
+                          previewMode === 'mobile' && currentSlide?.mobileImageUrl
+                            ? currentSlide.mobileImageUrl
+                            : currentSlide?.imageUrl
+                        }
+                        alt={currentSlide?.title || 'Banner'}
                         className="absolute inset-0 w-full h-full object-cover object-center"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = '/images/hero-banner.png';

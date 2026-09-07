@@ -11,6 +11,7 @@ export interface HeroBannerSlide {
   secondaryButtonText?: string;
   secondaryButtonLink?: string;
   imageUrl: string;
+  mobileImageUrl?: string;
   textAlign?: 'left' | 'center' | 'right';
   theme?: 'dark' | 'light';
   overlayOpacity?: number; // 0 - 100

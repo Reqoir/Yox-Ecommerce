@@ -113,14 +113,19 @@ export function HeroBanner() {
               return (
                 <div key={`${slide.id}-${idx}`} className="relative w-full h-full shrink-0 overflow-hidden">
                   <Link href={linkHref} className="block w-full h-full cursor-pointer relative">
-                    <img
-                      src={slide.imageUrl || '/images/hero-banner.png'}
-                      alt={slide.title || 'YOX Collection'}
-                      className="w-full h-full object-cover object-center"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/images/hero-banner.png';
-                      }}
-                    />
+                    <picture className="w-full h-full block">
+                      {slide.mobileImageUrl && (
+                        <source media="(max-width: 640px)" srcSet={slide.mobileImageUrl} />
+                      )}
+                      <img
+                        src={slide.imageUrl || '/images/hero-banner.png'}
+                        alt={slide.title || 'YOX Collection'}
+                        className="w-full h-full object-cover object-center"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/images/hero-banner.png';
+                        }}
+                      />
+                    </picture>
 
                     {/* Render Text Overlay per slide inside track */}
                     {slide.showTextOverlay && (
