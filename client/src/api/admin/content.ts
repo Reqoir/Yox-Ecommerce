@@ -32,7 +32,8 @@ export const DEFAULT_HERO_CONFIG: HeroBannersConfig = {
       id: 'default-hero-1',
       badgeText: 'NEW ARRIVALS',
       title: 'THE ART OF EFFORTLESS LUXURY',
-      subtitle: 'Explore our latest collection of meticulously crafted menswear designed for timeless modern sophistication.',
+      subtitle:
+        'Explore our latest collection of meticulously crafted menswear designed for timeless modern sophistication.',
       buttonText: 'Shop New Arrivals',
       buttonLink: '/shop',
       secondaryButtonText: 'Explore Offers',
@@ -48,7 +49,8 @@ export const DEFAULT_HERO_CONFIG: HeroBannersConfig = {
       id: 'default-hero-2',
       badgeText: 'SUMMER ESSENTIALS',
       title: 'BREATHE EASY IN PURE LINEN',
-      subtitle: 'Lightweight, breathable textures tailored for unmatched comfort and sharp aesthetics.',
+      subtitle:
+        'Lightweight, breathable textures tailored for unmatched comfort and sharp aesthetics.',
       buttonText: 'Discover Linen',
       buttonLink: '/shop?category=linen',
       secondaryButtonText: 'View Collection',
@@ -67,9 +69,13 @@ export const contentApi = {
   getHeroBanners: async (): Promise<HeroBannersConfig> => {
     try {
       const response = await apiClient.get<{ success: boolean; data: HeroBannersConfig | null }>(
-        '/settings/storefront.hero_banners'
+        '/settings/storefront.hero_banners',
       );
-      if (response.data?.data && Array.isArray(response.data.data.slides) && response.data.data.slides.length > 0) {
+      if (
+        response.data?.data &&
+        Array.isArray(response.data.data.slides) &&
+        response.data.data.slides.length > 0
+      ) {
         return response.data.data;
       }
       return DEFAULT_HERO_CONFIG;
@@ -82,7 +88,7 @@ export const contentApi = {
   updateHeroBanners: async (config: HeroBannersConfig): Promise<HeroBannersConfig> => {
     const response = await apiClient.put<{ success: boolean; data: HeroBannersConfig }>(
       '/settings/storefront.hero_banners',
-      { value: config }
+      { value: config },
     );
     return response.data.data;
   },

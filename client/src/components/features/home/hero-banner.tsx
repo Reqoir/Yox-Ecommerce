@@ -112,8 +112,8 @@ export function HeroBanner() {
               current.textAlign === 'center'
                 ? 'items-center text-center'
                 : current.textAlign === 'right'
-                ? 'items-end text-right'
-                : 'items-start text-left'
+                  ? 'items-end text-right'
+                  : 'items-start text-left'
             } ${isLight ? 'text-gray-950' : 'text-white'}`}
           >
             {/* Badge / Tag */}
@@ -204,7 +204,9 @@ export function HeroBanner() {
                     key={idx}
                     onClick={() => setCurrentIndex(idx)}
                     className={`h-2 rounded-full transition-all cursor-pointer ${
-                      currentIndex === idx ? 'w-7 bg-white shadow-md' : 'w-2 bg-white/40 hover:bg-white/70'
+                      currentIndex === idx
+                        ? 'w-7 bg-white shadow-md'
+                        : 'w-2 bg-white/40 hover:bg-white/70'
                     }`}
                     aria-label={`Slide ${idx + 1}`}
                   />

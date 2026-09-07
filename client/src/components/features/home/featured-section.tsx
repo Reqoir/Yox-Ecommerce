@@ -126,11 +126,11 @@ export function FeaturedSection() {
     <section className="w-full py-16 bg-white overflow-hidden">
       <div className="w-[98%] mx-auto max-w-[1500px]">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl md:text-3xl font-semibold text-gray-800">
-            Featured
+        <div className="relative flex items-center justify-center mb-8">
+          <h2 className="text-[20px] font-bold text-gray-900 tracking-wide uppercase text-center">
+            FEATURED
           </h2>
-          <div className="flex items-center gap-2">
+          <div className="absolute right-0 flex items-center gap-2">
             <button
               onClick={scrollLeft}
               className="w-8 h-8 rounded-full bg-[#EFECE8] flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
