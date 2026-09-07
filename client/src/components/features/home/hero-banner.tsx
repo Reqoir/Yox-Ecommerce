@@ -235,13 +235,7 @@ export function HeroBanner() {
                       setCurrentIndex(idx);
                     }}
                     className={`h-2 rounded-full transition-all cursor-pointer ${
-<<<<<<< HEAD
-                      currentIndex === idx
-                        ? 'w-7 bg-white shadow-md'
-                        : 'w-2 bg-white/40 hover:bg-white/70'
-=======
                       activeIndex === idx ? 'w-7 bg-white shadow-md' : 'w-2 bg-white/40 hover:bg-white/70'
->>>>>>> 5043a5e (feat: enhance hero banner slide content, category routing, clean graphics, slow right-to-left infinite slider, and UI layout spacing)
                     }`}
                     aria-label={`Slide ${idx + 1}`}
                   />
