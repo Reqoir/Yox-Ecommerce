@@ -25,7 +25,7 @@ export function StyleSeekers() {
             slug: cat.slug,
             label: cat.name.toUpperCase(),
             image: cat.image || 'https://placehold.co/400x600?text=No+Image',
-            height: index % 2 === 0 ? 'h-[450px]' : 'h-[300px]',
+            height: index % 2 === 0 ? 'h-[280px] sm:h-[450px]' : 'h-[200px] sm:h-[300px]',
           }));
         
         setCategories(mapped);
@@ -63,40 +63,30 @@ export function StyleSeekers() {
     };
 
     animationFrameId = requestAnimationFrame(autoScroll);
+
     return () => cancelAnimationFrame(animationFrameId);
-  }, [categories.length, isHovered]);
+  }, [categories, isHovered]);
 
   const handleScroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
-      const container = scrollContainerRef.current;
-      const oneThird = container.scrollWidth / 3;
-      
-      if (direction === 'left' && container.scrollLeft < 50) {
-        container.scrollLeft += oneThird;
-      } else if (direction === 'right' && container.scrollLeft >= oneThird * 2) {
-        container.scrollLeft -= oneThird;
-      }
-
-      const scrollAmount = direction === 'left' ? -340 : 340;
-      container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      const scrollAmount = direction === 'left' ? -260 : 260;
+      scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
 
   if (isLoading) {
     return (
-      <section className="w-full mt-8 py-12 sm:py-16 bg-white overflow-hidden animate-in fade-in duration-500">
-        <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-8 mb-10 md:mb-12 flex items-center justify-between">
-          <Skeleton className="h-8 w-60 rounded bg-gray-200" />
-          <div className="flex gap-2">
-            <Skeleton className="w-9 h-9 rounded-full bg-gray-200" />
-            <Skeleton className="w-9 h-9 rounded-full bg-gray-200" />
-          </div>
+      <section className="w-full mt-4 sm:mt-8 py-6 sm:py-16 bg-white overflow-hidden">
+        <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-8 mb-5 md:mb-16">
+          <Skeleton className="h-7 w-48 bg-gray-200" />
         </div>
-        <div className="flex w-max items-end gap-4 px-4 md:px-8 overflow-hidden">
-          {Array.from({ length: 6 }).map((_, idx) => (
-            <Skeleton 
-              key={idx} 
-              className={`flex-shrink-0 w-[240px] md:w-[280px] lg:w-[320px] ${idx % 2 === 0 ? 'h-[450px]' : 'h-[300px]'} rounded-sm`} 
+        <div className="flex gap-3 sm:gap-4 px-4 md:px-8 overflow-hidden">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton
+              key={i}
+              className={`flex-shrink-0 w-[160px] sm:w-[240px] md:w-[280px] lg:w-[320px] ${
+                i % 2 === 0 ? 'h-[280px] sm:h-[450px]' : 'h-[200px] sm:h-[300px]'
+              } bg-gray-200 rounded-sm`}
             />
           ))}
         </div>
@@ -107,28 +97,28 @@ export function StyleSeekers() {
   if (categories.length === 0) return null;
 
   return (
-    <section className="w-full mt-8 py-12 sm:py-16 bg-white overflow-hidden">
+    <section className="w-full mt-4 sm:mt-8 py-6 sm:py-16 bg-white overflow-hidden">
       {/* Header Section with SHOP BY CATEGORY Title and Sliding Navigation Arrows */}
-      <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-8 mb-12 md:mb-16 flex items-center justify-between">
-        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 tracking-wide uppercase">
+      <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-8 mb-5 md:mb-16 flex items-center justify-between">
+        <h2 className="text-lg md:text-2xl lg:text-3xl font-bold text-gray-900 tracking-wide uppercase">
           SHOP BY CATEGORY
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <button
             type="button"
             onClick={() => handleScroll('left')}
-            className="w-9 h-9 rounded-full bg-[#EFECE8] hover:bg-gray-300 flex items-center justify-center text-gray-800 transition-colors cursor-pointer"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EFECE8] hover:bg-gray-300 flex items-center justify-center text-gray-800 transition-colors cursor-pointer"
             aria-label="Scroll categories left"
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={16} />
           </button>
           <button
             type="button"
             onClick={() => handleScroll('right')}
-            className="w-9 h-9 rounded-full bg-[#EFECE8] hover:bg-gray-300 flex items-center justify-center text-gray-800 transition-colors cursor-pointer"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EFECE8] hover:bg-gray-300 flex items-center justify-center text-gray-800 transition-colors cursor-pointer"
             aria-label="Scroll categories right"
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={16} />
           </button>
         </div>
       </div>
@@ -138,13 +128,13 @@ export function StyleSeekers() {
         ref={scrollContainerRef}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className="flex overflow-x-auto items-end gap-4 px-4 md:px-8 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex overflow-x-auto items-end gap-3 sm:gap-4 px-4 md:px-8 pb-2 sm:pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {scrollItems.map((category, index) => (
           <Link
             key={`${category.id}-${index}`}
             href={`/shop?category=${category.slug}`}
-            className={`relative flex-shrink-0 w-[240px] md:w-[280px] lg:w-[320px] ${category.height} group overflow-hidden bg-gray-100 cursor-pointer rounded-sm block`}
+            className={`relative flex-shrink-0 w-[160px] sm:w-[240px] md:w-[280px] lg:w-[320px] ${category.height} group overflow-hidden bg-gray-100 cursor-pointer rounded-sm block`}
           >
             {/* Image */}
             <Image
