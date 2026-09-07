@@ -43,6 +43,14 @@ export class OfferRepository implements IOfferRepository {
     const data = offer.toJSON();
     const { id, ...rest } = data;
 
+    // Ensure dates are persisted as proper BSON Date objects
+    if (rest.startDate !== undefined) {
+      rest.startDate = rest.startDate ? new Date(rest.startDate) : null;
+    }
+    if (rest.endDate !== undefined) {
+      rest.endDate = rest.endDate ? new Date(rest.endDate) : null;
+    }
+
     if (id && Types.ObjectId.isValid(id)) {
       const updated = await OfferModel.findByIdAndUpdate(id, rest, { new: true }).exec();
       if (!updated) throw new Error('Offer not found');
@@ -99,11 +107,12 @@ export class OfferRepository implements IOfferRepository {
   }
 
   async findActive(now: Date = new Date()): Promise<Offer[]> {
+    const nowIso = now.toISOString();
     const filter = {
       isActive: true,
       $and: [
-        { $or: [{ startDate: null }, { startDate: { $lte: now } }] },
-        { $or: [{ endDate: null }, { endDate: { $gte: now } }] },
+        { $or: [{ startDate: null }, { startDate: { $lte: now } }, { startDate: { $lte: nowIso } }] },
+        { $or: [{ endDate: null }, { endDate: { $gte: now } }, { endDate: { $gte: nowIso } }] },
       ],
     };
 
@@ -112,12 +121,13 @@ export class OfferRepository implements IOfferRepository {
   }
 
   async findBanners(now: Date = new Date()): Promise<Offer[]> {
+    const nowIso = now.toISOString();
     const filter = {
       isActive: true,
       'banner.showOnHome': true,
       $and: [
-        { $or: [{ startDate: null }, { startDate: { $lte: now } }] },
-        { $or: [{ endDate: null }, { endDate: { $gte: now } }] },
+        { $or: [{ startDate: null }, { startDate: { $lte: now } }, { startDate: { $lte: nowIso } }] },
+        { $or: [{ endDate: null }, { endDate: { $gte: now } }, { endDate: { $gte: nowIso } }] },
       ],
     };
 

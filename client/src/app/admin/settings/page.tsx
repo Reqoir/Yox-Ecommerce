@@ -51,9 +51,20 @@ export default function AdminSettingsPage() {
 
   // Load active offers for banner action destination selector
   useEffect(() => {
-    offersApi.getActive()
-      .then((offers) => setActiveOffers(offers || []))
-      .catch((err) => console.error('Failed to load active offers for announcement selector', err));
+    offersApi.getAll({ isActive: true })
+      .then((res) => {
+        const list = (res.data || []).filter((o) => o.isActive);
+        if (list.length > 0) {
+          setActiveOffers(list);
+        } else {
+          offersApi.getActive().then((offers) => setActiveOffers(offers || []));
+        }
+      })
+      .catch(() => {
+        offersApi.getActive()
+          .then((offers) => setActiveOffers(offers || []))
+          .catch((err) => console.error('Failed to load active offers for announcement selector', err));
+      });
   }, []);
 
   // Determine which option is currently selected in the destination dropdown
@@ -106,22 +117,26 @@ export default function AdminSettingsPage() {
     }));
   };
 
-  const [justSaved, setJustSaved] = useState(false);
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
 
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (saveState === 'saving') return;
+
+    setSaveState('saving');
     try {
       const fresh = await updateSettings(formData);
       setFormData(fresh);
-      setJustSaved(true);
+      setSaveState('saved');
       toast.success('Store settings saved successfully!', {
         description: 'Customer storefront policies and thresholds have been updated in real-time.',
       });
       setTimeout(() => {
-        setJustSaved(false);
-      }, 2500);
+        setSaveState('idle');
+      }, 1400);
     } catch (error: any) {
       console.error('Failed to save settings:', error);
+      setSaveState('idle');
       toast.error('Failed to save store settings. Please check your connection.');
     }
   };
@@ -129,10 +144,16 @@ export default function AdminSettingsPage() {
   const handleResetDefaults = async () => {
     if (window.confirm('Reset all store settings to default operational values?')) {
       try {
+        setSaveState('saving');
         const reset = await resetToDefaults();
         setFormData(reset);
+        setSaveState('saved');
         toast.success('Settings restored to defaults!');
+        setTimeout(() => {
+          setSaveState('idle');
+        }, 1400);
       } catch (err) {
+        setSaveState('idle');
         toast.error('Failed to reset settings.');
       }
     }
@@ -140,6 +161,7 @@ export default function AdminSettingsPage() {
 
   const handleDiscard = () => {
     setFormData(config);
+    setSaveState('idle');
     toast.info('Changes discarded');
   };
 
@@ -179,7 +201,7 @@ export default function AdminSettingsPage() {
             <button
               type="button"
               onClick={handleDiscard}
-              disabled={isSaving}
+              disabled={saveState === 'saving'}
               className="px-3 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 border border-rose-200 dark:border-rose-900 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
             >
               Discard
@@ -189,17 +211,24 @@ export default function AdminSettingsPage() {
           <button
             type="button"
             onClick={() => handleSave()}
-            disabled={isSaving || !isDirty}
+            disabled={saveState === 'saving' || (!isDirty && saveState !== 'saved')}
             className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs ${
-              isDirty
+              saveState === 'saved'
+                ? 'bg-emerald-600 text-white shadow-emerald-500/20'
+                : isDirty
                 ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20'
                 : 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
             }`}
           >
-            {isSaving ? (
+            {saveState === 'saving' ? (
               <>
                 <Loader2 size={13} className="animate-spin" />
                 <span>Saving...</span>
+              </>
+            ) : saveState === 'saved' ? (
+              <>
+                <Check size={13} />
+                <span>Saved!</span>
               </>
             ) : (
               <>
@@ -1112,23 +1141,28 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
-      {/* Floating Sticky Save & Discard Bar - Only shows when unsaved or just saved */}
+      {/* Floating Sticky Save & Discard Bar - Smooth, stable, and completely dismissed off-screen */}
       <div
-        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[94%] max-w-3xl bg-card/95 backdrop-blur-md border border-border/80 rounded-2xl px-5 py-3.5 shadow-2xl transition-all duration-300 ease-out flex flex-col sm:flex-row items-center justify-between gap-3 ${
-          isDirty || justSaved
+        className={`fixed bottom-6 left-1/2 -translate-x-1/2 lg:left-[calc(50%+8rem)] lg:-translate-x-1/2 z-40 w-[92%] max-w-3xl bg-card/95 backdrop-blur-md border border-border/80 rounded-2xl px-5 py-3.5 shadow-2xl transition-all duration-300 ease-out flex flex-col sm:flex-row items-center justify-between gap-3 ${
+          isDirty || saveState !== 'idle'
             ? 'translate-y-0 opacity-100 pointer-events-auto'
-            : 'translate-y-28 opacity-0 pointer-events-none'
+            : 'translate-y-[calc(100%+4rem)] opacity-0 pointer-events-none'
         }`}
       >
-        <div className="flex items-center gap-2.5 text-xs">
-          {justSaved ? (
-            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold animate-in fade-in duration-200">
+        <div className="flex items-center gap-2.5 text-xs min-h-[26px]">
+          {saveState === 'saved' ? (
+            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold animate-in fade-in duration-150">
               <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
               <span>Settings saved and synced to storefront in real-time!</span>
             </div>
+          ) : saveState === 'saving' ? (
+            <div className="flex items-center gap-2 text-primary font-medium animate-in fade-in duration-150">
+              <Loader2 size={16} className="animate-spin text-primary shrink-0" />
+              <span>Saving store settings...</span>
+            </div>
           ) : isDirty ? (
-            <div className="flex items-center gap-2.5 font-medium animate-in fade-in duration-200">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
+            <div className="flex items-center gap-2.5 font-medium animate-in fade-in duration-150">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0 animate-pulse" />
               <span className="font-bold text-amber-600 dark:text-amber-400">
                 You have unsaved changes!
               </span>
@@ -1149,7 +1183,7 @@ export default function AdminSettingsPage() {
             <button
               type="button"
               onClick={handleDiscard}
-              disabled={isSaving}
+              disabled={saveState === 'saving'}
               className="px-3.5 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 border border-rose-200 dark:border-rose-900 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
             >
               Discard
@@ -1159,8 +1193,8 @@ export default function AdminSettingsPage() {
           <button
             type="button"
             onClick={handleResetDefaults}
-            disabled={isSaving}
-            className="px-3.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground border rounded-xl hover:bg-muted transition-colors"
+            disabled={saveState === 'saving'}
+            className="px-3.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground border rounded-xl hover:bg-muted transition-colors disabled:opacity-50"
           >
             Reset Defaults
           </button>
@@ -1168,17 +1202,24 @@ export default function AdminSettingsPage() {
           <button
             type="button"
             onClick={() => handleSave()}
-            disabled={isSaving || !isDirty}
+            disabled={saveState === 'saving' || (!isDirty && saveState !== 'saved')}
             className={`flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
-              isDirty
+              saveState === 'saved'
+                ? 'bg-emerald-600 text-white shadow-emerald-500/20'
+                : isDirty
                 ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20'
                 : 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
             }`}
           >
-            {isSaving ? (
+            {saveState === 'saving' ? (
               <>
                 <Loader2 size={14} className="animate-spin" />
                 <span>Saving...</span>
+              </>
+            ) : saveState === 'saved' ? (
+              <>
+                <Check size={14} />
+                <span>Saved!</span>
               </>
             ) : (
               <>
