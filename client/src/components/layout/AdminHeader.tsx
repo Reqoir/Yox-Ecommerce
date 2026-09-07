@@ -207,8 +207,8 @@ export function AdminHeader() {
                       <div
                         key={n.id}
                         onClick={() => handleItemClick(n)}
-                        className={`p-3 transition-colors cursor-pointer hover:bg-muted/50 flex items-start gap-3 text-xs ${
-                          !n.isRead ? 'bg-primary/[0.03]' : 'opacity-70'
+                        className={`p-3 transition-colors cursor-pointer hover:bg-muted/60 flex items-start gap-3 text-xs ${
+                          !n.isRead ? 'bg-primary/[0.04]' : 'bg-transparent'
                         }`}
                       >
                         <div className={`p-1.5 rounded-lg border shrink-0 text-base leading-none ${config.color}`}>

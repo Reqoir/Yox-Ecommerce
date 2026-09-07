@@ -8,6 +8,8 @@ import { shipmentsApi, BackendShipment } from '@/lib/api/shipments';
 import { returnsApi, BackendReturn, ReturnReason } from '@/lib/api/returns';
 import { ReturnStatusTracker } from '@/components/features/orders/ReturnStatusTracker';
 import { ManualShipmentCard } from '@/components/features/orders/ManualShipmentCard';
+import { ProductReviewModal } from '@/components/features/orders/ProductReviewModal';
+import { reviewsApi } from '@/lib/api/reviews';
 import { useCartStore } from '@/store/useCartStore';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
 import {
@@ -36,6 +38,7 @@ import {
   ShieldCheck,
   Building2,
   Info,
+  Star,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -82,6 +85,17 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [isSubmittingReturn, setIsSubmittingReturn] = useState(false);
 
+  // Review Modal State
+  const [userReviews, setUserReviews] = useState<any[]>([]);
+  const [reviewModalTarget, setReviewModalTarget] = useState<{
+    productId: string;
+    productName: string;
+    imageUrl?: string;
+    sku?: string;
+    size?: string;
+    color?: string;
+  } | null>(null);
+
   const fetchOrderDetails = async () => {
     try {
       setIsLoading(true);
@@ -89,14 +103,16 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       setOrder(data);
       if (data?.notes) setSavedNote(data.notes);
 
-      // Attempt shipment & returns lookup concurrently
-      const [shipData, returnsData] = await Promise.all([
+      // Attempt shipment, returns & user reviews lookup concurrently
+      const [shipData, returnsData, reviewsData] = await Promise.all([
         shipmentsApi.getShipmentByOrder(data.id).catch(() => null),
         returnsApi.getMyReturns().catch(() => []),
+        reviewsApi.getMyReviews().catch(() => ({ reviews: [] })),
       ]);
 
       if (shipData) setShipment(shipData);
-      setUserReturns(returnsData.filter((r) => r.orderId === data.id));
+      setUserReturns(returnsData.filter((r: any) => r.orderId === data.id));
+      setUserReviews(reviewsData?.reviews || reviewsData || []);
     } catch (error: any) {
       console.error('Failed to fetch order details:', error);
       toast.error(error?.response?.data?.message || 'Order not found');
@@ -394,6 +410,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const isWithinReturnWindow = isDelivered && returnsEnabled && daysSinceDelivery <= returnWindowDays;
   const returnDaysRemaining = deliveryDate ? Math.max(0, Math.ceil(returnWindowDays - daysSinceDelivery)) : 0;
 
+  const unreviewedItem = isDelivered && order.items
+    ? order.items.find((item) => !userReviews.some((r) => r.productId === item.productId))
+    : null;
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300 print:p-0 print:space-y-4">
       {/* Page Navigation & Title */}
@@ -617,13 +637,37 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             )}
           </div>
 
-          <button
-            onClick={handleBuyAgain}
-            className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-bold rounded-lg transition-colors shadow-2xs"
-          >
-            <RefreshCw size={14} />
-            <span>Buy Again</span>
-          </button>
+          <div className="flex items-center gap-2.5">
+            {isDelivered && (
+              <button
+                onClick={() => {
+                  const target = unreviewedItem || (order.items && order.items[0]);
+                  if (target) {
+                    setReviewModalTarget({
+                      productId: target.productId,
+                      productName: target.productName,
+                      imageUrl: target.imageUrl || (target as any).image,
+                      sku: target.sku,
+                      size: target.size,
+                      color: target.color,
+                    });
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-amber-400 hover:bg-amber-500 text-black text-xs font-bold rounded-lg transition-colors shadow-2xs cursor-pointer"
+              >
+                <Star size={14} className="fill-black" />
+                <span>{unreviewedItem ? 'Rate & Review' : 'Reviewed ★'}</span>
+              </button>
+            )}
+
+            <button
+              onClick={handleBuyAgain}
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-bold rounded-lg transition-colors shadow-2xs"
+            >
+              <RefreshCw size={14} />
+              <span>Buy Again</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -793,9 +837,43 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 </div>
               </div>
 
-              <div className="text-right shrink-0">
-                <span className="font-bold text-gray-900 text-sm">₹{item.subtotal}</span>
-                <span className="block text-[10px] text-gray-400">₹{item.unitPrice} / unit</span>
+              <div className="flex items-center gap-4 shrink-0">
+                {isDelivered && (
+                  <div>
+                    {(() => {
+                      const itemReview = userReviews.find((r) => r.productId === item.productId);
+                      if (itemReview) {
+                        return (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 font-semibold text-xs">
+                            <Star size={13} className="fill-amber-400 text-amber-400 shrink-0" />
+                            <span>Rated {itemReview.rating}★</span>
+                          </div>
+                        );
+                      }
+                      return (
+                        <button
+                          onClick={() => setReviewModalTarget({
+                            productId: item.productId,
+                            productName: item.productName,
+                            imageUrl: item.imageUrl || (item as any).image,
+                            sku: item.sku,
+                            size: item.size,
+                            color: item.color,
+                          })}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 rounded-lg text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                        >
+                          <Star size={13} className="fill-amber-500 text-amber-500 shrink-0" />
+                          <span>Rate & Review</span>
+                        </button>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                <div className="text-right">
+                  <span className="font-bold text-gray-900 text-sm">₹{item.subtotal}</span>
+                  <span className="block text-[10px] text-gray-400">₹{item.unitPrice} / unit</span>
+                </div>
               </div>
             </div>
           ))}
@@ -1170,6 +1248,16 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
       )}
+
+      {/* Product Review Modal */}
+      <ProductReviewModal
+        isOpen={Boolean(reviewModalTarget)}
+        onClose={() => setReviewModalTarget(null)}
+        product={reviewModalTarget}
+        onReviewSubmitted={(productId, newReview) => {
+          setUserReviews((prev) => [...prev, { productId, ...newReview }]);
+        }}
+      />
     </div>
   );
 }

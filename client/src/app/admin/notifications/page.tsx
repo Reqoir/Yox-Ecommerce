@@ -449,7 +449,7 @@ export default function AdminNotificationsPage() {
                     ? 'border-primary ring-2 ring-primary/40 bg-primary/[0.04]'
                     : 'border-border/60'
                 } ${
-                  n.isRead && !isSelected ? 'opacity-60 bg-muted/20' : !isSelected ? 'bg-card shadow-sm hover:shadow-md' : ''
+                  n.isRead && !isSelected ? 'bg-muted/20 border-border/40 hover:bg-muted/40' : !isSelected ? 'bg-card shadow-sm hover:shadow-md' : ''
                 }`}
                 onClick={() => handleCardClick(n)}
               >
