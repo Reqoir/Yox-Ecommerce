@@ -5,6 +5,7 @@ import { Plus, Edit2, Trash2, MapPin, CheckCircle2, Home, Building2, Check } fro
 import { AddressForm } from '@/components/profile/AddressForm';
 import { toast } from 'sonner';
 import { addressApi, Address, CreateAddressDto, UpdateAddressDto } from '@/api/addresses';
+import { getApiErrorMessage } from '@/lib/utils';
 
 export default function AddressesPage() {
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -83,7 +84,7 @@ export default function AddressesPage() {
       }
       setIsFormOpen(false);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to save address');
+      toast.error(getApiErrorMessage(error, 'Failed to save address'));
     }
   };
 

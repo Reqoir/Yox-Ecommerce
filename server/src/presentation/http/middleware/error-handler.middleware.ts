@@ -46,11 +46,16 @@ export const errorHandler = (err: Error, req: Request, res: Response, _next: Nex
 
   // ── Zod validation errors ─────────────────────────────────────────────────
   if (err instanceof ZodError) {
+    const formattedErrors = formatZodErrors(err);
+    const detailedMessage =
+      formattedErrors.map((e) => e.message).filter(Boolean).join(', ') ||
+      'Validation failed.';
+
     ApiResponse.error(
       res,
-      'Validation failed.',
+      detailedMessage,
       HttpStatus.UNPROCESSABLE_ENTITY,
-      formatZodErrors(err),
+      formattedErrors,
     );
     return;
   }
