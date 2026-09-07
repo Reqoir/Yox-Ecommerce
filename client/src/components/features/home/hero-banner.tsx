@@ -91,12 +91,12 @@ export function HeroBanner() {
 
   return (
     <section
-      className="w-full relative py-0 sm:py-4 overflow-hidden flex justify-center items-center"
+      className="w-full relative mt-0 py-0 sm:py-4 overflow-hidden flex justify-center items-center"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="w-full sm:w-[98%] max-w-[1500px] mx-auto">
-        <div className="relative overflow-hidden shadow-none sm:shadow-lg border-0 sm:border sm:border-gray-100 bg-gray-950 aspect-[4/5] sm:aspect-[1440/680] min-h-[480px] sm:min-h-[400px] md:min-h-[500px]">
+        <div className="relative overflow-hidden shadow-none sm:shadow-lg border-0 sm:border sm:border-gray-100 bg-gray-950 aspect-[4/5] sm:aspect-[1440/680] min-h-[460px] sm:min-h-[400px] md:min-h-[500px]">
           {/* Sliding Track Container */}
           <div
             className={`flex w-full h-full ${
