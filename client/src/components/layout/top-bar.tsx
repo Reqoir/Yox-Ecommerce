@@ -11,8 +11,40 @@ export function TopBar() {
   const { config, fetchSettings } = useStoreSettingsStore();
 
   useEffect(() => {
-    fetchSettings();
+    fetchSettings(true);
   }, [fetchSettings]);
+
+  // Resolve background color class or style
+  const getBannerBg = (color?: string) => {
+    if (!color) {
+      return { className: '', style: { backgroundColor: '#1A2E4C' } };
+    }
+    const COLOR_MAP: Record<string, string> = {
+      'bg-black': '#000000',
+      'black': '#000000',
+      'bg-[#1A2E4C]': '#1A2E4C',
+      '#1A2E4C': '#1A2E4C',
+      'navy': '#1A2E4C',
+      'bg-emerald-900': '#064e3b',
+      'bg-purple-900': '#581c87',
+      'bg-rose-900': '#881337',
+    };
+    if (COLOR_MAP[color]) {
+      return { className: '', style: { backgroundColor: COLOR_MAP[color] } };
+    }
+    if (color.startsWith('#') || color.startsWith('rgb')) {
+      return { className: '', style: { backgroundColor: color } };
+    }
+    if (color.startsWith('bg-[')) {
+      const match = color.match(/bg-\[(.*?)\]/);
+      if (match && match[1]) {
+        return { className: '', style: { backgroundColor: match[1] } };
+      }
+    }
+    return { className: color, style: {} };
+  };
+
+  const bannerBg = getBannerBg(config.announcementBgColor);
 
   return (
     <>
@@ -25,11 +57,14 @@ export function TopBar() {
       )}
 
       {/* Main Announcement & Store Features Bar */}
-      <div className="w-full bg-black text-white h-10 flex items-center justify-center transition-colors duration-300 border-b border-white/10">
-        <div className="w-[98%] max-w-[1500px] px-4 md:px-0 mx-auto flex items-center justify-between text-[11px] sm:text-xs">
-          
+      <div 
+        className={`w-full text-white min-h-[34px] sm:h-10 py-1.5 sm:py-0 flex items-center justify-center transition-colors duration-300 border-b border-white/10 ${bannerBg.className}`}
+        style={bannerBg.style}
+      >
+        <div className="w-[98%] max-w-[1500px] px-3 sm:px-4 md:px-0 mx-auto flex items-center justify-between text-[11px] sm:text-xs">
+
           {/* Left: Free Shipping Badge */}
-          <div className="hidden sm:flex items-center gap-2 text-white/90">
+          <div className="hidden sm:flex items-center gap-2 text-white/90 shrink-0">
             <TbTruckDelivery className="text-base text-emerald-400" />
             <span>
               Free Shipping on orders above{' '}
@@ -40,24 +75,22 @@ export function TopBar() {
           </div>
 
           {/* Center: Live Dynamic Announcement Banner */}
-          <div className="flex-1 text-center truncate px-2">
+          <div className="flex-1 text-center px-1 sm:px-3 flex items-center justify-center">
             {config.announcementEnabled ? (
               config.announcementLink ? (
                 <Link
                   href={config.announcementLink}
-                  className="inline-flex items-center gap-1.5 font-medium hover:underline text-amber-300 transition-colors"
+                  className="inline-flex items-center justify-center text-center font-medium hover:underline text-amber-300 transition-colors text-[10.5px] sm:text-[11px] md:text-xs leading-snug sm:leading-normal"
                 >
-                  <Sparkles size={12} className="text-amber-300 shrink-0" />
-                  <span className="truncate">{config.announcementText}</span>
+                  <span>{config.announcementText}</span>
                 </Link>
               ) : (
-                <span className="inline-flex items-center gap-1.5 font-medium text-amber-300">
-                  <Sparkles size={12} className="text-amber-300 shrink-0" />
-                  <span className="truncate">{config.announcementText}</span>
+                <span className="inline-flex items-center justify-center text-center font-medium text-amber-300 text-[10.5px] sm:text-[11px] md:text-xs leading-snug sm:leading-normal">
+                  <span>{config.announcementText}</span>
                 </span>
               )
             ) : (
-              <span className="text-white/80 font-medium truncate">
+              <span className="text-white/80 font-medium text-[10.5px] sm:text-[11px] md:text-xs leading-snug sm:leading-normal">
                 Welcome to {config.storeName} — {config.tagline}
               </span>
             )}

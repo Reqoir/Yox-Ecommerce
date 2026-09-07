@@ -141,7 +141,7 @@ export function Navbar() {
   };
 
   return (
-    <nav className={`w-full bg-white sticky top-0 z-40 ${pathname !== '/' ? 'shadow-sm border-b border-gray-100' : 'border-b'}`}>
+    <nav suppressHydrationWarning className={`w-full bg-white sticky top-0 z-40 ${pathname !== '/' ? 'shadow-sm border-b border-gray-100' : 'border-b'}`}>
       <div className="w-full px-4 lg:px-0 lg:w-[95%] mx-auto h-20 flex items-center justify-between">
         
         {/* Left Side: Empty space to keep logo centered */}
@@ -237,6 +237,7 @@ export function Navbar() {
           <div className="relative" ref={userDropdownRef}>
             {mounted && user ? (
               <button
+                suppressHydrationWarning
                 onClick={() => setIsUserDropdownOpen((prev) => !prev)}
                 className="flex items-center gap-2 p-1 -m-1 rounded-full hover:bg-gray-100 transition-all focus:outline-none group"
                 aria-expanded={isUserDropdownOpen}
@@ -271,6 +272,7 @@ export function Navbar() {
               </button>
             ) : (
               <button
+                suppressHydrationWarning
                 onClick={() => router.push('/login')}
                 className="flex items-center text-black hover:opacity-70 transition-opacity"
                 title="Sign In / Register"
@@ -381,6 +383,7 @@ export function Navbar() {
 
           {/* Mobile Search Trigger */}
           <button 
+            suppressHydrationWarning
             onClick={() => setIsMobileSearchOpen(true)}
             className="md:hidden flex items-center text-black hover:opacity-70 transition-opacity"
           >
@@ -400,7 +403,7 @@ export function Navbar() {
           </Link>
 
           {/* Mobile Menu */}
-          <button className="lg:hidden flex items-center text-black hover:opacity-70 transition-opacity ml-2">
+          <button suppressHydrationWarning className="lg:hidden flex items-center text-black hover:opacity-70 transition-opacity ml-2">
             <Menu size={24} />
           </button>
 

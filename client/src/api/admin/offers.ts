@@ -109,12 +109,14 @@ export const offersApi = {
   },
 
   getById: async (id: string): Promise<Offer> => {
-    const res = await apiClient.get(`/offers/${id}`);
+    const cleanId = encodeURIComponent((id || '').trim());
+    const res = await apiClient.get(`/offers/${cleanId}`);
     return res.data?.data;
   },
 
   getOfferWithProducts: async (id: string): Promise<OfferWithProducts> => {
-    const res = await apiClient.get(`/offers/${id}/products`);
+    const cleanId = encodeURIComponent((id || '').trim());
+    const res = await apiClient.get(`/offers/${cleanId}/products`);
     return res.data?.data;
   },
 

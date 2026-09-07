@@ -141,6 +141,7 @@ export function StyleSeekers() {
               src={category.image}
               alt={category.label}
               fill
+              sizes="(max-width: 640px) 160px, (max-width: 768px) 240px, (max-width: 1024px) 280px, 320px"
               className="object-cover transition-transform duration-700 group-hover:scale-105"
             />
             

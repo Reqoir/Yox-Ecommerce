@@ -5,6 +5,7 @@ import { Heart, X, RefreshCw, ShoppingBag, ChevronDown, WifiOff, SlidersHorizont
 import Link from 'next/link';
 import { useProductFilters } from '@/hooks/useProductFilters';
 import { useCategories } from '@/hooks/admin/useCategories';
+import { useBrands } from '@/hooks/admin/useBrands';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { toast } from 'sonner';
 import { SORT_OPTIONS_LIST, getColorHex } from '@/constants/products';
@@ -19,6 +20,7 @@ export function ProductGrid() {
     searchQuery,
     category,
     subCategory,
+    brand,
     sortBy,
     filteredProducts,
     isLoading,
@@ -32,6 +34,7 @@ export function ProductGrid() {
   } = useProductFilters();
 
   const { categories: apiCategories } = useCategories();
+  const { brands: apiBrands } = useBrands();
   const { isFavourite, toggleFavourite } = useFavouritesStore();
 
   // Show ONLY parent categories (no subcategories) in tabs
@@ -61,15 +64,21 @@ export function ProductGrid() {
     if (!category && !subCategory) return 'ALL';
     const target = (category || subCategory || '').toLowerCase().trim();
 
-    // 1. Direct match with a parent category
+    // 1. Direct match with a parent category (by slug, name, or id)
     const directParent = parentCategories.find(
-      (c) => c.slug?.toLowerCase() === target || c.name.toLowerCase() === target
+      (c) =>
+        c.slug?.toLowerCase() === target ||
+        c.name.toLowerCase() === target ||
+        c.id?.toLowerCase() === target
     );
     if (directParent) return directParent.name.toUpperCase();
 
     // 2. Subcategory match -> resolve to its parent
     const matchedSub = (apiCategories || []).find(
-      (c) => c.slug?.toLowerCase() === target || c.name.toLowerCase() === target
+      (c) =>
+        c.slug?.toLowerCase() === target ||
+        c.name.toLowerCase() === target ||
+        c.id?.toLowerCase() === target
     );
     if (matchedSub?.parentCategoryId) {
       const parent = parentCategories.find((p) => p.id === matchedSub.parentCategoryId);
@@ -84,15 +93,21 @@ export function ProductGrid() {
     if (!category && !subCategory) return null;
     const target = (category || subCategory || '').toLowerCase().trim();
 
-    // 1. Direct match with a parent category
+    // 1. Direct match with a parent category (by slug, name, or id)
     const directParent = parentCategories.find(
-      (c) => c.slug?.toLowerCase() === target || c.name.toLowerCase() === target
+      (c) =>
+        c.slug?.toLowerCase() === target ||
+        c.name.toLowerCase() === target ||
+        c.id?.toLowerCase() === target
     );
     if (directParent) return directParent;
 
     // 2. Subcategory match -> resolve to its parent
     const matchedSub = (apiCategories || []).find(
-      (c) => c.slug?.toLowerCase() === target || c.name.toLowerCase() === target
+      (c) =>
+        c.slug?.toLowerCase() === target ||
+        c.name.toLowerCase() === target ||
+        c.id?.toLowerCase() === target
     );
     if (matchedSub?.parentCategoryId) {
       return parentCategories.find((p) => p.id === matchedSub.parentCategoryId) || null;
@@ -117,6 +132,41 @@ export function ProductGrid() {
     }
   };
 
+  // Clean display page title
+  const pageTitle = React.useMemo(() => {
+    if (brand) {
+      const matchedBrand = (apiBrands || []).find(
+        (b) =>
+          b.slug?.toLowerCase() === brand.toLowerCase() ||
+          b.name.toLowerCase() === brand.toLowerCase() ||
+          b.id.toLowerCase() === brand.toLowerCase()
+      );
+      return (matchedBrand?.name || brand).toUpperCase();
+    }
+    if (subCategory) {
+      const matchedSub = (apiCategories || []).find(
+        (c) =>
+          c.slug?.toLowerCase() === subCategory.toLowerCase() ||
+          c.name.toLowerCase() === subCategory.toLowerCase() ||
+          c.id?.toLowerCase() === subCategory.toLowerCase()
+      );
+      return (matchedSub?.name || subCategory).toUpperCase();
+    }
+    if (category) {
+      const matchedCat = (apiCategories || []).find(
+        (c) =>
+          c.slug?.toLowerCase() === category.toLowerCase() ||
+          c.name.toLowerCase() === category.toLowerCase() ||
+          c.id?.toLowerCase() === category.toLowerCase()
+      );
+      return (matchedCat?.name || category).toUpperCase();
+    }
+    if (searchQuery) {
+      return `SEARCH: ${searchQuery.toUpperCase()}`;
+    }
+    return 'ALL PRODUCTS';
+  }, [category, subCategory, brand, searchQuery, apiCategories, apiBrands]);
+
   return (
     <div className="w-full lg:pl-8 pb-16 lg:pb-0">
       
@@ -125,13 +175,7 @@ export function ProductGrid() {
         
         {/* Title */}
         <h1 className="text-[22px] font-extrabold text-black uppercase tracking-wide mb-6">
-          {subCategory 
-            ? subCategory 
-            : category 
-            ? category 
-            : searchQuery 
-            ? `SEARCH: ${searchQuery}` 
-            : "ALL PRODUCTS"}
+          {pageTitle}
         </h1>
         
         {/* Tabs and Sort */}

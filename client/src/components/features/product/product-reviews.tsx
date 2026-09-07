@@ -115,8 +115,8 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
         </div>
       ) : reviews.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {reviews.map((review: any) => (
-            <div key={review._id} className="p-5 border border-gray-100 bg-[#FAFAFA] rounded-xs flex flex-col justify-between">
+          {reviews.map((review: any, idx: number) => (
+            <div key={review.id || review._id || `review-${idx}`} className="p-5 border border-gray-100 bg-[#FAFAFA] rounded-xs flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between gap-2 mb-2.5">
                   <div className="flex gap-0.5">

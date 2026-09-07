@@ -199,6 +199,7 @@ export function useProductFilters() {
   const searchQuery = searchParams.get('search') || '';
   const category = searchParams.get('category') || null;
   const subCategory = searchParams.get('subcategory') || null;
+  const brand = searchParams.get('brand') || null;
   const rawMinPrice = searchParams.get('minprice') || searchParams.get('minPrice');
   const minPrice = rawMinPrice && !isNaN(Number(rawMinPrice)) ? Number(rawMinPrice) : 0;
   
@@ -320,6 +321,13 @@ export function useProductFilters() {
   const setSubCategory = useCallback(
     (subCat: string | null) => {
       updateQueryParams({ subcategory: subCat ? subCat.toLowerCase() : null, subCategory: null });
+    },
+    [updateQueryParams]
+  );
+
+  const setBrand = useCallback(
+    (b: string | null) => {
+      updateQueryParams({ brand: b ? b.toLowerCase() : null });
     },
     [updateQueryParams]
   );
@@ -488,6 +496,32 @@ export function useProductFilters() {
       }
     }
 
+    // Brand match (supports brand slug, name, or ID)
+    if (brand) {
+      const brandLower = brand.toLowerCase().trim();
+      const matchedBrand = apiBrands.find(
+        (b) =>
+          b.slug?.toLowerCase() === brandLower ||
+          b.name.toLowerCase() === brandLower ||
+          b.id.toLowerCase() === brandLower
+      );
+
+      if (matchedBrand) {
+        result = result.filter(
+          (p) =>
+            p.brand?.toLowerCase() === matchedBrand.name.toLowerCase() ||
+            p.brand?.toLowerCase() === matchedBrand.slug?.toLowerCase() ||
+            (p as any).brandId === matchedBrand.id
+        );
+      } else {
+        result = result.filter(
+          (p) =>
+            p.brand?.toLowerCase() === brandLower ||
+            (p as any).brandId?.toLowerCase() === brandLower
+        );
+      }
+    }
+
     // Price range match
     result = result.filter((p) => p.price >= minPrice && p.price <= maxPrice);
 
@@ -549,6 +583,7 @@ export function useProductFilters() {
     searchQuery,
     category,
     subCategory,
+    brand,
     minPrice,
     maxPrice,
     selectedSizes,
@@ -559,6 +594,7 @@ export function useProductFilters() {
     onSaleOnly,
     sortBy,
     apiCategories,
+    apiBrands,
   ]);
 
   // Count active filters
@@ -567,6 +603,7 @@ export function useProductFilters() {
     if (searchQuery) count++;
     if (category) count++;
     if (subCategory) count++;
+    if (brand) count++;
     if (minPrice > 0 || maxPrice < 10000) count++;
     if (inStockOnly) count++;
     if (onSaleOnly) count++;
@@ -593,6 +630,7 @@ export function useProductFilters() {
     searchQuery,
     category,
     subCategory,
+    brand,
     minPrice,
     maxPrice,
     selectedSizes,
@@ -617,6 +655,7 @@ export function useProductFilters() {
     setSearchQuery,
     setCategory,
     setSubCategory,
+    setBrand,
     setPriceRange,
     toggleSize,
     toggleFit,
