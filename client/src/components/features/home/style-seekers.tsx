@@ -25,7 +25,7 @@ export function StyleSeekers() {
             slug: cat.slug,
             label: cat.name.toUpperCase(),
             image: cat.image || 'https://placehold.co/400x600?text=No+Image',
-            height: index % 2 === 0 ? 'h-[280px] sm:h-[450px]' : 'h-[200px] sm:h-[300px]',
+            height: index % 2 === 0 ? 'h-[160px] xs:h-[190px] sm:h-[280px] md:h-[450px]' : 'h-[130px] xs:h-[150px] sm:h-[200px] md:h-[300px]',
           }));
         
         setCategories(mapped);
@@ -134,7 +134,7 @@ export function StyleSeekers() {
           <Link
             key={`${category.id}-${index}`}
             href={`/shop?category=${category.slug}`}
-            className={`relative flex-shrink-0 w-[160px] sm:w-[240px] md:w-[280px] lg:w-[320px] ${category.height} group overflow-hidden bg-gray-100 cursor-pointer rounded-sm block`}
+            className={`relative flex-shrink-0 w-[130px] sm:w-[240px] md:w-[280px] lg:w-[320px] ${category.height} group overflow-hidden bg-gray-100 cursor-pointer rounded-sm block`}
           >
             {/* Image */}
             <Image
@@ -145,15 +145,15 @@ export function StyleSeekers() {
             />
             
             {/* Gradient Overlay for Text Readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-80" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
 
             {/* Bottom Content */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 flex items-center justify-between z-10">
-              <span className="text-white font-bold tracking-wide text-sm sm:text-base">
+            <div className="absolute bottom-0 left-0 right-0 p-2.5 sm:p-4 flex items-center justify-between z-10">
+              <span className="text-white font-bold tracking-wide text-[11px] sm:text-base truncate pr-1">
                 {category.label}
               </span>
-              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-gray-900 hover:scale-110 transition-transform shadow-sm">
-                <ArrowUpRight size={18} strokeWidth={2.5} />
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded-full flex items-center justify-center text-gray-900 hover:scale-110 transition-transform shadow-sm shrink-0">
+                <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={2.5} />
               </div>
             </div>
           </Link>
