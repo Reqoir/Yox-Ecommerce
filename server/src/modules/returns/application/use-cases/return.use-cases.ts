@@ -232,10 +232,12 @@ export class GetReturnByIdUseCase implements IUseCase<{ id: string; userId?: str
   }
 }
 
-export class ApproveReturnUseCase implements IUseCase<string, ReturnResponseDTO> {
+export class ApproveReturnUseCase implements IUseCase<string | { id: string; actor?: { id?: string; role?: string; email?: string } }, ReturnResponseDTO> {
   constructor(private readonly returnRepo: IReturnRepository) {}
 
-  async execute(id: string): Promise<ReturnResponseDTO> {
+  async execute(input: string | { id: string; actor?: { id?: string; role?: string; email?: string } }): Promise<ReturnResponseDTO> {
+    const id = typeof input === 'string' ? input : input.id;
+    const actor = typeof input === 'string' ? undefined : input.actor;
     const returnEntity = await this.returnRepo.findById(id);
     if (!returnEntity) throw new Error('Return record not found');
 
@@ -243,11 +245,31 @@ export class ApproveReturnUseCase implements IUseCase<string, ReturnResponseDTO>
     const saved = await this.returnRepo.save(returnEntity);
 
     try {
+      let actorId = actor?.id || 'SYSTEM';
+      let actorRole = actor?.role ? actor.role.toUpperCase() : 'ADMIN';
+      let actorName: string | null = null;
+      let actorEmail: string | null = actor?.email || null;
+
+      if (actorId && actorId !== 'SYSTEM' && actorId.length === 24) {
+        try {
+          const u = await UserModel.findById(actorId).select('fullName email roleId').lean();
+          if (u) {
+            actorName = u.fullName;
+            actorEmail = actorEmail || u.email;
+            if ((u as any).role) actorRole = (u as any).role.toUpperCase();
+          }
+        } catch {}
+      }
+
       await AuditLogService.getInstance()?.record({
+        actorId,
+        actorRole,
+        actorName,
+        actorEmail,
         action: AuditAction.RETURN_APPROVED,
         resourceType: 'RETURN',
         resourceId: saved.id,
-        description: `Return #${saved.id.substring(0, 8)} approved by admin`,
+        description: `Return #${saved.id.substring(0, 8)} approved by ${actorName || actorRole}`,
         after: { status: 'APPROVED' },
       });
     } catch {}
@@ -256,10 +278,10 @@ export class ApproveReturnUseCase implements IUseCase<string, ReturnResponseDTO>
   }
 }
 
-export class RejectReturnUseCase implements IUseCase<{ id: string; data: RejectReturnRequestDTO }, ReturnResponseDTO> {
+export class RejectReturnUseCase implements IUseCase<{ id: string; data: RejectReturnRequestDTO; actor?: { id?: string; role?: string; email?: string } }, ReturnResponseDTO> {
   constructor(private readonly returnRepo: IReturnRepository) {}
 
-  async execute(input: { id: string; data: RejectReturnRequestDTO }): Promise<ReturnResponseDTO> {
+  async execute(input: { id: string; data: RejectReturnRequestDTO; actor?: { id?: string; role?: string; email?: string } }): Promise<ReturnResponseDTO> {
     const returnEntity = await this.returnRepo.findById(input.id);
     if (!returnEntity) throw new Error('Return record not found');
 
@@ -267,11 +289,31 @@ export class RejectReturnUseCase implements IUseCase<{ id: string; data: RejectR
     const saved = await this.returnRepo.save(returnEntity);
 
     try {
+      let actorId = input.actor?.id || 'SYSTEM';
+      let actorRole = input.actor?.role ? input.actor.role.toUpperCase() : 'ADMIN';
+      let actorName: string | null = null;
+      let actorEmail: string | null = input.actor?.email || null;
+
+      if (actorId && actorId !== 'SYSTEM' && actorId.length === 24) {
+        try {
+          const u = await UserModel.findById(actorId).select('fullName email roleId').lean();
+          if (u) {
+            actorName = u.fullName;
+            actorEmail = actorEmail || u.email;
+            if ((u as any).role) actorRole = (u as any).role.toUpperCase();
+          }
+        } catch {}
+      }
+
       await AuditLogService.getInstance()?.record({
+        actorId,
+        actorRole,
+        actorName,
+        actorEmail,
         action: AuditAction.RETURN_REJECTED,
         resourceType: 'RETURN',
         resourceId: saved.id,
-        description: `Return #${saved.id.substring(0, 8)} rejected. Reason: ${input.data?.reason}`,
+        description: `Return #${saved.id.substring(0, 8)} rejected by ${actorName || actorRole}. Reason: ${input.data?.reason || 'Rejected'}`,
         after: { status: 'REJECTED', rejectionReason: input.data?.reason },
       });
     } catch {}

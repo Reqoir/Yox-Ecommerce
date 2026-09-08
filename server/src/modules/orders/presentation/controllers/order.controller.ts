@@ -102,7 +102,8 @@ export class OrderController {
     try {
       const userId = req.user!.id;
       const isAdmin = await this.checkIsAdmin(req);
-      const order = await this.cancelOrderUseCase.execute({ id: req.params.id as string, userId, isAdmin, data: req.body });
+      const actor = req.user ? { id: req.user.id, role: req.user.role, email: req.user.email } : undefined;
+      const order = await this.cancelOrderUseCase.execute({ id: req.params.id as string, userId, isAdmin, data: req.body, actor });
       ApiResponse.success(res, order, 'Order cancelled successfully');
     } catch (error) {
       next(error);
@@ -111,7 +112,8 @@ export class OrderController {
 
   confirmOrder = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const order = await this.confirmOrderUseCase.execute({ id: req.params.id as string });
+      const actor = req.user ? { id: req.user.id, role: req.user.role, email: req.user.email } : undefined;
+      const order = await this.confirmOrderUseCase.execute({ id: req.params.id as string, actor });
       ApiResponse.success(res, order, 'Order status updated to CONFIRMED');
     } catch (error) {
       next(error);
@@ -120,7 +122,8 @@ export class OrderController {
 
   packOrder = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const order = await this.packOrderUseCase.execute({ id: req.params.id as string });
+      const actor = req.user ? { id: req.user.id, role: req.user.role, email: req.user.email } : undefined;
+      const order = await this.packOrderUseCase.execute({ id: req.params.id as string, actor });
       ApiResponse.success(res, order, 'Order status updated to PACKED');
     } catch (error) {
       next(error);
@@ -129,7 +132,8 @@ export class OrderController {
 
   shipOrder = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const order = await this.shipOrderUseCase.execute({ id: req.params.id as string, data: req.body });
+      const actor = req.user ? { id: req.user.id, role: req.user.role, email: req.user.email } : undefined;
+      const order = await this.shipOrderUseCase.execute({ id: req.params.id as string, data: req.body, actor });
       ApiResponse.success(res, order, 'Order status updated to SHIPPED');
     } catch (error) {
       next(error);
@@ -138,7 +142,8 @@ export class OrderController {
 
   outForDelivery = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const order = await this.outForDeliveryUseCase.execute({ id: req.params.id as string });
+      const actor = req.user ? { id: req.user.id, role: req.user.role, email: req.user.email } : undefined;
+      const order = await this.outForDeliveryUseCase.execute({ id: req.params.id as string, actor });
       ApiResponse.success(res, order, 'Order status updated to OUT_FOR_DELIVERY');
     } catch (error) {
       next(error);
@@ -147,7 +152,8 @@ export class OrderController {
 
   deliverOrder = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const order = await this.deliverOrderUseCase.execute({ id: req.params.id as string });
+      const actor = req.user ? { id: req.user.id, role: req.user.role, email: req.user.email } : undefined;
+      const order = await this.deliverOrderUseCase.execute({ id: req.params.id as string, actor });
       ApiResponse.success(res, order, 'Order status updated to DELIVERED');
     } catch (error) {
       next(error);
@@ -156,7 +162,8 @@ export class OrderController {
 
   updateStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const order = await this.updateOrderStatusUseCase.execute({ id: req.params.id as string, data: req.body });
+      const actor = req.user ? { id: req.user.id, role: req.user.role, email: req.user.email } : undefined;
+      const order = await this.updateOrderStatusUseCase.execute({ id: req.params.id as string, data: req.body, actor });
       ApiResponse.success(res, order, 'Order status updated successfully');
     } catch (error) {
       next(error);
@@ -165,12 +172,14 @@ export class OrderController {
 
   updatePaymentStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const actor = req.user ? { id: req.user.id, role: req.user.role, email: req.user.email } : undefined;
       const { paymentStatus, transactionId, notes } = req.body;
       const order = await this.updateOrderPaymentStatusUseCase.execute({
         id: req.params.id as string,
         paymentStatus,
         transactionId,
         notes,
+        actor,
       });
       ApiResponse.success(res, order, 'Order payment status updated successfully');
     } catch (error) {

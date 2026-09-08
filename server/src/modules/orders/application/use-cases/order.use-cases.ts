@@ -412,7 +412,27 @@ export class GetOrderByIdUseCase implements IUseCase<{ id: string; userId?: stri
   }
 }
 
-export class CancelOrderUseCase implements IUseCase<{ id: string; userId?: string; isAdmin?: boolean; data: CancelOrderRequestDTO }, OrderResponseDTO> {
+async function resolveActorDetails(actor?: { id?: string; role?: string; email?: string }) {
+  let actorId = actor?.id || 'SYSTEM';
+  let actorRole = actor?.role ? actor.role.toUpperCase() : (actorId === 'SYSTEM' ? 'SYSTEM' : 'STAFF');
+  let actorName: string | null = null;
+  let actorEmail: string | null = actor?.email || null;
+
+  if (actorId && actorId !== 'SYSTEM' && actorId.length === 24) {
+    try {
+      const u = await UserModel.findById(actorId).select('fullName email roleId').lean();
+      if (u) {
+        actorName = u.fullName;
+        actorEmail = actorEmail || u.email;
+        if ((u as any).role) actorRole = (u as any).role.toUpperCase();
+      }
+    } catch {}
+  }
+
+  return { actorId, actorRole, actorName, actorEmail };
+}
+
+export class CancelOrderUseCase implements IUseCase<{ id: string; userId?: string; isAdmin?: boolean; data: CancelOrderRequestDTO; actor?: { id?: string; role?: string; email?: string } }, OrderResponseDTO> {
   constructor(
     private readonly orderRepo: IOrderRepository,
     private readonly variantRepo: IProductVariantRepository,
@@ -420,7 +440,7 @@ export class CancelOrderUseCase implements IUseCase<{ id: string; userId?: strin
     private readonly stockLogRepo: IStockLogRepository
   ) {}
 
-  async execute(input: { id: string; userId?: string; isAdmin?: boolean; data: CancelOrderRequestDTO }): Promise<OrderResponseDTO> {
+  async execute(input: { id: string; userId?: string; isAdmin?: boolean; data: CancelOrderRequestDTO; actor?: { id?: string; role?: string; email?: string } }): Promise<OrderResponseDTO> {
     let order = await this.orderRepo.findById(input.id);
     if (!order) {
       order = await this.orderRepo.findByOrderNumber(input.id);
@@ -473,13 +493,17 @@ export class CancelOrderUseCase implements IUseCase<{ id: string; userId?: strin
       }
     }
 
+    const actorInfo = await resolveActorDetails(input.actor || { id: input.userId, role: input.isAdmin ? 'ADMIN' : 'CUSTOMER' });
+
     AuditLogService.getInstance()?.record({
-      actorId: input.userId || 'SYSTEM',
-      actorRole: input.isAdmin ? 'ADMIN' : 'CUSTOMER',
+      actorId: actorInfo.actorId,
+      actorRole: actorInfo.actorRole,
+      actorName: actorInfo.actorName,
+      actorEmail: actorInfo.actorEmail,
       action: AuditAction.ORDER_CANCELLED,
       resourceType: 'ORDER',
       resourceId: savedOrder.id,
-      description: `Order #${savedOrder.orderNumber} cancelled. Reason: ${input.data?.reason || 'Cancelled'}`,
+      description: `Order #${savedOrder.orderNumber} cancelled by ${actorInfo.actorName || actorInfo.actorRole}. Reason: ${input.data?.reason || 'Cancelled'}`,
       before: { status: prevStatus },
       after: { status: 'CANCELLED' },
     });
@@ -513,9 +537,9 @@ export class CancelOrderUseCase implements IUseCase<{ id: string; userId?: strin
   }
 }
 
-export class ConfirmOrderUseCase implements IUseCase<{ id: string }, OrderResponseDTO> {
+export class ConfirmOrderUseCase implements IUseCase<{ id: string; actor?: { id?: string; role?: string; email?: string } }, OrderResponseDTO> {
   constructor(private readonly orderRepo: IOrderRepository) {}
-  async execute(input: { id: string }): Promise<OrderResponseDTO> {
+  async execute(input: { id: string; actor?: { id?: string; role?: string; email?: string } }): Promise<OrderResponseDTO> {
     let order = await this.orderRepo.findById(input.id);
     if (!order) order = await this.orderRepo.findByOrderNumber(input.id);
     if (!order) throw new Error('Order not found');
@@ -524,11 +548,16 @@ export class ConfirmOrderUseCase implements IUseCase<{ id: string }, OrderRespon
     const saved = await this.orderRepo.save(order);
 
     try {
+      const actorInfo = await resolveActorDetails(input.actor);
       await AuditLogService.getInstance()?.record({
+        actorId: actorInfo.actorId,
+        actorRole: actorInfo.actorRole,
+        actorName: actorInfo.actorName,
+        actorEmail: actorInfo.actorEmail,
         action: AuditAction.ORDER_STATUS_CHANGED,
         resourceType: 'ORDER',
         resourceId: saved.id,
-        description: `Order #${saved.orderNumber} confirmed`,
+        description: `Order #${saved.orderNumber} confirmed by ${actorInfo.actorName || actorInfo.actorRole}`,
         before: { status: prevStatus },
         after: { status: 'CONFIRMED' },
       });
@@ -538,9 +567,9 @@ export class ConfirmOrderUseCase implements IUseCase<{ id: string }, OrderRespon
   }
 }
 
-export class PackOrderUseCase implements IUseCase<{ id: string }, OrderResponseDTO> {
+export class PackOrderUseCase implements IUseCase<{ id: string; actor?: { id?: string; role?: string; email?: string } }, OrderResponseDTO> {
   constructor(private readonly orderRepo: IOrderRepository) {}
-  async execute(input: { id: string }): Promise<OrderResponseDTO> {
+  async execute(input: { id: string; actor?: { id?: string; role?: string; email?: string } }): Promise<OrderResponseDTO> {
     let order = await this.orderRepo.findById(input.id);
     if (!order) order = await this.orderRepo.findByOrderNumber(input.id);
     if (!order) throw new Error('Order not found');
@@ -549,11 +578,16 @@ export class PackOrderUseCase implements IUseCase<{ id: string }, OrderResponseD
     const saved = await this.orderRepo.save(order);
 
     try {
+      const actorInfo = await resolveActorDetails(input.actor);
       await AuditLogService.getInstance()?.record({
+        actorId: actorInfo.actorId,
+        actorRole: actorInfo.actorRole,
+        actorName: actorInfo.actorName,
+        actorEmail: actorInfo.actorEmail,
         action: AuditAction.ORDER_STATUS_CHANGED,
         resourceType: 'ORDER',
         resourceId: saved.id,
-        description: `Order #${saved.orderNumber} packed`,
+        description: `Order #${saved.orderNumber} packed by ${actorInfo.actorName || actorInfo.actorRole}`,
         before: { status: prevStatus },
         after: { status: 'PACKED' },
       });
@@ -563,9 +597,9 @@ export class PackOrderUseCase implements IUseCase<{ id: string }, OrderResponseD
   }
 }
 
-export class ShipOrderUseCase implements IUseCase<{ id: string; data: ShipOrderRequestDTO }, OrderResponseDTO> {
+export class ShipOrderUseCase implements IUseCase<{ id: string; data: ShipOrderRequestDTO; actor?: { id?: string; role?: string; email?: string } }, OrderResponseDTO> {
   constructor(private readonly orderRepo: IOrderRepository) {}
-  async execute(input: { id: string; data: ShipOrderRequestDTO }): Promise<OrderResponseDTO> {
+  async execute(input: { id: string; data: ShipOrderRequestDTO; actor?: { id?: string; role?: string; email?: string } }): Promise<OrderResponseDTO> {
     let order = await this.orderRepo.findById(input.id);
     if (!order) order = await this.orderRepo.findByOrderNumber(input.id);
     if (!order) throw new Error('Order not found');
@@ -574,11 +608,16 @@ export class ShipOrderUseCase implements IUseCase<{ id: string; data: ShipOrderR
     const saved = await this.orderRepo.save(order);
 
     try {
+      const actorInfo = await resolveActorDetails(input.actor);
       await AuditLogService.getInstance()?.record({
+        actorId: actorInfo.actorId,
+        actorRole: actorInfo.actorRole,
+        actorName: actorInfo.actorName,
+        actorEmail: actorInfo.actorEmail,
         action: AuditAction.ORDER_STATUS_CHANGED,
         resourceType: 'ORDER',
         resourceId: saved.id,
-        description: `Order #${saved.orderNumber} shipped via ${input.data?.deliveryPartnerId || 'Carrier'} (Tracking: ${input.data?.trackingNumber})`,
+        description: `Order #${saved.orderNumber} shipped via ${input.data?.deliveryPartnerId || 'Carrier'} by ${actorInfo.actorName || actorInfo.actorRole} (Tracking: ${input.data?.trackingNumber || 'N/A'})`,
         before: { status: prevStatus },
         after: { status: 'SHIPPED', trackingNumber: input.data?.trackingNumber },
       });
@@ -588,9 +627,9 @@ export class ShipOrderUseCase implements IUseCase<{ id: string; data: ShipOrderR
   }
 }
 
-export class OutForDeliveryUseCase implements IUseCase<{ id: string }, OrderResponseDTO> {
+export class OutForDeliveryUseCase implements IUseCase<{ id: string; actor?: { id?: string; role?: string; email?: string } }, OrderResponseDTO> {
   constructor(private readonly orderRepo: IOrderRepository) {}
-  async execute(input: { id: string }): Promise<OrderResponseDTO> {
+  async execute(input: { id: string; actor?: { id?: string; role?: string; email?: string } }): Promise<OrderResponseDTO> {
     let order = await this.orderRepo.findById(input.id);
     if (!order) order = await this.orderRepo.findByOrderNumber(input.id);
     if (!order) throw new Error('Order not found');
@@ -599,11 +638,16 @@ export class OutForDeliveryUseCase implements IUseCase<{ id: string }, OrderResp
     const saved = await this.orderRepo.save(order);
 
     try {
+      const actorInfo = await resolveActorDetails(input.actor);
       await AuditLogService.getInstance()?.record({
+        actorId: actorInfo.actorId,
+        actorRole: actorInfo.actorRole,
+        actorName: actorInfo.actorName,
+        actorEmail: actorInfo.actorEmail,
         action: AuditAction.ORDER_STATUS_CHANGED,
         resourceType: 'ORDER',
         resourceId: saved.id,
-        description: `Order #${saved.orderNumber} marked out for delivery`,
+        description: `Order #${saved.orderNumber} marked out for delivery by ${actorInfo.actorName || actorInfo.actorRole}`,
         before: { status: prevStatus },
         after: { status: 'OUT_FOR_DELIVERY' },
       });
@@ -613,13 +657,13 @@ export class OutForDeliveryUseCase implements IUseCase<{ id: string }, OrderResp
   }
 }
 
-export class DeliverOrderUseCase implements IUseCase<{ id: string }, OrderResponseDTO> {
+export class DeliverOrderUseCase implements IUseCase<{ id: string; actor?: { id?: string; role?: string; email?: string } }, OrderResponseDTO> {
   constructor(
     private readonly orderRepo: IOrderRepository,
     private readonly inventoryRepo: IInventoryRepository,
     private readonly stockLogRepo: IStockLogRepository
   ) {}
-  async execute(input: { id: string }): Promise<OrderResponseDTO> {
+  async execute(input: { id: string; actor?: { id?: string; role?: string; email?: string } }): Promise<OrderResponseDTO> {
     let order = await this.orderRepo.findById(input.id);
     if (!order) order = await this.orderRepo.findByOrderNumber(input.id);
     if (!order) throw new Error('Order not found');
@@ -653,11 +697,16 @@ export class DeliverOrderUseCase implements IUseCase<{ id: string }, OrderRespon
     } catch {}
 
     try {
+      const actorInfo = await resolveActorDetails(input.actor);
       await AuditLogService.getInstance()?.record({
+        actorId: actorInfo.actorId,
+        actorRole: actorInfo.actorRole,
+        actorName: actorInfo.actorName,
+        actorEmail: actorInfo.actorEmail,
         action: AuditAction.ORDER_STATUS_CHANGED,
         resourceType: 'ORDER',
         resourceId: savedOrder.id,
-        description: `Order #${savedOrder.orderNumber} marked delivered`,
+        description: `Order #${savedOrder.orderNumber} marked delivered by ${actorInfo.actorName || actorInfo.actorRole}`,
         before: { status: prevStatus },
         after: { status: 'DELIVERED' },
       });
@@ -667,9 +716,9 @@ export class DeliverOrderUseCase implements IUseCase<{ id: string }, OrderRespon
   }
 }
 
-export class UpdateOrderStatusUseCase implements IUseCase<{ id: string; data: UpdateOrderStatusRequestDTO }, OrderResponseDTO> {
+export class UpdateOrderStatusUseCase implements IUseCase<{ id: string; data: UpdateOrderStatusRequestDTO; actor?: { id?: string; role?: string; email?: string } }, OrderResponseDTO> {
   constructor(private readonly orderRepo: IOrderRepository) {}
-  async execute(input: { id: string; data: UpdateOrderStatusRequestDTO }): Promise<OrderResponseDTO> {
+  async execute(input: { id: string; data: UpdateOrderStatusRequestDTO; actor?: { id?: string; role?: string; email?: string } }): Promise<OrderResponseDTO> {
     let order = await this.orderRepo.findById(input.id);
     if (!order) order = await this.orderRepo.findByOrderNumber(input.id);
     if (!order) throw new Error('Order not found');
@@ -678,11 +727,16 @@ export class UpdateOrderStatusUseCase implements IUseCase<{ id: string; data: Up
     const saved = await this.orderRepo.save(order);
 
     try {
+      const actorInfo = await resolveActorDetails(input.actor);
       await AuditLogService.getInstance()?.record({
+        actorId: actorInfo.actorId,
+        actorRole: actorInfo.actorRole,
+        actorName: actorInfo.actorName,
+        actorEmail: actorInfo.actorEmail,
         action: AuditAction.ORDER_STATUS_CHANGED,
         resourceType: 'ORDER',
         resourceId: saved.id,
-        description: `Order #${saved.orderNumber} status updated to ${input.data.status.toUpperCase()}`,
+        description: `Order #${saved.orderNumber} status updated to ${input.data.status.toUpperCase()} by ${actorInfo.actorName || actorInfo.actorRole}`,
         before: { status: prevStatus },
         after: { status: input.data.status.toUpperCase() },
       });
@@ -692,9 +746,9 @@ export class UpdateOrderStatusUseCase implements IUseCase<{ id: string; data: Up
   }
 }
 
-export class UpdateOrderPaymentStatusUseCase implements IUseCase<{ id: string; paymentStatus: string; transactionId?: string; notes?: string }, OrderResponseDTO> {
+export class UpdateOrderPaymentStatusUseCase implements IUseCase<{ id: string; paymentStatus: string; transactionId?: string; notes?: string; actor?: { id?: string; role?: string; email?: string } }, OrderResponseDTO> {
   constructor(private readonly orderRepo: IOrderRepository) {}
-  async execute(input: { id: string; paymentStatus: string; transactionId?: string; notes?: string }): Promise<OrderResponseDTO> {
+  async execute(input: { id: string; paymentStatus: string; transactionId?: string; notes?: string; actor?: { id?: string; role?: string; email?: string } }): Promise<OrderResponseDTO> {
     let order = await this.orderRepo.findById(input.id);
     if (!order) order = await this.orderRepo.findByOrderNumber(input.id);
     if (!order) throw new Error('Order not found');
@@ -706,11 +760,16 @@ export class UpdateOrderPaymentStatusUseCase implements IUseCase<{ id: string; p
     const saved = await this.orderRepo.save(order);
 
     try {
+      const actorInfo = await resolveActorDetails(input.actor);
       await AuditLogService.getInstance()?.record({
+        actorId: actorInfo.actorId,
+        actorRole: actorInfo.actorRole,
+        actorName: actorInfo.actorName,
+        actorEmail: actorInfo.actorEmail,
         action: input.paymentStatus.toUpperCase() === 'REFUNDED' ? AuditAction.REFUND_COMPLETED : AuditAction.PAYMENT_VERIFIED,
         resourceType: 'ORDER',
         resourceId: saved.id,
-        description: `Order #${saved.orderNumber} payment status updated to ${input.paymentStatus.toUpperCase()}${input.transactionId ? ` (TXN: ${input.transactionId})` : ''}`,
+        description: `Order #${saved.orderNumber} payment status updated to ${input.paymentStatus.toUpperCase()} by ${actorInfo.actorName || actorInfo.actorRole}${input.transactionId ? ` (TXN: ${input.transactionId})` : ''}`,
         before: { paymentStatus: prevPaymentStatus },
         after: { paymentStatus: input.paymentStatus.toUpperCase(), paymentId: input.transactionId },
       });

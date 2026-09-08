@@ -8,6 +8,7 @@ import { Request } from 'express';
 import { IAuditLogRepository } from '../../domain/repositories/audit-log.repository.interface';
 import { AuditLog, ActorRole } from '../../domain/entities/audit-log.entity';
 import { CreateAuditLogDTO } from '../dtos/audit-log.dto';
+import { UserModel } from '../../../users/infrastructure/models/user.model';
 
 const SENSITIVE_KEYS = new Set([
   'password',
@@ -86,17 +87,42 @@ export class AuditLogService {
       // 1. Resolve Actor Details
       let actorId = dto.actorId;
       let actorRole: ActorRole | string = dto.actorRole || 'SYSTEM';
+      let actorName = dto.actorName || null;
+      let actorEmail = dto.actorEmail || null;
 
       if (req && req.user) {
         actorId = actorId || req.user.id;
-        actorRole = req.user.role === 'admin' || req.user.role === 'super_admin'
-          ? 'ADMIN'
-          : req.user.role === 'staff'
-          ? 'STAFF'
-          : 'CUSTOMER';
+        actorEmail = actorEmail || req.user.email;
+        const emailLower = (req.user.email || '').toLowerCase();
+        if (emailLower === 'admin@yox.com') {
+          actorRole = 'ADMIN';
+        } else if (req.user.role === 'customer') {
+          actorRole = 'CUSTOMER';
+        } else {
+          actorRole = 'STAFF';
+        }
       } else if (!actorId) {
         actorId = 'SYSTEM';
         actorRole = 'SYSTEM';
+        actorName = 'Automated System';
+        actorEmail = null;
+      }
+
+      // If actorId is present but actorName or actorEmail is missing, lookup UserModel
+      if (actorId && actorId !== 'SYSTEM' && (!actorName || !actorEmail)) {
+        try {
+          const userDoc = await UserModel.findById(actorId).select('fullName email role').lean();
+          if (userDoc) {
+            actorName = actorName || userDoc.fullName;
+            actorEmail = actorEmail || userDoc.email;
+            const emailLower = (userDoc.email || '').toLowerCase();
+            if (emailLower === 'admin@yox.com') {
+              actorRole = 'ADMIN';
+            } else if (actorRole !== 'CUSTOMER') {
+              actorRole = 'STAFF';
+            }
+          }
+        } catch {}
       }
 
       // 2. Resolve IP and User-Agent
@@ -107,6 +133,8 @@ export class AuditLogService {
       const auditLog = AuditLog.create({
         actorId: actorId!,
         actorRole: actorRole!,
+        actorName,
+        actorEmail,
         action: dto.action,
         resourceType: dto.resourceType,
         resourceId: dto.resourceId,

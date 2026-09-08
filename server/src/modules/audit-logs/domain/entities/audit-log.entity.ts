@@ -59,6 +59,8 @@ export type ActorRole = 'CUSTOMER' | 'ADMIN' | 'STAFF' | 'SYSTEM';
 export interface AuditLogProps extends EntityProps {
   actorId: string;
   actorRole: ActorRole | string;
+  actorName?: string | null;
+  actorEmail?: string | null;
   action: AuditAction | string;
   resourceType: string;
   resourceId: string;
@@ -77,6 +79,8 @@ export class AuditLog extends BaseEntity<AuditLogProps> {
 
   get actorId(): string { return this._props.actorId; }
   get actorRole(): string { return this._props.actorRole; }
+  get actorName(): string | null { return this._props.actorName ?? null; }
+  get actorEmail(): string | null { return this._props.actorEmail ?? null; }
   get action(): string { return this._props.action; }
   get resourceType(): string { return this._props.resourceType; }
   get resourceId(): string { return this._props.resourceId; }

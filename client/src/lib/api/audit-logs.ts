@@ -4,6 +4,8 @@ export interface AuditLogItem {
   id: string;
   actorId: string;
   actorRole: 'CUSTOMER' | 'ADMIN' | 'STAFF' | 'SYSTEM' | string;
+  actorName?: string | null;
+  actorEmail?: string | null;
   action: string;
   resourceType: string;
   resourceId: string;

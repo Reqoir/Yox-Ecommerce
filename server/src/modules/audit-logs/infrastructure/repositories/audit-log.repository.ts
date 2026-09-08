@@ -14,6 +14,8 @@ export class AuditLogRepository implements IAuditLogRepository {
       id: doc._id ? doc._id.toString() : data.id || '',
       actorId: data.actorId,
       actorRole: data.actorRole,
+      actorName: data.actorName || null,
+      actorEmail: data.actorEmail || null,
       action: data.action,
       resourceType: data.resourceType,
       resourceId: data.resourceId,
@@ -29,10 +31,12 @@ export class AuditLogRepository implements IAuditLogRepository {
   }
 
   async save(auditLog: AuditLog): Promise<AuditLog> {
-    const data = auditLog.toJSON();
+    const data = auditLog.toJSON() as any;
     const created = await AuditLogModel.create({
       actorId: data.actorId,
       actorRole: data.actorRole,
+      actorName: data.actorName || null,
+      actorEmail: data.actorEmail || null,
       action: data.action,
       resourceType: data.resourceType,
       resourceId: data.resourceId,
@@ -80,6 +84,8 @@ export class AuditLogRepository implements IAuditLogRepository {
         { resourceId: searchRegex },
         { resourceType: searchRegex },
         { actorId: searchRegex },
+        { actorName: searchRegex },
+        { actorEmail: searchRegex },
       ];
     }
 

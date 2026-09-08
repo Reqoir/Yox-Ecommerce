@@ -82,7 +82,8 @@ export class ReturnController {
 
   approveReturn = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const result = await this.approveReturnUseCase.execute(req.params.id as string);
+      const actor = req.user ? { id: req.user.id, role: req.user.role, email: req.user.email } : undefined;
+      const result = await this.approveReturnUseCase.execute({ id: req.params.id as string, actor });
       ApiResponse.success(res, result, 'Return approved');
     } catch (error) {
       next(error);
@@ -91,7 +92,8 @@ export class ReturnController {
 
   rejectReturn = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const result = await this.rejectReturnUseCase.execute({ id: req.params.id as string, data: req.body });
+      const actor = req.user ? { id: req.user.id, role: req.user.role, email: req.user.email } : undefined;
+      const result = await this.rejectReturnUseCase.execute({ id: req.params.id as string, data: req.body, actor });
       ApiResponse.success(res, result, 'Return rejected');
     } catch (error) {
       next(error);
