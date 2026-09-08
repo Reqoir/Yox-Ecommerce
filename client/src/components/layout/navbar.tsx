@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { matchesProductSearch } from '@/lib/search';
 import { toast } from 'sonner';
-import { Heart, Search, Menu, X, ArrowRight, LogOut, ChevronDown, Shield, User, Package, MapPin, Settings } from 'lucide-react';
+import { Heart, Search, Menu, X, ArrowRight, LogOut, ChevronDown, ChevronRight, Shield, User, Package, MapPin, Settings } from 'lucide-react';
 import { IoPersonOutline } from "react-icons/io5";
 import { BsHandbag } from "react-icons/bs";
 import { useProductFilters } from '@/hooks/useProductFilters';
@@ -551,18 +551,10 @@ export function Navbar() {
 
       {/* Full Screen Mobile Profile Dropdown Modal */}
       {mounted && isMobileProfileOpen && user && (
-        <div className="md:hidden fixed inset-0 z-50 bg-white flex flex-col p-6 animate-in slide-in-from-top duration-200 overflow-y-auto">
+        <div className="md:hidden fixed inset-0 z-[100] w-full h-full min-h-screen bg-white flex flex-col p-6 animate-in slide-in-from-top duration-200 overflow-y-auto">
           {/* Top Bar Header with Close Button */}
-          <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-black text-white text-sm font-bold flex items-center justify-center shrink-0">
-                {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-gray-900">Welcome, {user.fullName ? user.fullName.split(' ')[0] : 'User'}</h2>
-                <p className="text-[11px] text-gray-500">{user.email}</p>
-              </div>
-            </div>
+          <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-6 shrink-0">
+            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">ACCOUNT MENU</h2>
             <button
               onClick={() => setIsMobileProfileOpen(false)}
               className="p-2 text-gray-500 hover:text-black rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
@@ -590,7 +582,7 @@ export function Navbar() {
                       MY PROFILE
                     </span>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
+                  <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
                 </Link>
 
                 <Link
@@ -604,7 +596,7 @@ export function Navbar() {
                       MY ORDERS
                     </span>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
+                  <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
                 </Link>
 
                 <Link
@@ -618,7 +610,7 @@ export function Navbar() {
                       SAVED ADDRESSES
                     </span>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
+                  <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
                 </Link>
 
                 <Link
@@ -632,7 +624,7 @@ export function Navbar() {
                       MY WISHLIST
                     </span>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
+                  <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
                 </Link>
 
                 <Link
@@ -646,7 +638,7 @@ export function Navbar() {
                       ACCOUNT SETTINGS
                     </span>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
+                  <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
                 </Link>
 
                 {user.permissions?.includes('admin:access') && (
@@ -661,7 +653,7 @@ export function Navbar() {
                         ADMIN DASHBOARD
                       </span>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-[#1A2E4C] group-hover:text-black transition-colors" />
+                    <ChevronRight className="w-4 h-4 text-[#1A2E4C] group-hover:text-black transition-colors" />
                   </Link>
                 )}
               </div>
@@ -669,7 +661,7 @@ export function Navbar() {
           </div>
 
           {/* Footer Navigation Links */}
-          <div className="flex items-center justify-center gap-6 sm:gap-10 pt-8 pb-4 text-xs font-semibold tracking-widest text-gray-800 uppercase border-t border-gray-100 mt-8">
+          <div className="flex items-center justify-center gap-6 sm:gap-10 pt-8 pb-4 text-xs font-semibold tracking-widest text-gray-800 uppercase border-t border-gray-100 mt-8 shrink-0">
             <Link
               href="/contact"
               onClick={() => setIsMobileProfileOpen(false)}
