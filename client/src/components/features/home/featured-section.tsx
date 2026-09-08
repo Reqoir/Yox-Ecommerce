@@ -86,6 +86,8 @@ export function FeaturedSection() {
           allColors.sort((a, b) => a === firstVariant.color ? -1 : b === firstVariant.color ? 1 : 0);
         }
 
+        const isOutOfStock = variants.length === 0 || variants.every((v: any) => (v.stock === undefined ? 0 : v.stock) <= 0);
+
         return {
           id: p.id,
           name: p.name,
@@ -99,6 +101,7 @@ export function FeaturedSection() {
           secondImage,
           href: `/product/${p.slug || p.id}`,
           colors: allColors,
+          isOutOfStock,
         };
       });
     }
@@ -172,6 +175,8 @@ export function FeaturedSection() {
                     fill
                     sizes="(max-width: 768px) 260px, (max-width: 1024px) 300px, 25vw"
                     className={`object-cover object-center transition-opacity duration-300 ${
+                      product.isOutOfStock ? 'opacity-80 grayscale-[20%]' : ''
+                    } ${
                       product.secondImage && product.secondImage !== product.image ? 'group-hover:opacity-0' : ''
                     }`}
                   />
@@ -181,16 +186,22 @@ export function FeaturedSection() {
                       alt={`${product.name} alternate view`}
                       fill
                       sizes="(max-width: 768px) 260px, (max-width: 1024px) 300px, 25vw"
-                      className="object-cover object-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                      className={`object-cover object-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none ${
+                        product.isOutOfStock ? 'grayscale-[20%]' : ''
+                      }`}
                     />
                   )}
                   
-                  {/* Badge */}
-                  {product.badge && (
-                    <div className="absolute top-3 left-3 bg-white px-2 py-1 text-[10px] font-bold rounded-sm shadow-sm">
+                  {/* Badge / Sold Out Badge */}
+                  {product.isOutOfStock ? (
+                    <div className="absolute top-3 left-3 bg-black text-white px-2 py-1 text-[9px] font-black uppercase tracking-widest rounded-xs shadow-xs z-10">
+                      SOLD OUT
+                    </div>
+                  ) : product.badge ? (
+                    <div className="absolute top-3 left-3 bg-white px-2 py-1 text-[10px] font-bold rounded-xs shadow-xs z-10">
                       <span className={product.badgeColor || "text-gray-800"}>{product.badge}</span>
                     </div>
-                  )}
+                  ) : null}
 
                   {/* Eye Icon */}
                   <div className="absolute bottom-3 right-3 w-7 h-7 bg-white/80 rounded-full flex items-center justify-center text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-xs">
@@ -203,7 +214,12 @@ export function FeaturedSection() {
                     {product.name}
                   </h3>
                   <div className="flex items-center gap-2 text-[11px] font-medium text-gray-600">
-                    <span>₹{product.price || 0} INR</span>
+                    <span className={product.isOutOfStock ? 'text-gray-500 font-bold' : ''}>₹{product.price || 0} INR</span>
+                    {product.isOutOfStock && (
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        Sold Out
+                      </span>
+                    )}
                   </div>
                   {product.colors && product.colors.length > 1 && (
                     <div className="flex flex-wrap items-center gap-1.5 mt-0.5 mb-0.5">

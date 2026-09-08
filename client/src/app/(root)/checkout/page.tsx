@@ -23,10 +23,13 @@ function CheckoutContent() {
   const { items } = useCartStore();
   const { directBuyItem, setDirectBuyItem } = useCheckoutStore();
   const { isAuthenticated, user } = useAuthStore();
-  const { config, fetchSettings } = useStoreSettingsStore();
+  const { config, fetchSettings, hasLoaded } = useStoreSettingsStore();
+  const [checkingSettings, setCheckingSettings] = useState(!hasLoaded);
 
   useEffect(() => {
-    fetchSettings();
+    fetchSettings(true).finally(() => {
+      setCheckingSettings(false);
+    });
   }, [fetchSettings]);
 
   // Clean up directBuyItem if user navigated to standard cart checkout without buyNow query
@@ -39,7 +42,16 @@ function CheckoutContent() {
   const userRole = (user as any)?.role || user?.roleId || '';
   const userRoleUpper = typeof userRole === 'string' ? userRole.toUpperCase() : '';
   const isAdmin = userRoleUpper.includes('ADMIN') || (user?.permissions || []).includes('*');
-  const isMaintenance = config.maintenanceMode && !isAdmin;
+  const isMaintenance = Boolean(config.maintenanceMode);
+
+  if (checkingSettings && !hasLoaded) {
+    return (
+      <main className="w-full bg-slate-50 min-h-[70vh] flex flex-col items-center justify-center gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+        <p className="text-xs text-gray-500 font-medium tracking-wide">Verifying store status...</p>
+      </main>
+    );
+  }
 
   if (isMaintenance) {
     return (
@@ -55,7 +67,7 @@ function CheckoutContent() {
             </span>
             <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Checkout is Temporarily Paused</h2>
             <p className="text-sm text-gray-600 leading-relaxed">
-              We are currently optimizing our checkout and payment gateways to deliver an even smoother experience. Your cart items are completely safe.
+              {config.maintenanceNotice || 'We are currently optimizing our checkout and payment gateways to deliver an even smoother experience. Your cart items are completely safe.'}
             </p>
           </div>
 
@@ -68,6 +80,25 @@ function CheckoutContent() {
               Helpline: <span className="font-semibold text-slate-900">{config.supportPhone || '+91 98765 43210'}</span>
             </p>
           </div>
+
+          {isAdmin && (
+            <div className="bg-amber-50 border border-amber-300 rounded-xl p-3.5 text-xs text-amber-900 text-left space-y-1.5">
+              <p className="font-bold flex items-center gap-1.5 text-amber-950">
+                <ShieldCheck size={14} className="text-amber-700" /> Admin Access Notice
+              </p>
+              <p className="text-[11px] text-amber-800 leading-relaxed">
+                Store Maintenance Mode is currently active. Checkout is paused for all users to ensure order safety during maintenance.
+              </p>
+              <div className="pt-1">
+                <Link
+                  href="/admin/settings"
+                  className="inline-flex items-center gap-1 font-bold text-amber-950 underline hover:text-black text-xs"
+                >
+                  Manage Maintenance Mode in Admin Settings &rarr;
+                </Link>
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <Link

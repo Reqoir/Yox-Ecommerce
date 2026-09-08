@@ -339,6 +339,8 @@ export function ProductGrid() {
                     src={product.image} 
                     alt={`${product.name}${cardColor ? ` - ${cardColor}` : ''}`} 
                     className={`w-full h-full object-cover object-top transition-opacity duration-300 ${
+                      product.inStock === false ? 'opacity-80 grayscale-[20%]' : ''
+                    } ${
                       product.secondImage && product.secondImage !== product.image ? 'group-hover:opacity-0' : ''
                     }`}
                   />
@@ -346,12 +348,20 @@ export function ProductGrid() {
                     <img 
                       src={product.secondImage} 
                       alt={`${product.name}${cardColor ? ` - ${cardColor}` : ''} alternate view`} 
-                      className="absolute inset-0 w-full h-full object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                      className={`absolute inset-0 w-full h-full object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none ${
+                        product.inStock === false ? 'grayscale-[20%]' : ''
+                      }`}
                     />
                   )}
                   
-                  {/* Offer Badge if available */}
-                  {product.offerBadge && (
+                  {/* Sold Out or Offer Badge */}
+                  {product.inStock === false ? (
+                    <div className="absolute top-2 left-2 z-10">
+                      <span className="bg-black/90 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-xs tracking-widest shadow-xs">
+                        SOLD OUT
+                      </span>
+                    </div>
+                  ) : product.offerBadge ? (
                     <div className="absolute top-2 left-2 z-10 flex flex-col gap-0.5">
                       <span className="bg-rose-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-xs tracking-wider">
                         {product.offerBadge}
@@ -362,7 +372,7 @@ export function ProductGrid() {
                         </span>
                       )}
                     </div>
-                  )}
+                  ) : null}
                   
                   {/* Wishlist Button */}
                   <button 
@@ -399,10 +409,15 @@ export function ProductGrid() {
                     {product.name}
                   </h3>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-[13px] font-bold text-gray-900">
+                    <span className={`text-[13px] font-bold ${product.inStock === false ? 'text-gray-500' : 'text-gray-900'}`}>
                       ₹{product.price}
                     </span>
-                    {product.originalPrice && product.originalPrice > product.price && (
+                    {product.inStock === false && (
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        Sold Out
+                      </span>
+                    )}
+                    {product.inStock !== false && product.originalPrice && product.originalPrice > product.price && (
                       <>
                         <span className="text-[11px] text-gray-400 line-through">
                           ₹{product.originalPrice}

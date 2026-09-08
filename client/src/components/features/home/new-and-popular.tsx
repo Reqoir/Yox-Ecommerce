@@ -94,6 +94,8 @@ export function NewAndPopular() {
           allColors.sort((a, b) => a === firstVariant.color ? -1 : b === firstVariant.color ? 1 : 0);
         }
 
+        const isOutOfStock = variants.length === 0 || variants.every((v: any) => (v.stock === undefined ? 0 : v.stock) <= 0);
+
         return {
           id: p.id,
           name: p.name,
@@ -108,6 +110,7 @@ export function NewAndPopular() {
           secondImage,
           href: `/product/${p.slug || p.id}`,
           colors: allColors,
+          isOutOfStock,
         };
       });
 
@@ -216,14 +219,20 @@ export function NewAndPopular() {
             return (
               <Link href={product.href} key={product.id} className="group block">
                 <div className="relative aspect-[3/4] w-full bg-[#f6f6f6] mb-3 overflow-hidden rounded-[2px]">
-                  {/* Offer Badge if active */}
-                  {product.offerBadge && (
+                  {/* Sold Out or Offer Badge */}
+                  {product.isOutOfStock ? (
+                    <div className="absolute top-2 left-2 z-10">
+                      <span className="bg-black/90 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-xs tracking-widest shadow-xs">
+                        SOLD OUT
+                      </span>
+                    </div>
+                  ) : product.offerBadge ? (
                     <div className="absolute top-2 left-2 z-10">
                       <span className="bg-rose-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-xs tracking-wider">
                         {product.offerBadge}
                       </span>
                     </div>
-                  )}
+                  ) : null}
 
                   <Image
                     src={product.image}
@@ -231,6 +240,8 @@ export function NewAndPopular() {
                     fill
                     sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
                     className={`object-cover object-top transition-opacity duration-300 ${
+                      product.isOutOfStock ? 'opacity-80 grayscale-[20%]' : ''
+                    } ${
                       product.secondImage && product.secondImage !== product.image ? 'group-hover:opacity-0' : ''
                     }`}
                   />
@@ -240,7 +251,9 @@ export function NewAndPopular() {
                       alt={`${product.name} alternate view`}
                       fill
                       sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                      className="object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                      className={`object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none ${
+                        product.isOutOfStock ? 'grayscale-[20%]' : ''
+                      }`}
                     />
                   )}
                   <button 
@@ -258,7 +271,7 @@ export function NewAndPopular() {
                         image: product.image,
                         price: product.price,
                         comparePrice: product.comparePrice || undefined,
-                        inStock: true,
+                        inStock: !product.isOutOfStock,
                       });
                     }}
                   >
@@ -274,10 +287,15 @@ export function NewAndPopular() {
                     {product.name}
                   </h3>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-[12px] font-bold text-gray-900">
+                    <span className={`text-[12px] font-bold ${product.isOutOfStock ? 'text-gray-500' : 'text-gray-900'}`}>
                       ₹{product.price.toLocaleString('en-IN')}
                     </span>
-                    {product.comparePrice && product.comparePrice > product.price && (
+                    {product.isOutOfStock && (
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        Sold Out
+                      </span>
+                    )}
+                    {!product.isOutOfStock && product.comparePrice && product.comparePrice > product.price && (
                       <>
                         <span className="text-[10px] text-gray-400 line-through">
                           ₹{product.comparePrice.toLocaleString('en-IN')}

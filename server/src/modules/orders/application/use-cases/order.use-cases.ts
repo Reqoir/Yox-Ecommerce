@@ -73,12 +73,12 @@ export class PlaceOrderUseCase implements IUseCase<{ userId: string; data: Place
   ) {}
 
   async execute(input: { userId: string; data: PlaceOrderRequestDTO; isAdmin?: boolean }): Promise<OrderResponseDTO> {
-    const { userId, data, isAdmin } = input;
+    const { userId, data } = input;
 
     // 0. Maintenance Mode Check
     try {
       const storeSetting = await SettingsModel.findOne({ key: 'store_config' }).lean();
-      if (storeSetting?.value?.maintenanceMode && !isAdmin) {
+      if (storeSetting?.value?.maintenanceMode) {
         throw new Error('The store is currently undergoing scheduled maintenance. Order placement is temporarily paused. Please check back shortly.');
       }
     } catch (err: any) {

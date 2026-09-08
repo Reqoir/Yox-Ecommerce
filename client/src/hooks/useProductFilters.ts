@@ -105,7 +105,7 @@ export function useProductFilters() {
             colors: allProductColors,
             fit: (p.fit as ProductFit) || undefined,
             description: p.description || p.shortDescription || undefined,
-            inStock: p.isActive,
+            inStock: p.isActive !== false && (variants.length === 0 || variants.some((v: any) => (v.stock || 0) > 0)),
             href: `/product/${p.id}`,
           });
           return;

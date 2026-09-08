@@ -30,8 +30,8 @@ export const useStoreSettingsStore = create<StoreSettingsState>()(
 
       fetchSettings: async (force = false) => {
         const { lastFetchedAt, isLoading } = get();
-        // If loaded within the last 60 seconds and not forced, return cached config
-        if (!force && lastFetchedAt && Date.now() - lastFetchedAt < 60_000 && get().hasLoaded) {
+        // If loaded within the last 15 seconds and not forced, return cached config
+        if (!force && lastFetchedAt && Date.now() - lastFetchedAt < 15_000 && get().hasLoaded) {
           return get().config;
         }
 
@@ -124,7 +124,6 @@ export const useStoreSettingsStore = create<StoreSettingsState>()(
       })),
       partialize: (state) => ({
         config: state.config,
-        lastFetchedAt: state.lastFetchedAt,
         hasLoaded: state.hasLoaded,
       }),
     }

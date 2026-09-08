@@ -7,6 +7,44 @@ import { MdOutlineLocationOn, MdHeadphones } from 'react-icons/md';
 import { AlertTriangle, Sparkles } from 'lucide-react';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
 
+export const TOPBAR_COLOR_OPTIONS = [
+  { label: 'Sleek Jet Black (Classic)', value: '#000000', hex: '#000000' },
+  { label: 'Navy Blue Brand (#1A2E4C)', value: '#1A2E4C', hex: '#1A2E4C' },
+  { label: 'Deep Midnight Slate', value: '#0F172A', hex: '#0F172A' },
+  { label: 'Emerald Pine (Festive)', value: '#064E3B', hex: '#064E3B' },
+  { label: 'Royal Purple (Luxury)', value: '#581C87', hex: '#581C87' },
+  { label: 'Crimson Red (Sale Event)', value: '#881337', hex: '#881337' },
+  { label: 'Deep Burgundy / Wine', value: '#4A0E17', hex: '#4A0E17' },
+  { label: 'Charcoal Minimal', value: '#18181B', hex: '#18181B' },
+];
+
+export function resolveTopBarColor(color?: string): string {
+  if (!color) return '#000000';
+  const trimmed = color.trim();
+  
+  const legacyMap: Record<string, string> = {
+    'bg-black': '#000000',
+    'black': '#000000',
+    'bg-[#1A2E4C]': '#1A2E4C',
+    '#1A2E4C': '#1A2E4C',
+    'navy': '#1A2E4C',
+    'bg-emerald-900': '#064E3B',
+    'bg-purple-900': '#581C87',
+    'bg-rose-900': '#881337',
+    'bg-slate-900': '#0F172A',
+    'bg-zinc-900': '#18181B',
+  };
+
+  if (legacyMap[trimmed]) return legacyMap[trimmed];
+
+  if (trimmed.startsWith('bg-[')) {
+    const match = trimmed.match(/bg-\[(.*?)\]/);
+    if (match && match[1]) return match[1];
+  }
+
+  return trimmed;
+}
+
 export function TopBar() {
   const { config, fetchSettings } = useStoreSettingsStore();
 
@@ -14,37 +52,7 @@ export function TopBar() {
     fetchSettings();
   }, [fetchSettings]);
 
-  // Resolve background color class or style
-  const getBannerBg = (color?: string) => {
-    if (!color) {
-      return { className: '', style: { backgroundColor: '#000000' } };
-    }
-    const COLOR_MAP: Record<string, string> = {
-      'bg-black': '#000000',
-      'black': '#000000',
-      'bg-[#1A2E4C]': '#000000',
-      '#1A2E4C': '#000000',
-      'navy': '#000000',
-      'bg-emerald-900': '#064e3b',
-      'bg-purple-900': '#581c87',
-      'bg-rose-900': '#881337',
-    };
-    if (COLOR_MAP[color]) {
-      return { className: '', style: { backgroundColor: COLOR_MAP[color] } };
-    }
-    if (color.startsWith('#') || color.startsWith('rgb')) {
-      return { className: '', style: { backgroundColor: color } };
-    }
-    if (color.startsWith('bg-[')) {
-      const match = color.match(/bg-\[(.*?)\]/);
-      if (match && match[1]) {
-        return { className: '', style: { backgroundColor: match[1] } };
-      }
-    }
-    return { className: color, style: {} };
-  };
-
-  const bannerBg = getBannerBg(config.announcementBgColor);
+  const resolvedBg = resolveTopBarColor(config.announcementBgColor);
 
   return (
     <>
@@ -58,8 +66,8 @@ export function TopBar() {
 
       {/* Main Announcement & Store Features Bar */}
       <div 
-        className={`w-full text-white min-h-[34px] sm:h-10 py-1.5 sm:py-0 flex items-center justify-center transition-colors duration-300 border-b border-white/10 ${bannerBg.className}`}
-        style={bannerBg.style}
+        className="w-full text-white min-h-[34px] sm:h-10 py-1.5 sm:py-0 flex items-center justify-center transition-colors duration-300 border-b border-white/10"
+        style={{ backgroundColor: resolvedBg }}
       >
         <div className="w-[98%] max-w-[1500px] px-3 sm:px-4 md:px-0 mx-auto flex items-center justify-between text-[11px] sm:text-xs">
 

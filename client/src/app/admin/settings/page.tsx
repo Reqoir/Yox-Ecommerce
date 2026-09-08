@@ -37,6 +37,7 @@ import { StoreConfig, DEFAULT_STORE_CONFIG } from '@/api/admin/settings';
 import { offersApi, Offer } from '@/api/admin/offers';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { resolveTopBarColor, TOPBAR_COLOR_OPTIONS } from '@/components/layout/top-bar';
 
 type SettingsTab = 'general' | 'shipping' | 'payments' | 'returns' | 'announcement';
 
@@ -996,19 +997,67 @@ export default function AdminSettingsPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-foreground">Theme Background</label>
-                      <select
-                        value={formData.announcementBgColor}
-                        onChange={(e) => handleChange('announcementBgColor', e.target.value)}
-                        className="w-full px-3.5 py-2.5 text-sm bg-card border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                      >
-                        <option value="bg-black">Sleek Jet Black (Classic)</option>
-                        <option value="bg-[#1A2E4C]">Navy Blue Brand (#1A2E4C)</option>
-                        <option value="bg-emerald-900">Emerald Pine (Festive)</option>
-                        <option value="bg-purple-900">Royal Purple (Luxury)</option>
-                        <option value="bg-rose-900">Crimson Red (Sale Event)</option>
-                      </select>
+                    <div className="space-y-3 pt-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-foreground">Theme Background Color</label>
+                        <span className="font-mono text-[11px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded">
+                          {resolveTopBarColor(formData.announcementBgColor)}
+                        </span>
+                      </div>
+
+                      {/* Swatch Selector */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {TOPBAR_COLOR_OPTIONS.map((c) => {
+                          const isSelected = resolveTopBarColor(formData.announcementBgColor).toLowerCase() === c.hex.toLowerCase();
+                          return (
+                            <button
+                              key={c.hex}
+                              type="button"
+                              onClick={() => handleChange('announcementBgColor', c.hex)}
+                              className={`flex items-center gap-2 p-2 rounded-xl border text-xs font-medium transition-all text-left cursor-pointer ${
+                                isSelected
+                                  ? 'border-primary ring-2 ring-primary/20 bg-primary/5 font-bold shadow-2xs'
+                                  : 'border-border/70 hover:border-foreground/30 hover:bg-muted/40'
+                              }`}
+                            >
+                              <span
+                                className="w-4 h-4 rounded-full shrink-0 border border-white/20 shadow-xs"
+                                style={{ backgroundColor: c.hex }}
+                              />
+                              <span className="truncate text-[11px]">{c.label.split('(')[0].trim()}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Custom Color Input */}
+                      <div className="flex items-center gap-2.5 pt-1">
+                        <div className="relative flex items-center">
+                          <input
+                            type="color"
+                            value={resolveTopBarColor(formData.announcementBgColor).startsWith('#') ? resolveTopBarColor(formData.announcementBgColor) : '#000000'}
+                            onChange={(e) => handleChange('announcementBgColor', e.target.value)}
+                            className="w-9 h-9 p-0.5 rounded-lg border border-border cursor-pointer bg-card"
+                            title="Choose custom color"
+                          />
+                        </div>
+                        <div className="flex-1 relative">
+                          <input
+                            type="text"
+                            value={formData.announcementBgColor}
+                            onChange={(e) => handleChange('announcementBgColor', e.target.value)}
+                            placeholder="#1A2E4C or color name"
+                            className="w-full px-3 py-2 text-xs font-mono bg-card border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleChange('announcementBgColor', '#000000')}
+                          className="text-[11px] font-semibold text-muted-foreground hover:text-foreground px-2.5 py-2 border rounded-xl hover:bg-muted/60 cursor-pointer"
+                        >
+                          Default
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -1166,7 +1215,10 @@ export default function AdminSettingsPage() {
                 <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
                   1. Top Announcement Header
                 </span>
-                <div className={`w-full ${formData.announcementBgColor || 'bg-black'} text-white rounded-xl p-3 text-xs shadow-xs space-y-1`}>
+                <div 
+                  className="w-full text-white rounded-xl p-3 text-xs shadow-xs space-y-1 transition-colors duration-300 border border-white/10"
+                  style={{ backgroundColor: resolveTopBarColor(formData.announcementBgColor) }}
+                >
                   {formData.maintenanceMode && (
                     <div className="bg-amber-500 text-amber-950 px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1.5 mb-1.5">
                       <AlertTriangle size={12} className="shrink-0" />

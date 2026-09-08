@@ -33,7 +33,7 @@ export function CheckoutSummaryPanel() {
   const userRole = (user as any)?.role || user?.roleId || '';
   const userRoleUpper = typeof userRole === 'string' ? userRole.toUpperCase() : '';
   const isAdmin = userRoleUpper.includes('ADMIN') || (user?.permissions || []).includes('*');
-  const isMaintenance = config.maintenanceMode && !isAdmin;
+  const isMaintenance = Boolean(config.maintenanceMode);
 
   const subtotal = isDirectCheckout
     ? directBuyItem.price * directBuyItem.quantity

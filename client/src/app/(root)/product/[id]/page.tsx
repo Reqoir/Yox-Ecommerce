@@ -317,11 +317,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       ? Math.round(((baseStrikePrice - finalPrice) / baseStrikePrice) * 100)
       : Math.round((offerSavings / currentPrice) * 100);
   }
-
   // Stock status logic
   const variantStock = activeVariant?.stock !== undefined ? activeVariant.stock : 10;
   const isOutOfStock = variantStock <= 0;
   const isLowStock = variantStock > 0 && variantStock <= 5;
+  const isAllOutOfStock = variants.length > 0 && variants.every((v: any) => (v.stock === undefined ? 0 : v.stock) <= 0);
 
   const handleToggleWishlist = () => {
     if (!product) return;
@@ -363,14 +363,15 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       (i) => i.variantId === activeVariant.id || i.id === activeVariant.id
     );
     if (existingItem && existingItem.quantity >= variantStock) {
-      toast.error(`You have already added the maximum available stock (${variantStock}) to your basket.`);
+      toast.warning(`Maximum available stock reached for this item (${variantStock})`);
       return;
     }
 
     addItem({
+      id: activeVariant.id,
       variantId: activeVariant.id,
       productId: product.id,
-      name: `${product.name} - ${activeVariant.color}`,
+      name: product.name,
       image: images[0] || product.thumbnail,
       color: activeVariant.color || 'Default',
       size: activeVariant.size || 'Standard',
@@ -384,6 +385,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   };
 
   const handleBuyNow = () => {
+    if (config.maintenanceMode) {
+      toast.error(config.maintenanceNotice || 'Store maintenance is currently active. Checkout is temporarily paused.');
+      return;
+    }
+
     if (isOutOfStock || !activeVariant) {
       toast.error("This product variant is currently out of stock!");
       return;
@@ -417,43 +423,52 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     if (!bestOffer || offerSavings <= 0) return null;
 
     return (
-      <div className="bg-gradient-to-r from-emerald-50/90 via-teal-50/70 to-emerald-50/90 border border-emerald-300 rounded-xl p-4 my-5 shadow-xs">
-        <div className="flex items-center justify-between gap-2 mb-2.5">
-          <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-emerald-900">
-            <Sparkles size={14} className="text-emerald-600 animate-pulse" />
-            <span>Best Offer Auto-Applied</span>
+      <div className="border border-gray-200 bg-[#FAFAFA] rounded-xs p-4 my-5 transition-all">
+        {/* Header row: Minimal tag & discount badge */}
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2">
+            <Tag size={13} className="text-gray-900 shrink-0" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-900">
+              Special Offer Applied
+            </span>
           </div>
-          <span className="text-[10px] font-extrabold text-white bg-emerald-700 px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
+          <span className="text-[10px] font-bold text-[#D84141] bg-[#FDF0F0] border border-[#f0caca] px-2 py-0.5 rounded-xs uppercase tracking-wider">
             {finalDiscountPct}% OFF
           </span>
         </div>
 
-        <div className="flex items-center justify-between gap-3 bg-white p-3.5 rounded-lg border border-emerald-200">
+        {/* Details row: Title + Saving + Deal Price */}
+        <div className="flex items-baseline justify-between gap-3 pt-1 pb-2">
           <div>
-            <h4 className="text-sm font-bold text-gray-900">{bestOffer.title}</h4>
-            <p className="text-xs text-emerald-700 font-semibold mt-0.5">
-              You save ₹{offerSavings.toLocaleString('en-IN')} instantly on this item!
+            <h4 className="text-xs sm:text-[13px] font-bold text-gray-900 leading-snug">
+              {bestOffer.title}
+            </h4>
+            <p className="text-xs text-gray-600 mt-1">
+              You save <strong className="font-bold text-gray-900">₹{offerSavings.toLocaleString('en-IN')}</strong> instantly on this piece.
             </p>
             {bestOffer.isLimitedTime && (
-              <p className="text-[11px] text-rose-600 font-bold flex items-center gap-1 mt-1">
-                <Clock size={12} className="text-rose-600 animate-pulse" />
-                Limited-time flash deal active
+              <p className="text-[11px] text-gray-500 font-medium flex items-center gap-1 mt-1.5">
+                <Clock size={12} className="text-gray-500" />
+                <span>Limited-time promotional deal</span>
               </p>
             )}
           </div>
 
-          <div className="shrink-0 text-right pl-3 border-l border-gray-150">
-            <span className="text-[10px] text-gray-500 font-medium uppercase block">Offer Price</span>
-            <span className="text-base font-black text-gray-900">
+          <div className="shrink-0 text-right pl-3 border-l border-gray-200">
+            <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider block">
+              Deal Price
+            </span>
+            <span className="text-sm sm:text-base font-bold text-gray-900">
               ₹{finalPrice.toLocaleString('en-IN')}
             </span>
           </div>
         </div>
 
-        <p className="text-[11px] text-gray-600 font-medium mt-2 flex items-center gap-1.5">
-          <Check size={13} className="text-emerald-600 shrink-0" />
-          <span>Offer discount is automatically applied to your cart!</span>
-        </p>
+        {/* Footer info note */}
+        <div className="mt-2.5 pt-2.5 border-t border-gray-200/70 flex items-center gap-1.5 text-[11px] text-gray-500">
+          <Check size={12} className="text-gray-700 shrink-0" />
+          <span>Discount is automatically applied at checkout</span>
+        </div>
       </div>
     );
   };
@@ -478,10 +493,21 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     isHiddenOnMobile ? 'hidden lg:block' : 'block'
                   }`}
                 >
+                  {/* Sold Out badge on primary image */}
+                  {idx === 0 && isOutOfStock && (
+                    <div className="absolute top-3 left-3 z-10">
+                      <span className="bg-black/90 text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-xs shadow-md backdrop-blur-xs">
+                        SOLD OUT
+                      </span>
+                    </div>
+                  )}
+
                   <img 
                     src={img} 
                     alt={`${product.name} View ${idx + 1}`}
-                    className="w-full h-full object-cover object-top mix-blend-multiply transition-transform duration-300 group-hover:scale-105"
+                    className={`w-full h-full object-cover object-top mix-blend-multiply transition-transform duration-300 group-hover:scale-105 ${
+                      isOutOfStock ? 'opacity-85 grayscale-[15%]' : ''
+                    }`}
                   />
                   
                   {/* Subtle click to preview overlay hint */}
@@ -513,12 +539,18 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         {/* Right Column: 35% Details & Actions */}
         <div className="w-full lg:w-[35%] lg:sticky lg:top-24 lg:pl-10 lg:pr-14 pt-6 lg:pt-8 px-4 sm:px-6">
             
-            {/* Tag Badge if available */}
-            {product.tag && (
-              <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-black bg-gray-100 px-2 py-0.5 rounded-xs mb-2">
-                {product.tag}
-              </span>
-            )}
+            {/* Tag Badge / Sold Out Badge */}
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              {isOutOfStock ? (
+                <span className="inline-block text-[10px] font-black uppercase tracking-widest text-white bg-zinc-900 px-2.5 py-1 rounded-xs">
+                  SOLD OUT
+                </span>
+              ) : product.tag ? (
+                <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-black bg-gray-100 px-2 py-0.5 rounded-xs">
+                  {product.tag}
+                </span>
+              ) : null}
+            </div>
 
             <h1 className="text-2xl sm:text-3xl font-medium text-gray-900 mb-2.5 tracking-tight">
               {product.name}
@@ -541,15 +573,24 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               )}
             </div>
 
-            {/* Low Stock Alert (Only shown when stock is running low) */}
-            {isLowStock && (
+            {/* Stock status indicator */}
+            {isOutOfStock ? (
+              <div className="mb-4 p-3 bg-neutral-50 border border-neutral-200 rounded-xs flex items-center gap-2.5 text-xs text-neutral-700">
+                <span className="w-2 h-2 rounded-full bg-neutral-400 shrink-0" />
+                <span>
+                  {isAllOutOfStock
+                    ? 'This product is currently sold out in all sizes and colors.'
+                    : `The selected size (${selectedSize || 'this variant'}) is currently sold out.`}
+                </span>
+              </div>
+            ) : isLowStock ? (
               <div className="mb-4">
                 <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2.5 py-1 rounded animate-pulse">
                   <Flame size={14} className="text-amber-600 shrink-0" />
                   <span>Hurry, only {variantStock} left in stock!</span>
                 </div>
               </div>
-            )}
+            ) : null}
             
             <div className="text-[11px] text-gray-600 mb-5 border-b border-gray-200 pb-4">
               <span className="underline cursor-pointer hover:text-black decoration-gray-400">Shipping</span> calculated at checkout. Free shipping on orders over {config.currencySymbol}{config.freeShippingThreshold}.
@@ -611,6 +652,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 <div className="flex flex-wrap gap-2">
                   {availableSizesForColor.map((size) => {
                     const isSelected = selectedSize === size;
+                    const sizeVariant = variants.find(v => v.color === selectedColor && v.size === size);
+                    const isSizeSoldOut = sizeVariant ? (sizeVariant.stock === undefined ? 0 : sizeVariant.stock) <= 0 : false;
                     return (
                       <button
                         key={size}
@@ -619,8 +662,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                         className={`min-w-[48px] h-[34px] px-3 flex items-center justify-center text-[11px] font-bold tracking-wider transition-all border rounded-xs cursor-pointer ${
                           isSelected 
                             ? 'bg-black text-white border-black shadow-xs' 
+                            : isSizeSoldOut
+                            ? 'bg-gray-50 text-gray-400 border-gray-200 line-through hover:border-gray-400'
                             : 'bg-white text-black border-gray-300 hover:border-black'
                         }`}
+                        title={isSizeSoldOut ? `${size} (Sold Out)` : size}
                       >
                         {size}
                       </button>
@@ -643,8 +689,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 >
                   <Minus size={13} strokeWidth={2}/>
                 </button>
-                <span className="flex-1 flex items-center justify-center text-[13px] font-bold text-black border-l border-r border-gray-200 h-full leading-none select-none">
-                  {quantity}
+                <span className="flex-1 flex items-center justify-center text-xs font-bold text-gray-900 h-full select-none">
+                  {isOutOfStock ? 0 : quantity}
                 </span>
                 <button 
                   type="button"
@@ -688,7 +734,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 disabled={isOutOfStock}
                 className="sm:hidden w-full flex items-center justify-center h-[48px] bg-[#E5DCC5] text-[12px] font-bold text-gray-900 hover:bg-[#d8cbb0] active:scale-[0.99] transition-all tracking-widest uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-xs rounded-xs"
               >
-                Buy It Now
+                {isOutOfStock ? 'Sold Out' : config.maintenanceMode ? 'Paused (Maintenance)' : 'Buy It Now'}
               </button>
 
               {/* Desktop Action Buttons Row (>= sm screens) */}
@@ -707,7 +753,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   disabled={isOutOfStock}
                   className="flex-1 flex items-center justify-center h-[48px] bg-[#E5DCC5] text-[12px] font-bold text-gray-900 hover:bg-[#d8cbb0] active:scale-[0.99] transition-all tracking-widest uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-xs rounded-xs"
                 >
-                  Buy It Now
+                  {isOutOfStock ? 'Sold Out' : config.maintenanceMode ? 'Paused (Maintenance)' : 'Buy It Now'}
                 </button>
                 <button
                   type="button"
