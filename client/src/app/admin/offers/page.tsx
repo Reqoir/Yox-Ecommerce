@@ -558,11 +558,6 @@ export default function AdminOffersPage() {
                                 Home Banner
                               </span>
                             )}
-                            {offer.banner.position && (
-                              <span className="bg-blue-600/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded">
-                                {offer.banner.position}
-                              </span>
-                            )}
                           </div>
                         </div>
                       )}
@@ -1184,29 +1179,15 @@ export default function AdminOffersPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-semibold text-gray-700 block mb-1">CTA Button Text</label>
-                      <input
-                        type="text"
-                        placeholder="Explore Offer"
-                        value={bannerCtaText}
-                        onChange={(e) => setBannerCtaText(e.target.value)}
-                        className="w-full px-3 py-1.5 text-xs border rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-[#1A2E4C]"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-gray-700 block mb-1">Placement Position</label>
-                      <select
-                        value={bannerPosition}
-                        onChange={(e) => setBannerPosition(e.target.value as BannerPosition)}
-                        className="w-full px-3 py-1.5 text-xs border rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-[#1A2E4C]"
-                      >
-                        <option value="HERO">Hero Banner Carousel</option>
-                        <option value="BANNER_STRIP">Promotional Strip</option>
-                        <option value="EXCLUSIVE">Exclusive Bar</option>
-                      </select>
-                    </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 block mb-1">CTA Button Text</label>
+                    <input
+                      type="text"
+                      placeholder="Explore Offer"
+                      value={bannerCtaText}
+                      onChange={(e) => setBannerCtaText(e.target.value)}
+                      className="w-full px-3 py-1.5 text-xs border rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-[#1A2E4C]"
+                    />
                   </div>
                 </div>
               </div>
