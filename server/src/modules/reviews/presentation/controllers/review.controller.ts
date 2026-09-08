@@ -9,6 +9,7 @@ import { GetProductReviewsUseCase } from '../../application/use-cases/get-produc
 import { GetAllReviewsUseCase } from '../../application/use-cases/get-all-reviews.use-case';
 import { UpdateReviewStatusUseCase } from '../../application/use-cases/update-review-status.use-case';
 import { GetUserReviewsUseCase } from '../../application/use-cases/get-user-reviews.use-case';
+import { DeleteReviewUseCase } from '../../application/use-cases/delete-review.use-case';
 import { ReviewStatus } from '../../domain/entities/review.entity';
 
 export class ReviewController {
@@ -17,7 +18,8 @@ export class ReviewController {
     private readonly getProductReviewsUseCase: GetProductReviewsUseCase,
     private readonly getAllReviewsUseCase?: GetAllReviewsUseCase,
     private readonly updateReviewStatusUseCase?: UpdateReviewStatusUseCase,
-    private readonly getUserReviewsUseCase?: GetUserReviewsUseCase
+    private readonly getUserReviewsUseCase?: GetUserReviewsUseCase,
+    private readonly deleteReviewUseCase?: DeleteReviewUseCase
   ) {}
 
   createReview = async (req: Request, res: Response) => {
@@ -61,8 +63,9 @@ export class ReviewController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const status = req.query.status as string | undefined;
+      const search = req.query.search as string | undefined;
 
-      const result = await this.getAllReviewsUseCase.execute(page, limit, status);
+      const result = await this.getAllReviewsUseCase.execute(page, limit, status, search);
       return res.status(200).json({ success: true, data: result });
     } catch (error: any) {
       return res.status(400).json({ success: false, message: error.message });
@@ -77,6 +80,17 @@ export class ReviewController {
       
       const result = await this.updateReviewStatusUseCase.execute(id, status as ReviewStatus);
       return res.status(200).json({ success: true, data: result });
+    } catch (error: any) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+  };
+
+  deleteReview = async (req: Request, res: Response) => {
+    try {
+      if (!this.deleteReviewUseCase) return res.status(501).json({ message: 'Not implemented' });
+      const { id } = req.params;
+      await this.deleteReviewUseCase.execute(id);
+      return res.status(200).json({ success: true, message: 'Review deleted successfully' });
     } catch (error: any) {
       return res.status(400).json({ success: false, message: error.message });
     }

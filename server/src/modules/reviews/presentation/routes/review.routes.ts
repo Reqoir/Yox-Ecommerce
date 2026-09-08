@@ -11,6 +11,7 @@ import { GetProductReviewsUseCase } from '../../application/use-cases/get-produc
 import { GetAllReviewsUseCase } from '../../application/use-cases/get-all-reviews.use-case';
 import { UpdateReviewStatusUseCase } from '../../application/use-cases/update-review-status.use-case';
 import { GetUserReviewsUseCase } from '../../application/use-cases/get-user-reviews.use-case';
+import { DeleteReviewUseCase } from '../../application/use-cases/delete-review.use-case';
 import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
 import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
 
@@ -20,13 +21,15 @@ const getProductReviewsUseCase = new GetProductReviewsUseCase(reviewRepo);
 const getAllReviewsUseCase = new GetAllReviewsUseCase(reviewRepo);
 const updateReviewStatusUseCase = new UpdateReviewStatusUseCase(reviewRepo);
 const getUserReviewsUseCase = new GetUserReviewsUseCase(reviewRepo);
+const deleteReviewUseCase = new DeleteReviewUseCase(reviewRepo);
 
 const reviewController = new ReviewController(
   createReviewUseCase, 
   getProductReviewsUseCase,
   getAllReviewsUseCase,
   updateReviewStatusUseCase,
-  getUserReviewsUseCase
+  getUserReviewsUseCase,
+  deleteReviewUseCase
 );
 
 export const reviewRoutes = Router();
@@ -42,4 +45,5 @@ reviewRoutes.get('/mine', reviewController.getUserReviews);
 // Protected routes (Admin)
 reviewRoutes.get('/admin/all', requirePermission('manage_reviews'), reviewController.getAllReviews);
 reviewRoutes.patch('/admin/:id/status', requirePermission('manage_reviews'), reviewController.updateReviewStatus);
+reviewRoutes.delete('/admin/:id', requirePermission('manage_reviews'), reviewController.deleteReview);
 

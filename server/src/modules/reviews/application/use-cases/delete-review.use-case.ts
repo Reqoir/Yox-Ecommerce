@@ -1,28 +1,22 @@
 /**
- * @file update-review-status.use-case.ts
+ * @file delete-review.use-case.ts
  * @layer Application
  */
 
 import { IReviewRepository } from '../../domain/repositories/review.repository.interface';
-import { ReviewStatus } from '../../domain/entities/review.entity';
 import { ProductModel } from '../../../products/infrastructure/models/product.model';
 
-export class UpdateReviewStatusUseCase {
+export class DeleteReviewUseCase {
   constructor(private readonly reviewRepository: IReviewRepository) {}
 
-  async execute(reviewId: string, status: ReviewStatus) {
+  async execute(reviewId: string): Promise<void> {
     const review = await this.reviewRepository.findById(reviewId);
     if (!review) {
       throw new Error('Review not found');
     }
 
-    if (review.status === status) {
-      return review.toJSON();
-    }
+    await this.reviewRepository.delete(reviewId);
 
-    review.updateStatus(status);
-    const updatedReview = await this.reviewRepository.update(review);
-    
     // Recalculate product rating and review count
     try {
       const { average, count } = await this.reviewRepository.calculateAverageRating(review.productId);
@@ -33,7 +27,5 @@ export class UpdateReviewStatusUseCase {
     } catch {
       // Ignore rating calculation errors
     }
-    
-    return updatedReview.toJSON();
   }
 }

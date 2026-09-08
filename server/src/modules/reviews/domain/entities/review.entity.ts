@@ -32,6 +32,11 @@ export class Review extends BaseEntity<ReviewProps> {
   get comment(): string | null | undefined { return this._props.comment; }
   get status(): string { return this._props.status; }
 
+  public updateStatus(status: ReviewStatus | string): void {
+    this._props.status = status;
+    this._props.updatedAt = new Date();
+  }
+
   public static create(
     props: Omit<ReviewProps, 'id' | 'createdAt' | 'updatedAt' | 'status'> & { id?: string; createdAt?: Date; updatedAt?: Date; status?: string },
     id?: string

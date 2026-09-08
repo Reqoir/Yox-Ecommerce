@@ -6,6 +6,8 @@
 import { IReviewRepository } from '../../domain/repositories/review.repository.interface';
 import { Review } from '../../domain/entities/review.entity';
 import { ReviewModel } from '../models/review.model';
+import { ProductModel } from '../../../products/infrastructure/models/product.model';
+import { UserModel } from '../../../users/infrastructure/models/user.model';
 
 export class ReviewRepository implements IReviewRepository {
   async create(review: Review): Promise<Review> {
@@ -83,6 +85,7 @@ export class ReviewRepository implements IReviewRepository {
       review.id,
       {
         status: data.status,
+        updatedAt: new Date(),
       },
       { new: true, lean: true }
     );
@@ -99,47 +102,116 @@ export class ReviewRepository implements IReviewRepository {
     }, doc._id.toString());
   }
 
-  async findAll(options: { skip: number; limit: number; status?: string }): Promise<{ reviews: Review[]; total: number }> {
+  async delete(id: string): Promise<void> {
+    await ReviewModel.findByIdAndDelete(id).exec();
+  }
+
+  async findAll(options: {
+    skip: number;
+    limit: number;
+    status?: string;
+    search?: string;
+  }): Promise<{
+    reviews: any[];
+    total: number;
+    counts: { all: number; pending: number; approved: number; rejected: number };
+  }> {
     const query: any = {};
-    if (options.status) {
+    if (options.status && options.status !== 'ALL') {
       query.status = options.status;
     }
 
-    const [docs, total] = await Promise.all([
+    if (options.search && options.search.trim()) {
+      const searchRegex = new RegExp(options.search.trim(), 'i');
+      const [matchedProducts, matchedUsers] = await Promise.all([
+        ProductModel.find({ name: searchRegex }).select('_id').lean(),
+        UserModel.find({ $or: [{ fullName: searchRegex }, { email: searchRegex }] }).select('_id').lean(),
+      ]);
+
+      const matchedProductIds = matchedProducts.map((p: any) => p._id.toString());
+      const matchedUserIds = matchedUsers.map((u: any) => u._id.toString());
+
+      query.$or = [
+        { title: searchRegex },
+        { comment: searchRegex },
+        { productId: { $in: matchedProductIds } },
+        { userId: { $in: matchedUserIds } },
+      ];
+    }
+
+    const [docs, total, countsResult] = await Promise.all([
       ReviewModel.find(query)
         .sort({ createdAt: -1 })
         .skip(options.skip)
         .limit(options.limit)
-        .populate('productId', 'name images')
-        .populate('userId', 'firstName lastName email')
         .lean(),
-      ReviewModel.countDocuments(query)
+      ReviewModel.countDocuments(query),
+      ReviewModel.aggregate([
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 },
+          },
+        },
+      ]),
     ]);
 
-    const reviews = docs.map((doc: any) => Review.create({
-      productId: doc.productId?._id ? doc.productId._id.toString() : doc.productId,
-      userId: doc.userId?._id ? doc.userId._id.toString() : doc.userId,
-      rating: doc.rating,
-      title: doc.title,
-      comment: doc.comment,
-      status: doc.status,
-    }, doc._id.toString()));
-
-    // Attach populated data so it can be returned directly or used by presentation
-    return { 
-      reviews: reviews.map((r, i) => {
-        const json = r.toJSON();
-        return {
-          ...r,
-          toJSON: () => ({
-            ...json,
-            product: docs[i].productId,
-            user: docs[i].userId
-          })
-        } as unknown as Review;
-      }), 
-      total 
+    const counts = {
+      all: 0,
+      pending: 0,
+      approved: 0,
+      rejected: 0,
     };
+    for (const c of countsResult) {
+      const cnt = c.count || 0;
+      counts.all += cnt;
+      if (c._id === 'PENDING') counts.pending = cnt;
+      else if (c._id === 'APPROVED') counts.approved = cnt;
+      else if (c._id === 'REJECTED') counts.rejected = cnt;
+    }
+
+    // Resolve products and users in batch
+    const productIds = Array.from(new Set(docs.map((d: any) => String(d.productId)).filter(Boolean)));
+    const userIds = Array.from(new Set(docs.map((d: any) => String(d.userId)).filter(Boolean)));
+
+    const [products, users] = await Promise.all([
+      ProductModel.find({ _id: { $in: productIds } }).select('name thumbnail slug').lean(),
+      UserModel.find({ _id: { $in: userIds } }).select('fullName email phone profileImage').lean(),
+    ]);
+
+    const productMap = new Map(products.map((p: any) => [String(p._id), p]));
+    const userMap = new Map(users.map((u: any) => [String(u._id), u]));
+
+    const reviews = docs.map((doc: any) => {
+      const p = productMap.get(String(doc.productId));
+      const u = userMap.get(String(doc.userId));
+      return {
+        id: doc._id.toString(),
+        productId: doc.productId,
+        userId: doc.userId,
+        rating: doc.rating,
+        title: doc.title,
+        comment: doc.comment,
+        status: doc.status,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
+        product: p ? {
+          id: p._id.toString(),
+          name: p.name,
+          thumbnail: p.thumbnail,
+          slug: p.slug,
+        } : null,
+        user: u ? {
+          id: u._id.toString(),
+          fullName: u.fullName,
+          email: u.email,
+          phone: u.phone,
+          profileImage: u.profileImage,
+        } : null,
+      };
+    });
+
+    return { reviews, total, counts };
   }
 
   async findByUserId(userId: string, options: { skip: number; limit: number }): Promise<{ reviews: Review[]; total: number }> {

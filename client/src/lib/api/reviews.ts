@@ -22,13 +22,38 @@ export const reviewsApi = {
     return response.data.data;
   },
 
-  getAllReviews: async (params?: { page?: number; limit?: number; status?: string }) => {
+  getAllReviews: async (params?: { page?: number; limit?: number; status?: string; search?: string }) => {
     const response = await apiClient.get('/reviews/admin/all', { params });
-    return response.data.data;
+    const payload = response.data?.data;
+    const isArray = Array.isArray(payload);
+
+    const reviews = isArray ? payload : (payload?.reviews || []);
+    const total = isArray ? reviews.length : (payload?.total ?? reviews.length);
+    const page = isArray ? (params?.page || 1) : (payload?.page ?? 1);
+    const totalPages = isArray ? 1 : (payload?.totalPages ?? 1);
+    const counts = isArray 
+      ? { all: total, pending: 0, approved: total, rejected: 0 } 
+      : (payload?.counts || response.data?.counts || { all: total, pending: 0, approved: 0, rejected: 0 });
+
+    return {
+      reviews,
+      pagination: {
+        total,
+        page,
+        limit: params?.limit || 20,
+        totalPages,
+      },
+      counts,
+    };
   },
 
   updateReviewStatus: async (id: string, status: 'PENDING' | 'APPROVED' | 'REJECTED') => {
     const response = await apiClient.patch(`/reviews/admin/${id}/status`, { status });
     return response.data.data;
+  },
+
+  deleteReview: async (id: string) => {
+    const response = await apiClient.delete(`/reviews/admin/${id}`);
+    return response.data;
   },
 };
