@@ -153,11 +153,11 @@ export default function PersonalInfoPage() {
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1.5 gap-1.5 sm:gap-2">
               <label className="text-xs font-medium text-gray-800">
                 Email Address (Primary Login)
               </label>
-              <span className="text-[10px] font-medium text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-sm flex items-center gap-1">
+              <span className="text-[10px] font-medium text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-sm flex items-center gap-1 self-start sm:self-auto">
                 <Lock size={10} /> Locked for security
               </span>
             </div>
