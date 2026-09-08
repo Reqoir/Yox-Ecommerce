@@ -5,6 +5,12 @@
 
 import { OrderItemSnapshot, ShippingAddressSnapshot } from '../../domain/entities/order.entity';
 
+export interface DirectBuyItemDTO {
+  variantId: string;
+  quantity: number;
+  price?: number;
+}
+
 export interface PlaceOrderRequestDTO {
   addressId?: string;
   shippingAddress?: ShippingAddressSnapshot;
@@ -12,6 +18,7 @@ export interface PlaceOrderRequestDTO {
   paymentId?: string;
   couponId?: string;
   notes?: string;
+  directBuyItem?: DirectBuyItemDTO;
 }
 
 export interface CancelOrderRequestDTO {

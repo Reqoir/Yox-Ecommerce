@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ShieldCheck, Truck, ArrowRight, Tag, AlertCircle } from 'lucide-react';
 import { useCartStore } from '@/store/useCartStore';
+import { useCheckoutStore } from '@/store/useCheckoutStore';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -48,11 +49,16 @@ export function CartSummary() {
     }
   };
 
+  const { setDirectBuyItem } = useCheckoutStore();
+
   const handleProceedToCheckout = () => {
     if (isMaintenance) {
       toast.error('Store maintenance is currently active. Checkout is temporarily paused.');
       return;
     }
+    // Clear any direct buy state to ensure cart checkout is used
+    setDirectBuyItem(null);
+
     if (!isAuthenticated) {
       toast.error('Please log in to proceed to checkout');
       router.push('/login?callbackUrl=/checkout');

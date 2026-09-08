@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { addressesApi, Address as ApiAddress } from '../lib/api/addresses';
 import { useAuthStore } from './useAuthStore';
+import { CartItem } from './useCartStore';
 
 export type Address = ApiAddress;
 
@@ -23,6 +24,7 @@ interface CheckoutState {
   isOrderSuccess: boolean;
   lastOrderDetails: OrderDetails | null;
   isLoadingAddresses: boolean;
+  directBuyItem: CartItem | null;
   
   // Actions
   fetchAddresses: () => Promise<void>;
@@ -32,6 +34,7 @@ interface CheckoutState {
   setPaymentMethod: (method: PaymentMethod) => void;
   setIsAddAddressOpen: (open: boolean) => void;
   setOrderSuccess: (success: boolean, details?: OrderDetails) => void;
+  setDirectBuyItem: (item: CartItem | null) => void;
   resetCheckout: () => void;
 }
 
@@ -45,6 +48,7 @@ export const useCheckoutStore = create<CheckoutState>()(
       isOrderSuccess: false,
       lastOrderDetails: null,
       isLoadingAddresses: false,
+      directBuyItem: null,
 
       fetchAddresses: async () => {
         try {
@@ -116,15 +120,18 @@ export const useCheckoutStore = create<CheckoutState>()(
 
       setOrderSuccess: (success, details) => set({ isOrderSuccess: success, lastOrderDetails: details || null }),
 
-      resetCheckout: () => set({ isOrderSuccess: false, lastOrderDetails: null, addresses: [], selectedAddressId: null }),
+      setDirectBuyItem: (item) => set({ directBuyItem: item }),
+
+      resetCheckout: () => set({ isOrderSuccess: false, lastOrderDetails: null, addresses: [], selectedAddressId: null, directBuyItem: null }),
     }),
     {
       name: 'yox-checkout-storage',
       // We don't want to persist addresses as they should be fetched fresh,
-      // but we do want to persist paymentMethod and selectedAddressId.
+      // but we do want to persist paymentMethod, selectedAddressId, and directBuyItem.
       partialize: (state) => ({
         paymentMethod: state.paymentMethod,
         selectedAddressId: state.selectedAddressId,
+        directBuyItem: state.directBuyItem,
       }),
     }
   )

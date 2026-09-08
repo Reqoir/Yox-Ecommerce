@@ -26,6 +26,8 @@ import { useQuery } from '@tanstack/react-query';
 import { productsApi } from '@/lib/api/products';
 import { offersApi } from '@/api/admin/offers';
 import { useCartStore } from '@/store/useCartStore';
+import { useCheckoutStore } from '@/store/useCheckoutStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
 import { toast } from 'sonner';
@@ -69,6 +71,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
   const addItem = useCartStore((state) => state.addItem);
   const cartItems = useCartStore((state) => state.items);
+  const setDirectBuyItem = useCheckoutStore((state) => state.setDirectBuyItem);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { config } = useStoreSettingsStore();
   const { isFavourite, toggleFavourite } = useFavouritesStore();
   const isFav = product ? isFavourite(product.id, selectedColor) : false;
@@ -385,8 +389,28 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       return;
     }
 
-    handleAddToBasket();
-    router.push('/checkout');
+    // Set ONLY this specific product variant for direct checkout
+    setDirectBuyItem({
+      id: activeVariant.id,
+      variantId: activeVariant.id,
+      productId: product.id,
+      name: product.name,
+      image: images[0] || product.thumbnail,
+      color: activeVariant.color || 'Default',
+      size: activeVariant.size || 'Standard',
+      price: finalPrice,
+      comparePrice: baseStrikePrice && baseStrikePrice > finalPrice ? baseStrikePrice : undefined,
+      quantity: quantity,
+      stock: variantStock,
+    });
+
+    if (!isAuthenticated) {
+      toast.info("Please log in to complete your purchase");
+      router.push('/login?callbackUrl=' + encodeURIComponent('/checkout?buyNow=1'));
+      return;
+    }
+
+    router.push('/checkout?buyNow=1');
   };
 
   const renderOffers = () => {

@@ -2,10 +2,18 @@
 
 import React, { useState } from 'react';
 import { ShoppingBag, ChevronDown, ChevronUp } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { useCartStore } from '@/store/useCartStore';
+import { useCheckoutStore } from '@/store/useCheckoutStore';
 
 export function OrderItemsReview() {
-  const { items } = useCartStore();
+  const { items: cartItems } = useCartStore();
+  const { directBuyItem } = useCheckoutStore();
+  const searchParams = useSearchParams();
+  const isBuyNow = searchParams?.get('buyNow') === '1' || searchParams?.get('buyNow') === 'true';
+
+  const isDirectCheckout = isBuyNow && !!directBuyItem;
+  const items = isDirectCheckout ? [directBuyItem] : cartItems;
   const [isOpen, setIsOpen] = useState(true);
 
   return (
@@ -20,9 +28,11 @@ export function OrderItemsReview() {
           </div>
           <div>
             <h2 className="text-base font-bold text-gray-900 leading-tight">
-              Review Order Items ({items.length})
+              {isDirectCheckout ? 'Review Buy Now Item (1)' : `Review Order Items (${items.length})`}
             </h2>
-            <p className="text-xs text-gray-500">Verify items before completing purchase</p>
+            <p className="text-xs text-gray-500">
+              {isDirectCheckout ? 'Purchasing only this product (your cart items remain untouched)' : 'Verify items before completing purchase'}
+            </p>
           </div>
         </div>
 

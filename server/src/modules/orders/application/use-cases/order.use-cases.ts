@@ -87,10 +87,28 @@ export class PlaceOrderUseCase implements IUseCase<{ userId: string; data: Place
       }
     }
 
-    // 1. Fetch User Cart
-    const cart = await this.cartRepo.findByUserId(userId);
-    if (!cart || cart.items.length === 0) {
-      throw new Error('Your shopping cart is empty');
+    // 1. Resolve Items to Order: either Direct Buy Item OR User Cart
+    let itemsToProcess: { variantId: string; quantity: number; price?: number }[] = [];
+    let isDirectBuy = false;
+    let userCart: any = null;
+
+    if (data.directBuyItem && data.directBuyItem.variantId) {
+      isDirectBuy = true;
+      itemsToProcess = [{
+        variantId: data.directBuyItem.variantId,
+        quantity: Math.max(1, data.directBuyItem.quantity || 1),
+        price: data.directBuyItem.price,
+      }];
+    } else {
+      userCart = await this.cartRepo.findByUserId(userId);
+      if (!userCart || userCart.items.length === 0) {
+        throw new Error('Your shopping cart is empty');
+      }
+      itemsToProcess = userCart.items.map((item: any) => ({
+        variantId: item.variantId,
+        quantity: item.quantity,
+        price: item.price,
+      }));
     }
 
     // 2. Resolve Shipping Address Snapshot
@@ -119,7 +137,7 @@ export class PlaceOrderUseCase implements IUseCase<{ userId: string; data: Place
 
     // 3. Process items and verify/deduct stock atomically
     const orderItems: OrderItemSnapshot[] = [];
-    for (const item of cart.items) {
+    for (const item of itemsToProcess) {
       const variant = await this.variantRepo.findById(item.variantId);
       if (!variant) {
         throw new Error(`Product variant ${item.variantId} no longer exists`);
@@ -159,6 +177,8 @@ export class PlaceOrderUseCase implements IUseCase<{ userId: string; data: Place
         await this.stockLogRepo.save(log);
       }
 
+      const unitPrice = typeof item.price === 'number' && item.price > 0 ? item.price : variant.price;
+
       orderItems.push({
         productId: variant.productId,
         variantId: variant.id,
@@ -167,9 +187,9 @@ export class PlaceOrderUseCase implements IUseCase<{ userId: string; data: Place
         size: variant.size,
         color: variant.color,
         quantity: item.quantity,
-        unitPrice: item.price,
+        unitPrice: unitPrice,
         discount: 0,
-        subtotal: item.quantity * item.price,
+        subtotal: item.quantity * unitPrice,
         imageUrl: (variant as any).images?.[0] || (item as any).image || (item as any).imageUrl || null,
       });
     }
@@ -241,9 +261,11 @@ export class PlaceOrderUseCase implements IUseCase<{ userId: string; data: Place
 
     const savedOrder = await this.orderRepo.save(order);
 
-    // 6. Clear User Cart
-    cart.clear();
-    await this.cartRepo.save(cart);
+    // 6. Clear User Cart (Only for standard cart checkout, NOT for direct buy)
+    if (!isDirectBuy && userCart) {
+      userCart.clear();
+      await this.cartRepo.save(userCart);
+    }
 
     AuditLogService.getInstance()?.record({
       actorId: userId,

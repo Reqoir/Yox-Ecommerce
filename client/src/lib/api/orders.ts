@@ -78,6 +78,11 @@ export interface PlaceOrderPayload {
   paymentId?: string;
   couponId?: string;
   notes?: string;
+  directBuyItem?: {
+    variantId: string;
+    quantity: number;
+    price?: number;
+  };
 }
 
 export interface PaginatedOrdersResponse {

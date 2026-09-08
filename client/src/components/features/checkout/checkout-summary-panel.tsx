@@ -7,10 +7,14 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useCheckoutStore } from '@/store/useCheckoutStore';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
 import { DEFAULT_STORE_CONFIG } from '@/api/admin/settings';
+import { useSearchParams } from 'next/navigation';
 import { ordersApi } from '@/lib/api/orders';
 import { toast } from 'sonner';
 
 export function CheckoutSummaryPanel() {
+  const searchParams = useSearchParams();
+  const isBuyNow = searchParams?.get('buyNow') === '1' || searchParams?.get('buyNow') === 'true';
+
   const { getSubtotal, getSavingsTotal, getItemCount, clearCart } = useCartStore();
   const { config } = useStoreSettingsStore();
   const {
@@ -18,18 +22,32 @@ export function CheckoutSummaryPanel() {
     selectedAddressId,
     paymentMethod,
     setOrderSuccess,
+    directBuyItem,
+    setDirectBuyItem,
   } = useCheckoutStore();
   const { user } = useAuthStore();
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const isDirectCheckout = isBuyNow && !!directBuyItem;
 
   const userRole = (user as any)?.role || user?.roleId || '';
   const userRoleUpper = typeof userRole === 'string' ? userRole.toUpperCase() : '';
   const isAdmin = userRoleUpper.includes('ADMIN') || (user?.permissions || []).includes('*');
   const isMaintenance = config.maintenanceMode && !isAdmin;
 
-  const subtotal = getSubtotal();
-  const savings = getSavingsTotal();
-  const itemCount = getItemCount();
+  const subtotal = isDirectCheckout
+    ? directBuyItem.price * directBuyItem.quantity
+    : getSubtotal();
+
+  const savings = isDirectCheckout
+    ? (directBuyItem.comparePrice && directBuyItem.comparePrice > directBuyItem.price
+        ? (directBuyItem.comparePrice - directBuyItem.price) * directBuyItem.quantity
+        : 0)
+    : getSavingsTotal();
+
+  const itemCount = isDirectCheckout
+    ? directBuyItem.quantity
+    : getItemCount();
 
   const freeShippingThreshold = config.freeShippingThreshold ?? DEFAULT_STORE_CONFIG.freeShippingThreshold;
   const standardShippingFee = config.standardShippingFee ?? DEFAULT_STORE_CONFIG.standardShippingFee;
@@ -50,14 +68,14 @@ export function CheckoutSummaryPanel() {
     }
 
     if (itemCount === 0) {
-      toast.error('Your shopping cart is empty');
+      toast.error(isDirectCheckout ? 'No item selected for purchase' : 'Your shopping cart is empty');
       return;
     }
 
     setIsProcessing(true);
 
     try {
-      const order = await ordersApi.placeOrder({
+      const orderPayload: any = {
         shippingAddress: {
           fullName: selectedAddress.fullName,
           phone: selectedAddress.phone,
@@ -69,7 +87,17 @@ export function CheckoutSummaryPanel() {
           postalCode: (selectedAddress as any).pincode || (selectedAddress as any).zipCode || '400001',
         },
         paymentMethod: paymentMethod,
-      });
+      };
+
+      if (isDirectCheckout && directBuyItem) {
+        orderPayload.directBuyItem = {
+          variantId: directBuyItem.variantId || directBuyItem.id,
+          quantity: directBuyItem.quantity,
+          price: directBuyItem.price,
+        };
+      }
+
+      const order = await ordersApi.placeOrder(orderPayload);
 
       // Delivery date estimation based on store settings
       const deliveryDays = config.estimatedDeliveryDaysMax || 4;
@@ -81,8 +109,12 @@ export function CheckoutSummaryPanel() {
         day: 'numeric',
       });
 
-      // Clear cart in state
-      clearCart();
+      // Clear only if normal cart checkout! For direct buy, keep customer's cart intact!
+      if (isDirectCheckout) {
+        setDirectBuyItem(null);
+      } else {
+        clearCart();
+      }
 
       // Set order success details with authoritative backend values
       setOrderSuccess(true, {
@@ -105,6 +137,13 @@ export function CheckoutSummaryPanel() {
 
   return (
     <div className="w-full bg-white border border-gray-200 rounded p-6 sticky top-24">
+      {isDirectCheckout && (
+        <div className="mb-4 p-2.5 bg-amber-50 border border-amber-200 rounded text-xs text-amber-900 flex items-center justify-between">
+          <span className="font-bold">⚡ Buy It Now Item</span>
+          <span className="text-[11px] text-amber-700">Other cart items remain saved</span>
+        </div>
+      )}
+
       <h3 className="text-base font-bold text-gray-900 mb-4 pb-3 border-b border-gray-200">
         Payment Details
       </h3>
