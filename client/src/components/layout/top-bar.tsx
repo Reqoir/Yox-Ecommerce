@@ -11,7 +11,7 @@ export function TopBar() {
   const { config, fetchSettings } = useStoreSettingsStore();
 
   useEffect(() => {
-    fetchSettings(true);
+    fetchSettings();
   }, [fetchSettings]);
 
   // Resolve background color class or style
