@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { matchesProductSearch } from '@/lib/search';
 import { toast } from 'sonner';
-import { Heart, Search, Menu, X, ArrowRight, LogOut, ChevronDown, ChevronRight, Shield, User, Package, MapPin, Settings } from 'lucide-react';
+import { Heart, Search, Menu, X, ArrowRight, LogOut, ChevronDown, Shield, User, Package, MapPin, Settings } from 'lucide-react';
 import { IoPersonOutline } from "react-icons/io5";
 import { BsHandbag } from "react-icons/bs";
 import { useProductFilters } from '@/hooks/useProductFilters';
@@ -367,85 +367,41 @@ export function Navbar() {
 
             {/* User Dropdown Menu */}
             {mounted && isUserDropdownOpen && user && (
-              <div className="absolute right-0 top-11 w-64 bg-white border border-gray-200 rounded-xl shadow-xl py-2 z-50 animate-in fade-in-50 duration-150 divide-y divide-gray-100">
-                <div className="px-4 py-3 flex items-center gap-3">
-                  {user.avatar ? (
-                    <img 
-                      src={user.avatar} 
-                      alt={user.fullName || "User"} 
-                      className="w-10 h-10 rounded-full object-cover border border-gray-200 shrink-0"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-black text-white text-sm font-bold flex items-center justify-center shrink-0">
-                      {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-gray-900 truncate">{user.fullName || 'YOX Member'}</p>
-                    <p className="text-[11px] text-gray-500 truncate">{user.email}</p>
+              <div className="absolute right-0 top-11 w-72 bg-white border border-gray-200 rounded-sm shadow-xl z-50 animate-in fade-in-50 duration-150">
+                {/* Profile Info */}
+                <div className="flex flex-col items-center justify-center py-6 border-b border-gray-100">
+                  <div className="w-14 h-14 rounded-full bg-black text-white text-xl font-bold flex items-center justify-center mb-3">
+                    {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
                   </div>
+                  <h2 className="text-base font-bold text-gray-900">{user.fullName || 'User'}</h2>
+                  <p className="text-xs text-gray-500 mt-1">{user.email}</p>
                 </div>
 
-                <div className="py-1">
-                  <Link
-                    href="/profile"
-                    onClick={() => setIsUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
-                  >
-                    <User size={15} className="text-gray-500" />
-                    <span>My Profile</span>
+                {/* Links */}
+                <div className="flex flex-col divide-y divide-gray-100">
+                  <Link href="/profile" onClick={() => setIsUserDropdownOpen(false)} className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group">
+                    <span className="text-sm font-medium text-gray-800">My Profile</span>
+                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
                   </Link>
-                  <Link
-                    href="/profile/orders"
-                    onClick={() => setIsUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
-                  >
-                    <Package size={15} className="text-gray-500" />
-                    <span>My Orders</span>
+                  <Link href="/profile/orders" onClick={() => setIsUserDropdownOpen(false)} className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group">
+                    <span className="text-sm font-medium text-gray-800">My Orders</span>
+                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
                   </Link>
-                  <Link
-                    href="/profile/addresses"
-                    onClick={() => setIsUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
-                  >
-                    <MapPin size={15} className="text-gray-500" />
-                    <span>Saved Addresses</span>
+                  <Link href="/profile/addresses" onClick={() => setIsUserDropdownOpen(false)} className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group">
+                    <span className="text-sm font-medium text-gray-800">Saved Addresses</span>
+                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
                   </Link>
-                  <Link
-                    href="/profile/favourites"
-                    onClick={() => setIsUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
-                  >
-                    <Heart size={15} className="text-gray-500" />
-                    <span>My Wishlist</span>
+                  <Link href="/profile/favourites" onClick={() => setIsUserDropdownOpen(false)} className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group">
+                    <span className="text-sm font-medium text-gray-800">My Wishlist</span>
+                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
                   </Link>
-                  <Link
-                    href="/profile/settings"
-                    onClick={() => setIsUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
-                  >
-                    <Settings size={15} className="text-gray-500" />
-                    <span>Account Settings</span>
+                  <Link href="/profile/settings" onClick={() => setIsUserDropdownOpen(false)} className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group">
+                    <span className="text-sm font-medium text-gray-800">Account Settings</span>
+                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
                   </Link>
-                  {user.permissions?.includes('admin:access') && (
-                    <Link
-                      href="/admin"
-                      onClick={() => setIsUserDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-[#1A2E4C] hover:bg-blue-50 transition-colors"
-                    >
-                      <Shield size={15} className="text-[#1A2E4C]" />
-                      <span>Admin Dashboard</span>
-                    </Link>
-                  )}
-                </div>
-
-                <div className="pt-1">
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors text-left"
-                  >
-                    <LogOut size={15} className="text-red-500" />
-                    <span>Sign Out</span>
+                  <button onClick={handleLogout} className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group w-full text-left">
+                    <span className="text-sm font-medium text-gray-800">Sign Out</span>
+                    <LogOut className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
                   </button>
                 </div>
               </div>
@@ -551,10 +507,9 @@ export function Navbar() {
 
       {/* Full Screen Mobile Profile Dropdown Modal */}
       {mounted && isMobileProfileOpen && user && (
-        <div className="md:hidden fixed inset-0 z-[100] w-full h-full min-h-screen bg-white flex flex-col p-6 animate-in slide-in-from-top duration-200 overflow-y-auto">
-          {/* Top Bar Header with Close Button */}
-          <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-6 shrink-0">
-            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">ACCOUNT MENU</h2>
+        <div className="md:hidden fixed inset-0 z-50 bg-white flex flex-col animate-in slide-in-from-top duration-200 overflow-y-auto">
+          {/* Header with Close Button */}
+          <div className="flex justify-end p-4">
             <button
               onClick={() => setIsMobileProfileOpen(false)}
               className="p-2 text-gray-500 hover:text-black rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
@@ -564,128 +519,40 @@ export function Navbar() {
             </button>
           </div>
 
-          {/* Grouped Account Links Card */}
-          <div className="flex-1 space-y-6">
-            <div>
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-1 mb-2.5">
-                ACCOUNT
-              </h3>
-              <div className="bg-white border border-gray-200 rounded-sm divide-y divide-gray-100 overflow-hidden shadow-2xs">
-                <Link
-                  href="/profile/personal-info"
-                  onClick={() => setIsMobileProfileOpen(false)}
-                  className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <User className="w-5 h-5 text-gray-800 shrink-0 stroke-[1.75]" />
-                    <span className="text-xs font-semibold text-gray-800 tracking-wider uppercase">
-                      MY PROFILE
-                    </span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
-                </Link>
-
-                <Link
-                  href="/profile/orders"
-                  onClick={() => setIsMobileProfileOpen(false)}
-                  className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <Package className="w-5 h-5 text-gray-800 shrink-0 stroke-[1.75]" />
-                    <span className="text-xs font-semibold text-gray-800 tracking-wider uppercase">
-                      MY ORDERS
-                    </span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
-                </Link>
-
-                <Link
-                  href="/profile/addresses"
-                  onClick={() => setIsMobileProfileOpen(false)}
-                  className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <MapPin className="w-5 h-5 text-gray-800 shrink-0 stroke-[1.75]" />
-                    <span className="text-xs font-semibold text-gray-800 tracking-wider uppercase">
-                      SAVED ADDRESSES
-                    </span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
-                </Link>
-
-                <Link
-                  href="/profile/favourites"
-                  onClick={() => setIsMobileProfileOpen(false)}
-                  className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <Heart className="w-5 h-5 text-gray-800 shrink-0 stroke-[1.75]" />
-                    <span className="text-xs font-semibold text-gray-800 tracking-wider uppercase">
-                      MY WISHLIST
-                    </span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
-                </Link>
-
-                <Link
-                  href="/profile/settings"
-                  onClick={() => setIsMobileProfileOpen(false)}
-                  className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <Settings className="w-5 h-5 text-gray-800 shrink-0 stroke-[1.75]" />
-                    <span className="text-xs font-semibold text-gray-800 tracking-wider uppercase">
-                      ACCOUNT SETTINGS
-                    </span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
-                </Link>
-
-                {user.permissions?.includes('admin:access') && (
-                  <Link
-                    href="/admin"
-                    onClick={() => setIsMobileProfileOpen(false)}
-                    className="flex items-center justify-between p-4 bg-blue-50/50 hover:bg-blue-50 transition-colors group"
-                  >
-                    <div className="flex items-center gap-3.5">
-                      <Shield className="w-5 h-5 text-[#1A2E4C] shrink-0 stroke-[1.75]" />
-                      <span className="text-xs font-bold text-[#1A2E4C] tracking-wider uppercase">
-                        ADMIN DASHBOARD
-                      </span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-[#1A2E4C] group-hover:text-black transition-colors" />
-                  </Link>
-                )}
-              </div>
+          {/* Profile Info */}
+          <div className="flex flex-col items-center justify-center pb-8 border-b border-gray-100 px-4">
+            <div className="w-16 h-16 rounded-full bg-black text-white text-2xl font-bold flex items-center justify-center mb-4">
+              {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
             </div>
+            <h2 className="text-lg font-bold text-gray-900">{user.fullName || 'User'}</h2>
+            <p className="text-sm text-gray-500 mt-1">{user.email}</p>
           </div>
 
-          {/* Footer Navigation Links */}
-          <div className="flex items-center justify-center gap-6 sm:gap-10 pt-8 pb-4 text-xs font-semibold tracking-widest text-gray-800 uppercase border-t border-gray-100 mt-8 shrink-0">
-            <Link
-              href="/contact"
-              onClick={() => setIsMobileProfileOpen(false)}
-              className="hover:underline"
-            >
-              HELP
+          {/* Links */}
+          <div className="flex-1 flex flex-col divide-y divide-gray-100">
+            <Link href="/profile" onClick={() => setIsMobileProfileOpen(false)} className="flex items-center justify-between p-5 bg-white hover:bg-gray-50 transition-colors group">
+              <span className="text-base font-medium text-gray-800">My Profile</span>
+              <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-700 transition-colors" />
             </Link>
-            <span className="text-gray-300">|</span>
-            <Link
-              href="/profile/settings"
-              onClick={() => setIsMobileProfileOpen(false)}
-              className="hover:underline"
-            >
-              SETTINGS
+            <Link href="/profile/orders" onClick={() => setIsMobileProfileOpen(false)} className="flex items-center justify-between p-5 bg-white hover:bg-gray-50 transition-colors group">
+              <span className="text-base font-medium text-gray-800">My Orders</span>
+              <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-700 transition-colors" />
             </Link>
-            <span className="text-gray-300">|</span>
-            <button
-              onClick={() => {
-                setIsMobileProfileOpen(false);
-                handleLogout();
-              }}
-              className="hover:underline cursor-pointer text-rose-600"
-            >
-              LOGOUT
+            <Link href="/profile/addresses" onClick={() => setIsMobileProfileOpen(false)} className="flex items-center justify-between p-5 bg-white hover:bg-gray-50 transition-colors group">
+              <span className="text-base font-medium text-gray-800">Saved Addresses</span>
+              <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-700 transition-colors" />
+            </Link>
+            <Link href="/profile/favourites" onClick={() => setIsMobileProfileOpen(false)} className="flex items-center justify-between p-5 bg-white hover:bg-gray-50 transition-colors group">
+              <span className="text-base font-medium text-gray-800">My Wishlist</span>
+              <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-700 transition-colors" />
+            </Link>
+            <Link href="/profile/settings" onClick={() => setIsMobileProfileOpen(false)} className="flex items-center justify-between p-5 bg-white hover:bg-gray-50 transition-colors group">
+              <span className="text-base font-medium text-gray-800">Account Settings</span>
+              <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-700 transition-colors" />
+            </Link>
+            <button onClick={() => { setIsMobileProfileOpen(false); handleLogout(); }} className="flex items-center justify-between p-5 bg-white hover:bg-gray-50 transition-colors group w-full text-left">
+              <span className="text-base font-medium text-gray-800">Sign Out</span>
+              <LogOut className="w-5 h-5 text-gray-400 group-hover:text-gray-700 transition-colors" />
             </button>
           </div>
         </div>
