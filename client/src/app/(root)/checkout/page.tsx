@@ -129,14 +129,11 @@ function CheckoutContent() {
   return (
     <main className="w-full bg-white min-h-screen pb-16 pt-4 lg:pt-8">
       <div className="w-[98%] max-w-[1500px] mx-auto">
-        
+
         {/* Buy Now Informational Banner */}
         {isDirectCheckout && (
           <div className="mb-6 p-3 bg-amber-50/90 border border-amber-200 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs">
             <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center text-xs shrink-0">
-                <Zap size={14} className="fill-amber-600 text-amber-700" />
-              </span>
               <p className="text-xs font-medium text-amber-900">
                 <strong className="font-bold">Buy It Now Mode:</strong> Checking out{' '}
                 <span className="underline decoration-amber-300 font-semibold">{directBuyItem.name}</span> only.
@@ -194,7 +191,7 @@ function CheckoutContent() {
 
         {/* 2-Column Responsive Layout */}
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-          
+
           {/* Left Column: Multi-Step Forms */}
           <div className="w-full lg:w-[65%]">
             <AddressSection />
