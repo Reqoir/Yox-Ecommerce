@@ -49,13 +49,13 @@ export const DEFAULT_STORE_CONFIG: StoreConfig = {
   currency: "INR",
   currencySymbol: "₹",
 
-  freeShippingThreshold: 699,
+  freeShippingThreshold: 199,
   standardShippingFee: 99,
   estimatedDeliveryDaysMin: 3,
   estimatedDeliveryDaysMax: 5,
   deliveryPartner: "Delhivery / BlueDart Express",
 
-  codEnabled: true,
+  codEnabled: false,
   codMaxLimit: 5000,
   taxRatePercent: 18,
   isTaxInclusive: true,
@@ -66,9 +66,9 @@ export const DEFAULT_STORE_CONFIG: StoreConfig = {
   returnPolicyNotice: "Hassle-free 7-day returns on unworn items with original tags.",
 
   announcementEnabled: true,
-  announcementText: "⚡ Festive Season Exclusive: Get Extra 10% Off with Code YOX10 | Free Shipping On Orders Above ₹699",
-  announcementLink: "/shop",
-  announcementBgColor: "bg-black",
+  announcementText: "Onam Season Exclusive: Get Extra 15% Off!",
+  announcementLink: "/offers/6a9f04f3de097e23e83541f4",
+  announcementBgColor: "bg-[#1A2E4C]",
 
   maintenanceMode: false,
   maintenanceNotice: "Store maintenance in progress. We will be back online shortly."

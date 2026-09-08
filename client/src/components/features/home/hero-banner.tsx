@@ -10,8 +10,23 @@ import {
   DEFAULT_HERO_CONFIG,
 } from '@/api/admin/content';
 
+const HERO_CACHE_KEY = 'yox_hero_banners_cache';
+
 export function HeroBanner() {
-  const [config, setConfig] = useState<HeroBannersConfig>(DEFAULT_HERO_CONFIG);
+  const [config, setConfig] = useState<HeroBannersConfig>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem(HERO_CACHE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed?.slides) && parsed.slides.length > 0) {
+            return parsed;
+          }
+        }
+      } catch {}
+    }
+    return DEFAULT_HERO_CONFIG;
+  });
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(true);
   const [isHovered, setIsHovered] = useState<boolean>(false);
@@ -21,8 +36,11 @@ export function HeroBanner() {
     const loadBanners = async () => {
       try {
         const data = await contentApi.getHeroBanners();
-        if (isMounted && data?.slides) {
+        if (isMounted && data?.slides && data.slides.length > 0) {
           setConfig(data);
+          try {
+            localStorage.setItem(HERO_CACHE_KEY, JSON.stringify(data));
+          } catch {}
         }
       } catch (err) {
         console.error('Failed to load hero banner configuration:', err);
@@ -118,11 +136,13 @@ export function HeroBanner() {
                         <source media="(max-width: 640px)" srcSet={slide.mobileImageUrl} />
                       )}
                       <img
-                        src={slide.imageUrl || '/images/hero-banner.png'}
+                        src={slide.imageUrl || DEFAULT_HERO_CONFIG.slides[0]?.imageUrl}
                         alt={slide.title || 'YOX Collection'}
                         className="w-full h-auto sm:h-full object-contain sm:object-cover object-center"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/images/hero-banner.png';
+                          if (DEFAULT_HERO_CONFIG.slides[0]?.imageUrl) {
+                            (e.target as HTMLImageElement).src = DEFAULT_HERO_CONFIG.slides[0].imageUrl;
+                          }
                         }}
                       />
                     </picture>
