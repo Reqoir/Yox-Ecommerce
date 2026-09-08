@@ -97,17 +97,32 @@ export default function AdminSettingsPage() {
     }
   };
 
-  // Sync form state when config loads from server
+  // Helper to compare configs field-by-field safely without serialization or key-order glitches
+  const areConfigsEqual = (a: StoreConfig, b: StoreConfig): boolean => {
+    if (!a || !b) return a === b;
+    const keys: (keyof StoreConfig)[] = [
+      'storeName', 'tagline', 'supportEmail', 'supportPhone', 'storeAddress',
+      'currency', 'currencySymbol', 'freeShippingThreshold', 'standardShippingFee',
+      'estimatedDeliveryDaysMin', 'estimatedDeliveryDaysMax', 'deliveryPartner',
+      'codEnabled', 'codMaxLimit', 'taxRatePercent', 'isTaxInclusive',
+      'returnsEnabled', 'returnWindowDays', 'minEvidencePhotos', 'returnPolicyNotice',
+      'announcementEnabled', 'announcementText', 'announcementLink', 'announcementBgColor',
+      'maintenanceMode', 'maintenanceNotice'
+    ];
+    return keys.every((key) => a[key] === b[key]);
+  };
+
+  // Sync form state when config loads from server (run once on mount)
   useEffect(() => {
     fetchSettings().then((fresh) => {
       setFormData(fresh);
       setHasInitialized(true);
     });
-  }, [fetchSettings]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Track dirty state
   const isDirty = useMemo(() => {
-    return JSON.stringify(formData) !== JSON.stringify(config);
+    return !areConfigsEqual(formData, config);
   }, [formData, config]);
 
   const handleChange = <K extends keyof StoreConfig>(key: K, value: StoreConfig[K]) => {
@@ -171,7 +186,7 @@ export default function AdminSettingsPage() {
   const previewProgress = Math.min(100, Math.round((previewSampleSubtotal / (formData.freeShippingThreshold || 1)) * 100));
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300 pb-36 max-w-[1400px]">
+    <div className="space-y-8 animate-in fade-in duration-300 pb-12 max-w-[1400px]">
       {/* Top Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b pb-6">
         <div>
@@ -188,6 +203,29 @@ export default function AdminSettingsPage() {
 
         {/* Global Overview Pills & Actions */}
         <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Real-time sync status pill */}
+          {saveState === 'saving' ? (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20 text-xs font-semibold">
+              <Loader2 size={13} className="animate-spin" />
+              <span>Saving...</span>
+            </div>
+          ) : saveState === 'saved' ? (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-semibold">
+              <CheckCircle2 size={13} className="text-emerald-500" />
+              <span>Settings Synced</span>
+            </div>
+          ) : isDirty ? (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-semibold">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              <span>Unsaved changes</span>
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted/60 text-muted-foreground border text-xs font-medium">
+              <Check size={12} className="text-emerald-500" />
+              <span>All settings up to date</span>
+            </div>
+          )}
+
           <Link
             href="/"
             target="_blank"
@@ -210,13 +248,22 @@ export default function AdminSettingsPage() {
 
           <button
             type="button"
+            onClick={handleResetDefaults}
+            disabled={saveState === 'saving'}
+            className="px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground border rounded-xl hover:bg-muted transition-colors disabled:opacity-50"
+          >
+            Reset Defaults
+          </button>
+
+          <button
+            type="button"
             onClick={() => handleSave()}
             disabled={saveState === 'saving' || (!isDirty && saveState !== 'saved')}
             className={`flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs ${
               saveState === 'saved'
                 ? 'bg-emerald-600 text-white shadow-emerald-500/20'
                 : isDirty
-                ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20'
+                ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20 cursor-pointer'
                 : 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
             }`}
           >
@@ -234,7 +281,6 @@ export default function AdminSettingsPage() {
               <>
                 <Save size={13} />
                 <span>Save Settings</span>
-                {isDirty && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
               </>
             )}
           </button>
@@ -1018,6 +1064,87 @@ export default function AdminSettingsPage() {
               </Card>
             </div>
           )}
+          {/* Permanent Form Actions Card - Stable, non-floating, elegant */}
+          <div className="rounded-2xl border bg-card/90 backdrop-blur-sm p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs mt-6">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className={`p-2.5 rounded-xl shrink-0 ${isDirty ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>
+                {isDirty ? <Sliders size={18} /> : <CheckCircle2 size={18} />}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-foreground">
+                    {isDirty ? 'Unsaved Configuration Changes' : 'Store Settings are Active'}
+                  </span>
+                  {isDirty ? (
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                      PENDING SAVE
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                      SYNCED
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {isDirty 
+                    ? 'Click Save Settings to apply changes to the live storefront immediately.' 
+                    : 'All operational thresholds, policies, and announcement banners are live.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end shrink-0">
+              {isDirty && (
+                <button
+                  type="button"
+                  onClick={handleDiscard}
+                  disabled={saveState === 'saving'}
+                  className="px-3.5 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 border border-rose-200 dark:border-rose-900 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                >
+                  Discard
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleResetDefaults}
+                disabled={saveState === 'saving'}
+                className="px-3.5 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground border rounded-xl hover:bg-muted transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                Reset Defaults
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSave()}
+                disabled={saveState === 'saving' || (!isDirty && saveState !== 'saved')}
+                className={`flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs ${
+                  saveState === 'saved'
+                    ? 'bg-emerald-600 text-white shadow-emerald-500/20'
+                    : isDirty
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20 cursor-pointer'
+                    : 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
+                }`}
+              >
+                {saveState === 'saving' ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : saveState === 'saved' ? (
+                  <>
+                    <Check size={14} />
+                    <span>Saved!</span>
+                  </>
+                ) : (
+                  <>
+                    <Save size={14} />
+                    <span>Save Settings</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Right Column: Interactive Live Storefront Preview */}
@@ -1141,95 +1268,6 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
-      {/* Floating Sticky Save & Discard Bar - Smooth, stable, and completely dismissed off-screen */}
-      <div
-        className={`fixed bottom-6 left-1/2 -translate-x-1/2 lg:left-[calc(50%+8rem)] lg:-translate-x-1/2 z-40 w-[92%] max-w-3xl bg-card/95 backdrop-blur-md border border-border/80 rounded-2xl px-5 py-3.5 shadow-2xl transition-all duration-300 ease-out flex flex-col sm:flex-row items-center justify-between gap-3 ${
-          isDirty || saveState !== 'idle'
-            ? 'translate-y-0 opacity-100 pointer-events-auto'
-            : 'translate-y-[calc(100%+4rem)] opacity-0 pointer-events-none'
-        }`}
-      >
-        <div className="flex items-center gap-2.5 text-xs min-h-[26px]">
-          {saveState === 'saved' ? (
-            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold animate-in fade-in duration-150">
-              <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-              <span>Settings saved and synced to storefront in real-time!</span>
-            </div>
-          ) : saveState === 'saving' ? (
-            <div className="flex items-center gap-2 text-primary font-medium animate-in fade-in duration-150">
-              <Loader2 size={16} className="animate-spin text-primary shrink-0" />
-              <span>Saving store settings...</span>
-            </div>
-          ) : isDirty ? (
-            <div className="flex items-center gap-2.5 font-medium animate-in fade-in duration-150">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0 animate-pulse" />
-              <span className="font-bold text-amber-600 dark:text-amber-400">
-                You have unsaved changes!
-              </span>
-              <span className="text-muted-foreground hidden md:inline">
-                — Save to update storefront policies immediately.
-              </span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-              <span>All settings are up to date.</span>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-          {isDirty && (
-            <button
-              type="button"
-              onClick={handleDiscard}
-              disabled={saveState === 'saving'}
-              className="px-3.5 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 border border-rose-200 dark:border-rose-900 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
-            >
-              Discard
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={handleResetDefaults}
-            disabled={saveState === 'saving'}
-            className="px-3.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground border rounded-xl hover:bg-muted transition-colors disabled:opacity-50"
-          >
-            Reset Defaults
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleSave()}
-            disabled={saveState === 'saving' || (!isDirty && saveState !== 'saved')}
-            className={`flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
-              saveState === 'saved'
-                ? 'bg-emerald-600 text-white shadow-emerald-500/20'
-                : isDirty
-                ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20'
-                : 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
-            }`}
-          >
-            {saveState === 'saving' ? (
-              <>
-                <Loader2 size={14} className="animate-spin" />
-                <span>Saving...</span>
-              </>
-            ) : saveState === 'saved' ? (
-              <>
-                <Check size={14} />
-                <span>Saved!</span>
-              </>
-            ) : (
-              <>
-                <Save size={14} />
-                <span>Save Settings</span>
-              </>
-            )}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

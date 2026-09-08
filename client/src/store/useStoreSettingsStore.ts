@@ -120,20 +120,3 @@ export const useStoreSettingsStore = create<StoreSettingsState>()(
   )
 );
 
-// Cross-tab and window-level reactive synchronization
-if (typeof window !== 'undefined') {
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'yox_store_settings' && e.newValue) {
-      try {
-        const parsed = JSON.parse(e.newValue);
-        if (parsed?.state?.config) {
-          useStoreSettingsStore.setState({
-            config: { ...DEFAULT_STORE_CONFIG, ...parsed.state.config },
-            hasLoaded: true,
-          });
-        }
-      } catch (err) {}
-    }
-  });
-}
-

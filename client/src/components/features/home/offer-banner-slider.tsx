@@ -2,59 +2,169 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Clock, ArrowRight, Sparkles, Flame, ChevronLeft, ChevronRight, Copy, Check } from 'lucide-react';
+import {
+  Clock,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Check,
+} from 'lucide-react';
 import { offersApi, Offer } from '@/api/admin/offers';
 import { toast } from 'sonner';
+
+// Curated luxury fashion editorial fallback slides if no banners exist in database
+const FALLBACK_CAMPAIGNS: Partial<Offer>[] = [
+  {
+    id: 'default-luxe-linen',
+    title: 'The Modern Linen Edit',
+    description: 'Relaxed tailoring and natural breathable weaves designed for timeless ease.',
+    code: 'LINEN20',
+    offerType: 'CATEGORY',
+    discountType: 'PERCENTAGE',
+    discountValue: 20,
+    badgeText: 'SEASONAL EDIT',
+    isLimitedTime: true,
+    banner: {
+      imageUrl: '/images/linen-banner.png',
+      title: 'The Modern Linen Edit',
+      subtitle: 'Relaxed tailoring and natural breathable weaves designed for timeless ease.',
+      ctaText: 'Shop Collection',
+      ctaLink: '/shop?category=linen',
+      showOnHome: true,
+      position: 'BANNER_STRIP',
+    },
+  },
+  {
+    id: 'default-festive-privilege',
+    title: 'Artisanal Festive Curation',
+    description: 'Bespoke silhouettes, rich textures, and heritage embroidery tailored for contemporary celebrations.',
+    code: 'FESTIVE15',
+    offerType: 'CELEBRATION',
+    discountType: 'PERCENTAGE',
+    discountValue: 15,
+    badgeText: 'FESTIVE PRIVILEGE',
+    isLimitedTime: true,
+    banner: {
+      imageUrl: '/images/hero-luxury-1.jpg',
+      title: 'Artisanal Festive Curation',
+      subtitle: 'Bespoke silhouettes, rich textures, and heritage embroidery tailored for contemporary celebrations.',
+      ctaText: 'Explore Collection',
+      ctaLink: '/shop',
+      showOnHome: true,
+      position: 'BANNER_STRIP',
+    },
+  },
+  {
+    id: 'default-street-modern',
+    title: 'Contemporary Streetwear Drop',
+    description: 'Heavyweight cottons, drop shoulders, and structured architectural lines.',
+    code: 'STREET25',
+    offerType: 'LIMITED_TIME',
+    discountType: 'PERCENTAGE',
+    discountValue: 25,
+    badgeText: 'FLASH DROP',
+    isLimitedTime: true,
+    banner: {
+      imageUrl: '/images/hero-streetwear-2.jpg',
+      title: 'Contemporary Streetwear Drop',
+      subtitle: 'Heavyweight cottons, drop shoulders, and structured architectural lines.',
+      ctaText: 'Discover Drop',
+      ctaLink: '/shop',
+      showOnHome: true,
+      position: 'BANNER_STRIP',
+    },
+  },
+];
 
 export function OfferBannerSlider() {
   const [banners, setBanners] = useState<Offer[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Time left state for current banner
-  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; mins: number; secs: number } | null>(null);
+  const [timeLeft, setTimeLeft] = useState<{ hours: number; mins: number; secs: number } | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchBanners = async () => {
       try {
         const data = await offersApi.getBanners();
-        setBanners(data);
+        if (isMounted) {
+          if (data && data.length > 0) {
+            setBanners(data);
+          } else {
+            const active = await offersApi.getActive();
+            const offersWithBanner = active.filter((o) => o.banner?.imageUrl || o.banner?.showOnHome);
+            if (offersWithBanner.length > 0) {
+              setBanners(offersWithBanner);
+            } else if (active.length > 0) {
+              const formatted: Offer[] = active.map((o, idx) => ({
+                ...o,
+                banner: o.banner || {
+                  imageUrl: FALLBACK_CAMPAIGNS[idx % FALLBACK_CAMPAIGNS.length]?.banner?.imageUrl || '/images/linen-banner.png',
+                  title: o.title,
+                  subtitle: o.description || `${o.discountValue}${o.discountType === 'PERCENTAGE' ? '%' : ' FLAT'} off your selected garments`,
+                  ctaText: 'Explore Offer',
+                  ctaLink: `/offers/${o.id}`,
+                  showOnHome: true,
+                  position: 'BANNER_STRIP',
+                },
+              }));
+              setBanners(formatted);
+            } else {
+              setBanners(FALLBACK_CAMPAIGNS as Offer[]);
+            }
+          }
+        }
       } catch (err) {
-        console.error('Failed to fetch offer banners:', err);
+        console.error('Failed to load offer banners:', err);
+        if (isMounted) {
+          setBanners(FALLBACK_CAMPAIGNS as Offer[]);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
+
     fetchBanners();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Calculate live countdown for active banner
+  // Live countdown timer calculation
   useEffect(() => {
     if (banners.length === 0) return;
     const currentOffer = banners[currentIndex];
-    if (!currentOffer?.endDate || !currentOffer.isLimitedTime) {
-      setTimeLeft(null);
-      return;
-    }
 
-    const targetDate = new Date(currentOffer.endDate).getTime();
+    let targetDate: number;
+    if (currentOffer?.endDate) {
+      targetDate = new Date(currentOffer.endDate).getTime();
+    } else {
+      const now = new Date();
+      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).getTime();
+      targetDate = endOfDay;
+    }
 
     const updateTimer = () => {
       const now = new Date().getTime();
       const distance = targetDate - now;
 
       if (distance <= 0) {
-        setTimeLeft({ days: 0, hours: 0, mins: 0, secs: 0 });
+        setTimeLeft({ hours: 0, mins: 0, secs: 0 });
         return;
       }
 
-      setTimeLeft({
-        days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-        mins: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-        secs: Math.floor((distance % (1000 * 60)) / 1000),
-      });
+      const totalHours = Math.floor(distance / (1000 * 60 * 60));
+      const mins = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((distance % (1000 * 60)) / 1000);
+
+      setTimeLeft({ hours: totalHours, mins, secs });
     };
 
     updateTimer();
@@ -62,158 +172,263 @@ export function OfferBannerSlider() {
     return () => clearInterval(interval);
   }, [banners, currentIndex]);
 
-  // Autoplay banner carousel
+  // Autoplay carousel
   useEffect(() => {
-    if (banners.length <= 1) return;
+    if (banners.length <= 1 || isHovered) return;
     const autoPlay = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % banners.length);
-    }, 6000);
+    }, 7000);
     return () => clearInterval(autoPlay);
-  }, [banners.length]);
+  }, [banners.length, isHovered]);
 
   const handleCopyCode = (e: React.MouseEvent, code: string) => {
     e.preventDefault();
     e.stopPropagation();
     navigator.clipboard.writeText(code);
     setCopiedCode(code);
-    toast.success(`Coupon code ${code} copied!`);
-    setTimeout(() => setCopiedCode(null), 2000);
+    toast.success(`Code ${code} copied`, {
+      description: 'Applied automatically during checkout.',
+    });
+    setTimeout(() => setCopiedCode(null), 2400);
   };
 
-  if (isLoading || banners.length === 0) {
-    return null; // Don't render banner strip if no active banners configured
+  const handlePrev = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length);
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev + 1) % banners.length);
+  };
+
+  if (isLoading && banners.length === 0) {
+    return (
+      <section className="w-full py-8 sm:py-12 bg-white">
+        <div className="w-[98%] max-w-[1500px] 2xl:max-w-[1700px] mx-auto px-4 md:px-8">
+          <div className="h-5 w-36 bg-gray-100 rounded mb-2 animate-pulse" />
+          <div className="h-8 w-64 bg-gray-100 rounded mb-6 animate-pulse" />
+          <div className="w-full aspect-[4/5] sm:aspect-[16/8] lg:aspect-[22/9] bg-gray-100 rounded-sm animate-pulse" />
+        </div>
+      </section>
+    );
   }
 
-  const current = banners[currentIndex];
+  if (banners.length === 0) {
+    return null;
+  }
+
+  const current = banners[currentIndex] || banners[0];
   const bannerInfo = current.banner;
-  const isFlashSale = current.isLimitedTime || current.offerType === 'LIMITED_TIME';
+  const couponCode = current.code || (current.id && current.id.length < 12 ? current.id : null);
+  const targetLink =
+    bannerInfo?.ctaLink ||
+    (current.id.startsWith('default-')
+      ? '/shop'
+      : `/offers/${current.id}`);
+
+  const offerTypeLabel =
+    current.badgeText ||
+    (current.offerType === 'CELEBRATION'
+      ? 'FESTIVE SPECIAL'
+      : current.offerType === 'LIMITED_TIME'
+        ? 'LIMITED RUN'
+        : `${current.offerType} PRIVILEGE`);
+
+  const discountFormatted =
+    current.discountType === 'PERCENTAGE'
+      ? `${current.discountValue}% OFF`
+      : `FLAT ₹${current.discountValue} OFF`;
 
   return (
-    <section className="w-full relative py-4 lg:py-6 overflow-hidden">
-      <div className="w-[98%] max-w-[1500px] mx-auto">
-        <div className="relative rounded-2xl overflow-hidden shadow-lg border border-gray-100 bg-gray-950 aspect-[16/9] sm:aspect-[21/9] md:aspect-[24/9] min-h-[260px] max-h-[460px]">
+    <section className="w-full py-8 sm:py-14 bg-white border-t border-b border-gray-100 overflow-hidden">
+      <div className="w-[98%] max-w-[1500px] 2xl:max-w-[1700px] mx-auto px-4 md:px-8">
 
-          {/* Background Image */}
+        {/* Minimalist Editorial Header: Clean architectural styling */}
+        <div className="flex items-end justify-between mb-5 sm:mb-8 border-b border-gray-200/80 pb-4">
+          <div>
+            <span className="text-[11px] font-mono tracking-[0.2em] text-gray-500 uppercase block mb-1">
+              Curated Campaigns
+            </span>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-gray-900 uppercase">
+              Special Offers
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-4 sm:gap-6">
+            <Link
+              href="/offers"
+              className="text-xs sm:text-sm font-semibold tracking-wider text-gray-900 hover:text-gray-500 transition-colors uppercase inline-flex items-center gap-1 group"
+            >
+              <span>View All Offers</span>
+              <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+            </Link>
+
+            {/* Carousel Counter & Controls */}
+            {banners.length > 1 && (
+              <div className="hidden sm:flex items-center gap-2.5 border-l border-gray-200 pl-4">
+                <span className="font-mono text-xs text-gray-500 tracking-wider">
+                  {String(currentIndex + 1).padStart(2, '0')} / {String(banners.length).padStart(2, '0')}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handlePrev}
+                    className="w-7 h-7 rounded-full border border-gray-300 hover:border-gray-900 hover:bg-gray-900 hover:text-white flex items-center justify-center text-gray-700 transition-all cursor-pointer"
+                    aria-label="Previous campaign"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="w-7 h-7 rounded-full border border-gray-300 hover:border-gray-900 hover:bg-gray-900 hover:text-white flex items-center justify-center text-gray-700 transition-all cursor-pointer"
+                    aria-label="Next campaign"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Campaign Hero Showcase Banner */}
+        <div
+          className="relative w-full rounded-sm overflow-hidden bg-gray-950 group aspect-[4/5] sm:aspect-[16/8] lg:aspect-[21/9] xl:aspect-[24/9] min-h-[380px] sm:min-h-[420px] max-h-[560px] 2xl:max-h-[620px]"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          {/* Background Fashion Imagery */}
           {bannerInfo?.imageUrl ? (
             <img
               src={bannerInfo.imageUrl}
               alt={bannerInfo.title || current.title}
-              className="w-full h-full object-cover object-center transition-all duration-700 ease-out"
+              className="w-full h-full object-cover object-center transition-transform duration-1000 ease-out group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#0F172A]" />
+            <div className="w-full h-full bg-gradient-to-r from-gray-900 via-neutral-900 to-black" />
           )}
 
-          {/* Gradient Overlay for Text Readability */}
-          <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-black/85 via-black/55 to-transparent flex flex-col justify-center px-6 sm:px-12 md:px-16 text-white z-10">
+          {/* High-Contrast Editorial Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/75 to-black/20 sm:bg-gradient-to-r sm:from-black/95 sm:via-black/75 sm:to-transparent flex flex-col justify-end sm:justify-center p-6 sm:p-8 md:p-10 lg:p-12 text-white z-10">
 
-            {/* Badges Bar */}
-            <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-3">
-              <span className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-black uppercase tracking-widest px-2.5 py-1 rounded-full shadow-xs ${current.offerType === 'CELEBRATION'
-                ? 'bg-amber-500 text-black'
-                : current.offerType === 'LIMITED_TIME'
-                  ? 'bg-rose-600 text-white animate-pulse'
-                  : 'bg-blue-600 text-white'
-                }`}>
-                {current.offerType === 'CELEBRATION' ? (
-                  <>
-                    <Sparkles size={12} /> {current.badgeText || 'Celebration Sale'}
-                  </>
-                ) : isFlashSale ? (
-                  <>
-                    <Flame size={12} /> {current.badgeText || 'Flash Deal'}
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={12} /> {current.badgeText || `${current.offerType} Offer`}
-                  </>
-                )}
+            {/* Clean Monospace Tagline Bar */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+              <span className="font-mono text-[10px] sm:text-xs font-medium tracking-[0.18em] uppercase text-white/90 bg-white/15 backdrop-blur-md px-2.5 py-1 border border-white/20">
+                {offerTypeLabel}
               </span>
 
-              {/* Discount Percentage Pill */}
-              <span className="bg-white/20 backdrop-blur-md text-white font-extrabold text-[11px] sm:text-xs px-2.5 py-0.5 rounded-full border border-white/30">
-                {current.discountType === 'PERCENTAGE'
-                  ? `${current.discountValue}% OFF`
-                  : `₹${current.discountValue} FLAT OFF`}
+              <span className="font-mono text-[10px] sm:text-xs font-semibold tracking-wider text-amber-300 bg-black/60 backdrop-blur-md px-2.5 py-1 border border-amber-400/30">
+                {discountFormatted}
               </span>
+
+              {current.minOrderValue && current.minOrderValue > 0 && (
+                <span className="hidden md:inline-block font-mono text-[10px] sm:text-xs text-white/70 px-2 py-1">
+                  Orders over ₹{current.minOrderValue}
+                </span>
+              )}
             </div>
 
-            {/* Title & Subtitle */}
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight leading-none text-white drop-shadow-md max-w-xl">
+            {/* Campaign Headline */}
+            <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light tracking-tight text-white uppercase max-w-2xl leading-tight drop-shadow-md font-serif">
               {bannerInfo?.title || current.title}
-            </h2>
+            </h3>
 
-            <p className="text-xs sm:text-base text-gray-200 mt-2 max-w-md line-clamp-2 drop-shadow-sm font-medium">
-              {bannerInfo?.subtitle || current.description || 'Exclusive discounts crafted for modern styles. Limited availability.'}
+            {/* Campaign Subtitle / Description - Clearly visible with high contrast */}
+            <p className="text-sm sm:text-base text-gray-100 font-normal drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] mt-2 sm:mt-2.5 max-w-xl line-clamp-2 leading-relaxed">
+              {bannerInfo?.subtitle ||
+                current.description ||
+                'Impeccable silhouettes, handcrafted textures, and modern essentials tailored for elevated wardrobes.'}
             </p>
 
-            {/* Countdown Clock (If Limited Time) */}
-            {timeLeft && (
-              <div className="flex items-center gap-2 mt-3 sm:mt-4">
-                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1 mr-1">
-                  <Clock size={14} className="text-amber-400 animate-spin" style={{ animationDuration: '4s' }} /> Ends In:
-                </span>
-                <div className="flex items-center gap-1.5 font-mono text-center">
-                  <div className="bg-black/70 backdrop-blur-md border border-white/20 rounded px-2 py-1 min-w-[36px]">
-                    <span className="text-xs sm:text-sm font-black">{String(timeLeft.days).padStart(2, '0')}</span>
-                    <span className="text-[8px] text-gray-400 block uppercase">d</span>
-                  </div>
-                  <span className="font-bold text-gray-400">:</span>
-                  <div className="bg-black/70 backdrop-blur-md border border-white/20 rounded px-2 py-1 min-w-[36px]">
-                    <span className="text-xs sm:text-sm font-black">{String(timeLeft.hours).padStart(2, '0')}</span>
-                    <span className="text-[8px] text-gray-400 block uppercase">h</span>
-                  </div>
-                  <span className="font-bold text-gray-400">:</span>
-                  <div className="bg-black/70 backdrop-blur-md border border-white/20 rounded px-2 py-1 min-w-[36px]">
-                    <span className="text-xs sm:text-sm font-black">{String(timeLeft.mins).padStart(2, '0')}</span>
-                    <span className="text-[8px] text-gray-400 block uppercase">m</span>
-                  </div>
-                  <span className="font-bold text-gray-400">:</span>
-                  <div className="bg-black/70 backdrop-blur-md border border-white/20 rounded px-2 py-1 min-w-[36px]">
-                    <span className="text-xs sm:text-sm font-black text-rose-400">{String(timeLeft.secs).padStart(2, '0')}</span>
-                    <span className="text-[8px] text-gray-400 block uppercase">s</span>
-                  </div>
+            {/* Timer & Coupon Code Bar */}
+            <div className="flex flex-wrap items-center gap-3 sm:gap-5 mt-4 sm:mt-6 pt-3 border-t border-white/15 max-w-xl">
+              {/* Minimalist Countdown */}
+              {timeLeft && (
+                <div className="flex items-center gap-2 text-white">
+                  <Clock size={13} className="text-gray-400" />
+                  <span className="font-mono text-[11px] sm:text-xs tracking-widest text-gray-300 uppercase">
+                    Ends in{' '}
+                    <strong className="text-white font-semibold">
+                      {String(timeLeft.hours).padStart(2, '0')}h : {String(timeLeft.mins).padStart(2, '0')}m : {String(timeLeft.secs).padStart(2, '0')}s
+                    </strong>
+                  </span>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Action Bar (Dedicated Offer Page Link) */}
-            <div className="flex flex-wrap items-center gap-3 mt-4 sm:mt-5">
+              {/* Minimalist Coupon Copy Action */}
+              {couponCode && (
+                <button
+                  type="button"
+                  onClick={(e) => handleCopyCode(e, couponCode)}
+                  className={`inline-flex items-center gap-2 px-3 py-1 text-xs font-mono tracking-wider transition-all cursor-pointer border ${copiedCode === couponCode
+                      ? 'bg-white text-black border-white'
+                      : 'bg-black/50 hover:bg-black/80 text-white border-white/30'
+                    }`}
+                  title="Copy promo code"
+                >
+                  <span>CODE: <strong className="tracking-widest">{couponCode}</strong></span>
+                  {copiedCode === couponCode ? (
+                    <span className="inline-flex items-center gap-1 font-sans text-[11px] font-bold text-emerald-600">
+                      <Check size={12} /> COPIED
+                    </span>
+                  ) : (
+                    <Copy size={12} className="text-gray-400 hover:text-white" />
+                  )}
+                </button>
+              )}
+            </div>
+
+            {/* Primary Action Button */}
+            <div className="flex items-center gap-3 mt-5 sm:mt-7">
               <Link
-                href={`/offers/${current.id}`}
-                className="inline-flex items-center gap-2 bg-white text-gray-950 hover:bg-gray-100 font-bold text-xs sm:text-sm px-5 py-2.5 rounded-md shadow-md transition-all transform hover:scale-105 active:scale-95 cursor-pointer"
+                href={targetLink}
+                className="inline-flex items-center gap-2.5 bg-white text-black hover:bg-neutral-200 font-semibold text-xs sm:text-sm tracking-wider uppercase px-6 sm:px-8 py-3 rounded-none transition-all cursor-pointer"
               >
-                {bannerInfo?.ctaText || 'Shop Offer'}
+                <span>{bannerInfo?.ctaText || 'Shop Offer'}</span>
                 <ArrowRight size={15} />
+              </Link>
+
+              <Link
+                href="/offers"
+                className="inline-flex items-center gap-2 text-white/90 hover:text-white border border-white/30 hover:border-white text-xs sm:text-sm tracking-wider uppercase px-5 sm:px-6 py-3 transition-colors cursor-pointer"
+              >
+                <span>All Offers</span>
               </Link>
             </div>
           </div>
 
-          {/* Carousel Arrows (If > 1 Banner) */}
+          {/* Carousel Arrows on Mobile / Hover */}
           {banners.length > 1 && (
             <>
               <button
-                onClick={() => setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-xs text-white flex items-center justify-center transition-colors cursor-pointer"
-                aria-label="Previous Banner"
+                type="button"
+                onClick={handlePrev}
+                className="sm:hidden absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center border border-white/20 cursor-pointer"
+                aria-label="Previous Slide"
               >
-                <ChevronLeft size={18} />
+                <ChevronLeft size={16} />
               </button>
               <button
-                onClick={() => setCurrentIndex((prev) => (prev + 1) % banners.length)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-xs text-white flex items-center justify-center transition-colors cursor-pointer"
-                aria-label="Next Banner"
+                type="button"
+                onClick={handleNext}
+                className="sm:hidden absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center border border-white/20 cursor-pointer"
+                aria-label="Next Slide"
               >
-                <ChevronRight size={18} />
+                <ChevronRight size={16} />
               </button>
 
-              {/* Indicator Dots */}
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+              {/* Minimal Line Indicators */}
+              <div className="absolute bottom-3 left-6 sm:left-14 lg:left-16 z-20 flex items-center gap-1.5">
                 {banners.map((_, idx) => (
                   <button
                     key={idx}
+                    type="button"
                     onClick={() => setCurrentIndex(idx)}
-                    className={`h-1.5 rounded-full transition-all cursor-pointer ${currentIndex === idx ? 'w-6 bg-white' : 'w-1.5 bg-white/40'
+                    className={`h-[2px] transition-all cursor-pointer ${currentIndex === idx ? 'w-8 bg-white' : 'w-3 bg-white/40 hover:bg-white/70'
                       }`}
                     aria-label={`Slide ${idx + 1}`}
                   />
@@ -222,6 +437,7 @@ export function OfferBannerSlider() {
             </>
           )}
         </div>
+
       </div>
     </section>
   );

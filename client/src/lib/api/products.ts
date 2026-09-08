@@ -64,6 +64,36 @@ export const productsApi = {
       console.warn('[productsApi] getProducts failed, returning empty data fallback.');
     }
     return { data: [], total: 0 };
-  }
+  },
+
+  getSimilarProducts: async (params: {
+    categoryId?: string;
+    brandId?: string;
+    excludeId?: string;
+    limit?: number;
+  }): Promise<{ data: BackendProduct[]; total: number }> => {
+    try {
+      const queryParams: Record<string, string> = {
+        limit: String(params.limit || 8),
+      };
+      if (params.categoryId) queryParams.categoryId = params.categoryId;
+      if (params.brandId) queryParams.brandId = params.brandId;
+
+      const response = await apiClient.get('/products', { params: queryParams });
+      if (response.data?.data) {
+        const result = response.data.data as { data: BackendProduct[]; total: number };
+        // Exclude the current product
+        if (params.excludeId) {
+          result.data = result.data.filter(
+            (p) => p.id !== params.excludeId && p.slug !== params.excludeId
+          );
+        }
+        return result;
+      }
+    } catch (error) {
+      console.warn('[productsApi] getSimilarProducts failed.');
+    }
+    return { data: [], total: 0 };
+  },
 };
 

@@ -22,8 +22,12 @@ export const zodParse = <T>(schema: ZodSchema<T>, data: unknown): T => {
 
   if (!result.success) {
     const errors = formatZodErrors(result.error);
+    const detailedMessage =
+      errors.map((e) => e.message).filter(Boolean).join(', ') ||
+      'Validation failed. Please check the request data.';
+
     throw new ApiError(
-      'Validation failed. Please check the request data.',
+      detailedMessage,
       HttpStatus.UNPROCESSABLE_ENTITY,
       errors,
     );

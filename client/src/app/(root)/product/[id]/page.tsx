@@ -30,6 +30,7 @@ import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
 import { toast } from 'sonner';
 import { ProductReviews } from '@/components/features/product/product-reviews';
+import { ProductSuggestions } from '@/components/features/product/product-suggestions';
 import { ProductImagePreviewModal } from '@/components/features/product/product-image-preview-modal';
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -261,11 +262,15 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     || variants.find(v => v.color === selectedColor) 
     || variants[0] || null;
 
-  // Available sizes for selected color
-  const availableSizesForColor = variants
-    .filter(v => v.color === selectedColor)
-    .map(v => v.size)
-    .filter(Boolean);
+  // Available sizes for selected color (deduplicated to avoid duplicate React keys)
+  const availableSizesForColor = Array.from(
+    new Set(
+      variants
+        .filter(v => v.color === selectedColor)
+        .map(v => v.size)
+        .filter((s): s is string => Boolean(s && s.trim()))
+    )
+  );
 
   const images = activeVariant?.images && activeVariant.images.length > 0
     ? activeVariant.images
@@ -758,6 +763,13 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       <div className="w-full max-w-7xl mx-auto px-4 mt-12 sm:mt-16">
         <ProductReviews productId={product.id} />
       </div>
+
+      {/* Product Suggestions: Similar Styles + More from Brand */}
+      <ProductSuggestions
+        currentProductId={product.id}
+        categoryId={product.categoryId}
+        brandId={product.brandId}
+      />
 
       {/* Image Preview Lightbox Modal */}
       <ProductImagePreviewModal

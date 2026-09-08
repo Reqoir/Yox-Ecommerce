@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ordersApi, BackendOrder } from '@/lib/api/orders';
 import { returnsApi, BackendReturn } from '@/lib/api/returns';
-import { Loader2, ShoppingBag, ArrowRight, ChevronRight, PackageCheck } from 'lucide-react';
+import { Loader2, ShoppingBag, ArrowRight, ChevronRight, PackageCheck, Star } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function MyOrdersPage() {
@@ -212,7 +212,13 @@ export default function MyOrdersPage() {
                   </div>
 
                   {/* Right Chevron indicating full card clickability */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+                    {order.orderStatus === 'DELIVERED' && (
+                      <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 group-hover:bg-amber-100 transition-colors">
+                        <Star size={12} className="fill-amber-400 text-amber-500" />
+                        <span>Rate & Review</span>
+                      </span>
+                    )}
                     <span className="hidden sm:inline-block text-xs font-bold text-gray-400 group-hover:text-[#1A2E4C] transition-colors">
                       ₹{order.totalAmount}
                     </span>

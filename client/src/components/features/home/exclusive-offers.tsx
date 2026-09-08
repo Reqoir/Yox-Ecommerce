@@ -40,8 +40,8 @@ export function ExclusiveOffers() {
                 oldPrice: p.originalPrice > p.discountedPrice ? p.originalPrice : null,
                 title: p.name,
                 image: p.thumbnail ? optimizeCloudinaryUrl(p.thumbnail) : '/images/product-1.jpeg',
-                secondImage: (p.secondImage || p.images?.[1]) 
-                  ? optimizeCloudinaryUrl(p.secondImage || p.images?.[1]) 
+                secondImage: (p.secondImage || p.images?.[1])
+                  ? optimizeCloudinaryUrl(p.secondImage || p.images?.[1])
                   : null,
                 slug: p.slug || p.id,
                 discountPercentage: p.discountPercentage,
@@ -129,7 +129,7 @@ export function ExclusiveOffers() {
           </div>
 
           {/* Offers Horizontal Cards Grid Skeleton */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-12 gap-x-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-y-8 sm:gap-y-12 gap-x-3 sm:gap-x-6">
             {Array.from({ length: 4 }).map((_, idx) => (
               <div key={idx} className="flex items-center">
                 <Skeleton className="w-[110px] md:w-[130px] shrink-0 aspect-[3/4] rounded-none bg-gray-200" />
@@ -192,7 +192,7 @@ export function ExclusiveOffers() {
               </Link>
             )}
           </div>
-          
+
           {/* Countdown Timer */}
           {mounted && endDate && (
             <div className="flex items-center gap-2 md:gap-3 text-[18px] md:text-[22px] font-bold text-[#4B4239]">
@@ -219,47 +219,48 @@ export function ExclusiveOffers() {
           )}
         </div>
 
-        {/* Offers Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-12 gap-x-6">
-          {offers.map(offer => (
-            <Link 
-              href={`/product/${offer.slug}`} 
-              key={offer.id} 
-              className="flex items-center group cursor-pointer transition-transform hover:-translate-y-1"
+        {/* Offers Grid: 2 in a row on mobile, maximum 4 products */}
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-y-8 sm:gap-y-12 gap-x-3 sm:gap-x-6">
+          {offers.slice(0, 4).map(offer => (
+            <Link
+              href={`/product/${offer.slug}`}
+              key={offer.id}
+              className="flex flex-col sm:flex-row sm:items-center group cursor-pointer transition-transform hover:-translate-y-1"
             >
-              <div className="w-[110px] md:w-[130px] shrink-0 relative aspect-[3/4] bg-transparent overflow-hidden">
-                 <Image 
-                   src={offer.image} 
-                   fill 
-                   className={`object-cover object-top transition-opacity duration-300 ${
-                     offer.secondImage && offer.secondImage !== offer.image ? 'group-hover:opacity-0' : ''
-                   }`} 
-                   alt={offer.title} 
-                 />
-                 {offer.secondImage && offer.secondImage !== offer.image && (
-                   <Image 
-                     src={offer.secondImage} 
-                     fill 
-                     className="object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" 
-                     alt={`${offer.title} alternate view`} 
-                   />
-                 )}
+              <div className="w-full sm:w-[110px] md:w-[130px] shrink-0 relative aspect-[3/4] bg-transparent overflow-hidden">
+                <Image
+                  src={offer.image}
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 110px, 130px"
+                  className={`object-cover object-top transition-opacity duration-300 ${offer.secondImage && offer.secondImage !== offer.image ? 'group-hover:opacity-0' : ''
+                    }`}
+                  alt={offer.title}
+                />
+                {offer.secondImage && offer.secondImage !== offer.image && (
+                  <Image
+                    src={offer.secondImage}
+                    fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 110px, 130px"
+                    className="object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                    alt={`${offer.title} alternate view`}
+                  />
+                )}
               </div>
-              <div className="flex flex-col justify-center pl-4 py-2 flex-1">
-                <span className="text-[11px] text-gray-500 mb-1">{offer.category}</span>
-                <span className="text-[13px] font-medium text-[#40362C] mb-0.5">
+              <div className="flex flex-col justify-center pt-2.5 sm:pt-0 sm:pl-4 sm:py-2 flex-1">
+                <span className="text-[10px] sm:text-[11px] text-gray-500 mb-0.5 sm:mb-1">{offer.category}</span>
+                <span className="text-[12px] sm:text-[13px] font-medium text-[#40362C] mb-0.5">
                   From ₹{offer.price}
                 </span>
                 {offer.oldPrice ? (
-                   <span className="text-[11px] text-[#B33924] line-through mb-1">
-                     ₹{offer.oldPrice}
-                   </span>
+                  <span className="text-[10px] sm:text-[11px] text-[#B33924] line-through mb-0.5 sm:mb-1">
+                    ₹{offer.oldPrice}
+                  </span>
                 ) : (
-                   <span className="text-[11px] text-transparent mb-1 opacity-0 pointer-events-none">
-                     -
-                   </span>
+                  <span className="text-[10px] sm:text-[11px] text-transparent mb-0.5 sm:mb-1 opacity-0 pointer-events-none">
+                    -
+                  </span>
                 )}
-                <h3 className="text-[13px] text-[#40362C] font-medium line-clamp-2 mt-1 pr-2">
+                <h3 className="text-[12px] sm:text-[13px] text-[#40362C] font-medium line-clamp-2 mt-0.5 sm:mt-1 sm:pr-2">
                   {offer.title}
                 </h3>
               </div>

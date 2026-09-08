@@ -21,10 +21,10 @@ import {
   Check,
   Package,
   Layers,
-  PartyPopper,
-  Loader2,
   ChevronRight,
-  Sparkle
+  Sparkle,
+  ShoppingBag,
+  Eye
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { offersApi, OfferProductItem } from '@/api/admin/offers';
@@ -44,7 +44,8 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
   const { data, isLoading, error } = useQuery({
     queryKey: ['offer-with-products', offerId],
     queryFn: () => offersApi.getOfferWithProducts(offerId),
-    enabled: Boolean(offerId),
+    enabled: Boolean(offerId && offerId.trim()),
+    retry: false,
   });
 
   const offer = data?.offer;
@@ -116,7 +117,6 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
         break;
       case 'featured':
       default:
-        // natural order returned by server
         break;
     }
 
@@ -138,7 +138,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
     if (typeof window !== 'undefined') {
       navigator.clipboard.writeText(window.location.href);
       setCopiedLink(true);
-      toast.success('Offer link copied to clipboard!');
+      toast.success('Campaign link copied to clipboard!');
       setTimeout(() => setCopiedLink(false), 2500);
     }
   };
@@ -196,25 +196,37 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
 
   if (error || !offer) {
     return (
-      <div className="min-h-[75vh] flex flex-col items-center justify-center p-6 text-center bg-white">
-        <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-4 text-gray-400">
-          <Tag size={28} />
+      <div className="min-h-[75vh] flex flex-col items-center justify-center p-6 text-center bg-[#FCFBFA]">
+        <div className="w-16 h-16 rounded-full bg-white border border-gray-200 flex items-center justify-center mb-4 text-gray-400 shadow-xs">
+          <Tag size={26} />
         </div>
-        <h2 className="text-2xl font-serif font-bold text-gray-900">Promotional Event Concluded</h2>
-        <p className="text-sm text-gray-500 max-w-md mt-2 mb-6">
-          This promotional showcase is no longer active or has reached its capacity. Explore our newest collections in the catalog.
+        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-gray-900 uppercase tracking-tight">
+          Promotional Campaign Concluded
+        </h2>
+        <p className="text-sm text-gray-500 max-w-md mt-2 mb-6 leading-relaxed">
+          This limited drop or seasonal offer is no longer active. Discover our current promotions and latest menswear arrivals.
         </p>
-        <Link
-          href="/shop"
-          className="inline-flex items-center gap-2 bg-[#0F172A] text-white px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-black transition-all shadow-md"
-        >
-          <ArrowLeft size={14} /> Return to Shop
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/offers"
+            className="inline-flex items-center gap-2 bg-black text-white px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gray-800 transition-all shadow-sm cursor-pointer"
+          >
+            Browse All Offers
+          </Link>
+          <Link
+            href="/shop"
+            className="inline-flex items-center gap-2 bg-white text-gray-800 border border-gray-200 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gray-50 transition-all shadow-2xs"
+          >
+            Explore Catalog
+          </Link>
+        </div>
       </div>
     );
   }
 
-  const isFlashSale = offer.isLimitedTime || offer.offerType === 'LIMITED_TIME';
+  const discountSummary = offer.discountType === 'PERCENTAGE'
+    ? `${offer.discountValue}% OFF`
+    : `₹${offer.discountValue} FLAT OFF`;
 
   return (
     <main className="w-full bg-[#FAFAFA] min-h-screen pb-24 text-gray-900 antialiased selection:bg-black selection:text-white">

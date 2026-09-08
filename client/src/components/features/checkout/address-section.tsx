@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Plus, CheckCircle2, Home, Briefcase, Trash2, X, Loader2 } from 'lucide-react';
 import { useCheckoutStore, Address } from '@/store/useCheckoutStore';
 import { toast } from 'sonner';
+import { COUNTRY_CODES, getCountryByCode, formatPhoneNumber } from '@/lib/country-codes';
+import { getApiErrorMessage } from '@/lib/utils';
 
 export function AddressSection() {
   const {
@@ -18,9 +20,10 @@ export function AddressSection() {
     setIsAddAddressOpen,
   } = useCheckoutStore();
 
+  const [countryCode, setCountryCode] = useState('+91');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [formData, setFormData] = useState({
     fullName: '',
-    phone: '',
     zipCode: '',
     street: '',
     city: '',
@@ -33,17 +36,33 @@ export function AddressSection() {
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
+    if (!formData.fullName.trim() || formData.fullName.trim().length < 2) {
+      newErrors.fullName = 'Full name must be at least 2 characters';
+    }
     
-    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
-    else if (!/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) newErrors.phone = 'Enter a valid 10-digit number';
+    const cleanDigits = phoneNumber.replace(/\D/g, '');
+    if (!phoneNumber.trim()) {
+      newErrors.phone = 'Phone number is required';
+    } else if (countryCode === '+91' && cleanDigits.length !== 10) {
+      newErrors.phone = 'Enter a valid 10-digit mobile number';
+    } else if (cleanDigits.length < 7) {
+      newErrors.phone = 'Phone number must have at least 7 digits';
+    }
     
-    if (!formData.zipCode.trim()) newErrors.zipCode = 'Pincode is required';
-    else if (!/^\d{6}$/.test(formData.zipCode.replace(/\D/g, ''))) newErrors.zipCode = 'Enter a valid 6-digit pincode';
+    if (!formData.zipCode.trim()) {
+      newErrors.zipCode = 'Pincode is required';
+    } else if (countryCode === '+91' && !/^\d{6}$/.test(formData.zipCode.replace(/\D/g, ''))) {
+      newErrors.zipCode = 'Enter a valid 6-digit pincode';
+    } else if (formData.zipCode.trim().length < 3) {
+      newErrors.zipCode = 'Enter a valid postal/zip code';
+    }
 
-    if (!formData.street.trim()) newErrors.street = 'Street address is required';
+    if (!formData.street.trim() || formData.street.trim().length < 3) {
+      newErrors.street = 'Street address must be at least 3 characters';
+    }
     if (!formData.city.trim()) newErrors.city = 'City is required';
     if (!formData.state.trim()) newErrors.state = 'State is required';
+    if (!formData.country.trim()) newErrors.country = 'Country is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -61,30 +80,32 @@ export function AddressSection() {
 
     setIsSubmitting(true);
     try {
+      const fullPhone = formatPhoneNumber(countryCode, phoneNumber);
       await addAddress({
-        fullName: formData.fullName,
-        phone: formData.phone,
-        zipCode: formData.zipCode,
-        street: formData.street,
-        city: formData.city,
-        state: formData.state,
-        country: formData.country,
+        fullName: formData.fullName.trim(),
+        phone: fullPhone,
+        zipCode: formData.zipCode.trim(),
+        street: formData.street.trim(),
+        city: formData.city.trim(),
+        state: formData.state.trim(),
+        country: formData.country.trim() || 'India',
       });
 
       toast.success('New delivery address added');
       setIsAddAddressOpen(false);
       setFormData({
         fullName: '',
-        phone: '',
         zipCode: '',
         street: '',
         city: '',
         state: '',
         country: 'India',
       });
+      setPhoneNumber('');
+      setCountryCode('+91');
       setErrors({});
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to add address');
+      toast.error(getApiErrorMessage(error, 'Failed to add address'));
     } finally {
       setIsSubmitting(false);
     }
@@ -197,7 +218,7 @@ export function AddressSection() {
             </div>
 
             <form onSubmit={handleAddSubmit} className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-gray-700 font-semibold mb-1">Full Name *</label>
                   <input
@@ -217,19 +238,40 @@ export function AddressSection() {
                 </div>
                 <div>
                   <label className="block text-gray-700 font-semibold mb-1">Phone Number *</label>
-                  <input
-                    type="tel"
-                    required
-                    placeholder="10-digit mobile number"
-                    value={formData.phone}
-                    onChange={(e) => {
-                      setFormData({ ...formData, phone: e.target.value });
-                      if (errors.phone) setErrors({ ...errors, phone: '' });
-                    }}
-                    className={`w-full px-3 py-2 border rounded outline-none bg-white text-gray-900 placeholder-gray-400 ${
-                      errors.phone ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#1A2E4C]'
-                    }`}
-                  />
+                  <div className="flex rounded border border-gray-300 overflow-hidden focus-within:border-[#1A2E4C]">
+                    <select
+                      value={countryCode}
+                      onChange={(e) => {
+                        const newCode = e.target.value;
+                        setCountryCode(newCode);
+                        const c = getCountryByCode(newCode);
+                        if (c) {
+                          setFormData((prev) => ({ ...prev, country: c }));
+                        }
+                      }}
+                      className="bg-gray-50 text-gray-800 px-2 py-2 text-xs font-semibold border-r border-gray-300 outline-none cursor-pointer max-w-[125px]"
+                    >
+                      {COUNTRY_CODES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.flag} {c.code}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="tel"
+                      required
+                      placeholder={countryCode === '+91' ? '10-digit mobile number' : 'Contact number'}
+                      value={phoneNumber}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^\d\s-]/g, '');
+                        setPhoneNumber(val);
+                        if (errors.phone) setErrors({ ...errors, phone: '' });
+                      }}
+                      className={`flex-1 min-w-0 px-3 py-2 outline-none bg-white text-gray-900 placeholder-gray-400 ${
+                        errors.phone ? 'bg-red-50/20' : ''
+                      }`}
+                    />
+                  </div>
                   {errors.phone && <p className="text-red-500 text-[10px] mt-1">{errors.phone}</p>}
                 </div>
               </div>
@@ -251,6 +293,23 @@ export function AddressSection() {
                     }`}
                   />
                   {errors.zipCode && <p className="text-red-500 text-[10px] mt-1">{errors.zipCode}</p>}
+                </div>
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-1">Country *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. India"
+                    value={formData.country}
+                    onChange={(e) => {
+                      setFormData({ ...formData, country: e.target.value });
+                      if (errors.country) setErrors({ ...errors, country: '' });
+                    }}
+                    className={`w-full px-3 py-2 border rounded outline-none bg-white text-gray-900 placeholder-gray-400 ${
+                      errors.country ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#1A2E4C]'
+                    }`}
+                  />
+                  {errors.country && <p className="text-red-500 text-[10px] mt-1">{errors.country}</p>}
                 </div>
               </div>
 

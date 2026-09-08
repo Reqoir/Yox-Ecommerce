@@ -299,12 +299,17 @@ export class GetOfferWithProductsUseCase implements IUseCase<string, OfferWithPr
         discount = Math.min(discount, basePrice);
         const discountedPrice = Math.max(0, Math.round(basePrice - discount));
 
-        // When a product has compare amount cross that amount!
-        // If not compare amount, then only cross the price amount!
-        const originalPrice = comparePrice && comparePrice > discountedPrice ? comparePrice : basePrice;
-        const discountPercentage = originalPrice > discountedPrice 
-          ? Math.round(((originalPrice - discountedPrice) / originalPrice) * 100) 
-          : (basePrice > 0 ? Math.round((discount / basePrice) * 100) : 0);
+        // originalPrice for strikethrough display: use basePrice (the price BEFORE this offer)
+        // We intentionally do NOT use comparePrice here, because the offer discount is always
+        // applied to the actual selling price (basePrice), not the MRP.
+        // This ensures the badge always shows the true offer discount %, not a misleading combined %.
+        const originalPrice = basePrice;
+
+        // discountPercentage: reflects the ACTUAL offer discount on the selling price.
+        // e.g. 15% off = badge says "15% OFF" — correct and honest.
+        const discountPercentage = basePrice > 0
+          ? Math.round((discount / basePrice) * 100)
+          : 0;
 
         const variantImages = variants.flatMap((v) => v.images || []).filter(Boolean);
         const allImages = Array.from(

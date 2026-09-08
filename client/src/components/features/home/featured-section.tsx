@@ -124,23 +124,25 @@ export function FeaturedSection() {
 
   return (
     <section className="w-full py-8 sm:py-16 bg-white overflow-hidden">
-      <div className="w-[98%] mx-auto max-w-[1500px]">
-        {/* Header */}
+      <div className="w-[98%] mx-auto max-w-[1500px] px-4 md:px-8">
+        {/* Header: Title on Left, Arrows on Right Side */}
         <div className="flex items-center justify-between mb-5 sm:mb-8">
-          <h2 className="text-base sm:text-[20px] font-bold text-gray-900 tracking-wide uppercase">
+          <h2 className="text-lg md:text-2xl lg:text-3xl font-bold text-gray-900 tracking-wide uppercase">
             FEATURED
           </h2>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <button
+              type="button"
               onClick={scrollLeft}
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#EFECE8] flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#EFECE8] hover:bg-gray-300 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
               aria-label="Scroll left"
             >
               <ChevronLeft size={16} />
             </button>
             <button
+              type="button"
               onClick={scrollRight}
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#EFECE8] flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#EFECE8] hover:bg-gray-300 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
               aria-label="Scroll right"
             >
               <ChevronRight size={16} />
