@@ -331,14 +331,8 @@ export function Navbar() {
             {mounted && user ? (
               <button
                 suppressHydrationWarning
-                onClick={() => {
-                  if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                    router.push('/profile');
-                  } else {
-                    setIsUserDropdownOpen((prev) => !prev);
-                  }
-                }}
-                className="flex items-center gap-1.5 p-1 rounded-md hover:bg-gray-100 transition-all focus:outline-none group cursor-pointer"
+                onClick={() => setIsUserDropdownOpen((prev) => !prev)}
+                className="flex items-center gap-1.5 p-1 rounded-sm hover:bg-gray-100 transition-all focus:outline-none group cursor-pointer"
                 aria-expanded={isUserDropdownOpen}
                 aria-label="User account menu"
                 title={user.fullName || "My Account"}
@@ -366,28 +360,20 @@ export function Navbar() {
 
             {/* User Dropdown Menu */}
             {mounted && isUserDropdownOpen && user && (
-              <div className="absolute right-0 top-11 w-64 bg-white border border-gray-200 rounded-xl shadow-xl py-2 z-50 animate-in fade-in-50 duration-150 divide-y divide-gray-100">
-                <div className="px-4 py-3 flex items-center gap-3">
-                  {user.avatar ? (
-                    <img 
-                      src={user.avatar} 
-                      alt={user.fullName || "User"} 
-                      className="w-10 h-10 rounded-full object-cover border border-gray-200 shrink-0"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-black text-white text-sm font-bold flex items-center justify-center shrink-0">
-                      {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
-                    </div>
-                  )}
+              <div className="absolute right-0 top-11 w-60 bg-white border border-gray-200 rounded-sm shadow-xl py-2 z-50 animate-in fade-in-50 duration-150 divide-y divide-gray-100">
+                <div className="px-4 py-2.5 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-black text-white text-xs font-bold flex items-center justify-center shrink-0">
+                    {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-gray-900 truncate">{user.fullName || 'YOX Member'}</p>
+                    <p className="text-xs font-semibold text-gray-900 truncate">{user.fullName || 'YOX Member'}</p>
                     <p className="text-[11px] text-gray-500 truncate">{user.email}</p>
                   </div>
                 </div>
 
                 <div className="py-1">
                   <Link
-                    href="/profile"
+                    href="/profile/personal-info"
                     onClick={() => setIsUserDropdownOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
                   >
@@ -441,7 +427,7 @@ export function Navbar() {
                 <div className="pt-1">
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors text-left"
                   >
                     <LogOut size={15} className="text-red-500" />
                     <span>Sign Out</span>
