@@ -13,7 +13,7 @@ import {
   Share2,
   Heart,
   SlidersHorizontal,
-  ArrowUpDown,
+  ArrowDownUp,
   Search,
   ShieldCheck,
   Truck,
@@ -26,6 +26,7 @@ import {
   ChevronRight,
   Sparkle
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { offersApi, OfferProductItem } from '@/api/admin/offers';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { Pagination } from '@/components/ui/pagination';
@@ -145,74 +146,43 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
   if (isLoading) {
     return (
       <main className="w-full bg-[#FAFAFA] min-h-screen pb-24 text-gray-900 antialiased animate-in fade-in duration-300">
-        {/* Breadcrumb Skeleton */}
-        <nav className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto pt-4 pb-3 flex items-center justify-between">
-          <Skeleton className="w-48 sm:w-64 h-4 rounded-xs bg-gray-200" />
-          <Skeleton className="w-24 h-7 rounded-full bg-gray-200" />
-        </nav>
-
-        {/* Hero Showcase Skeleton */}
-        <section className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto mb-10 sm:mb-14">
-          <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-gray-900 min-h-[380px] sm:min-h-[460px] md:min-h-[500px] flex flex-col justify-end p-6 sm:p-10 md:p-14">
-            <div className="flex items-center gap-2.5 mb-4">
-              <Skeleton className="w-32 h-7 rounded-full bg-gray-800" />
-              <Skeleton className="w-28 h-7 rounded-full bg-gray-800" />
-            </div>
-            <Skeleton className="w-3/4 max-w-2xl h-10 sm:h-14 rounded-md bg-gray-800 mb-3" />
-            <Skeleton className="w-2/3 max-w-xl h-5 sm:h-6 rounded-xs bg-gray-800 mb-6" />
-
-            {/* Countdown Clock Skeleton */}
-            <div className="pt-6 border-t border-white/10 flex items-center gap-2 sm:gap-2.5">
-              <Skeleton className="w-[50px] sm:w-[62px] h-[54px] rounded-xl bg-gray-800" />
-              <span className="text-gray-700 font-bold text-lg">:</span>
-              <Skeleton className="w-[50px] sm:w-[62px] h-[54px] rounded-xl bg-gray-800" />
-              <span className="text-gray-700 font-bold text-lg">:</span>
-              <Skeleton className="w-[50px] sm:w-[62px] h-[54px] rounded-xl bg-gray-800" />
-              <span className="text-gray-700 font-bold text-lg">:</span>
-              <Skeleton className="w-[50px] sm:w-[62px] h-[54px] rounded-xl bg-gray-800" />
-            </div>
+        {/* Hero Banner Skeleton — Exact match aspect ratio without overlays or rounded corners */}
+        <section className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto mt-4 sm:mt-6 mb-10 sm:mb-14">
+          <div className="relative overflow-hidden bg-gray-200 aspect-[1440/680] min-h-[220px] sm:min-h-[380px] md:min-h-[460px]">
+            <Skeleton className="w-full h-full rounded-none bg-gray-200" />
+            <Skeleton className="absolute top-3 right-3 sm:top-4 sm:right-4 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gray-300/80" />
           </div>
         </section>
 
-        {/* Catalog Showcase Header & Controls Skeleton */}
+        {/* Main Catalog Showcase Skeleton */}
         <section className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between gap-4 pb-6 mb-6 border-b border-gray-200">
-            <div>
-              <Skeleton className="w-56 h-7 rounded-md bg-gray-200 mb-2" />
-              <Skeleton className="w-80 h-4 rounded-xs bg-gray-200" />
-            </div>
-            <div className="flex gap-3">
-              <Skeleton className="w-48 h-9 rounded-lg bg-gray-200" />
-              <Skeleton className="w-36 h-9 rounded-lg bg-gray-200" />
-            </div>
+          {/* Controls: Search & Sort Toolbar Skeleton */}
+          <div className="flex items-center justify-end gap-3 pb-6 mb-6 border-b border-gray-200">
+            <Skeleton className="w-48 sm:w-56 h-9 rounded-lg bg-gray-200" />
+            <Skeleton className="w-36 h-9 rounded-lg bg-gray-200" />
           </div>
 
-          {/* Product Grid Skeleton */}
+          {/* Product Grid Skeleton — Exact product card layout */}
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-3.5 sm:gap-6 lg:gap-7">
             {Array.from({ length: 10 }).map((_, idx) => (
-              <div key={idx} className="flex flex-col bg-white rounded-xl overflow-hidden border border-gray-150">
-                <Skeleton className="w-full aspect-[3/4] rounded-none bg-gray-100" />
-                <div className="p-3.5 sm:p-4 flex flex-col gap-2">
-                  <Skeleton className="w-5/6 h-4 rounded-xs bg-gray-200" />
-                  <Skeleton className="w-2/3 h-4 rounded-xs bg-gray-200 mb-2" />
-                  <div className="pt-2 border-t border-gray-100 flex justify-between items-end">
-                    <div>
-                      <Skeleton className="w-24 h-5 rounded-xs bg-gray-200 mb-1" />
-                      <Skeleton className="w-16 h-3 rounded-xs bg-gray-200" />
-                    </div>
-                    <Skeleton className="w-12 h-4 rounded-xs bg-gray-200" />
-                  </div>
+              <div key={idx} className="flex flex-col relative">
+                {/* Image Container Skeleton */}
+                <Skeleton className="w-full aspect-[3/4] rounded-[2px] bg-gray-200 mb-3" />
+                {/* Text Details Skeleton */}
+                <div className="space-y-1.5 px-1">
+                  <Skeleton className="w-4/5 h-4 rounded-xs bg-gray-200" />
+                  <Skeleton className="w-2/5 h-3.5 rounded-xs bg-gray-200" />
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Brand Guarantees Skeleton */}
+          {/* Brand Luxury Guarantees Skeleton */}
           <div className="mt-20 pt-10 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: 4 }).map((_, idx) => (
-              <div key={idx} className="flex items-start gap-3.5">
+              <div key={idx} className="flex items-center sm:items-start gap-3.5">
                 <Skeleton className="w-10 h-10 rounded-full bg-gray-200 shrink-0" />
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1.5 flex-1">
                   <Skeleton className="w-32 h-4 rounded-xs bg-gray-200" />
                   <Skeleton className="w-44 h-3 rounded-xs bg-gray-200" />
                 </div>
@@ -248,143 +218,42 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
 
   return (
     <main className="w-full bg-[#FAFAFA] min-h-screen pb-24 text-gray-900 antialiased selection:bg-black selection:text-white">
-      {/* Top Editorial Breadcrumbs & Actions */}
-      <nav aria-label="Breadcrumb" className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto pt-4 pb-3 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-gray-500 overflow-hidden">
-          <Link href="/" className="hover:text-black transition-colors whitespace-nowrap">Home</Link>
-          <ChevronRight size={12} className="text-gray-300 shrink-0" />
-          <Link href="/shop" className="hover:text-black transition-colors whitespace-nowrap">Shop</Link>
-          <ChevronRight size={12} className="text-gray-300 shrink-0" />
-          <span className="text-gray-900 font-semibold truncate max-w-[160px] sm:max-w-[280px]">
-            {offer.title}
-          </span>
-        </div>
-
-        <button
-          onClick={handleShare}
-          className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-gray-600 hover:text-black transition-colors bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-2xs hover:shadow-xs cursor-pointer"
-          title="Share Offer"
-        >
-          {copiedLink ? <Check size={13} className="text-emerald-600" /> : <Share2 size={13} />}
-          <span className="hidden sm:inline">{copiedLink ? 'Link Copied' : 'Share Event'}</span>
-        </button>
-      </nav>
-
-      {/* Hero Showcase Section — Ultra-Responsive Adaptive Banner */}
-      <section className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto mb-10 sm:mb-14">
-        <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-[#0A0D14] shadow-2xl ring-1 ring-black/10 min-h-[380px] sm:min-h-[460px] md:min-h-[500px] lg:min-h-[540px] 2xl:min-h-[600px] flex flex-col justify-end">
-
+      {/* Hero Showcase Section — Banner without text overlay and with share button on top right */}
+      <section className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto mt-4 sm:mt-6 mb-10 sm:mb-14">
+        <div className="relative overflow-hidden bg-gray-950 aspect-[1440/680] min-h-[220px] sm:min-h-[380px] md:min-h-[460px]">
           {/* Background Hero Image */}
           {offer.banner?.imageUrl ? (
-            <img
-              src={offer.banner.imageUrl}
-              alt={offer.banner.title || offer.title}
-              className="absolute inset-0 w-full h-full object-cover object-center transform scale-100 hover:scale-105 transition-transform duration-1000 ease-out"
-            />
+            <picture className="w-full h-full block">
+              {offer.banner.mobileImageUrl && (
+                <source media="(max-width: 640px)" srcSet={optimizeCloudinaryUrl(offer.banner.mobileImageUrl, 1200)} />
+              )}
+              <img
+                src={optimizeCloudinaryUrl(offer.banner.imageUrl, 2000)}
+                alt={offer.banner.title || offer.title}
+                className="w-full h-full object-cover object-center"
+              />
+            </picture>
           ) : (
-            <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-[#090D16] via-[#151D2A] to-[#0A0E18]" />
+            <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-gray-900 via-gray-800 to-black" />
           )}
 
-          {/* Cinematic Vignette Overlays for Maximum Legibility */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/25 z-1" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/40 to-transparent z-1" />
-
-          {/* Hero Content Block */}
-          <div className="relative z-10 p-6 sm:p-10 md:p-14 lg:p-16 2xl:p-20 text-white flex flex-col justify-between max-w-4xl">
-            <div>
-              {/* Event Badges */}
-              <div className="flex flex-wrap items-center gap-2.5 mb-4">
-                <span className={`inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full shadow-lg ${offer.offerType === 'CELEBRATION'
-                    ? 'bg-amber-400 text-black'
-                    : isFlashSale
-                      ? 'bg-rose-600 text-white'
-                      : 'bg-white/90 text-black'
-                  }`}>
-                  {offer.offerType === 'CELEBRATION' ? (
-                    <>
-                      <PartyPopper size={13} /> {offer.badgeText || 'Celebration Event'}
-                    </>
-                  ) : isFlashSale ? (
-                    <>
-                      <Flame size={13} className="animate-bounce" /> {offer.badgeText || 'Flash Archive Deal'}
-                    </>
-                  ) : (
-                    <>
-                      <Sparkle size={13} /> {offer.badgeText || `${offer.offerType} Edition`}
-                    </>
-                  )}
-                </span>
-
-                <span className="bg-white/15 backdrop-blur-md text-white font-extrabold text-[11px] sm:text-xs px-3.5 py-1.5 rounded-full border border-white/20 shadow-sm">
-                  {offer.discountType === 'PERCENTAGE' ? `${offer.discountValue}% SAVINGS` : `₹${offer.discountValue} FLAT OFF`}
-                </span>
-              </div>
-
-              {/* Title */}
-              <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-serif font-black tracking-tight leading-[1.08] text-white drop-shadow-md">
-                {offer.banner?.title || offer.title}
-              </h1>
-
-              {/* Subtitle */}
-              <p className="text-sm sm:text-base md:text-lg text-gray-200/90 font-light leading-relaxed mt-3 sm:mt-4 max-w-2xl line-clamp-3">
-                {offer.banner?.subtitle || offer.description || 'Curated seasonal drops automatically discounted for our members. Instant price privileges applied at checkout.'}
-              </p>
-            </div>
-
-            {/* Architectural Countdown Clock */}
-            {timeLeft && (
-              <div className="mt-6 sm:mt-8 pt-6 border-t border-white/15 flex flex-wrap items-center gap-4 sm:gap-6">
-
-                <div className="flex items-center gap-2 sm:gap-2.5 font-mono">
-                  {/* Days */}
-                  <div className="flex flex-col items-center justify-center bg-black/60 backdrop-blur-xl border border-white/20 rounded-xl px-3 py-2 min-w-[50px] sm:min-w-[62px] shadow-lg">
-                    <span className="text-lg sm:text-2xl font-black text-white">{String(timeLeft.days).padStart(2, '0')}</span>
-                    <span className="text-[8px] sm:text-[9px] font-medium text-gray-400 uppercase tracking-widest">Days</span>
-                  </div>
-                  <span className="text-white/60 font-bold text-lg">:</span>
-
-                  {/* Hours */}
-                  <div className="flex flex-col items-center justify-center bg-black/60 backdrop-blur-xl border border-white/20 rounded-xl px-3 py-2 min-w-[50px] sm:min-w-[62px] shadow-lg">
-                    <span className="text-lg sm:text-2xl font-black text-white">{String(timeLeft.hours).padStart(2, '0')}</span>
-                    <span className="text-[8px] sm:text-[9px] font-medium text-gray-400 uppercase tracking-widest">Hours</span>
-                  </div>
-                  <span className="text-white/60 font-bold text-lg">:</span>
-
-                  {/* Mins */}
-                  <div className="flex flex-col items-center justify-center bg-black/60 backdrop-blur-xl border border-white/20 rounded-xl px-3 py-2 min-w-[50px] sm:min-w-[62px] shadow-lg">
-                    <span className="text-lg sm:text-2xl font-black text-white">{String(timeLeft.mins).padStart(2, '0')}</span>
-                    <span className="text-[8px] sm:text-[9px] font-medium text-gray-400 uppercase tracking-widest">Mins</span>
-                  </div>
-                  <span className="text-white/60 font-bold text-lg">:</span>
-
-                  {/* Secs */}
-                  <div className="flex flex-col items-center justify-center bg-black/60 backdrop-blur-xl border border-white/20 rounded-xl px-3 py-2 min-w-[50px] sm:min-w-[62px] shadow-lg">
-                    <span className="text-lg sm:text-2xl font-black text-rose-400">{String(timeLeft.secs).padStart(2, '0')}</span>
-                    <span className="text-[8px] sm:text-[9px] font-medium text-gray-400 uppercase tracking-widest">Secs</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Share Button on Banner Top Right */}
+          <button
+            onClick={handleShare}
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-gray-900 bg-white/80 hover:bg-white hover:text-black backdrop-blur-md px-3 py-2 rounded-full border border-white/40 shadow-sm transition-all cursor-pointer"
+            title="Share Event"
+          >
+            {copiedLink ? <Check size={14} className="text-emerald-600" /> : <Share2 size={14} />}
+            <span className="hidden sm:inline">{copiedLink ? 'Copied' : 'Share'}</span>
+          </button>
         </div>
       </section>
 
       {/* Main Catalog Showcase */}
       <section className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto">
 
-        {/* Curated Toolbar: Header, Search & Sort */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b border-gray-200">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-serif font-bold text-gray-950 flex items-center gap-2.5">
-              <span>Curated Eligible Pieces</span>
-              <span className="text-xs sm:text-sm font-sans font-semibold text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full">
-                {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
-              </span>
-            </h2>
-            <p className="text-xs sm:text-sm text-gray-600 mt-1">
-              Select any piece below to view variants and secure your auto-applied event pricing.
-            </p>
-          </div>
+        {/* Curated Toolbar: Search & Sort */}
+        <div className="flex items-center justify-end gap-4 pb-6 mb-6 border-b border-gray-200">
 
           {/* Controls: Search & Sort Filter */}
           <div className="flex flex-wrap items-center gap-3">
@@ -401,20 +270,28 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
             </div>
 
             {/* Sort Dropdown */}
-            <div className="relative">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
-                aria-label="Sort products"
-                className="appearance-none bg-white border border-gray-200 text-xs font-semibold text-gray-700 pl-3 pr-8 py-2 rounded-lg cursor-pointer hover:border-gray-300 focus:outline-none focus:border-black transition-colors shadow-2xs"
-              >
-                <option value="featured">Featured Order</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-                <option value="discount-desc">Biggest Discount</option>
-              </select>
-              <ArrowUpDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            </div>
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+              <SelectTrigger className="border-0 focus:ring-0 focus:ring-offset-0 p-0 h-auto bg-transparent hover:bg-transparent shadow-none [&>svg]:hidden">
+                <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-900 hover:text-black transition-colors cursor-pointer">
+                  <ArrowDownUp size={14} strokeWidth={1.5} />
+                  <span>Sort By</span>
+                </div>
+              </SelectTrigger>
+              <SelectContent align="end" className="bg-white border border-gray-200 rounded-none">
+                <SelectItem value="featured" className="text-xs capitalize text-gray-800 cursor-pointer rounded-none">
+                  Featured Order
+                </SelectItem>
+                <SelectItem value="price-asc" className="text-xs capitalize text-gray-800 cursor-pointer rounded-none">
+                  Price: Low to High
+                </SelectItem>
+                <SelectItem value="price-desc" className="text-xs capitalize text-gray-800 cursor-pointer rounded-none">
+                  Price: High to Low
+                </SelectItem>
+                <SelectItem value="discount-desc" className="text-xs capitalize text-gray-800 cursor-pointer rounded-none">
+                  Biggest Discount
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -453,11 +330,11 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
               return (
                 <div
                   key={product.id}
-                  className="group flex flex-col bg-white rounded-xl overflow-hidden border border-gray-150/80 hover:border-gray-400 hover:shadow-xl transition-all duration-300 relative"
+                  className="group flex flex-col relative"
                 >
-                  {/* Image Container with 3:4 High-Fashion Ratio */}
-                  <div className="relative aspect-[3/4] bg-[#F4F4F4] overflow-hidden">
-                    <Link href={`/product/${product.slug || product.id}`} className="block w-full h-full relative">
+                  <Link href={`/product/${product.slug || product.id}`} className="block">
+                    {/* Image Container */}
+                    <div className="relative aspect-[3/4] bg-[#F2F2F2] mb-3 overflow-hidden rounded-[2px]">
                       {product.thumbnail ? (
                         <>
                           <img
@@ -482,81 +359,54 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
                           No Preview Available
                         </div>
                       )}
-                    </Link>
 
-                    {/* Discount Badge */}
-                    <div className="absolute top-2.5 left-2.5 z-10">
-                      <span className="bg-[#0F172A] text-white text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-sm">
-                        {product.discountPercentage}% OFF
-                      </span>
-                    </div>
-
-                    {/* Wishlist Button */}
-                    <button
-                      type="button"
-                      aria-label="Toggle favourite"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleFavourite({
-                          id: product.id,
-                          productId: product.id,
-                          name: product.name,
-                          category: 'Apparel',
-                          image: product.thumbnail || '/images/product-1.jpeg',
-                          price: product.discountedPrice,
-                          comparePrice: product.originalPrice,
-                          inStock: true,
-                        });
-
-                      }}
-                      className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/80 hover:bg-white backdrop-blur-xs flex items-center justify-center text-gray-700 hover:text-rose-600 transition-all shadow-xs z-10 cursor-pointer"
-                    >
-                      <Heart
-                        size={15}
-                        strokeWidth={2}
-                        className={isFav ? 'fill-rose-600 text-rose-600' : 'text-gray-700'}
-                      />
-                    </button>
-                  </div>
-
-                  {/* Product Details */}
-                  <div className="p-3.5 sm:p-4 flex flex-col justify-between flex-1 gap-3">
-                    <div>
-                      <Link href={`/product/${product.slug || product.id}`}>
-                        <h3 className="text-xs sm:text-sm font-semibold text-gray-900 group-hover:text-black line-clamp-2 leading-snug tracking-tight">
-                          {product.name}
-                        </h3>
-                      </Link>
-                    </div>
-
-                    {/* Price and Instant Savings Box */}
-                    <div className="pt-2 border-t border-gray-100 flex items-end justify-between gap-2">
-                      <div>
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-sm sm:text-base font-extrabold text-gray-950">
-                            ₹{product.discountedPrice.toLocaleString('en-IN')}
-                          </span>
-                          {product.originalPrice > product.discountedPrice && (
-                            <span className="text-[11px] sm:text-xs text-gray-400 line-through font-normal">
-                              ₹{product.originalPrice.toLocaleString('en-IN')}
-                            </span>
-                          )}
+                      {/* Badge */}
+                      {product.discountPercentage > 0 && (
+                        <div className="absolute top-2.5 left-2.5 z-10 bg-white px-2 py-1 text-[10px] font-bold rounded-sm shadow-sm text-rose-600">
+                          {product.discountPercentage}% OFF
                         </div>
-                        <p className="text-[10px] sm:text-[11px] font-bold text-emerald-700 mt-0.5">
-                          Save ₹{product.discountAmount.toLocaleString('en-IN')}
-                        </p>
-                      </div>
+                      )}
 
-                      {/* Quick Navigate Link */}
-                      <Link
-                        href={`/product/${product.slug || product.id}`}
-                        className="text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-black transition-colors"
+                      {/* Wishlist Button */}
+                      <button
+                        type="button"
+                        aria-label="Toggle favourite"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleFavourite({
+                            id: product.id,
+                            productId: product.id,
+                            name: product.name,
+                            category: 'Apparel',
+                            image: product.thumbnail || '/images/product-1.jpeg',
+                            price: product.discountedPrice,
+                            comparePrice: product.originalPrice,
+                            inStock: true,
+                          });
+                        }}
+                        className="absolute top-2.5 right-2.5 p-1.5 text-gray-600 hover:text-red-500 transition-colors z-10 cursor-pointer bg-white/60 hover:bg-white rounded-full backdrop-blur-xs"
                       >
-                        View &rarr;
-                      </Link>
+                        <Heart
+                          size={15}
+                          className={isFav ? 'fill-rose-600 text-rose-600' : 'text-gray-700'}
+                        />
+                      </button>
                     </div>
-                  </div>
+
+                    {/* Product Details (Standard Design & Font) */}
+                    <div className="space-y-1.5 px-1">
+                      <h3 className="text-[13px] font-medium text-gray-800 line-clamp-1 truncate">
+                        {product.name}
+                      </h3>
+                      <div className="flex items-center gap-2 text-[11px] font-medium text-gray-600">
+                        <span className="text-gray-900 font-bold">₹{product.discountedPrice.toLocaleString('en-IN')} INR</span>
+                        {product.originalPrice > product.discountedPrice && (
+                          <span className="line-through text-gray-400">₹{product.originalPrice.toLocaleString('en-IN')}</span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
                 </div>
               );
             })}

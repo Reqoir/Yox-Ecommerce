@@ -80,12 +80,12 @@ export function StyleSeekers() {
         <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-8 mb-5 md:mb-16">
           <Skeleton className="h-7 w-48 bg-gray-200" />
         </div>
-        <div className="flex gap-3 sm:gap-4 px-4 md:px-8 overflow-hidden">
-          {[1, 2, 3, 4, 5].map((i) => (
+        <div className="flex items-end gap-3 sm:gap-4 px-4 md:px-8 overflow-hidden">
+          {[0, 1, 2, 3, 4].map((i) => (
             <Skeleton
               key={i}
               className={`flex-shrink-0 w-[160px] sm:w-[240px] md:w-[280px] lg:w-[320px] ${
-                i % 2 === 0 ? 'h-[280px] sm:h-[450px]' : 'h-[200px] sm:h-[300px]'
+                i % 2 === 0 ? 'h-[225px] sm:h-[450px]' : 'h-[150px] sm:h-[300px]'
               } bg-gray-200 rounded-sm`}
             />
           ))}

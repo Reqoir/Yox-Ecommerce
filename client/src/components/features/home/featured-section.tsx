@@ -126,7 +126,7 @@ export function FeaturedSection() {
     <section className="w-full py-8 sm:py-16 bg-white overflow-hidden">
       <div className="w-[98%] mx-auto max-w-[1500px]">
         {/* Header */}
-        <div className="relative flex items-center justify-between sm:justify-center mb-5 sm:mb-8">
+        <div className="flex items-center justify-between mb-5 sm:mb-8">
           <h2 className="text-base sm:text-[20px] font-bold text-gray-900 tracking-wide uppercase">
             FEATURED
           </h2>
