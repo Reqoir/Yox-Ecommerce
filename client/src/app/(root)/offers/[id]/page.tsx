@@ -147,19 +147,19 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
     return (
       <main className="w-full bg-[#FAFAFA] min-h-screen pb-24 text-gray-900 antialiased animate-in fade-in duration-300">
         {/* Hero Banner Skeleton — Exact match aspect ratio without overlays or rounded corners */}
-        <section className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto mt-4 sm:mt-6 mb-10 sm:mb-14">
-          <div className="relative overflow-hidden bg-gray-200 aspect-[1440/680] min-h-[220px] sm:min-h-[380px] md:min-h-[460px]">
+        <section className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto mt-3 sm:mt-6 mb-8 sm:mb-14">
+          <div className="relative overflow-hidden bg-gray-200 aspect-[1440/680] w-full">
             <Skeleton className="w-full h-full rounded-none bg-gray-200" />
-            <Skeleton className="absolute top-3 right-3 sm:top-4 sm:right-4 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gray-300/80" />
+            <Skeleton className="absolute top-2.5 right-2.5 sm:top-4 sm:right-4 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-300/80" />
           </div>
         </section>
 
         {/* Main Catalog Showcase Skeleton */}
         <section className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto">
           {/* Controls: Search & Sort Toolbar Skeleton */}
-          <div className="flex items-center justify-end gap-3 pb-6 mb-6 border-b border-gray-200">
-            <Skeleton className="w-48 sm:w-56 h-9 rounded-lg bg-gray-200" />
-            <Skeleton className="w-36 h-9 rounded-lg bg-gray-200" />
+          <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 pb-6 mb-6 border-b border-gray-200">
+            <Skeleton className="w-44 sm:w-56 h-9 rounded-lg bg-gray-200" />
+            <Skeleton className="w-24 sm:w-36 h-9 rounded-lg bg-gray-200" />
           </div>
 
           {/* Product Grid Skeleton — Exact product card layout */}
@@ -231,8 +231,8 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
   return (
     <main className="w-full bg-[#FAFAFA] min-h-screen pb-24 text-gray-900 antialiased selection:bg-black selection:text-white">
       {/* Hero Showcase Section — Banner without text overlay and with share button on top right */}
-      <section className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto mt-4 sm:mt-6 mb-10 sm:mb-14">
-        <div className="relative overflow-hidden bg-gray-950 aspect-[1440/680] min-h-[220px] sm:min-h-[380px] md:min-h-[460px]">
+      <section className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto mt-3 sm:mt-6 mb-8 sm:mb-14">
+        <div className="relative overflow-hidden bg-gray-950 aspect-[1440/680] w-full">
           {/* Background Hero Image */}
           {offer.banner?.imageUrl ? (
             <picture className="w-full h-full block">
@@ -252,10 +252,10 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
           {/* Share Button on Banner Top Right */}
           <button
             onClick={handleShare}
-            className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-gray-900 bg-white/80 hover:bg-white hover:text-black backdrop-blur-md px-3 py-2 rounded-full border border-white/40 shadow-sm transition-all cursor-pointer"
+            className="absolute top-2.5 right-2.5 sm:top-4 sm:right-4 z-20 inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-gray-900 bg-white/80 hover:bg-white hover:text-black backdrop-blur-md px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-full border border-white/40 shadow-sm transition-all cursor-pointer"
             title="Share Event"
           >
-            {copiedLink ? <Check size={14} className="text-emerald-600" /> : <Share2 size={14} />}
+            {copiedLink ? <Check size={13} className="text-emerald-600" /> : <Share2 size={13} />}
             <span className="hidden sm:inline">{copiedLink ? 'Copied' : 'Share'}</span>
           </button>
         </div>
@@ -265,24 +265,21 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
       <section className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto">
 
         {/* Curated Toolbar: Search & Sort */}
-        <div className="flex items-center justify-end gap-4 pb-6 mb-6 border-b border-gray-200">
+        <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 pb-6 mb-6 border-b border-gray-200">
+          {/* Search Input */}
+          <div className="relative min-w-[150px] sm:min-w-[220px]">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search styles..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black transition-colors"
+            />
+          </div>
 
-          {/* Controls: Search & Sort Filter */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Search Input */}
-            <div className="relative min-w-[180px] sm:min-w-[220px]">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search styles..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black transition-colors"
-              />
-            </div>
-
-            {/* Sort Dropdown */}
-            <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+          {/* Sort Dropdown on Right */}
+          <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
               <SelectTrigger className="border-0 focus:ring-0 focus:ring-offset-0 p-0 h-auto bg-transparent hover:bg-transparent shadow-none [&>svg]:hidden">
                 <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-900 hover:text-black transition-colors cursor-pointer">
                   <ArrowDownUp size={14} strokeWidth={1.5} />
@@ -304,7 +301,6 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
                 </SelectItem>
               </SelectContent>
             </Select>
-          </div>
         </div>
 
         {/* Product Grid — Responsive from Mobile 360px up to 4K Ultra-Wide TV */}

@@ -246,55 +246,6 @@ export function OfferBannerSlider() {
     <section className="w-full py-8 sm:py-14 bg-white border-t border-b border-gray-100 overflow-hidden">
       <div className="w-[98%] max-w-[1500px] 2xl:max-w-[1700px] mx-auto px-4 md:px-8">
 
-        {/* Minimalist Editorial Header: Clean architectural styling */}
-        <div className="flex items-end justify-between mb-5 sm:mb-8 border-b border-gray-200/80 pb-4">
-          <div>
-            <span className="text-[11px] font-mono tracking-[0.2em] text-gray-500 uppercase block mb-1">
-              Curated Campaigns
-            </span>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-gray-900 uppercase">
-              Special Offers
-            </h2>
-          </div>
-
-          <div className="flex items-center gap-4 sm:gap-6">
-            <Link
-              href="/offers"
-              className="text-xs sm:text-sm font-semibold tracking-wider text-gray-900 hover:text-gray-500 transition-colors uppercase inline-flex items-center gap-1 group"
-            >
-              <span>View All Offers</span>
-              <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
-            </Link>
-
-            {/* Carousel Counter & Controls */}
-            {banners.length > 1 && (
-              <div className="hidden sm:flex items-center gap-2.5 border-l border-gray-200 pl-4">
-                <span className="font-mono text-xs text-gray-500 tracking-wider">
-                  {String(currentIndex + 1).padStart(2, '0')} / {String(banners.length).padStart(2, '0')}
-                </span>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={handlePrev}
-                    className="w-7 h-7 rounded-full border border-gray-300 hover:border-gray-900 hover:bg-gray-900 hover:text-white flex items-center justify-center text-gray-700 transition-all cursor-pointer"
-                    aria-label="Previous campaign"
-                  >
-                    <ChevronLeft size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleNext}
-                    className="w-7 h-7 rounded-full border border-gray-300 hover:border-gray-900 hover:bg-gray-900 hover:text-white flex items-center justify-center text-gray-700 transition-all cursor-pointer"
-                    aria-label="Next campaign"
-                  >
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Campaign Hero Showcase Banner */}
         <div
           className="relative w-full rounded-sm overflow-hidden bg-gray-950 group aspect-[4/5] sm:aspect-[16/8] lg:aspect-[21/9] xl:aspect-[24/9] min-h-[380px] sm:min-h-[420px] max-h-[560px] 2xl:max-h-[620px]"
