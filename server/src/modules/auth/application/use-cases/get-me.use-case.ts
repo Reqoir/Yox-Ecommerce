@@ -21,6 +21,7 @@ export class GetMeUseCase {
 
     const role = await this.roleRepository.findById(user.roleId);
     const permissions = role ? role.permissions : [];
+    const roleName = role ? role.name.toUpperCase() : 'CUSTOMER';
 
     return {
       user: {
@@ -28,6 +29,7 @@ export class GetMeUseCase {
         fullName: user.fullName,
         email: user.email,
         roleId: user.roleId,
+        role: roleName,
         permissions,
       }
     };

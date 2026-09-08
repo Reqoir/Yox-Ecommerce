@@ -1,13 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/store/useAuthStore';
 import { analyticsApi, DashboardStats, SalesChartData } from '@/api/admin/analytics';
 import { SalesChart } from '@/components/admin/analytics/sales-chart';
 import { IndianRupee, ShoppingBag, Users, Package, TrendingUp } from 'lucide-react';
+import { navItems, hasNavPermission } from '@/components/layout/AdminSidebar';
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
   const { user } = useAuthStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [salesData, setSalesData] = useState<SalesChartData[]>([]);
@@ -15,6 +18,18 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!user) return;
+    const userPermissions = user.permissions || [];
+    const canViewDashboard = hasNavPermission(['dashboard:read', 'view_analytics'], user, userPermissions);
+
+    if (!canViewDashboard) {
+      const firstAllowed = navItems.find((item) => hasNavPermission(item.permission, user, userPermissions));
+      if (firstAllowed && firstAllowed.href !== '/admin') {
+        router.replace(firstAllowed.href);
+        return;
+      }
+    }
+
     const fetchAnalytics = async () => {
       try {
         setLoading(true);
@@ -32,7 +47,7 @@ export default function AdminDashboardPage() {
     };
 
     fetchAnalytics();
-  }, []);
+  }, [user, router]);
 
   if (loading) {
     return (

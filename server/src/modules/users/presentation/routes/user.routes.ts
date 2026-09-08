@@ -53,7 +53,7 @@ router.patch('/me', userController.updateProfile);
 router.get('/', requirePermission('manage_users'), userController.getAll);
 router.post('/', requirePermission('manage_users'), userController.create);
 router.get('/:id', requirePermission('manage_users'), userController.getById);
-router.patch('/:id/role', requirePermission('manage_users'), userController.updateRole);
+router.patch('/:id/role', requirePermission('manage_roles'), userController.updateRole);
 router.patch('/:id/status', requirePermission('manage_users'), userController.updateStatus);
 router.delete('/:id', requirePermission('manage_users'), userController.delete);
 

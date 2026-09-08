@@ -34,19 +34,35 @@ export const requirePermission = (requiredPermission: string) => {
         // Fallthrough
       }
 
-      if (
-        role &&
-        (role.name.toLowerCase().includes('admin') ||
-          role.hasPermission(requiredPermission) ||
-          requiredPermission === 'view_audit_logs' ||
-          requiredPermission === 'view_reports')
-      ) {
-        return next();
-      }
+      if (role) {
+        const roleNameLower = role.name.toLowerCase();
+        if (roleNameLower === 'admin' || roleNameLower === 'super_admin' || roleNameLower.includes('admin')) {
+          return next();
+        }
 
-      // Fallback: If user is authenticated as staff/admin
-      if (userRoleStr === 'staff') {
-        return next();
+        if (role.hasPermission('*') || role.hasPermission(requiredPermission)) {
+          return next();
+        }
+
+        // Support logical permission aliases
+        if (requiredPermission === 'dashboard:read' && role.hasPermission('view_analytics')) {
+          return next();
+        }
+
+        if (requiredPermission === 'manage_users' && (role.hasPermission('manage_staff') || role.hasPermission('manage_roles'))) {
+          return next();
+        }
+
+        if (requiredPermission === 'manage_staff' && role.hasPermission('manage_roles')) {
+          return next();
+        }
+
+        if (
+          requiredPermission === 'manage_orders' &&
+          (role.hasPermission('manage_shipments') || role.hasPermission('manage_returns'))
+        ) {
+          return next();
+        }
       }
 
       throw ApiError.forbidden(`Access denied. Missing permission: ${requiredPermission}`);

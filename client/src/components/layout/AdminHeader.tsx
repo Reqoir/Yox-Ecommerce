@@ -271,7 +271,7 @@ export function AdminHeader() {
             </div>
             <div className="hidden md:block text-left text-xs leading-tight">
               <p className="font-semibold truncate max-w-[120px]">{user.fullName || user.email}</p>
-              <p className="text-[10px] text-muted-foreground capitalize">Admin</p>
+              <p className="text-[10px] text-muted-foreground capitalize">{user.role ? user.role.toLowerCase() : 'Staff'}</p>
             </div>
           </div>
         )}
