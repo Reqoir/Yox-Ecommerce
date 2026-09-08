@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { matchesProductSearch } from '@/lib/search';
 import { toast } from 'sonner';
-import { Heart, Search, Menu, X, ArrowRight, LogOut, ChevronDown, Shield, User, Package, MapPin, Settings } from 'lucide-react';
+import { Heart, Search, Menu, X, ArrowRight, LogOut, ChevronDown, ChevronRight, Shield, User, Package, MapPin, Settings } from 'lucide-react';
 import { IoPersonOutline } from "react-icons/io5";
 import { BsHandbag } from "react-icons/bs";
 import { useProductFilters } from '@/hooks/useProductFilters';
@@ -332,7 +332,7 @@ export function Navbar() {
               <button
                 suppressHydrationWarning
                 onClick={() => setIsUserDropdownOpen((prev) => !prev)}
-                className="flex items-center gap-1.5 p-1 rounded-sm hover:bg-gray-100 transition-all focus:outline-none group cursor-pointer"
+                className="flex items-center gap-1.5 p-1 rounded-md hover:bg-gray-100 transition-all focus:outline-none group cursor-pointer"
                 aria-expanded={isUserDropdownOpen}
                 aria-label="User account menu"
                 title={user.fullName || "My Account"}
@@ -360,77 +360,107 @@ export function Navbar() {
 
             {/* User Dropdown Menu */}
             {mounted && isUserDropdownOpen && user && (
-              <div className="absolute right-0 top-11 w-60 bg-white border border-gray-200 rounded-sm shadow-xl py-2 z-50 animate-in fade-in-50 duration-150 divide-y divide-gray-100">
-                <div className="px-4 py-2.5 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-black text-white text-xs font-bold flex items-center justify-center shrink-0">
-                    {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-gray-900 truncate">{user.fullName || 'YOX Member'}</p>
-                    <p className="text-[11px] text-gray-500 truncate">{user.email}</p>
+              <div className="absolute right-0 top-12 w-[270px] sm:w-72 bg-white border border-gray-200 rounded-sm shadow-xl z-50 animate-in fade-in-50 duration-150 divide-y divide-gray-100 overflow-hidden">
+                {/* Header Banner */}
+                <div className="px-4 py-3 bg-gray-50/60 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-gray-900 truncate">
+                      Welcome, {user.fullName ? user.fullName.split(' ')[0] : 'Member'}
+                    </p>
+                    <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mt-0.5">
+                      YOX Member
+                    </p>
                   </div>
                 </div>
 
-                <div className="py-1">
+                {/* Menu Options */}
+                <div className="divide-y divide-gray-100">
                   <Link
                     href="/profile/personal-info"
                     onClick={() => setIsUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                    className="flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-800 hover:bg-gray-50 hover:text-black transition-colors group"
                   >
-                    <User size={15} className="text-gray-500" />
-                    <span>My Profile</span>
+                    <div className="flex items-center gap-3">
+                      <User size={16} className="text-gray-700 shrink-0" />
+                      <span>My Profile</span>
+                    </div>
+                    <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
                   </Link>
+
                   <Link
                     href="/profile/orders"
                     onClick={() => setIsUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                    className="flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-800 hover:bg-gray-50 hover:text-black transition-colors group"
                   >
-                    <Package size={15} className="text-gray-500" />
-                    <span>My Orders</span>
+                    <div className="flex items-center gap-3">
+                      <Package size={16} className="text-gray-700 shrink-0" />
+                      <span>My Orders</span>
+                    </div>
+                    <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
                   </Link>
+
                   <Link
                     href="/profile/addresses"
                     onClick={() => setIsUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                    className="flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-800 hover:bg-gray-50 hover:text-black transition-colors group"
                   >
-                    <MapPin size={15} className="text-gray-500" />
-                    <span>Saved Addresses</span>
+                    <div className="flex items-center gap-3">
+                      <MapPin size={16} className="text-gray-700 shrink-0" />
+                      <span>Saved Addresses</span>
+                    </div>
+                    <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
                   </Link>
+
                   <Link
                     href="/profile/favourites"
                     onClick={() => setIsUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                    className="flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-800 hover:bg-gray-50 hover:text-black transition-colors group"
                   >
-                    <Heart size={15} className="text-gray-500" />
-                    <span>My Wishlist</span>
+                    <div className="flex items-center gap-3">
+                      <Heart size={16} className="text-gray-700 shrink-0" />
+                      <span>My Wishlist</span>
+                    </div>
+                    <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
                   </Link>
+
                   <Link
                     href="/profile/settings"
                     onClick={() => setIsUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                    className="flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-800 hover:bg-gray-50 hover:text-black transition-colors group"
                   >
-                    <Settings size={15} className="text-gray-500" />
-                    <span>Account Settings</span>
+                    <div className="flex items-center gap-3">
+                      <Settings size={16} className="text-gray-700 shrink-0" />
+                      <span>Account Settings</span>
+                    </div>
+                    <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
                   </Link>
+
                   {user.permissions?.includes('admin:access') && (
                     <Link
                       href="/admin"
                       onClick={() => setIsUserDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-[#1A2E4C] hover:bg-blue-50 transition-colors"
+                      className="flex items-center justify-between px-4 py-3 text-xs font-semibold text-[#1A2E4C] hover:bg-blue-50 transition-colors group"
                     >
-                      <Shield size={15} className="text-[#1A2E4C]" />
-                      <span>Admin Dashboard</span>
+                      <div className="flex items-center gap-3">
+                        <Shield size={16} className="text-[#1A2E4C] shrink-0" />
+                        <span>Admin Dashboard</span>
+                      </div>
+                      <ChevronRight size={14} className="text-[#1A2E4C] group-hover:text-black transition-colors" />
                     </Link>
                   )}
                 </div>
 
-                <div className="pt-1">
+                {/* Sign Out Button */}
+                <div className="p-1 bg-gray-50/50">
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors text-left"
+                    className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-sm transition-colors text-left cursor-pointer"
                   >
-                    <LogOut size={15} className="text-red-500" />
-                    <span>Sign Out</span>
+                    <div className="flex items-center gap-3">
+                      <LogOut size={16} className="text-rose-500 shrink-0" />
+                      <span>Sign Out Account</span>
+                    </div>
+                    <ChevronRight size={14} className="text-rose-300" />
                   </button>
                 </div>
               </div>
