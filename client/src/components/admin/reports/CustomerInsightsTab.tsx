@@ -119,9 +119,9 @@ export function CustomerInsightsTab({ data, loading }: CustomerInsightsTabProps)
                       <td className="px-4 py-3 font-medium">{customer.fullName}</td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">{customer.email}</td>
                       <td className="px-4 py-3 text-right font-semibold">{customer.totalOrders}</td>
-                      <td className="px-4 py-3 text-right">${customer.averageOrderValue.toFixed(2)}</td>
-                      <td className="px-4 py-3 text-right font-bold text-emerald-500">
-                        ${customer.totalSpent.toFixed(2)}
+                      <td className="px-4 py-3 text-right">₹{customer.averageOrderValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      <td className="px-4 py-3 text-right font-bold text-emerald-600">
+                        ₹{customer.totalSpent.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
                     </tr>
                   ))

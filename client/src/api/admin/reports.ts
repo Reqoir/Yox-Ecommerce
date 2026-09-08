@@ -132,7 +132,7 @@ export const reportsApi = {
     return res.data.data;
   },
 
-  exportReportCSV: async (type: 'sales' | 'products' | 'customers' | 'inventory', params?: ReportQueryParams): Promise<Blob> => {
+  exportReportCSV: async (type: 'sales' | 'products' | 'customers' | 'inventory' | 'payments', params?: ReportQueryParams): Promise<Blob> => {
     const res = await apiClient.get('/reports/export', {
       params: { ...params, type, format: 'csv' },
       responseType: 'blob',

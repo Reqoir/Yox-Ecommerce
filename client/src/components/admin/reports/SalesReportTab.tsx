@@ -14,7 +14,7 @@ import {
   Bar,
   Cell,
 } from 'recharts';
-import { DollarSign, ShoppingCart, TrendingUp, CreditCard, Percent, Truck } from 'lucide-react';
+import { IndianRupee, ShoppingCart, TrendingUp, CreditCard, Percent } from 'lucide-react';
 
 interface SalesReportTabProps {
   data: SalesReport | null;
@@ -48,13 +48,13 @@ export function SalesReportTab({ data, loading }: SalesReportTabProps) {
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Net Revenue</CardTitle>
-            <div className="p-2 bg-emerald-500/100/10 rounded-full text-emerald-500">
-              <DollarSign className="h-4 w-4" />
+            <div className="p-2 bg-emerald-500/10 rounded-full text-emerald-600">
+              <IndianRupee className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-500">
-              ${summary.netRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            <div className="text-2xl font-bold text-emerald-600">
+              ₹{summary.netRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Excludes cancelled orders</p>
           </CardContent>
@@ -76,12 +76,14 @@ export function SalesReportTab({ data, loading }: SalesReportTabProps) {
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Avg Order Value</CardTitle>
-            <div className="p-2 bg-amber-500/100/10 rounded-full text-amber-500">
+            <div className="p-2 bg-amber-500/10 rounded-full text-amber-600">
               <TrendingUp className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${summary.averageOrderValue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">
+              ₹{summary.averageOrderValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">Average per transaction</p>
           </CardContent>
         </Card>
@@ -89,12 +91,14 @@ export function SalesReportTab({ data, loading }: SalesReportTabProps) {
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Gross Discounts</CardTitle>
-            <div className="p-2 bg-rose-500/100/10 rounded-full text-rose-500">
+            <div className="p-2 bg-rose-500/10 rounded-full text-rose-600">
               <Percent className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${summary.totalDiscounts.toFixed(2)}</div>
+            <div className="text-2xl font-bold">
+              ₹{summary.totalDiscounts.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">Total coupons & discounts</p>
           </CardContent>
         </Card>
@@ -113,7 +117,7 @@ export function SalesReportTab({ data, loading }: SalesReportTabProps) {
           ) : (
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={timeSeries} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <AreaChart data={timeSeries} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
@@ -122,9 +126,9 @@ export function SalesReportTab({ data, loading }: SalesReportTabProps) {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                   <XAxis dataKey="period" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(val) => `$${val}`} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(val) => `₹${val}`} />
                   <Tooltip
-                    formatter={(val: any) => [`$${Number(val || 0).toFixed(2)}`, 'Revenue']}
+                    formatter={(val: any) => [`₹${Number(val || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 'Revenue']}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                   />
                   <Area
@@ -156,7 +160,9 @@ export function SalesReportTab({ data, loading }: SalesReportTabProps) {
                   <span className="text-sm font-medium">{item.orderStatus}</span>
                   <div className="text-right">
                     <div className="text-sm font-bold">{item.count} orders</div>
-                    <div className="text-xs text-muted-foreground">${item.totalRevenue.toFixed(2)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      ₹{item.totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -181,7 +187,9 @@ export function SalesReportTab({ data, loading }: SalesReportTabProps) {
                     <span className="text-sm font-medium">{pm.paymentMethod}</span>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold">${pm.totalRevenue.toFixed(2)}</div>
+                    <div className="text-sm font-bold">
+                      ₹{pm.totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </div>
                     <div className="text-xs text-muted-foreground">{pm.count} transactions</div>
                   </div>
                 </div>

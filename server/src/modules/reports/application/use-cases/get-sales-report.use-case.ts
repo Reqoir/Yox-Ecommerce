@@ -5,6 +5,7 @@ export class GetSalesReportUseCase {
   async execute(params: ReportQueryParams): Promise<SalesReportDTO> {
     const startDate = params.startDate ? new Date(params.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const endDate = params.endDate ? new Date(params.endDate) : new Date();
+    endDate.setHours(23, 59, 59, 999);
     const groupBy = params.groupBy || 'day';
 
     const dateMatch = {

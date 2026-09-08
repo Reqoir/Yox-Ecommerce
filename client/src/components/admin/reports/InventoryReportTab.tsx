@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { InventoryReport } from '@/api/admin/reports';
-import { Warehouse, DollarSign, AlertTriangle, XCircle, PackageCheck } from 'lucide-react';
+import { Warehouse, IndianRupee, AlertTriangle, XCircle, PackageCheck } from 'lucide-react';
 
 interface InventoryReportTabProps {
   data: InventoryReport | null;
@@ -34,13 +34,13 @@ export function InventoryReportTab({ data, loading }: InventoryReportTabProps) {
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Inventory Value</CardTitle>
-            <div className="p-2 bg-emerald-500/100/10 rounded-full text-emerald-500">
-              <DollarSign className="h-4 w-4" />
+            <div className="p-2 bg-emerald-500/10 rounded-full text-emerald-500">
+              <IndianRupee className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-emerald-500">
-              ${summary.totalInventoryValuation.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              ₹{summary.totalInventoryValuation.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Total retail value of active stock</p>
           </CardContent>
@@ -122,7 +122,7 @@ export function InventoryReportTab({ data, loading }: InventoryReportTabProps) {
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{item.sku}</td>
                       <td className="px-4 py-3 text-right font-bold text-amber-500">{item.currentStock}</td>
                       <td className="px-4 py-3 text-right text-muted-foreground">{item.lowStockThreshold}</td>
-                      <td className="px-4 py-3 text-right">${item.price.toFixed(2)}</td>
+                      <td className="px-4 py-3 text-right">₹{item.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     </tr>
                   ))
                 )}
@@ -166,7 +166,7 @@ export function InventoryReportTab({ data, loading }: InventoryReportTabProps) {
                       <td className="px-4 py-3 text-xs">{item.title}</td>
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{item.sku}</td>
                       <td className="px-4 py-3 text-right font-bold text-rose-500">0</td>
-                      <td className="px-4 py-3 text-right">${item.price.toFixed(2)}</td>
+                      <td className="px-4 py-3 text-right">₹{item.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     </tr>
                   ))
                 )}

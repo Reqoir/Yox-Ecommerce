@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const reportQuerySchema = z.object({
+  type: z.enum(['sales', 'products', 'customers', 'inventory', 'payments']).optional(),
   startDate: z.string().optional().refine((val) => !val || !isNaN(Date.parse(val)), {
     message: 'Invalid startDate format',
   }),

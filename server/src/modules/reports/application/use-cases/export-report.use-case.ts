@@ -4,6 +4,7 @@ import { GetCustomerInsightsReportUseCase } from './get-customer-insights-report
 import { GetInventoryReportUseCase } from './get-inventory-report.use-case';
 import { CsvExporterService } from '../../infrastructure/services/csv-exporter.service';
 import { ReportQueryParams } from '../dtos/report-query.dto';
+import { PaymentModel } from '../../../payments/infrastructure/models/payment.model';
 
 export class ExportReportUseCase {
   constructor(
@@ -86,6 +87,32 @@ export class ExportReportUseCase {
       return {
         csvData: CsvExporterService.jsonToCsv(rows),
         filename: `inventory_report_${timestamp}.csv`,
+      };
+    }
+
+    if (type === 'payments') {
+      const startDate = params.startDate ? new Date(params.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const endDate = params.endDate ? new Date(params.endDate) : new Date();
+      endDate.setHours(23, 59, 59, 999);
+
+      const payments = await PaymentModel.find({
+        createdAt: { $gte: startDate, $lte: endDate },
+      }).sort({ createdAt: -1 }).lean();
+
+      const rows = payments.map((p, index) => ({
+        '#': index + 1,
+        'Order ID': p.orderId,
+        'Payment Method': p.paymentMethod,
+        'Amount (INR)': p.amount,
+        Status: p.paymentStatus,
+        'Transaction ID': p.transactionId || 'N/A',
+        'Refunded Amount': p.refundedAmount || 0,
+        Date: p.createdAt ? new Date(p.createdAt).toISOString().split('T')[0] : 'N/A',
+      }));
+
+      return {
+        csvData: CsvExporterService.jsonToCsv(rows),
+        filename: `payments_report_${timestamp}.csv`,
       };
     }
 

@@ -15,8 +15,9 @@ import {
 } from '@/api/admin/reports';
 import { PaymentReportsTab } from '@/components/admin/reports/PaymentReportsTab';
 import { subDays, format } from 'date-fns';
-import { Download, BarChart3, Package, Users, Warehouse, CreditCard } from 'lucide-react';
+import { Download, BarChart3, Package, Users, Warehouse, CreditCard, Printer, FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
+import { exportReportToPDF } from '@/lib/report-pdf';
 
 type ActiveTab = 'payments' | 'sales' | 'products' | 'customers' | 'inventory';
 
@@ -66,10 +67,6 @@ export default function AdminReportsPage() {
   }, [activeTab, startDate, endDate, groupBy]);
 
   const handleExportCSV = async () => {
-    if (activeTab === 'payments') {
-      toast.info('Use financial transaction filters for payment audit details.');
-      return;
-    }
     try {
       setExporting(true);
       const queryParams = { startDate, endDate, groupBy };
@@ -82,12 +79,176 @@ export default function AdminReportsPage() {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
 
       toast.success(`${activeTab.toUpperCase()} report exported successfully!`);
     } catch (error) {
       toast.error('Failed to export CSV report.');
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleExportPDF = () => {
+    try {
+      const periodStr = activeTab === 'inventory' ? 'Current Snapshot' : `${startDate} to ${endDate}`;
+
+      if (activeTab === 'sales') {
+        if (!salesReport) {
+          toast.error('Sales report data is still loading.');
+          return;
+        }
+        exportReportToPDF({
+          title: 'Sales & Revenue Performance Report',
+          subtitle: `Aggregated by ${groupBy.toUpperCase()}`,
+          dateRange: periodStr,
+          kpis: [
+            { label: 'Gross Revenue', value: `₹${salesReport.summary.grossRevenue.toLocaleString('en-IN')}` },
+            { label: 'Net Revenue', value: `₹${salesReport.summary.netRevenue.toLocaleString('en-IN')}` },
+            { label: 'Total Orders', value: salesReport.summary.totalOrders.toLocaleString('en-IN') },
+            { label: 'Avg Order Value', value: `₹${salesReport.summary.averageOrderValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` },
+            { label: 'Total Tax', value: `₹${salesReport.summary.totalTax.toLocaleString('en-IN')}` },
+            { label: 'Discounts', value: `₹${salesReport.summary.totalDiscounts.toLocaleString('en-IN')}` },
+          ],
+          sections: [
+            {
+              heading: 'Sales Over Time',
+              headers: ['Period', 'Orders Count', 'Revenue (₹)', 'Average Order Value (₹)'],
+              rows: salesReport.timeSeries.map((t) => [
+                t.period,
+                t.ordersCount,
+                `₹${t.revenue.toLocaleString('en-IN')}`,
+                `₹${t.averageOrderValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+              ]),
+            },
+            {
+              heading: 'Order Status Breakdown',
+              headers: ['Order Status', 'Orders Count', 'Total Revenue (₹)'],
+              rows: salesReport.statusBreakdown.map((s) => [
+                s.orderStatus,
+                s.count,
+                `₹${s.totalRevenue.toLocaleString('en-IN')}`,
+              ]),
+            },
+            {
+              heading: 'Payment Method Breakdown',
+              headers: ['Payment Method', 'Transactions', 'Total Collected (₹)'],
+              rows: salesReport.paymentMethodBreakdown.map((p) => [
+                p.paymentMethod,
+                p.count,
+                `₹${p.totalRevenue.toLocaleString('en-IN')}`,
+              ]),
+            },
+          ],
+        });
+      } else if (activeTab === 'products') {
+        if (!productReport) {
+          toast.error('Product report data is still loading.');
+          return;
+        }
+        exportReportToPDF({
+          title: 'Product & Category Performance Report',
+          dateRange: periodStr,
+          kpis: [
+            { label: 'Total Variants', value: productReport.inventoryHealth.totalVariants.toLocaleString() },
+            { label: 'Low Stock', value: productReport.inventoryHealth.lowStockVariants.toLocaleString() },
+            { label: 'Out of Stock', value: productReport.inventoryHealth.outOfStockVariants.toLocaleString() },
+          ],
+          sections: [
+            {
+              heading: 'Top Products by Revenue',
+              headers: ['Product Name', 'SKU', 'Units Sold', 'Total Revenue (₹)'],
+              rows: productReport.topProductsByRevenue.map((p) => [
+                p.productName,
+                p.sku,
+                p.unitsSold,
+                `₹${p.totalRevenue.toLocaleString('en-IN')}`,
+              ]),
+            },
+            {
+              heading: 'Category Sales Distribution',
+              headers: ['Category Name', 'Total Products', 'Units Sold', 'Total Revenue (₹)'],
+              rows: productReport.categoryBreakdown.map((c) => [
+                c.categoryName,
+                c.totalProducts,
+                c.totalUnitsSold,
+                `₹${c.totalRevenue.toLocaleString('en-IN')}`,
+              ]),
+            },
+          ],
+        });
+      } else if (activeTab === 'customers') {
+        if (!customerReport) {
+          toast.error('Customer insights data is still loading.');
+          return;
+        }
+        exportReportToPDF({
+          title: 'Customer Insights & Lifetime Value Report',
+          dateRange: periodStr,
+          kpis: [
+            { label: 'Total Registered', value: customerReport.summary.totalCustomers.toLocaleString('en-IN') },
+            { label: 'Active in Period', value: customerReport.summary.activeCustomers.toLocaleString('en-IN') },
+            { label: 'New in Period', value: customerReport.summary.newCustomersInPeriod.toLocaleString('en-IN') },
+            { label: 'Repeat Rate', value: `${customerReport.summary.repeatCustomerRate.toFixed(1)}%` },
+          ],
+          sections: [
+            {
+              heading: 'Top Customers by Spend',
+              headers: ['Customer Name', 'Email', 'Orders Count', 'Total Spent (₹)', 'Avg Order Value (₹)'],
+              rows: customerReport.topCustomers.map((c) => [
+                c.fullName,
+                c.email,
+                c.totalOrders,
+                `₹${c.totalSpent.toLocaleString('en-IN')}`,
+                `₹${c.averageOrderValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+              ]),
+            },
+          ],
+        });
+      } else if (activeTab === 'inventory') {
+        if (!inventoryReport) {
+          toast.error('Inventory report data is still loading.');
+          return;
+        }
+        exportReportToPDF({
+          title: 'Inventory Health & Valuation Report',
+          dateRange: periodStr,
+          kpis: [
+            { label: 'Inventory Value', value: `₹${inventoryReport.summary.totalInventoryValuation.toLocaleString('en-IN')}` },
+            { label: 'Total Units', value: inventoryReport.summary.totalStockQuantity.toLocaleString('en-IN') },
+            { label: 'Low Stock', value: inventoryReport.summary.lowStockCount.toLocaleString('en-IN') },
+            { label: 'Out of Stock', value: inventoryReport.summary.outOfStockCount.toLocaleString('en-IN') },
+          ],
+          sections: [
+            {
+              heading: 'Low Stock Reorder Items',
+              headers: ['Product', 'Variant', 'SKU', 'Current Stock', 'Threshold', 'Price (₹)'],
+              rows: inventoryReport.lowStockItems.map((i) => [
+                i.productName,
+                i.title,
+                i.sku,
+                i.currentStock,
+                i.lowStockThreshold,
+                `₹${i.price.toLocaleString('en-IN')}`,
+              ]),
+            },
+            {
+              heading: 'Out of Stock Items',
+              headers: ['Product', 'Variant', 'SKU', 'Price (₹)'],
+              rows: inventoryReport.outOfStockItems.map((i) => [
+                i.productName,
+                i.title,
+                i.sku,
+                `₹${i.price.toLocaleString('en-IN')}`,
+              ]),
+            },
+          ],
+        });
+      } else if (activeTab === 'payments') {
+        toast.info('Payment transactions can be exported via CSV or the audit log below.');
+      }
+    } catch (err: any) {
+      toast.error('Failed to generate PDF report.');
     }
   };
 
@@ -102,14 +263,27 @@ export default function AdminReportsPage() {
           </p>
         </div>
 
-        <button
-          onClick={handleExportCSV}
-          disabled={exporting || loading || activeTab === 'payments'}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-medium text-sm rounded-lg shadow-sm hover:opacity-90 transition-opacity disabled:opacity-50"
-        >
-          <Download className="h-4 w-4" />
-          {exporting ? 'Exporting...' : 'Export CSV'}
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={handleExportCSV}
+            disabled={exporting || loading}
+            className="inline-flex items-center gap-2 px-3.5 py-2 border border-border bg-card text-foreground font-medium text-xs rounded-xl shadow-xs hover:bg-muted transition-colors disabled:opacity-50"
+            title="Download CSV Spreadsheet"
+          >
+            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+            {exporting ? 'Exporting...' : 'Export CSV'}
+          </button>
+
+          <button
+            onClick={handleExportPDF}
+            disabled={loading || activeTab === 'payments'}
+            className="inline-flex items-center gap-2 px-3.5 py-2 bg-[#1A2E4C] text-white font-medium text-xs rounded-xl shadow-xs hover:bg-[#1A2E4C]/90 transition-colors disabled:opacity-50"
+            title="Print or Save as PDF"
+          >
+            <Printer className="h-3.5 w-3.5 text-[#D2925D]" />
+            Export PDF
+          </button>
+        </div>
       </div>
 
       {/* Date Filter Bar */}

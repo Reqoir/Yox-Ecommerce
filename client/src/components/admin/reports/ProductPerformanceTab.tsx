@@ -87,8 +87,8 @@ export function ProductPerformanceTab({ data, loading }: ProductPerformanceTabPr
                 <BarChart data={categoryBreakdown} margin={{ top: 10, right: 10, left: 10, bottom: 25 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                   <XAxis dataKey="categoryName" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `$${v}`} />
-                  <Tooltip formatter={(val: any) => [`$${Number(val || 0).toFixed(2)}`, 'Revenue']} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `₹${v}`} />
+                  <Tooltip formatter={(val: any) => [`₹${Number(val || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 'Revenue']} />
                   <Bar dataKey="totalRevenue" radius={[6, 6, 0, 0]}>
                     {categoryBreakdown.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -135,8 +135,8 @@ export function ProductPerformanceTab({ data, loading }: ProductPerformanceTabPr
                       <td className="px-4 py-3 font-medium">{product.productName}</td>
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{product.sku}</td>
                       <td className="px-4 py-3 text-right font-semibold">{product.unitsSold}</td>
-                      <td className="px-4 py-3 text-right font-bold text-emerald-500">
-                        ${product.totalRevenue.toFixed(2)}
+                      <td className="px-4 py-3 text-right font-bold text-emerald-600">
+                        ₹{product.totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
                     </tr>
                   ))
