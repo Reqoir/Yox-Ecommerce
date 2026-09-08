@@ -138,6 +138,60 @@ export default function AdminNotificationsPage() {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
+  const emptyDescription = useMemo(() => {
+    if (readFilter === 'unread') {
+      return 'All caught up! No unread notifications.';
+    }
+
+    if (typeFilter !== 'all') {
+      switch (typeFilter) {
+        case 'NEW_ORDER':
+          return "You'll be notified instantly when new customer orders are placed.";
+        case 'ORDER_CANCELLED':
+          return "You'll be notified instantly when orders are cancelled.";
+        case 'RETURN_REQUEST':
+          return "You'll be notified instantly when customer return requests are submitted.";
+        case 'ORDER_STATUS':
+          return "You'll be notified instantly about customer order status updates.";
+        case 'LOW_STOCK':
+          return "You'll be notified instantly when inventory levels fall below thresholds.";
+        case 'NEW_REVIEW':
+          return "You'll be notified instantly when new customer reviews are submitted.";
+        case 'NEW_USER':
+          return "You'll be notified instantly when new customers register.";
+        case 'SYSTEM':
+          return "You'll be notified instantly about system updates and announcements.";
+        default:
+          break;
+      }
+    }
+
+    const topics: string[] = [];
+    if (isAdmin || userPermissions.includes('manage_orders')) {
+      topics.push('orders, cancellations, and returns');
+    }
+    if (isAdmin || userPermissions.includes('manage_inventory')) {
+      topics.push('low stock alerts');
+    }
+    if (isAdmin || userPermissions.includes('manage_reviews')) {
+      topics.push('new reviews');
+    }
+    if (isAdmin || userPermissions.includes('manage_users')) {
+      topics.push('new customer registrations');
+    }
+    topics.push('system updates');
+
+    if (topics.length === 1) {
+      return `You'll be notified instantly about ${topics[0]}.`;
+    }
+    if (topics.length === 2) {
+      return `You'll be notified instantly about ${topics[0]} and ${topics[1]}.`;
+    }
+    const copy = [...topics];
+    const last = copy.pop();
+    return `You'll be notified instantly about ${copy.join(', ')}, and ${last}.`;
+  }, [readFilter, typeFilter, isAdmin, userPermissions]);
+
   const {
     notifications,
     total,
@@ -477,8 +531,8 @@ export default function AdminNotificationsPage() {
         <div className="flex flex-col items-center justify-center py-24 text-muted-foreground gap-3">
           <Bell className="h-12 w-12 opacity-20" />
           <p className="text-lg">No notifications</p>
-          <p className="text-sm">
-            {readFilter === 'unread' ? 'All caught up!' : "You'll be notified instantly about new orders, cancellations, and returns."}
+          <p className="text-sm text-center max-w-md">
+            {emptyDescription}
           </p>
         </div>
       ) : (
