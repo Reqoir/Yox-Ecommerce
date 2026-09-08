@@ -76,11 +76,11 @@ export function StyleSeekers() {
 
   if (isLoading) {
     return (
-      <section className="w-full mt-0 sm:mt-1 pt-2 sm:pt-4 pb-8 sm:pb-16 bg-white overflow-hidden">
+      <section className="w-full mt-0 sm:mt-1 pt-2 sm:pt-4 pb-[2px] mb-[2px] bg-white overflow-hidden">
         <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-8 mb-5 md:mb-10">
           <Skeleton className="h-7 w-48 bg-gray-200" />
         </div>
-        <div className="flex items-end gap-3 sm:gap-4 px-4 md:px-8 overflow-hidden">
+        <div className="flex items-end gap-3 sm:gap-4 px-4 md:px-8 overflow-hidden pb-[2px]">
           {[0, 1, 2, 3, 4].map((i) => (
             <Skeleton
               key={i}
@@ -97,7 +97,7 @@ export function StyleSeekers() {
   if (categories.length === 0) return null;
 
   return (
-    <section className="w-full mt-0 sm:mt-1 pt-2 sm:pt-4 pb-8 sm:pb-16 bg-white overflow-hidden">
+    <section className="w-full mt-0 sm:mt-1 pt-2 sm:pt-4 pb-[2px] mb-[2px] bg-white overflow-hidden">
       {/* Header Section with SHOP BY CATEGORY Title and Sliding Navigation Arrows */}
       <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-8 mb-5 md:mb-10 flex items-center justify-between">
         <h2 className="text-lg md:text-2xl lg:text-3xl font-bold text-gray-900 tracking-wide uppercase">
@@ -108,17 +108,17 @@ export function StyleSeekers() {
             type="button"
             onClick={() => handleScroll('left')}
             className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EFECE8] hover:bg-gray-300 flex items-center justify-center text-gray-800 transition-colors cursor-pointer"
-            aria-label="Scroll categories left"
+            aria-label="Scroll left"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={18} strokeWidth={2} />
           </button>
           <button
             type="button"
             onClick={() => handleScroll('right')}
             className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EFECE8] hover:bg-gray-300 flex items-center justify-center text-gray-800 transition-colors cursor-pointer"
-            aria-label="Scroll categories right"
+            aria-label="Scroll right"
           >
-            <ChevronRight size={16} />
+            <ChevronRight size={18} strokeWidth={2} />
           </button>
         </div>
       </div>
@@ -128,7 +128,7 @@ export function StyleSeekers() {
         ref={scrollContainerRef}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className="flex overflow-x-auto items-end gap-3 sm:gap-4 px-4 md:px-8 pb-2 sm:pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex overflow-x-auto items-end gap-3 sm:gap-4 px-4 md:px-8 pb-[2px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {scrollItems.map((category, index) => (
           <Link
