@@ -30,6 +30,7 @@ interface FormattedProduct {
   secondImage: string | null;
   slug: string;
   discountPercentage: number;
+  inStock?: boolean;
 }
 
 export function ExclusiveOffers() {
@@ -126,6 +127,7 @@ export function ExclusiveOffers() {
     secondImage: p.secondImage || p.images?.[1] ? optimizeCloudinaryUrl(p.secondImage || p.images?.[1]!) : null,
     slug: p.slug || p.id,
     discountPercentage: p.discountPercentage,
+    inStock: p.inStock !== false,
   });
 
   // Current active offer
@@ -549,20 +551,31 @@ export function ExclusiveOffers() {
                     />
                   )}
 
-                  {/* Discount percentage tag on product thumbnail */}
-                  {item.discountPercentage > 0 && (
+                  {/* Sold Out or Discount percentage tag on product thumbnail */}
+                  {item.inStock === false ? (
+                    <span className="absolute top-1 left-1 bg-black text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-none z-10">
+                      SOLD OUT
+                    </span>
+                  ) : item.discountPercentage > 0 ? (
                     <span className="absolute top-1 left-1 bg-[#B33924] text-white text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-none">
                       -{item.discountPercentage}%
                     </span>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className="flex flex-col justify-center pt-2.5 sm:pt-0 sm:pl-4 sm:py-2 flex-1">
                   <span className="text-[10px] sm:text-[11px] text-gray-500 mb-0.5 sm:mb-1">{item.category}</span>
-                  <span className="text-[12px] sm:text-[13px] font-bold text-[#40362C] mb-0.5">
-                    From ₹{item.price.toLocaleString('en-IN')}
-                  </span>
-                  {item.oldPrice ? (
+                  <div className="flex items-baseline gap-1.5 mb-0.5">
+                    <span className={`text-[12px] sm:text-[13px] font-bold ${item.inStock === false ? 'text-gray-500' : 'text-[#40362C]'}`}>
+                      From ₹{item.price.toLocaleString('en-IN')}
+                    </span>
+                    {item.inStock === false && (
+                      <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        Sold Out
+                      </span>
+                    )}
+                  </div>
+                  {item.inStock !== false && item.oldPrice ? (
                     <span className="text-[10px] sm:text-[11px] text-[#B33924] line-through mb-0.5 sm:mb-1">
                       ₹{item.oldPrice.toLocaleString('en-IN')}
                     </span>

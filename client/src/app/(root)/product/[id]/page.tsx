@@ -261,8 +261,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     new Set(variants.map(v => v.color).filter((c): c is string => Boolean(c && c.trim())))
   );
   
-  // Get active variant
-  const activeVariant = variants.find(v => v.color === selectedColor && v.size === selectedSize) 
+  // Get active variant (prioritizing default or in-stock variants if multiple matches exist)
+  const activeVariant = 
+    variants.find(v => v.color === selectedColor && v.size === selectedSize && v.isDefault)
+    || variants.find(v => v.color === selectedColor && v.size === selectedSize && (v.stock || 0) > 0)
+    || variants.find(v => v.color === selectedColor && v.size === selectedSize) 
+    || variants.find(v => v.color === selectedColor && (v.stock || 0) > 0)
     || variants.find(v => v.color === selectedColor) 
     || variants[0] || null;
 
@@ -420,7 +424,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   };
 
   const renderOffers = () => {
-    if (!bestOffer || offerSavings <= 0) return null;
+    if (isOutOfStock || !bestOffer || offerSavings <= 0) return null;
 
     return (
       <div className="border border-gray-200 bg-[#FAFAFA] rounded-xs p-4 my-5 transition-all">
@@ -558,10 +562,10 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
             {/* Price section */}
             <div className="flex flex-wrap items-baseline gap-2 mb-2">
-              <span className="text-xl sm:text-2xl font-bold text-gray-900">
+              <span className={`text-xl sm:text-2xl font-bold ${isOutOfStock ? 'text-gray-500' : 'text-gray-900'}`}>
                 Rs. {finalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })} INR
               </span>
-              {baseStrikePrice && baseStrikePrice > finalPrice && (
+              {!isOutOfStock && baseStrikePrice && baseStrikePrice > finalPrice && (
                 <>
                   <span className="text-[13px] sm:text-sm text-[#D84141] line-through font-medium">
                     Rs. {baseStrikePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })} INR

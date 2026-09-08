@@ -361,16 +361,11 @@ export function ProductGrid() {
                         SOLD OUT
                       </span>
                     </div>
-                  ) : product.offerBadge ? (
-                    <div className="absolute top-2 left-2 z-10 flex flex-col gap-0.5">
-                      <span className="bg-rose-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-xs tracking-wider">
-                        {product.offerBadge}
+                  ) : (product.offerBadge || product.offerTitle) ? (
+                    <div className="absolute top-2 left-2 z-10">
+                      <span className="bg-rose-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-xs tracking-wider max-w-[140px] truncate block">
+                        {product.offerBadge || product.offerTitle}
                       </span>
-                      {product.offerTitle && (
-                        <span className="bg-black/75 backdrop-blur-xs text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-xs max-w-[120px] truncate">
-                          {product.offerTitle}
-                        </span>
-                      )}
                     </div>
                   ) : null}
                   

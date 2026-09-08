@@ -59,26 +59,25 @@ export function FavouriteCard({ item }: FavouriteCardProps) {
           <img
             src={item.image || '/images/product-1.jpeg'}
             alt={item.name}
-            className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+            className={`w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500 ${
+              item.inStock === false ? 'opacity-80 grayscale-[20%]' : ''
+            }`}
             onError={(e) => {
               e.currentTarget.src = '/images/product-1.jpeg';
             }}
           />
         </Link>
 
-        {/* Tag */}
-        {item.tag && (
+        {/* Sold Out or Tag */}
+        {item.inStock === false ? (
+          <div className="absolute top-2.5 left-2.5 z-10 bg-black text-white px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-xs shadow-xs">
+            SOLD OUT
+          </div>
+        ) : item.tag ? (
           <div className="absolute top-2.5 left-2.5 z-10 bg-white/90 backdrop-blur px-2.5 py-0.5 text-[10px] font-medium text-gray-800 uppercase shadow-sm rounded-sm">
             {item.tag}
           </div>
-        )}
-
-        {/* Out of Stock Notice */}
-        {item.inStock === false && (
-          <div className="absolute bottom-2.5 left-2.5 z-10 bg-black/80 text-white text-[10px] font-semibold px-2 py-0.5 rounded-sm">
-            Out of Stock
-          </div>
-        )}
+        ) : null}
       </div>
 
       {/* Details */}
@@ -104,14 +103,24 @@ export function FavouriteCard({ item }: FavouriteCardProps) {
 
           {/* Pricing */}
           <div className="flex items-baseline gap-2 mb-3">
-            <span className="text-sm font-semibold text-gray-900">₹{item.price.toLocaleString()}</span>
-            {item.comparePrice && item.comparePrice > item.price && (
-              <span className="text-xs text-gray-400 line-through">₹{item.comparePrice.toLocaleString()}</span>
-            )}
-            {discountPercentage > 0 && (
-              <span className="text-[11px] font-semibold text-emerald-600 ml-auto">
-                {discountPercentage}% OFF
+            <span className={`text-sm font-semibold ${item.inStock === false ? 'text-gray-500' : 'text-gray-900'}`}>
+              ₹{item.price.toLocaleString()}
+            </span>
+            {item.inStock === false ? (
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Sold Out
               </span>
+            ) : (
+              <>
+                {item.comparePrice && item.comparePrice > item.price && (
+                  <span className="text-xs text-gray-400 line-through">₹{item.comparePrice.toLocaleString()}</span>
+                )}
+                {discountPercentage > 0 && (
+                  <span className="text-[11px] font-semibold text-emerald-600 ml-auto">
+                    {discountPercentage}% OFF
+                  </span>
+                )}
+              </>
             )}
           </div>
         </div>

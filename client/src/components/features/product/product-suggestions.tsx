@@ -32,8 +32,9 @@ function SuggestionCard({ product, categoryDisplayName }: SuggestionCardProps) {
   const defaultVariant = variants.find((v) => v.isDefault) || variants[0] || null;
   const price = defaultVariant?.price || 0;
   const comparePrice = defaultVariant?.comparePrice || null;
+  const isOutOfStock = variants.length === 0 || variants.every((v) => (v.stock === undefined ? 0 : v.stock) <= 0);
   const discountPct =
-    comparePrice && comparePrice > price
+    !isOutOfStock && comparePrice && comparePrice > price
       ? Math.round(((comparePrice - price) / comparePrice) * 100)
       : 0;
 
@@ -62,7 +63,7 @@ function SuggestionCard({ product, categoryDisplayName }: SuggestionCardProps) {
       image: primaryImage,
       price,
       comparePrice: comparePrice || undefined,
-      inStock: variants.some((v) => (v.stock || 0) > 0),
+      inStock: !isOutOfStock,
     });
   };
 
@@ -80,6 +81,8 @@ function SuggestionCard({ product, categoryDisplayName }: SuggestionCardProps) {
           src={optimizeCloudinaryUrl(primaryImage)}
           alt={product.name}
           className={`w-full h-full object-cover object-top transition-opacity duration-300 ${
+            isOutOfStock ? 'opacity-80 grayscale-[20%]' : ''
+          } ${
             secondImage ? 'group-hover:opacity-0' : ''
           }`}
         />
@@ -89,16 +92,22 @@ function SuggestionCard({ product, categoryDisplayName }: SuggestionCardProps) {
           <img
             src={optimizeCloudinaryUrl(secondImage)}
             alt={`${product.name} alternate view`}
-            className="absolute inset-0 w-full h-full object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+            className={`absolute inset-0 w-full h-full object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none ${
+              isOutOfStock ? 'grayscale-[20%]' : ''
+            }`}
           />
         )}
 
-        {/* Discount badge */}
-        {discountPct > 0 && (
-          <span className="absolute top-2 left-2 z-10 bg-black/90 text-white text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm">
+        {/* Sold Out or Discount badge */}
+        {isOutOfStock ? (
+          <span className="absolute top-2 left-2 z-10 bg-black text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-xs shadow-xs">
+            SOLD OUT
+          </span>
+        ) : discountPct > 0 ? (
+          <span className="absolute top-2 left-2 z-10 bg-rose-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-xs shadow-xs">
             {discountPct}% OFF
           </span>
-        )}
+        ) : null}
 
         {/* Wishlist */}
         <button
@@ -123,14 +132,18 @@ function SuggestionCard({ product, categoryDisplayName }: SuggestionCardProps) {
         {product.name}
       </h3>
       <div className="flex items-baseline gap-1.5 mt-auto">
-        <span className="text-[13px] font-bold text-gray-900">
+        <span className={`text-[13px] font-bold ${isOutOfStock ? 'text-gray-500' : 'text-gray-900'}`}>
           ₹{price.toLocaleString('en-IN')}
         </span>
-        {comparePrice && comparePrice > price && (
+        {isOutOfStock ? (
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            Sold Out
+          </span>
+        ) : comparePrice && comparePrice > price ? (
           <span className="text-[11px] text-gray-400 line-through">
             ₹{comparePrice.toLocaleString('en-IN')}
           </span>
-        )}
+        ) : null}
       </div>
     </Link>
   );

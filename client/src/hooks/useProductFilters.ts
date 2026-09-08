@@ -184,7 +184,7 @@ export function useProductFilters() {
             colors: (allProductColors.length > 0 ? allProductColors : [colorName]) as string[],
             fit: (p.fit as ProductFit) || undefined,
             description: p.description || p.shortDescription || undefined,
-            inStock: p.isActive && colorVariants.some((v: any) => (v.stock || 0) > 0),
+            inStock: p.isActive !== false && colorVariants.length > 0 && colorVariants.some((v: any) => (v.stock || 0) > 0),
             href: href,
           });
         });

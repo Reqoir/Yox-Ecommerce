@@ -349,6 +349,8 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
                             src={optimizeCloudinaryUrl(product.thumbnail)}
                             alt={product.name}
                             className={`w-full h-full object-cover object-top transition-opacity duration-300 ${
+                              product.inStock === false ? 'opacity-80 grayscale-[20%]' : ''
+                            } ${
                               (product.secondImage || (product.images && product.images.length > 1 && product.images[1] !== product.thumbnail))
                                 ? 'group-hover:opacity-0'
                                 : ''
@@ -358,7 +360,9 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
                             <img
                               src={optimizeCloudinaryUrl(product.secondImage || product.images![1])}
                               alt={`${product.name} alternate view`}
-                              className="absolute inset-0 w-full h-full object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                              className={`absolute inset-0 w-full h-full object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none ${
+                                product.inStock === false ? 'grayscale-[20%]' : ''
+                              }`}
                             />
                           )}
                         </>
@@ -368,12 +372,16 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
                         </div>
                       )}
 
-                      {/* Badge */}
-                      {product.discountPercentage > 0 && (
-                        <div className="absolute top-2.5 left-2.5 z-10 bg-white px-2 py-1 text-[10px] font-bold rounded-sm shadow-sm text-rose-600">
+                      {/* Badge / Sold Out */}
+                      {product.inStock === false ? (
+                        <div className="absolute top-2.5 left-2.5 z-10 bg-black text-white px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-xs shadow-xs">
+                          SOLD OUT
+                        </div>
+                      ) : product.discountPercentage > 0 ? (
+                        <div className="absolute top-2.5 left-2.5 z-10 bg-rose-600 text-white px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-xs shadow-xs">
                           {product.discountPercentage}% OFF
                         </div>
-                      )}
+                      ) : null}
 
                       {/* Wishlist Button */}
                       <button
@@ -390,7 +398,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
                             image: product.thumbnail || '/images/product-1.jpeg',
                             price: product.discountedPrice,
                             comparePrice: product.originalPrice,
-                            inStock: true,
+                            inStock: product.inStock !== false,
                           });
                         }}
                         className="absolute top-2.5 right-2.5 p-1.5 text-gray-600 hover:text-red-500 transition-colors z-10 cursor-pointer bg-white/60 hover:bg-white rounded-full backdrop-blur-xs"
@@ -408,8 +416,14 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
                         {product.name}
                       </h3>
                       <div className="flex items-center gap-2 text-[11px] font-medium text-gray-600">
-                        <span className="text-gray-900 font-bold">₹{product.discountedPrice.toLocaleString('en-IN')} INR</span>
-                        {product.originalPrice > product.discountedPrice && (
+                        <span className={`font-bold ${product.inStock === false ? 'text-gray-500' : 'text-gray-900'}`}>
+                          ₹{product.discountedPrice.toLocaleString('en-IN')} INR
+                        </span>
+                        {product.inStock === false ? (
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                            Sold Out
+                          </span>
+                        ) : product.originalPrice > product.discountedPrice && (
                           <span className="line-through text-gray-400">₹{product.originalPrice.toLocaleString('en-IN')}</span>
                         )}
                       </div>
