@@ -233,7 +233,7 @@ export function OfferBannerSlider() {
     return (
       <section className="w-full bg-white">
         <div className="w-full mx-auto">
-          <div className="w-full aspect-[1440/680] bg-gray-100 animate-pulse" />
+          <div className="w-full bg-gray-100 animate-pulse" style={{ aspectRatio: '1440 / 680' }} />
         </div>
       </section>
     );
@@ -271,7 +271,8 @@ export function OfferBannerSlider() {
 
         {/* Campaign Hero Showcase Banner */}
         <div
-          className="relative w-full aspect-[1440/680] overflow-hidden bg-gray-950 group"
+          className="relative w-full overflow-hidden bg-gray-950 group"
+          style={{ aspectRatio: '1440 / 680' }}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
