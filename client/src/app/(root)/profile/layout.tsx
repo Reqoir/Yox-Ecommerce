@@ -6,8 +6,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { User, MapPin, Package, Heart, Settings, LogOut, ShieldCheck, ChevronRight, ChevronDown } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { authApi } from '@/api/auth';
-import { ordersApi } from '@/lib/api/orders';
-import { addressApi } from '@/api/addresses';
 import { toast } from 'sonner';
 
 const sidebarLinks = [
@@ -22,16 +20,10 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   const pathname = usePathname();
   const router = useRouter();
   const { user, logoutUser } = useAuthStore();
-
-  const [orderCount, setOrderCount] = useState<number>(0);
-  const [addressCount, setAddressCount] = useState<number>(0);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      ordersApi.getMyOrders(1, 50).then((res) => setOrderCount(res.total || res.orders.length)).catch(() => {});
-      addressApi.getAddresses().then((res) => setAddressCount(res.length)).catch(() => {});
-    }
+    // Other profile layout logic if needed
   }, [user]);
 
   const handleLogout = async () => {
@@ -90,19 +82,6 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                   </div>
                   {user?.phone && <p className="text-xs text-gray-500 mt-0.5">{user.phone}</p>}
                 </div>
-              </div>
-
-              {/* Quick Metrics */}
-              <div className="flex flex-wrap items-center gap-3 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-8">
-                <Link href="/profile/orders" className="bg-gray-50 hover:bg-gray-100 transition-all rounded-sm p-3 text-center min-w-[105px] border border-gray-200/80 shadow-2xs">
-                  <span className="text-lg font-bold block text-gray-900">{orderCount}</span>
-                  <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Orders</span>
-                </Link>
-
-                <Link href="/profile/addresses" className="bg-gray-50 hover:bg-gray-100 transition-all rounded-sm p-3 text-center min-w-[105px] border border-gray-200/80 shadow-2xs">
-                  <span className="text-lg font-bold block text-gray-900">{addressCount}</span>
-                  <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Addresses</span>
-                </Link>
               </div>
             </div>
           </div>
