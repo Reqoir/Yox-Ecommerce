@@ -12,7 +12,7 @@ import { RoleRepository } from '../../../modules/roles/infrastructure/repositori
 
 const roleRepository = new RoleRepository();
 
-export const requirePermission = (requiredPermission: string) => {
+export const requirePermission = (requiredPermission: string | string[]) => {
   return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!req.user) {
@@ -40,32 +40,46 @@ export const requirePermission = (requiredPermission: string) => {
           return next();
         }
 
-        if (role.hasPermission('*') || role.hasPermission(requiredPermission)) {
+        if (role.hasPermission('*')) {
           return next();
         }
 
-        // Support logical permission aliases
-        if (requiredPermission === 'dashboard:read' && role.hasPermission('view_analytics')) {
-          return next();
-        }
+        const requiredList = Array.isArray(requiredPermission) ? requiredPermission : [requiredPermission];
 
-        if (requiredPermission === 'manage_users' && (role.hasPermission('manage_staff') || role.hasPermission('manage_roles'))) {
-          return next();
-        }
+        const checkSinglePermission = (perm: string): boolean => {
+          if (role.hasPermission(perm)) return true;
 
-        if (requiredPermission === 'manage_staff' && role.hasPermission('manage_roles')) {
-          return next();
-        }
+          // Support logical permission aliases
+          if (perm === 'dashboard:read' && role.hasPermission('view_analytics')) {
+            return true;
+          }
 
-        if (
-          requiredPermission === 'manage_orders' &&
-          (role.hasPermission('manage_shipments') || role.hasPermission('manage_returns'))
-        ) {
+          if (perm === 'manage_users' && (role.hasPermission('manage_staff') || role.hasPermission('manage_roles'))) {
+            return true;
+          }
+
+          if (perm === 'manage_staff' && role.hasPermission('manage_roles')) {
+            return true;
+          }
+
+          if (
+            perm === 'manage_orders' &&
+            (role.hasPermission('manage_shipments') || role.hasPermission('manage_returns'))
+          ) {
+            return true;
+          }
+
+          return false;
+        };
+
+        const hasAnyPermission = requiredList.some(checkSinglePermission);
+        if (hasAnyPermission) {
           return next();
         }
       }
 
-      throw ApiError.forbidden(`Access denied. Missing permission: ${requiredPermission}`);
+      const permissionString = Array.isArray(requiredPermission) ? requiredPermission.join(' or ') : requiredPermission;
+      throw ApiError.forbidden(`Access denied. Missing permission: ${permissionString}`);
     } catch (error) {
       next(error);
     }

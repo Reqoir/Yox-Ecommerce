@@ -31,13 +31,14 @@ const roleController = new RoleController(
   deleteRoleUseCase,
 );
 
-// All role management routes require 'manage_roles' permission
 router.use(requireAuth);
-router.use(requirePermission('manage_roles'));
+ 
+// Reading roles is permitted for role management and staff management
+router.get('/', requirePermission(['manage_roles', 'manage_staff']), roleController.getAll);
 
-router.get('/', roleController.getAll);
-router.post('/', roleController.create);
-router.patch('/:id', roleController.update);
-router.delete('/:id', roleController.delete);
+// Modifying roles strictly requires 'manage_roles'
+router.post('/', requirePermission('manage_roles'), roleController.create);
+router.patch('/:id', requirePermission('manage_roles'), roleController.update);
+router.delete('/:id', requirePermission('manage_roles'), roleController.delete);
 
 export const roleRoutes = router;

@@ -97,7 +97,7 @@ export default function StaffManagementPage() {
           status: statusFilter === 'all' ? undefined : statusFilter,
           userType: 'staff',
         }),
-        roleApi.getAll(),
+        roleApi.getAll().catch(() => [] as Role[]),
       ]);
 
       setStaffList(usersResponse.users);
