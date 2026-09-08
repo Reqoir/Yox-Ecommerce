@@ -3,6 +3,7 @@
  * @layer Application › Use Cases
  */
 
+import mongoose from 'mongoose';
 import { IReviewRepository } from '../../domain/repositories/review.repository.interface';
 import { CreateReviewDTO } from '../dtos/review.dto';
 import { Review } from '../../domain/entities/review.entity';
@@ -21,14 +22,28 @@ export class CreateReviewUseCase {
     }
 
     // 2. Validate that the user actually purchased the product AND it was delivered
-    const hasPurchased = await OrderModel.exists({
-      userId: dto.userId,
-      orderStatus: 'DELIVERED',
-      'items.productId': dto.productId
-    });
+    const userIds: any[] = [String(dto.userId)];
+    if (mongoose.Types.ObjectId.isValid(dto.userId)) {
+      userIds.push(new mongoose.Types.ObjectId(dto.userId));
+    }
 
-    if (!hasPurchased) {
-      throw new Error('FORBIDDEN: You can only review products you have purchased and received.');
+    const productIds: any[] = [String(dto.productId)];
+    if (mongoose.Types.ObjectId.isValid(dto.productId)) {
+      productIds.push(new mongoose.Types.ObjectId(dto.productId));
+    }
+
+    const userOrders = await OrderModel.find({
+      userId: { $in: userIds },
+      'items.productId': { $in: productIds },
+    }).lean();
+
+    if (userOrders.length === 0) {
+      throw new Error('Only verified buyers who have purchased this product can write a review.');
+    }
+
+    const hasDelivered = userOrders.some((o) => o.orderStatus === 'DELIVERED');
+    if (!hasDelivered) {
+      throw new Error('You can review this product once your order has been delivered.');
     }
 
     // 3. Create the review

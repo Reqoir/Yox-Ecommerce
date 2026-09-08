@@ -53,3 +53,36 @@ export const requireAuth = (req: Request, _res: Response, next: NextFunction): v
     next(error);
   }
 };
+
+export const optionalAuth = (req: Request, _res: Response, next: NextFunction): void => {
+  try {
+    let token: string | undefined;
+
+    if (req.cookies && (req.cookies[ACCESS_TOKEN_COOKIE] || req.cookies['accessToken'])) {
+      token = req.cookies[ACCESS_TOKEN_COOKIE] || req.cookies['accessToken'];
+    } else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    } else if (req.query && typeof req.query.token === 'string') {
+      token = req.query.token;
+    }
+
+    if (!token) {
+      return next();
+    }
+
+    try {
+      const decoded = verifyAccessToken(token);
+      req.user = {
+        id: decoded.sub,
+        email: decoded.email,
+        role: decoded.role,
+      };
+    } catch {
+      // Ignore invalid token in optionalAuth
+    }
+
+    next();
+  } catch {
+    next();
+  }
+};

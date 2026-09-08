@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Star, MessageSquare, X, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
+import { Star, MessageSquare, X, CheckCircle2, Loader2, Sparkles, ShieldCheck, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { reviewsApi } from '@/lib/api/reviews';
+import { useAuthStore } from '@/store/useAuthStore';
 
 interface ProductReviewsProps {
   productId: string;
@@ -19,7 +21,9 @@ const RATING_LABELS: Record<number, string> = {
 };
 
 export function ProductReviews({ productId }: ProductReviewsProps) {
+  const router = useRouter();
   const queryClient = useQueryClient();
+  const { isAuthenticated, user } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
@@ -31,11 +35,19 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
     queryFn: () => reviewsApi.getProductReviews(productId, { limit: 10 }),
   });
 
+  const { data: eligibility, isLoading: isCheckingEligibility } = useQuery({
+    queryKey: ['review-eligibility', productId, user?.id],
+    queryFn: () => reviewsApi.checkEligibility(productId),
+    enabled: !!productId,
+    staleTime: 30 * 1000,
+  });
+
   const submitReview = useMutation({
     mutationFn: () => reviewsApi.createReview(productId, { rating, title, comment }),
     onSuccess: () => {
       toast.success('Your review has been submitted successfully!');
       queryClient.invalidateQueries({ queryKey: ['reviews', productId] });
+      queryClient.invalidateQueries({ queryKey: ['review-eligibility', productId] });
       setIsOpen(false);
       setTitle('');
       setComment('');
@@ -49,6 +61,23 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      toast.error('Please log in to submit a review');
+      router.push(`/login?redirect=/product/${productId}`);
+      return;
+    }
+    if (!eligibility?.canReview) {
+      if (eligibility?.reason === 'NOT_PURCHASED') {
+        toast.error('Only verified buyers who have purchased this product can leave a review.');
+      } else if (eligibility?.reason === 'NOT_DELIVERED') {
+        toast.error('You can review this product once your order has been delivered.');
+      } else if (eligibility?.alreadyReviewed) {
+        toast.error('You have already reviewed this product.');
+      } else {
+        toast.error('You are not eligible to review this product.');
+      }
+      return;
+    }
     if (rating < 1) {
       toast.error('Please select a star rating');
       return;
@@ -71,6 +100,69 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
         className={i < count ? "text-[#B58546] fill-[#B58546]" : "text-gray-200 fill-gray-100"} 
       />
     ));
+  };
+
+  const renderEligibilityCTA = (inEmptyState = false) => {
+    if (isCheckingEligibility) {
+      return (
+        <div className="inline-flex items-center gap-2 text-xs text-gray-400 px-3 py-2">
+          <Loader2 size={13} className="animate-spin" />
+          <span>Checking verification...</span>
+        </div>
+      );
+    }
+
+    if (!isAuthenticated) {
+      return (
+        <button
+          type="button"
+          onClick={() => router.push(`/login?redirect=/product/${productId}`)}
+          className="inline-flex items-center justify-center gap-1.5 border border-gray-300 bg-white hover:bg-gray-50 text-gray-800 px-5 h-10 text-xs font-bold tracking-wider uppercase transition-all cursor-pointer shadow-xs active:scale-[0.98]"
+        >
+          <Lock size={13} className="text-gray-500" />
+          Sign in to Review
+        </button>
+      );
+    }
+
+    if (eligibility?.alreadyReviewed) {
+      return (
+        <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 h-10 text-xs font-semibold rounded-xs">
+          <CheckCircle2 size={15} className="text-emerald-600" />
+          <span>You have reviewed this product</span>
+        </div>
+      );
+    }
+
+    if (eligibility?.canReview) {
+      return (
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="inline-flex items-center justify-center gap-1.5 border border-black bg-black text-white hover:bg-gray-800 px-6 h-10 text-xs font-bold tracking-widest uppercase transition-all cursor-pointer shadow-xs active:scale-[0.98]"
+        >
+          <Sparkles size={13} className="text-[#B58546]" />
+          Write a Review
+        </button>
+      );
+    }
+
+    if (eligibility?.reason === 'NOT_DELIVERED') {
+      return (
+        <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 px-4 h-10 text-xs font-medium rounded-xs">
+          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+          <span>Order in transit • Review available upon delivery</span>
+        </div>
+      );
+    }
+
+    // Default: NOT_PURCHASED
+    return (
+      <div className="inline-flex items-center gap-1.5 text-gray-500 bg-gray-50 border border-gray-200 px-4 h-10 text-xs font-medium rounded-xs">
+        <ShieldCheck size={14} className="text-[#B58546]" />
+        <span>Verified buyers only</span>
+      </div>
+    );
   };
 
   return (
@@ -98,13 +190,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          className="inline-flex items-center justify-center border border-black bg-white hover:bg-black text-black hover:text-white px-6 h-10 text-xs font-bold tracking-widest uppercase transition-all cursor-pointer shadow-xs active:scale-[0.98]"
-        >
-          Write a Review
-        </button>
+        {renderEligibilityCTA()}
       </div>
 
       {/* Reviews Content */}
@@ -167,13 +253,37 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
           <p className="text-gray-500 text-xs max-w-sm mb-5">
             Be the first to share your thoughts and help others make the right choice.
           </p>
-          <button
-            type="button"
-            onClick={() => setIsOpen(true)}
-            className="border border-black bg-black text-white hover:bg-gray-800 px-5 h-9 text-xs font-bold tracking-widest uppercase transition-all cursor-pointer"
-          >
-            Leave a Review
-          </button>
+          {eligibility?.canReview ? (
+            <button
+              type="button"
+              onClick={() => setIsOpen(true)}
+              className="border border-black bg-black text-white hover:bg-gray-800 px-5 h-9 text-xs font-bold tracking-widest uppercase transition-all cursor-pointer"
+            >
+              Leave a Review
+            </button>
+          ) : !isAuthenticated ? (
+            <button
+              type="button"
+              onClick={() => router.push(`/login?redirect=/product/${productId}`)}
+              className="border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 px-5 h-9 text-xs font-bold tracking-widest uppercase transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <Lock size={12} className="text-gray-400" />
+              Sign in to Review
+            </button>
+          ) : eligibility?.alreadyReviewed ? (
+            <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1.5 bg-emerald-50 px-3 py-1.5 rounded-xs border border-emerald-200">
+              <CheckCircle2 size={14} /> You have reviewed this product
+            </span>
+          ) : eligibility?.reason === 'NOT_DELIVERED' ? (
+            <span className="text-xs text-amber-700 font-medium flex items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-xs border border-amber-200">
+              Order in transit • Review available upon delivery
+            </span>
+          ) : (
+            <span className="text-xs text-gray-500 font-medium flex items-center gap-1.5 bg-gray-100/70 px-3 py-1.5 rounded-xs border border-gray-200">
+              <ShieldCheck size={14} className="text-[#B58546]" />
+              Reviews are exclusive to verified purchasers
+            </span>
+          )}
         </div>
       )}
 
@@ -212,6 +322,21 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
             </div>
 
             {/* Form */}
+            {!eligibility?.canReview && (
+              <div className="mt-4 p-3.5 bg-amber-50/90 border border-amber-200 text-amber-900 text-xs rounded-xs flex items-center gap-2.5">
+                <ShieldCheck size={16} className="text-[#B58546] shrink-0" />
+                <span>
+                  {eligibility?.reason === 'NOT_PURCHASED'
+                    ? 'Reviews are exclusive to verified buyers who have purchased and received this product.'
+                    : eligibility?.reason === 'NOT_DELIVERED'
+                    ? 'You will be able to review this product once your order has been delivered.'
+                    : eligibility?.alreadyReviewed
+                    ? 'You have already submitted a review for this product.'
+                    : 'Only verified buyers who have received this product can review it.'}
+                </span>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="mt-6 space-y-5">
               
               {/* Star Rating Selector */}
@@ -298,7 +423,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
 
                 <button 
                   type="submit" 
-                  disabled={submitReview.isPending}
+                  disabled={submitReview.isPending || !eligibility?.canReview}
                   className="flex-1 h-11 bg-black hover:bg-gray-800 active:scale-[0.99] text-white text-[11px] font-bold tracking-widest uppercase transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitReview.isPending ? (

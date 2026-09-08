@@ -10,6 +10,7 @@ import { GetAllReviewsUseCase } from '../../application/use-cases/get-all-review
 import { UpdateReviewStatusUseCase } from '../../application/use-cases/update-review-status.use-case';
 import { GetUserReviewsUseCase } from '../../application/use-cases/get-user-reviews.use-case';
 import { DeleteReviewUseCase } from '../../application/use-cases/delete-review.use-case';
+import { CheckReviewEligibilityUseCase } from '../../application/use-cases/check-review-eligibility.use-case';
 import { ReviewStatus } from '../../domain/entities/review.entity';
 
 export class ReviewController {
@@ -19,7 +20,8 @@ export class ReviewController {
     private readonly getAllReviewsUseCase?: GetAllReviewsUseCase,
     private readonly updateReviewStatusUseCase?: UpdateReviewStatusUseCase,
     private readonly getUserReviewsUseCase?: GetUserReviewsUseCase,
-    private readonly deleteReviewUseCase?: DeleteReviewUseCase
+    private readonly deleteReviewUseCase?: DeleteReviewUseCase,
+    private readonly checkReviewEligibilityUseCase?: CheckReviewEligibilityUseCase
   ) {}
 
   createReview = async (req: Request, res: Response) => {
@@ -51,6 +53,39 @@ export class ReviewController {
       const limit = parseInt(req.query.limit as string) || 10;
 
       const result = await this.getProductReviewsUseCase.execute({ productId, page, limit });
+      return res.status(200).json({ success: true, data: result });
+    } catch (error: any) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+  };
+
+  checkEligibility = async (req: Request, res: Response) => {
+    try {
+      const { productId } = req.params;
+      const userId = (req as any).user?.id;
+
+      if (!userId) {
+        return res.status(200).json({
+          success: true,
+          data: {
+            canReview: false,
+            hasPurchased: false,
+            isDelivered: false,
+            alreadyReviewed: false,
+            reason: 'LOGIN_REQUIRED',
+          },
+        });
+      }
+
+      if (!this.checkReviewEligibilityUseCase) {
+        return res.status(501).json({ message: 'Not implemented' });
+      }
+
+      const result = await this.checkReviewEligibilityUseCase.execute({
+        userId,
+        productId,
+      });
+
       return res.status(200).json({ success: true, data: result });
     } catch (error: any) {
       return res.status(400).json({ success: false, message: error.message });

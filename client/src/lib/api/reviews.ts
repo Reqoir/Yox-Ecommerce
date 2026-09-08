@@ -6,10 +6,24 @@ export interface ReviewData {
   comment?: string;
 }
 
+export interface ReviewEligibility {
+  canReview: boolean;
+  hasPurchased: boolean;
+  isDelivered: boolean;
+  alreadyReviewed: boolean;
+  existingReview?: any;
+  reason?: 'LOGIN_REQUIRED' | 'ALREADY_REVIEWED' | 'NOT_PURCHASED' | 'NOT_DELIVERED';
+}
+
 export const reviewsApi = {
   createReview: async (productId: string, data: ReviewData) => {
     const response = await apiClient.post('/reviews', { productId, ...data });
     return response.data;
+  },
+
+  checkEligibility: async (productId: string): Promise<ReviewEligibility> => {
+    const response = await apiClient.get<{ success: boolean; data: ReviewEligibility }>(`/reviews/product/${productId}/eligibility`);
+    return response.data.data;
   },
 
   getProductReviews: async (productId: string, params?: { page?: number; limit?: number }) => {
