@@ -231,11 +231,9 @@ export function OfferBannerSlider() {
 
   if (isLoading && banners.length === 0) {
     return (
-      <section className="w-full py-8 sm:py-12 bg-white">
-        <div className="w-[98%] max-w-[1500px] 2xl:max-w-[1700px] mx-auto px-4 md:px-8">
-          <div className="h-5 w-36 bg-gray-100 rounded mb-2 animate-pulse" />
-          <div className="h-8 w-64 bg-gray-100 rounded mb-6 animate-pulse" />
-          <div className="w-full aspect-[4/5] sm:aspect-[16/8] lg:aspect-[22/9] bg-gray-100 rounded-sm animate-pulse" />
+      <section className="w-full bg-white">
+        <div className="w-full mx-auto">
+          <div className="w-full aspect-[21/9] bg-gray-100 animate-pulse" />
         </div>
       </section>
     );
@@ -268,12 +266,12 @@ export function OfferBannerSlider() {
       : `FLAT ₹${current.discountValue} OFF`;
 
   return (
-    <section className="w-full py-8 sm:py-14 bg-white border-t border-b border-gray-100 overflow-hidden">
-      <div className="w-[98%] max-w-[1500px] 2xl:max-w-[1700px] mx-auto px-4 md:px-8">
+    <section className="w-full bg-white border-t border-b border-gray-100 overflow-hidden mb-6 sm:mb-10">
+      <div className="w-full mx-auto">
 
         {/* Campaign Hero Showcase Banner */}
         <div
-          className="relative w-full rounded-sm overflow-hidden bg-gray-950 group aspect-[4/5] sm:aspect-[16/8] lg:aspect-[21/9] xl:aspect-[24/9] min-h-[380px] sm:min-h-[420px] max-h-[560px] 2xl:max-h-[620px]"
+          className="relative w-full overflow-hidden bg-gray-950 group"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
@@ -282,10 +280,10 @@ export function OfferBannerSlider() {
             <img
               src={bannerInfo.imageUrl}
               alt={bannerInfo.title || current.title}
-              className="w-full h-full object-cover object-center transition-transform duration-1000 ease-out group-hover:scale-105"
+              className="w-full h-auto object-cover object-center transition-transform duration-1000 ease-out group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-r from-gray-900 via-neutral-900 to-black" />
+            <div className="w-full min-h-[380px] sm:min-h-[420px] bg-gradient-to-r from-gray-900 via-neutral-900 to-black" />
           )}
 
           {/* High-Contrast Editorial Overlay */}
