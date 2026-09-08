@@ -233,7 +233,7 @@ export function OfferBannerSlider() {
     return (
       <section className="w-full bg-white">
         <div className="w-full mx-auto">
-          <div className="w-full aspect-[21/9] bg-gray-100 animate-pulse" />
+          <div className="w-full aspect-[1440/680] bg-gray-100 animate-pulse" />
         </div>
       </section>
     );
@@ -271,7 +271,7 @@ export function OfferBannerSlider() {
 
         {/* Campaign Hero Showcase Banner */}
         <div
-          className="relative w-full overflow-hidden bg-gray-950 group"
+          className="relative w-full aspect-[1440/680] overflow-hidden bg-gray-950 group"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
@@ -280,7 +280,7 @@ export function OfferBannerSlider() {
             <img
               src={bannerInfo.imageUrl}
               alt={bannerInfo.title || current.title}
-              className="w-full h-auto object-cover object-center transition-transform duration-1000 ease-out group-hover:scale-105"
+              className="w-full h-full object-cover object-center transition-transform duration-1000 ease-out group-hover:scale-105"
             />
           ) : (
             <div className="w-full min-h-[380px] sm:min-h-[420px] bg-gradient-to-r from-gray-900 via-neutral-900 to-black" />
