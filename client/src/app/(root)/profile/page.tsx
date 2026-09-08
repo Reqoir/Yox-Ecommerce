@@ -7,12 +7,10 @@ import {
   User,
   MapPin,
   Package,
-  RotateCcw,
   Heart,
-  ShoppingBag,
-  Star,
-  Sparkles,
+  Settings,
   ChevronRight,
+  Shield,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { authApi } from '@/api/auth';
@@ -20,7 +18,7 @@ import { toast } from 'sonner';
 
 export default function ProfileOverviewPage() {
   const router = useRouter();
-  const { logoutUser } = useAuthStore();
+  const { user, logoutUser } = useAuthStore();
 
   const handleLogout = async () => {
     try {
@@ -35,20 +33,11 @@ export default function ProfileOverviewPage() {
   };
 
   const accountItems = [
-    { label: 'PERSONAL INFORMATION', href: '/profile/personal-info', icon: User },
+    { label: 'MY PROFILE', href: '/profile/personal-info', icon: User },
+    { label: 'MY ORDERS', href: '/profile/orders', icon: Package },
     { label: 'SAVED ADDRESSES', href: '/profile/addresses', icon: MapPin },
-  ];
-
-  const shoppingItems = [
-    { label: 'ORDERS', href: '/profile/orders', icon: Package },
-    { label: 'REFUNDS', href: '/profile/orders', icon: RotateCcw },
-    { label: 'MY FAVOURITES', href: '/profile/favourites', icon: Heart },
-    { label: 'EXPLORE SHOP CATALOG', href: '/shop', icon: ShoppingBag },
-    { label: 'RATE & REVIEW', href: '/profile/orders', icon: Star },
-  ];
-
-  const communityItems = [
-    { label: 'EXCLUSIVE OFFERS & DROPS', href: '/offers', icon: Sparkles },
+    { label: 'MY WISHLIST', href: '/profile/favourites', icon: Heart },
+    { label: 'ACCOUNT SETTINGS', href: '/profile/settings', icon: Settings },
   ];
 
   return (
@@ -77,65 +66,26 @@ export default function ProfileOverviewPage() {
               </Link>
             );
           })}
-        </div>
-      </div>
 
-      {/* SHOPPING SECTION */}
-      <div>
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-1 mb-2.5">
-          SHOPPING
-        </h3>
-        <div className="bg-white border border-gray-200 rounded-sm divide-y divide-gray-100 overflow-hidden shadow-2xs">
-          {shoppingItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="flex items-center justify-between p-4 bg-white hover:bg-gray-50/80 transition-colors group"
-              >
-                <div className="flex items-center gap-3.5">
-                  <Icon className="w-5 h-5 text-gray-800 shrink-0 stroke-[1.75]" />
-                  <span className="text-xs font-semibold text-gray-800 tracking-wider uppercase">
-                    {item.label}
-                  </span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* COMMUNITY SECTION */}
-      <div>
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-1 mb-2.5">
-          COMMUNITY
-        </h3>
-        <div className="bg-white border border-gray-200 rounded-sm divide-y divide-gray-100 overflow-hidden shadow-2xs">
-          {communityItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="flex items-center justify-between p-4 bg-white hover:bg-gray-50/80 transition-colors group"
-              >
-                <div className="flex items-center gap-3.5">
-                  <Icon className="w-5 h-5 text-gray-800 shrink-0 stroke-[1.75]" />
-                  <span className="text-xs font-semibold text-gray-800 tracking-wider uppercase">
-                    {item.label}
-                  </span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
-              </Link>
-            );
-          })}
+          {user?.permissions?.includes('admin:access') && (
+            <Link
+              href="/admin"
+              className="flex items-center justify-between p-4 bg-blue-50/50 hover:bg-blue-50 transition-colors group"
+            >
+              <div className="flex items-center gap-3.5">
+                <Shield className="w-5 h-5 text-[#1A2E4C] shrink-0 stroke-[1.75]" />
+                <span className="text-xs font-bold text-[#1A2E4C] tracking-wider uppercase">
+                  ADMIN DASHBOARD
+                </span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#1A2E4C] group-hover:text-black transition-colors" />
+            </Link>
+          )}
         </div>
       </div>
 
       {/* FOOTER LINKS */}
-      <div className="flex items-center justify-center gap-6 sm:gap-10 pt-6 pb-2 text-xs font-semibold tracking-widest text-gray-800 uppercase border-t border-gray-100">
+      <div className="flex items-center justify-center gap-6 sm:gap-10 pt-8 pb-2 text-xs font-semibold tracking-widest text-gray-800 uppercase border-t border-gray-100">
         <Link href="/contact" className="hover:underline">
           HELP
         </Link>
@@ -144,7 +94,7 @@ export default function ProfileOverviewPage() {
           SETTINGS
         </Link>
         <span className="text-gray-300">|</span>
-        <button onClick={handleLogout} className="hover:underline cursor-pointer">
+        <button onClick={handleLogout} className="hover:underline cursor-pointer text-rose-600">
           LOGOUT
         </button>
       </div>
