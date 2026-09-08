@@ -156,7 +156,7 @@ export function NewAndPopular() {
   }, [dbProducts, activeTab, categoryMap, dbCategories, activeOffers]);
 
   return (
-    <section className="w-full py-16 bg-white overflow-hidden">
+    <section className="w-full pt-12 sm:pt-16 pb-6 sm:pb-8 bg-white overflow-hidden">
       <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-0">
         
         {/* Header */}
