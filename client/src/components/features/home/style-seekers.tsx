@@ -77,7 +77,7 @@ export function StyleSeekers() {
   if (isLoading) {
     return (
       <section className="w-full mt-0 sm:mt-1 pt-2 sm:pt-4 pb-[2px] mb-[2px] bg-white overflow-hidden">
-        <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-8 mb-5 md:mb-10">
+        <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-8 mb-7 sm:mb-10 md:mb-14">
           <Skeleton className="h-7 w-48 bg-gray-200" />
         </div>
         <div className="flex items-end gap-3 sm:gap-4 px-4 md:px-8 overflow-hidden pb-[2px]">
@@ -99,7 +99,7 @@ export function StyleSeekers() {
   return (
     <section className="w-full mt-0 sm:mt-1 pt-2 sm:pt-4 pb-[2px] mb-[2px] bg-white overflow-hidden">
       {/* Header Section with SHOP BY CATEGORY Title and Sliding Navigation Arrows */}
-      <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-8 mb-5 md:mb-10 flex items-center justify-between">
+      <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-8 mb-7 sm:mb-10 md:mb-14 flex items-center justify-between">
         <h2 className="text-lg md:text-2xl lg:text-3xl font-bold text-gray-900 tracking-wide uppercase">
           SHOP BY CATEGORY
         </h2>
