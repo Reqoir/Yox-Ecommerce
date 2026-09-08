@@ -339,19 +339,12 @@ export function Navbar() {
                     setIsUserDropdownOpen((prev) => !prev);
                   }
                 }}
-                className="flex items-center gap-1.5 p-1 rounded-md hover:bg-gray-100 transition-all focus:outline-none group cursor-pointer"
+                className="flex items-center text-black hover:opacity-70 transition-opacity p-1 cursor-pointer focus:outline-none"
                 aria-expanded={isUserDropdownOpen}
                 aria-label="User account menu"
                 title={user.fullName || "My Account"}
               >
-                <IoPersonOutline size={22} className="text-black shrink-0" />
-                <span className="text-xs font-semibold text-gray-800 group-hover:text-black max-w-[90px] sm:max-w-[120px] truncate">
-                  {user.fullName ? user.fullName.split(' ')[0] : 'Account'}
-                </span>
-                <ChevronDown 
-                  size={14} 
-                  className={`text-gray-500 group-hover:text-black transition-transform duration-200 ${isUserDropdownOpen ? 'rotate-180' : ''}`} 
-                />
+                <IoPersonOutline size={22} />
               </button>
             ) : (
               <button
@@ -379,7 +372,7 @@ export function Navbar() {
 
                 {/* Links */}
                 <div className="flex flex-col divide-y divide-gray-100">
-                  <Link href="/profile" onClick={() => setIsUserDropdownOpen(false)} className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group">
+                  <Link href="/profile/personal-info" onClick={() => setIsUserDropdownOpen(false)} className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group">
                     <span className="text-sm font-medium text-gray-800">My Profile</span>
                     <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
                   </Link>
@@ -530,7 +523,7 @@ export function Navbar() {
 
           {/* Links */}
           <div className="flex-1 flex flex-col divide-y divide-gray-100">
-            <Link href="/profile" onClick={() => setIsMobileProfileOpen(false)} className="flex items-center justify-between p-5 bg-white hover:bg-gray-50 transition-colors group">
+            <Link href="/profile/personal-info" onClick={() => setIsMobileProfileOpen(false)} className="flex items-center justify-between p-5 bg-white hover:bg-gray-50 transition-colors group">
               <span className="text-base font-medium text-gray-800">My Profile</span>
               <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-700 transition-colors" />
             </Link>
