@@ -6,7 +6,8 @@ import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { useCartStore } from '@/store/useCartStore';
 import { FavouriteCard } from '@/components/features/favourites/favourite-card';
 import { EmptyFavourites } from '@/components/features/favourites/empty-favourites';
-import { Trash2, ShoppingBag, ArrowUpDown } from 'lucide-react';
+import { Trash2, ArrowUpDown } from 'lucide-react';
+import { BsHandbag } from 'react-icons/bs';
 import { toast } from 'sonner';
 
 type SortOption = 'default' | 'price-low' | 'price-high';
@@ -95,7 +96,7 @@ export default function FavouritesPage() {
       {/* Header Breadcrumb & Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-200 pb-4 gap-3">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-xl lg:text-2xl font-semibold text-gray-900 tracking-tight">
             My Favourites
           </h1>
           <p className="text-xs text-gray-500 mt-1">
@@ -122,9 +123,9 @@ export default function FavouritesPage() {
           {inStockCount > 0 && (
             <button
               onClick={handleAddAllToCart}
-              className="flex items-center gap-1.5 bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-bold py-2 px-4 rounded-full transition-colors shadow-sm"
+              className="flex items-center gap-1.5 bg-white hover:bg-gray-50 text-black border border-black text-xs font-medium py-2 px-4 rounded-sm transition-colors shadow-2xs cursor-pointer"
             >
-              <ShoppingBag size={13} />
+              <BsHandbag size={15} />
               <span>Add All In-Stock ({inStockCount})</span>
             </button>
           )}

@@ -163,14 +163,14 @@ export function AddressForm({ isOpen, onClose, onSubmit, initialData }: AddressF
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-lg shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-gray-900 rounded-sm w-full max-w-lg shadow-xl overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-200">
         <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             {initialData ? 'Edit Address' : 'Add New Address'}
           </h2>
           <button 
             onClick={onClose}
-            className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+            className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-sm transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -189,7 +189,7 @@ export function AddressForm({ isOpen, onClose, onSubmit, initialData }: AddressF
                 placeholder="e.g. Rahul Sharma"
                 value={formData.fullName}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-sm ${
+                className={`w-full px-4 py-2.5 rounded-sm border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-sm ${
                   errors.fullName ? 'border-red-500 bg-red-50/20' : 'border-gray-200 dark:border-gray-800'
                 }`}
               />
@@ -205,11 +205,11 @@ export function AddressForm({ isOpen, onClose, onSubmit, initialData }: AddressF
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Phone Number <span className="text-red-500">*</span>
               </label>
-              <div className="flex rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden focus-within:ring-2 focus-within:ring-black dark:focus-within:ring-white">
+              <div className="flex rounded-sm border border-gray-200 dark:border-gray-800 overflow-hidden focus-within:ring-2 focus-within:ring-black dark:focus-within:ring-white">
                 <select
                   value={countryCode}
                   onChange={handleCountryCodeChange}
-                  className="bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-3 py-2.5 text-xs font-semibold border-r border-gray-200 dark:border-gray-700 outline-none cursor-pointer max-w-[130px] sm:max-w-[150px]"
+                  className="bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-3 py-2.5 text-xs font-medium border-r border-gray-200 dark:border-gray-700 outline-none cursor-pointer max-w-[130px] sm:max-w-[150px]"
                 >
                   {COUNTRY_CODES.map((c) => (
                     <option key={c.code} value={c.code}>
@@ -250,7 +250,7 @@ export function AddressForm({ isOpen, onClose, onSubmit, initialData }: AddressF
                 placeholder="House/Flat No, Building, Street, Landmark"
                 value={formData.street}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-sm ${
+                className={`w-full px-4 py-2.5 rounded-sm border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-sm ${
                   errors.street ? 'border-red-500 bg-red-50/20' : 'border-gray-200 dark:border-gray-800'
                 }`}
               />
@@ -272,7 +272,7 @@ export function AddressForm({ isOpen, onClose, onSubmit, initialData }: AddressF
                 placeholder="e.g. Mumbai"
                 value={formData.city}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-sm ${
+                className={`w-full px-4 py-2.5 rounded-sm border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-sm ${
                   errors.city ? 'border-red-500 bg-red-50/20' : 'border-gray-200 dark:border-gray-800'
                 }`}
               />
@@ -294,7 +294,7 @@ export function AddressForm({ isOpen, onClose, onSubmit, initialData }: AddressF
                 placeholder="e.g. Maharashtra"
                 value={formData.state}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-sm ${
+                className={`w-full px-4 py-2.5 rounded-sm border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-sm ${
                   errors.state ? 'border-red-500 bg-red-50/20' : 'border-gray-200 dark:border-gray-800'
                 }`}
               />
@@ -316,7 +316,7 @@ export function AddressForm({ isOpen, onClose, onSubmit, initialData }: AddressF
                 placeholder="e.g. 400001"
                 value={formData.zipCode}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-sm ${
+                className={`w-full px-4 py-2.5 rounded-sm border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-sm ${
                   errors.zipCode ? 'border-red-500 bg-red-50/20' : 'border-gray-200 dark:border-gray-800'
                 }`}
               />
@@ -338,7 +338,7 @@ export function AddressForm({ isOpen, onClose, onSubmit, initialData }: AddressF
                 placeholder="e.g. India"
                 value={formData.country}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-sm ${
+                className={`w-full px-4 py-2.5 rounded-sm border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-sm ${
                   errors.country ? 'border-red-500 bg-red-50/20' : 'border-gray-200 dark:border-gray-800'
                 }`}
               />
@@ -359,7 +359,7 @@ export function AddressForm({ isOpen, onClose, onSubmit, initialData }: AddressF
                 onChange={handleChange}
                 className="peer sr-only"
               />
-              <div className="w-5 h-5 border-2 border-gray-300 dark:border-gray-600 rounded peer-checked:bg-black peer-checked:border-black dark:peer-checked:bg-white dark:peer-checked:border-white transition-all"></div>
+              <div className="w-5 h-5 border-2 border-gray-300 dark:border-gray-600 rounded-sm peer-checked:bg-black peer-checked:border-black dark:peer-checked:bg-white dark:peer-checked:border-white transition-all"></div>
               <svg className="absolute w-3 h-3 text-white dark:text-black left-1 top-1 opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
@@ -373,13 +373,13 @@ export function AddressForm({ isOpen, onClose, onSubmit, initialData }: AddressF
             <button 
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 font-medium rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              className="flex-1 py-3 font-medium rounded-sm border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               Cancel
             </button>
             <button 
               type="submit"
-              className="flex-1 py-3 bg-black text-white dark:bg-white dark:text-black font-medium rounded-xl hover:opacity-90 transition-opacity shadow-sm"
+              className="flex-1 py-3 bg-black text-white dark:bg-white dark:text-black font-medium rounded-sm hover:opacity-90 transition-opacity shadow-sm"
             >
               Save Address
             </button>

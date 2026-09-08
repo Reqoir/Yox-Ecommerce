@@ -17,14 +17,14 @@ export function TopBar() {
   // Resolve background color class or style
   const getBannerBg = (color?: string) => {
     if (!color) {
-      return { className: '', style: { backgroundColor: '#1A2E4C' } };
+      return { className: '', style: { backgroundColor: '#000000' } };
     }
     const COLOR_MAP: Record<string, string> = {
       'bg-black': '#000000',
       'black': '#000000',
-      'bg-[#1A2E4C]': '#1A2E4C',
-      '#1A2E4C': '#1A2E4C',
-      'navy': '#1A2E4C',
+      'bg-[#1A2E4C]': '#000000',
+      '#1A2E4C': '#000000',
+      'navy': '#000000',
       'bg-emerald-900': '#064e3b',
       'bg-purple-900': '#581c87',
       'bg-rose-900': '#881337',

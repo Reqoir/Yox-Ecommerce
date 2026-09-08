@@ -13,6 +13,7 @@ import { useProductFilters } from '@/hooks/useProductFilters';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
 import { authApi } from '@/api/auth';
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 export function Navbar() {
   const router = useRouter();
@@ -141,14 +142,96 @@ export function Navbar() {
   };
 
   return (
-    <nav suppressHydrationWarning className={`w-full bg-white sticky top-0 z-40 ${pathname !== '/' ? 'shadow-sm border-b border-gray-100' : 'border-b'}`}>
+    <nav suppressHydrationWarning className={`w-full bg-white sticky top-0 z-40 ${pathname !== '/' ? 'shadow-sm border-b border-gray-100' : 'border-b border-gray-100'}`}>
       <div className="w-full px-4 lg:px-0 lg:w-[95%] mx-auto h-20 flex items-center justify-between">
         
-        {/* Left Side: Empty space to keep logo centered */}
-        <div className="hidden lg:flex flex-1"></div>
+        {/* Left Side: Hamburger Menu on Mobile, Empty Flex-1 on Desktop */}
+        <div className="flex-1 flex items-center justify-start">
+          <Sheet>
+            <SheetTrigger 
+              className="lg:hidden flex items-center text-black hover:opacity-70 transition-opacity p-1 -ml-1 cursor-pointer"
+              aria-label="Open mobile navigation menu"
+            >
+              <Menu size={24} />
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[300px] sm:w-[340px] p-0 bg-white border-r border-gray-200">
+              <SheetHeader className="p-5 border-b border-gray-100 flex flex-row items-center justify-between">
+                <SheetTitle className="sr-only">Mobile Navigation Menu</SheetTitle>
+                <Link href="/" className="h-9 relative overflow-hidden block">
+                  <img src="/images/logo.png" alt="YOX Men's Fashion" className="h-full w-auto object-contain" />
+                </Link>
+              </SheetHeader>
 
-        {/* Center: Logo */}
-        <div className="flex justify-start lg:justify-center items-center flex-1">
+              <div className="flex flex-col py-3 overflow-y-auto">
+                <div className="px-5 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Navigation</p>
+                  <div className="space-y-1">
+                    <SheetClose render={<Link href="/" className="block py-2 text-sm font-semibold text-gray-800 hover:text-black" />}>
+                      Home
+                    </SheetClose>
+                    <SheetClose render={<Link href="/shop" className="block py-2 text-sm font-semibold text-gray-800 hover:text-black" />}>
+                      Shop All Catalog
+                    </SheetClose>
+                    <SheetClose render={<Link href="/offers" className="block py-2 text-sm font-semibold text-gray-800 hover:text-black" />}>
+                      Exclusive Offers & Drops
+                    </SheetClose>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 my-2 pt-3 px-5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Categories</p>
+                  <div className="space-y-1">
+                    {['T-SHIRT', 'JACKET', 'ACCESSORIES', 'PANTS', 'SHIRTS'].map((cat) => (
+                      <SheetClose 
+                        key={cat} 
+                        render={
+                          <Link 
+                            href={`/shop?category=${cat.toLowerCase()}`}
+                            className="block py-1.5 text-xs font-medium text-gray-600 hover:text-black uppercase tracking-wider"
+                          />
+                        }
+                      >
+                        {cat}
+                      </SheetClose>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 my-2 pt-3 px-5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">My Account & Bag</p>
+                  <div className="space-y-2">
+                    <SheetClose render={<Link href="/cart" className="flex items-center justify-between py-1.5 text-xs font-semibold text-gray-800 hover:text-black" />}>
+                      <span className="flex items-center gap-2">
+                        <BsHandbag size={18} />
+                        My Shopping Bag
+                      </span>
+                      {mounted && cartCount > 0 && (
+                        <span className="bg-black text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          {cartCount}
+                        </span>
+                      )}
+                    </SheetClose>
+
+                    <SheetClose render={<Link href="/profile/favourites" className="flex items-center justify-between py-1.5 text-xs font-semibold text-gray-800 hover:text-black" />}>
+                      <span className="flex items-center gap-2">
+                        <Heart size={18} />
+                        My Wishlist
+                      </span>
+                      {mounted && favouritesCount > 0 && (
+                        <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          {favouritesCount}
+                        </span>
+                      )}
+                    </SheetClose>
+                  </div>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        {/* Center: Logo (Centered on Mobile & Desktop) */}
+        <div className="flex justify-center items-center flex-1">
           <Link href="/" className="flex-shrink-0 h-10 md:h-12 relative overflow-hidden flex items-center justify-center">
             <img 
               src="/images/logo.png" 
@@ -158,8 +241,8 @@ export function Navbar() {
           </Link>
         </div>
 
-        {/* Right Actions & Search */}
-        <div className="flex items-center justify-end gap-5 flex-1">
+        {/* Right Side: Search & Profile (Mobile & Desktop), Wishlist & Cart (Desktop Only) */}
+        <div className="flex items-center justify-end gap-3.5 sm:gap-4 lg:gap-5 flex-1">
           
           {/* Desktop Search Bar */}
           <div className="hidden md:block relative w-full max-w-[280px]" ref={containerRef}>
@@ -233,48 +316,41 @@ export function Navbar() {
             )}
           </div>
 
-          {/* User Icon & Account Dropdown */}
+          {/* Mobile Search Trigger Button (Right Side) */}
+          <button 
+            suppressHydrationWarning
+            onClick={() => setIsMobileSearchOpen(true)}
+            className="md:hidden flex items-center text-black hover:opacity-70 transition-opacity p-1 cursor-pointer"
+            aria-label="Search"
+          >
+            <Search size={22} />
+          </button>
+
+          {/* User Icon & Account Dropdown (Right Side on Mobile & Desktop) */}
           <div className="relative" ref={userDropdownRef}>
             {mounted && user ? (
               <button
                 suppressHydrationWarning
                 onClick={() => setIsUserDropdownOpen((prev) => !prev)}
-                className="flex items-center gap-2 p-1 -m-1 rounded-full hover:bg-gray-100 transition-all focus:outline-none group"
+                className="flex items-center gap-1.5 p-1 rounded-md hover:bg-gray-100 transition-all focus:outline-none group cursor-pointer"
                 aria-expanded={isUserDropdownOpen}
                 aria-label="User account menu"
                 title={user.fullName || "My Account"}
               >
-                <div className="relative">
-                  {user.avatar ? (
-                    <img 
-                      src={user.avatar} 
-                      alt={user.fullName || "User"} 
-                      className="w-8 h-8 rounded-full object-cover border border-gray-300 shadow-xs group-hover:border-black transition-colors"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-black text-white text-xs font-bold flex items-center justify-center border border-black/10 shadow-xs group-hover:scale-105 transition-transform">
-                      {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
-                    </div>
-                  )}
-                  {/* Active online status badge */}
-                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full" />
-                </div>
-
-                <div className="hidden lg:flex items-center gap-1 text-left">
-                  <span className="text-xs font-semibold text-gray-800 group-hover:text-black max-w-[90px] truncate">
-                    {user.fullName ? user.fullName.split(' ')[0] : 'Account'}
-                  </span>
-                  <ChevronDown 
-                    size={14} 
-                    className={`text-gray-500 group-hover:text-black transition-transform duration-200 ${isUserDropdownOpen ? 'rotate-180' : ''}`} 
-                  />
-                </div>
+                <IoPersonOutline size={22} className="text-black shrink-0" />
+                <span className="text-xs font-semibold text-gray-800 group-hover:text-black max-w-[90px] sm:max-w-[120px] truncate">
+                  {user.fullName ? user.fullName.split(' ')[0] : 'Account'}
+                </span>
+                <ChevronDown 
+                  size={14} 
+                  className={`text-gray-500 group-hover:text-black transition-transform duration-200 ${isUserDropdownOpen ? 'rotate-180' : ''}`} 
+                />
               </button>
             ) : (
               <button
                 suppressHydrationWarning
                 onClick={() => router.push('/login')}
-                className="flex items-center text-black hover:opacity-70 transition-opacity"
+                className="flex items-center text-black hover:opacity-70 transition-opacity p-1 cursor-pointer"
                 title="Sign In / Register"
                 aria-label="Sign In"
               >
@@ -369,8 +445,8 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Wishlist Icon */}
-          <Link href="/profile/favourites" className="flex items-center relative text-black hover:opacity-70 transition-opacity" title="Wishlist">
+          {/* Wishlist Icon (Desktop Only - Hidden on Mobile) */}
+          <Link href="/profile/favourites" className="hidden lg:flex items-center relative text-black hover:opacity-70 transition-opacity" title="Wishlist">
             <div className="relative">
               <Heart size={21} />
               {mounted && favouritesCount > 0 && (
@@ -381,17 +457,8 @@ export function Navbar() {
             </div>
           </Link>
 
-          {/* Mobile Search Trigger */}
-          <button 
-            suppressHydrationWarning
-            onClick={() => setIsMobileSearchOpen(true)}
-            className="md:hidden flex items-center text-black hover:opacity-70 transition-opacity"
-          >
-            <Search size={22} />
-          </button>
-
-          {/* Cart Icon */}
-          <Link href="/cart" className="flex items-center relative text-black hover:opacity-70 transition-opacity">
+          {/* Cart Icon (Desktop Only - Hidden on Mobile) */}
+          <Link href="/cart" className="hidden lg:flex items-center relative text-black hover:opacity-70 transition-opacity">
             <div className="relative">
               <BsHandbag size={22} />
               {mounted && cartCount > 0 && (
@@ -401,11 +468,6 @@ export function Navbar() {
               )}
             </div>
           </Link>
-
-          {/* Mobile Menu */}
-          <button suppressHydrationWarning className="lg:hidden flex items-center text-black hover:opacity-70 transition-opacity ml-2">
-            <Menu size={24} />
-          </button>
 
         </div>
       </div>

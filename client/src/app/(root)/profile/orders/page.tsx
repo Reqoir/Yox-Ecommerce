@@ -43,7 +43,7 @@ export default function MyOrdersPage() {
         return {
           text: `Cancelled & Refunded`,
           subText: `Refund of ₹${order.totalAmount} completed to bank account`,
-          colorClass: 'text-purple-700 font-bold',
+          colorClass: 'text-purple-700 font-medium',
           badgeBg: 'bg-purple-50 border-purple-200 text-purple-800',
         };
       }
@@ -51,14 +51,14 @@ export default function MyOrdersPage() {
         return {
           text: `Cancelled (Refund Processing)`,
           subText: `Refund of ₹${order.totalAmount} will be credited within 2 business days`,
-          colorClass: 'text-amber-700 font-bold',
+          colorClass: 'text-amber-700 font-medium',
           badgeBg: 'bg-amber-50 border-amber-200 text-amber-800',
         };
       }
       return {
         text: `Cancelled`,
         subText: order.cancelledReason ? `Reason: ${order.cancelledReason}` : `Order was cancelled`,
-        colorClass: 'text-rose-600 font-bold',
+        colorClass: 'text-rose-600 font-medium',
         badgeBg: 'bg-rose-50 border-rose-200 text-rose-700',
       };
     }
@@ -67,7 +67,7 @@ export default function MyOrdersPage() {
       return {
         text: `Returned & Refunded`,
         subText: `Refund of ₹${orderReturn?.refundAmount || order.totalAmount} completed`,
-        colorClass: 'text-emerald-700 font-bold',
+        colorClass: 'text-emerald-700 font-medium',
         badgeBg: 'bg-emerald-50 border-emerald-200 text-emerald-800',
       };
     }
@@ -76,7 +76,7 @@ export default function MyOrdersPage() {
       return {
         text: `Return Progress (${orderReturn.status.replace(/_/g, ' ')})`,
         subText: `Return requested for order item`,
-        colorClass: 'text-amber-700 font-bold',
+        colorClass: 'text-amber-700 font-medium',
         badgeBg: 'bg-amber-50 border-amber-200 text-amber-800',
       };
     }
@@ -90,7 +90,7 @@ export default function MyOrdersPage() {
       return {
         text: `Delivered on ${deliveredDate}`,
         subText: `Package handed to recipient`,
-        colorClass: 'text-emerald-600 font-bold',
+        colorClass: 'text-emerald-600 font-medium',
         badgeBg: 'bg-emerald-50 border-emerald-200 text-emerald-700',
       };
     }
@@ -106,15 +106,15 @@ export default function MyOrdersPage() {
     return {
       text: `Arriving ${formattedDate} between 7:00 AM - 10:00 PM`,
       subText: `Order #${order.orderNumber} • ${order.orderStatus.replace(/_/g, ' ')}`,
-      colorClass: 'text-emerald-600 font-bold',
+      colorClass: 'text-emerald-600 font-medium',
       badgeBg: 'bg-emerald-50 border-emerald-200 text-emerald-800',
     };
   };
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] bg-white rounded-2xl border border-gray-200 p-8 text-center">
-        <Loader2 className="w-8 h-8 text-[#1A2E4C] animate-spin mb-3" />
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] bg-white rounded-sm border border-gray-200 p-8 text-center">
+        <Loader2 className="w-8 h-8 text-black animate-spin mb-3" />
         <p className="text-sm font-medium text-gray-500">Loading your order history...</p>
       </div>
     );
@@ -124,26 +124,26 @@ export default function MyOrdersPage() {
     <div className="flex-1 space-y-6">
       <div className="flex items-center justify-between border-b border-gray-200 pb-4">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900 tracking-tight">My Orders</h1>
+          <h1 className="text-xl lg:text-2xl font-semibold text-gray-900 tracking-tight">My Orders</h1>
           <p className="text-xs text-gray-500 mt-1">Click on any order to view full tracking chart & receipt details</p>
         </div>
-        <span className="text-xs font-semibold bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full">
+        <span className="text-xs font-medium bg-gray-100 text-gray-700 px-3 py-1.5 rounded-sm">
           {orders.length} {orders.length === 1 ? 'Order' : 'Orders'}
         </span>
       </div>
 
       {orders.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center max-w-lg mx-auto my-8 shadow-sm">
+        <div className="bg-white rounded-sm border border-gray-200 p-12 text-center max-w-lg mx-auto my-8 shadow-xs">
           <div className="w-16 h-16 bg-gray-50 text-gray-400 rounded-full flex items-center justify-center mx-auto mb-4">
             <ShoppingBag size={32} />
           </div>
-          <h3 className="text-lg font-bold text-gray-900 mb-1">No Orders Found</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">No Orders Found</h3>
           <p className="text-xs text-gray-500 mb-6 max-w-xs mx-auto">
             You haven't placed any orders yet. Explore our latest fashion collections!
           </p>
           <Link
             href="/shop"
-            className="inline-flex items-center gap-2 bg-[#1A2E4C] hover:bg-[#132238] text-white font-bold text-xs px-6 py-3 rounded transition-all shadow"
+            className="inline-flex items-center gap-2 bg-black hover:bg-gray-800 text-white font-medium text-xs px-6 py-3 rounded-sm transition-all shadow-xs"
           >
             <span>Explore Catalog</span>
             <ArrowRight size={14} />
@@ -159,13 +159,13 @@ export default function MyOrdersPage() {
               <Link
                 key={order.id}
                 href={`/profile/orders/${order.id}`}
-                className="block bg-white border border-gray-200 hover:border-[#1A2E4C] rounded-2xl p-5 shadow-2xs hover:shadow-md transition-all duration-200 group cursor-pointer"
+                className="block bg-white border border-gray-200 hover:border-black rounded-sm p-5 shadow-2xs hover:shadow-md transition-all duration-200 group cursor-pointer"
               >
                 <div className="flex items-center justify-between gap-4">
                   {/* Left: Product Photo & Receiving Details */}
                   <div className="flex items-center gap-4">
                     {/* Product Photo */}
-                    <div className="relative w-20 h-24 bg-gray-100 rounded-xl overflow-hidden border border-gray-200 shrink-0 flex items-center justify-center">
+                    <div className="relative w-20 h-24 bg-gray-100 rounded-sm overflow-hidden border border-gray-200 shrink-0 flex items-center justify-center">
                       <img
                         src={
                           firstItem?.imageUrl ||
@@ -183,7 +183,7 @@ export default function MyOrdersPage() {
 
                       {/* Multiple Items Indicator Badge */}
                       {order.items && order.items.length > 1 && (
-                        <span className="absolute bottom-1 right-1 bg-black/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-xs">
+                        <span className="absolute bottom-1 right-1 bg-black/80 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded backdrop-blur-xs">
                           +{order.items.length - 1}
                         </span>
                       )}
@@ -191,7 +191,7 @@ export default function MyOrdersPage() {
 
                     {/* Receiving Details */}
                     <div className="space-y-1">
-                      <p className="text-xs font-bold text-gray-900 group-hover:text-[#1A2E4C] transition-colors">
+                      <p className="text-xs font-medium text-gray-900 group-hover:text-black transition-colors">
                         {firstItem?.productName || `Order #${order.orderNumber}`}
                         {order.items && order.items.length > 1 && (
                           <span className="text-gray-500 font-normal ml-1">
@@ -214,15 +214,15 @@ export default function MyOrdersPage() {
                   {/* Right Chevron indicating full card clickability */}
                   <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
                     {order.orderStatus === 'DELIVERED' && (
-                      <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 group-hover:bg-amber-100 transition-colors">
+                      <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 group-hover:bg-amber-100 transition-colors">
                         <Star size={12} className="fill-amber-400 text-amber-500" />
                         <span>Rate & Review</span>
                       </span>
                     )}
-                    <span className="hidden sm:inline-block text-xs font-bold text-gray-400 group-hover:text-[#1A2E4C] transition-colors">
+                    <span className="hidden sm:inline-block text-xs font-medium text-gray-600 group-hover:text-black transition-colors">
                       ₹{order.totalAmount}
                     </span>
-                    <div className="w-9 h-9 rounded-full bg-gray-50 group-hover:bg-[#1A2E4C] text-gray-400 group-hover:text-white flex items-center justify-center transition-all">
+                    <div className="w-9 h-9 rounded-full bg-gray-50 group-hover:bg-black text-gray-400 group-hover:text-white flex items-center justify-center transition-all">
                       <ChevronRight size={18} />
                     </div>
                   </div>

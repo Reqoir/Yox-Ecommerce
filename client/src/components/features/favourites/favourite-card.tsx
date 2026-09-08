@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ShoppingBag, Trash2, X } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
+import { BsHandbag } from 'react-icons/bs';
 import { useFavouritesStore, FavouriteItem } from '@/store/useFavouritesStore';
 import { useCartStore } from '@/store/useCartStore';
 import { toast } from 'sonner';
@@ -51,7 +52,7 @@ export function FavouriteCard({ item }: FavouriteCardProps) {
     : 0;
 
   return (
-    <div className="group relative flex flex-col bg-white border border-gray-100 rounded overflow-hidden hover:shadow-md transition-shadow">
+    <div className="group relative flex flex-col bg-white border border-gray-100 rounded-sm overflow-hidden hover:shadow-md transition-shadow">
       {/* Product Image */}
       <div className="aspect-[3/4] overflow-hidden bg-[#f2f2f2] relative">
         <Link href={productUrl} className="block w-full h-full">
@@ -67,7 +68,7 @@ export function FavouriteCard({ item }: FavouriteCardProps) {
 
         {/* Tag */}
         {item.tag && (
-          <div className="absolute top-2.5 left-2.5 z-10 bg-white/90 backdrop-blur px-2.5 py-0.5 text-[10px] font-bold text-gray-800 uppercase shadow-sm">
+          <div className="absolute top-2.5 left-2.5 z-10 bg-white/90 backdrop-blur px-2.5 py-0.5 text-[10px] font-medium text-gray-800 uppercase shadow-sm rounded-sm">
             {item.tag}
           </div>
         )}
@@ -78,23 +79,13 @@ export function FavouriteCard({ item }: FavouriteCardProps) {
             Out of Stock
           </div>
         )}
-
-        {/* Top-Right Clear Remove Button */}
-        <button
-          onClick={handleRemove}
-          className="absolute top-2.5 right-2.5 z-10 w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-white transition-all shadow-sm"
-          aria-label="Remove from wishlist"
-          title="Remove from wishlist"
-        >
-          <X size={15} />
-        </button>
       </div>
 
       {/* Details */}
       <div className="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
         <div>
           <div className="flex items-center justify-between gap-1 mb-1">
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block truncate">
+            <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wider block truncate">
               {item.category || 'Apparel'}
             </span>
             {item.color && (
@@ -113,12 +104,12 @@ export function FavouriteCard({ item }: FavouriteCardProps) {
 
           {/* Pricing */}
           <div className="flex items-baseline gap-2 mb-3">
-            <span className="text-sm font-bold text-gray-900">₹{item.price.toLocaleString()}</span>
+            <span className="text-sm font-semibold text-gray-900">₹{item.price.toLocaleString()}</span>
             {item.comparePrice && item.comparePrice > item.price && (
               <span className="text-xs text-gray-400 line-through">₹{item.comparePrice.toLocaleString()}</span>
             )}
             {discountPercentage > 0 && (
-              <span className="text-[11px] font-bold text-emerald-600 ml-auto">
+              <span className="text-[11px] font-semibold text-emerald-600 ml-auto">
                 {discountPercentage}% OFF
               </span>
             )}
@@ -130,19 +121,19 @@ export function FavouriteCard({ item }: FavouriteCardProps) {
           <button
             onClick={handleMoveToCart}
             disabled={item.inStock === false}
-            className={`flex-1 flex items-center justify-center gap-2 text-xs font-bold py-2.5 px-3 rounded transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-2 text-xs font-medium py-2.5 px-3 rounded-sm transition-colors border ${
               item.inStock === false
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-[#1A2E4C] hover:bg-[#132238] text-white active:scale-[0.99]'
+                ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                : 'bg-white hover:bg-gray-50 text-black border-black active:scale-[0.99] cursor-pointer'
             }`}
           >
-            <ShoppingBag size={14} className="shrink-0" />
+            <BsHandbag size={16} className="shrink-0" />
             <span className="truncate">{item.inStock === false ? 'Out of Stock' : 'Move to Basket'}</span>
           </button>
 
           <button
             onClick={handleRemove}
-            className="h-9 w-9 flex items-center justify-center rounded border border-gray-200 text-gray-400 hover:text-red-600 hover:border-gray-300 transition-colors shrink-0"
+            className="h-9 w-9 flex items-center justify-center rounded-sm border border-gray-200 text-gray-400 hover:text-red-600 hover:border-gray-300 transition-colors shrink-0 cursor-pointer"
             title="Remove from wishlist"
             aria-label="Remove item"
           >
