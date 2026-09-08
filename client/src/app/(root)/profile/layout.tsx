@@ -25,6 +25,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
   const [orderCount, setOrderCount] = useState<number>(0);
   const [addressCount, setAddressCount] = useState<number>(0);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -113,11 +114,18 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
           {/* Navigation Sidebar (Hidden on mobile if on root overview page) */}
           <aside className={`w-full lg:w-72 shrink-0 ${isOverviewPage ? 'hidden lg:block' : ''}`}>
             <div className="bg-white border border-gray-200/90 rounded-sm p-3 shadow-2xs">
-              <div className="px-3.5 py-2 border-b border-gray-100 mb-2">
+              <div 
+                className="px-3.5 py-2 border-b border-gray-100 lg:mb-2 flex items-center justify-between cursor-pointer lg:cursor-default"
+                onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+              >
                 <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Account Menu</span>
+                <ChevronRight 
+                  size={16} 
+                  className={`lg:hidden transition-transform duration-200 text-gray-400 ${isMobileNavOpen ? 'rotate-90' : ''}`} 
+                />
               </div>
 
-              <nav className="flex flex-col gap-1">
+              <nav className={`flex-col gap-1 mt-2 lg:mt-0 ${isMobileNavOpen ? 'flex' : 'hidden'} lg:flex`}>
                 {sidebarLinks.map((link) => {
                   const isActive = pathname === link.href;
                   const Icon = link.icon;
@@ -126,6 +134,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                     <Link
                       key={link.href}
                       href={link.href}
+                      onClick={() => setIsMobileNavOpen(false)}
                       className={`flex items-center justify-between px-3.5 py-3 rounded-sm transition-all duration-150 group ${
                         isActive
                           ? 'bg-black text-white shadow-xs'
@@ -150,7 +159,10 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
                 <button
                   suppressHydrationWarning
-                  onClick={handleLogout}
+                  onClick={() => {
+                    setIsMobileNavOpen(false);
+                    handleLogout();
+                  }}
                   className="w-full flex items-center justify-between px-3.5 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 rounded-sm transition-colors text-left cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
