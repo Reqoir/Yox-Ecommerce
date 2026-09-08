@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { User, MapPin, Package, Heart, Settings, LogOut, ShieldCheck, ChevronRight } from 'lucide-react';
+import { User, MapPin, Package, Heart, Settings, LogOut, ShieldCheck, ChevronRight, ChevronDown } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { authApi } from '@/api/auth';
 import { ordersApi } from '@/lib/api/orders';
@@ -111,21 +111,14 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
         {/* 2-Column Main Layout */}
         <div className="flex flex-col lg:flex-row gap-6 items-start">
           
-          {/* Navigation Sidebar (Hidden on mobile if on root overview page) */}
-          <aside className={`w-full lg:w-72 shrink-0 ${isOverviewPage ? 'hidden lg:block' : ''}`}>
+          {/* Navigation Sidebar (Hidden on mobile) */}
+          <aside className="hidden lg:block w-72 shrink-0">
             <div className="bg-white border border-gray-200/90 rounded-sm p-3 shadow-2xs">
-              <div 
-                className="px-3.5 py-2 border-b border-gray-100 lg:mb-2 flex items-center justify-between cursor-pointer lg:cursor-default"
-                onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
-              >
+              <div className="px-3.5 py-2 border-b border-gray-100 mb-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Account Menu</span>
-                <ChevronRight 
-                  size={16} 
-                  className={`lg:hidden transition-transform duration-200 text-gray-400 ${isMobileNavOpen ? 'rotate-90' : ''}`} 
-                />
               </div>
 
-              <nav className={`flex-col gap-1 mt-2 lg:mt-0 ${isMobileNavOpen ? 'flex' : 'hidden'} lg:flex`}>
+              <nav className="flex flex-col gap-1">
                 {sidebarLinks.map((link) => {
                   const isActive = pathname === link.href;
                   const Icon = link.icon;
@@ -134,7 +127,6 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                     <Link
                       key={link.href}
                       href={link.href}
-                      onClick={() => setIsMobileNavOpen(false)}
                       className={`flex items-center justify-between px-3.5 py-3 rounded-sm transition-all duration-150 group ${
                         isActive
                           ? 'bg-black text-white shadow-xs'
@@ -159,10 +151,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
                 <button
                   suppressHydrationWarning
-                  onClick={() => {
-                    setIsMobileNavOpen(false);
-                    handleLogout();
-                  }}
+                  onClick={handleLogout}
                   className="w-full flex items-center justify-between px-3.5 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 rounded-sm transition-colors text-left cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
@@ -179,10 +168,52 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
           <main className="flex-1 w-full">
             <div className="bg-white border border-gray-200/90 rounded-sm p-4 sm:p-6 lg:p-8 shadow-2xs min-h-[520px]">
               {!isOverviewPage && (
-                <div className="lg:hidden mb-4 pb-3 border-b border-gray-100">
-                  <Link href="/profile" className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 hover:text-black">
-                    <span>← Back to Account Menu</span>
-                  </Link>
+                <div className="lg:hidden mb-4 relative z-20">
+                  <button 
+                    onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+                    className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-sm p-4 shadow-2xs"
+                  >
+                    <div className="flex items-center gap-3">
+                      {(() => {
+                        const activeLink = sidebarLinks.find(l => l.href === pathname);
+                        const Icon = activeLink?.icon || User;
+                        return (
+                          <>
+                            <Icon className="w-5 h-5 text-black" />
+                            <span className="text-sm font-bold text-gray-900 uppercase tracking-wider">{activeLink?.name || 'Menu'}</span>
+                          </>
+                        );
+                      })()}
+                    </div>
+                    <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform ${isMobileNavOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {isMobileNavOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-sm shadow-xl flex flex-col divide-y divide-gray-100">
+                      {sidebarLinks.map(link => {
+                        const isActive = pathname === link.href;
+                        const Icon = link.icon;
+                        return (
+                          <Link 
+                            key={link.href} 
+                            href={link.href}
+                            onClick={() => setIsMobileNavOpen(false)}
+                            className={`flex items-center gap-3 p-4 transition-colors ${isActive ? 'bg-gray-50' : 'hover:bg-gray-50'}`}
+                          >
+                            <Icon className={`w-5 h-5 ${isActive ? 'text-black' : 'text-gray-400'}`} />
+                            <span className={`text-sm font-semibold uppercase tracking-wider ${isActive ? 'text-black' : 'text-gray-600'}`}>{link.name}</span>
+                          </Link>
+                        );
+                      })}
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-rose-50"
+                      >
+                        <LogOut className="w-5 h-5 text-rose-500" />
+                        <span className="text-sm font-semibold uppercase tracking-wider text-rose-600">Sign Out</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
               {children}
