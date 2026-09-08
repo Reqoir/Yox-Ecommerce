@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { matchesProductSearch } from '@/lib/search';
 import { toast } from 'sonner';
-import { Heart, Search, Menu, X, ArrowRight, LogOut, ChevronDown, ChevronRight, Shield, User, Package, MapPin, Settings } from 'lucide-react';
+import { Heart, Search, Menu, X, ArrowRight, LogOut, ChevronDown, ChevronRight, Shield, User, Package, MapPin, Settings, RotateCcw, ShoppingBag, Star, Sparkles } from 'lucide-react';
 import { IoPersonOutline } from "react-icons/io5";
 import { BsHandbag } from "react-icons/bs";
 import { useProductFilters } from '@/hooks/useProductFilters';
@@ -358,112 +358,303 @@ export function Navbar() {
               </button>
             )}
 
-            {/* User Dropdown Menu */}
+            {/* User Dropdown Menu (Desktop: Popover, Mobile: Full-Screen Overlay) */}
             {mounted && isUserDropdownOpen && user && (
-              <div className="absolute right-0 top-12 w-[270px] sm:w-72 bg-white border border-gray-200 rounded-sm shadow-xl z-50 animate-in fade-in-50 duration-150 divide-y divide-gray-100 overflow-hidden">
-                {/* Header Banner */}
-                <div className="px-4 py-3 bg-gray-50/60 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-bold text-gray-900 truncate">
-                      Welcome, {user.fullName ? user.fullName.split(' ')[0] : 'Member'}
-                    </p>
-                    <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mt-0.5">
-                      YOX Member
-                    </p>
+              <>
+                {/* Desktop Compact Dropdown */}
+                <div className="hidden md:block absolute right-0 top-12 w-[270px] sm:w-72 bg-white border border-gray-200 rounded-sm shadow-xl z-50 animate-in fade-in-50 duration-150 divide-y divide-gray-100 overflow-hidden">
+                  {/* Header Banner */}
+                  <div className="px-4 py-3 bg-gray-50/60 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-bold text-gray-900 truncate">
+                        Welcome, {user.fullName ? user.fullName.split(' ')[0] : 'Member'}
+                      </p>
+                      <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mt-0.5">
+                        YOX Member
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Menu Options */}
+                  <div className="divide-y divide-gray-100">
+                    <Link
+                      href="/profile/personal-info"
+                      onClick={() => setIsUserDropdownOpen(false)}
+                      className="flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-800 hover:bg-gray-50 hover:text-black transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <User size={16} className="text-gray-700 shrink-0" />
+                        <span>My Profile</span>
+                      </div>
+                      <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
+                    </Link>
+
+                    <Link
+                      href="/profile/orders"
+                      onClick={() => setIsUserDropdownOpen(false)}
+                      className="flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-800 hover:bg-gray-50 hover:text-black transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Package size={16} className="text-gray-700 shrink-0" />
+                        <span>My Orders</span>
+                      </div>
+                      <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
+                    </Link>
+
+                    <Link
+                      href="/profile/addresses"
+                      onClick={() => setIsUserDropdownOpen(false)}
+                      className="flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-800 hover:bg-gray-50 hover:text-black transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <MapPin size={16} className="text-gray-700 shrink-0" />
+                        <span>Saved Addresses</span>
+                      </div>
+                      <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
+                    </Link>
+
+                    <Link
+                      href="/profile/favourites"
+                      onClick={() => setIsUserDropdownOpen(false)}
+                      className="flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-800 hover:bg-gray-50 hover:text-black transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Heart size={16} className="text-gray-700 shrink-0" />
+                        <span>My Wishlist</span>
+                      </div>
+                      <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
+                    </Link>
+
+                    <Link
+                      href="/profile/settings"
+                      onClick={() => setIsUserDropdownOpen(false)}
+                      className="flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-800 hover:bg-gray-50 hover:text-black transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Settings size={16} className="text-gray-700 shrink-0" />
+                        <span>Account Settings</span>
+                      </div>
+                      <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
+                    </Link>
+
+                    {user.permissions?.includes('admin:access') && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        className="flex items-center justify-between px-4 py-3 text-xs font-semibold text-[#1A2E4C] hover:bg-blue-50 transition-colors group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Shield size={16} className="text-[#1A2E4C] shrink-0" />
+                          <span>Admin Dashboard</span>
+                        </div>
+                        <ChevronRight size={14} className="text-[#1A2E4C] group-hover:text-black transition-colors" />
+                      </Link>
+                    )}
+                  </div>
+
+                  {/* Sign Out Button */}
+                  <div className="p-1 bg-gray-50/50">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-sm transition-colors text-left cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <LogOut size={16} className="text-rose-500 shrink-0" />
+                        <span>Sign Out Account</span>
+                      </div>
+                      <ChevronRight size={14} className="text-rose-300" />
+                    </button>
                   </div>
                 </div>
 
-                {/* Menu Options */}
-                <div className="divide-y divide-gray-100">
-                  <Link
-                    href="/profile/personal-info"
-                    onClick={() => setIsUserDropdownOpen(false)}
-                    className="flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-800 hover:bg-gray-50 hover:text-black transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <User size={16} className="text-gray-700 shrink-0" />
-                      <span>My Profile</span>
+                {/* Mobile Full-Screen Overlay View (Exact Reference Image Style) */}
+                <div className="md:hidden fixed inset-0 z-[100] bg-white flex flex-col p-5 overflow-y-auto animate-in slide-in-from-bottom duration-200">
+                  {/* Mobile Header Bar */}
+                  <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-5">
+                    <div className="flex items-center gap-2">
+                      <IoPersonOutline size={22} className="text-black" />
+                      <span className="text-sm font-bold text-gray-900 tracking-tight">MY ACCOUNT</span>
                     </div>
-                    <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
-                  </Link>
-
-                  <Link
-                    href="/profile/orders"
-                    onClick={() => setIsUserDropdownOpen(false)}
-                    className="flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-800 hover:bg-gray-50 hover:text-black transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Package size={16} className="text-gray-700 shrink-0" />
-                      <span>My Orders</span>
-                    </div>
-                    <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
-                  </Link>
-
-                  <Link
-                    href="/profile/addresses"
-                    onClick={() => setIsUserDropdownOpen(false)}
-                    className="flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-800 hover:bg-gray-50 hover:text-black transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <MapPin size={16} className="text-gray-700 shrink-0" />
-                      <span>Saved Addresses</span>
-                    </div>
-                    <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
-                  </Link>
-
-                  <Link
-                    href="/profile/favourites"
-                    onClick={() => setIsUserDropdownOpen(false)}
-                    className="flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-800 hover:bg-gray-50 hover:text-black transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Heart size={16} className="text-gray-700 shrink-0" />
-                      <span>My Wishlist</span>
-                    </div>
-                    <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
-                  </Link>
-
-                  <Link
-                    href="/profile/settings"
-                    onClick={() => setIsUserDropdownOpen(false)}
-                    className="flex items-center justify-between px-4 py-3 text-xs font-semibold text-gray-800 hover:bg-gray-50 hover:text-black transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Settings size={16} className="text-gray-700 shrink-0" />
-                      <span>Account Settings</span>
-                    </div>
-                    <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
-                  </Link>
-
-                  {user.permissions?.includes('admin:access') && (
-                    <Link
-                      href="/admin"
+                    <button
                       onClick={() => setIsUserDropdownOpen(false)}
-                      className="flex items-center justify-between px-4 py-3 text-xs font-semibold text-[#1A2E4C] hover:bg-blue-50 transition-colors group"
+                      className="w-9 h-9 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center hover:bg-gray-200 transition-colors cursor-pointer"
+                      aria-label="Close"
                     >
-                      <div className="flex items-center gap-3">
-                        <Shield size={16} className="text-[#1A2E4C] shrink-0" />
-                        <span>Admin Dashboard</span>
-                      </div>
-                      <ChevronRight size={14} className="text-[#1A2E4C] group-hover:text-black transition-colors" />
-                    </Link>
-                  )}
-                </div>
+                      <X size={20} />
+                    </button>
+                  </div>
 
-                {/* Sign Out Button */}
-                <div className="p-1 bg-gray-50/50">
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-sm transition-colors text-left cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <LogOut size={16} className="text-rose-500 shrink-0" />
-                      <span>Sign Out Account</span>
+                  {/* Account Welcome Banner */}
+                  <div className="p-4 bg-gray-50/80 border border-gray-200/90 rounded-sm mb-6 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-bold text-gray-900">Welcome, {user.fullName ? user.fullName.split(' ')[0] : 'Member'}</p>
+                      <p className="text-[11px] text-gray-500 font-medium uppercase tracking-wider mt-0.5">{user.email || 'YOX Member'}</p>
                     </div>
-                    <ChevronRight size={14} className="text-rose-300" />
-                  </button>
+                    <span className="inline-flex items-center gap-1 bg-[#D2925D] text-white text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-sm">
+                      <Shield size={12} /> YOX VIP
+                    </span>
+                  </div>
+
+                  <div className="space-y-6 flex-1">
+                    {/* ACCOUNT SECTION */}
+                    <div>
+                      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-1 mb-2">
+                        ACCOUNT
+                      </h3>
+                      <div className="bg-white border border-gray-200/90 rounded-sm divide-y divide-gray-100 overflow-hidden shadow-2xs">
+                        <Link
+                          href="/profile/personal-info"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group"
+                        >
+                          <div className="flex items-center gap-3.5">
+                            <User className="w-5 h-5 text-gray-800 shrink-0 stroke-[1.75]" />
+                            <span className="text-xs font-semibold text-gray-800 tracking-wider uppercase">
+                              PERSONAL INFORMATION
+                            </span>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
+                        </Link>
+
+                        <Link
+                          href="/profile/addresses"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group"
+                        >
+                          <div className="flex items-center gap-3.5">
+                            <MapPin className="w-5 h-5 text-gray-800 shrink-0 stroke-[1.75]" />
+                            <span className="text-xs font-semibold text-gray-800 tracking-wider uppercase">
+                              SAVED ADDRESSES
+                            </span>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* SHOPPING SECTION */}
+                    <div>
+                      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-1 mb-2">
+                        SHOPPING
+                      </h3>
+                      <div className="bg-white border border-gray-200/90 rounded-sm divide-y divide-gray-100 overflow-hidden shadow-2xs">
+                        <Link
+                          href="/profile/orders"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group"
+                        >
+                          <div className="flex items-center gap-3.5">
+                            <Package className="w-5 h-5 text-gray-800 shrink-0 stroke-[1.75]" />
+                            <span className="text-xs font-semibold text-gray-800 tracking-wider uppercase">
+                              ORDERS
+                            </span>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
+                        </Link>
+
+                        <Link
+                          href="/profile/orders"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group"
+                        >
+                          <div className="flex items-center gap-3.5">
+                            <RotateCcw className="w-5 h-5 text-gray-800 shrink-0 stroke-[1.75]" />
+                            <span className="text-xs font-semibold text-gray-800 tracking-wider uppercase">
+                              REFUNDS
+                            </span>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
+                        </Link>
+
+                        <Link
+                          href="/profile/favourites"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group"
+                        >
+                          <div className="flex items-center gap-3.5">
+                            <Heart className="w-5 h-5 text-gray-800 shrink-0 stroke-[1.75]" />
+                            <span className="text-xs font-semibold text-gray-800 tracking-wider uppercase">
+                              MY WISHLIST
+                            </span>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
+                        </Link>
+
+                        <Link
+                          href="/shop"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group"
+                        >
+                          <div className="flex items-center gap-3.5">
+                            <ShoppingBag className="w-5 h-5 text-gray-800 shrink-0 stroke-[1.75]" />
+                            <span className="text-xs font-semibold text-gray-800 tracking-wider uppercase">
+                              EXPLORE SHOP CATALOG
+                            </span>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
+                        </Link>
+
+                        <Link
+                          href="/profile/orders"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group"
+                        >
+                          <div className="flex items-center gap-3.5">
+                            <Star className="w-5 h-5 text-gray-800 shrink-0 stroke-[1.75]" />
+                            <span className="text-xs font-semibold text-gray-800 tracking-wider uppercase">
+                              RATE & REVIEW
+                            </span>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* COMMUNITY SECTION */}
+                    <div>
+                      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-1 mb-2">
+                        COMMUNITY
+                      </h3>
+                      <div className="bg-white border border-gray-200/90 rounded-sm divide-y divide-gray-100 overflow-hidden shadow-2xs">
+                        <Link
+                          href="/offers"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group"
+                        >
+                          <div className="flex items-center gap-3.5">
+                            <Sparkles className="w-5 h-5 text-gray-800 shrink-0 stroke-[1.75]" />
+                            <span className="text-xs font-semibold text-gray-800 tracking-wider uppercase">
+                              EXCLUSIVE OFFERS & DROPS
+                            </span>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mobile Footer Links */}
+                  <div className="flex items-center justify-center gap-6 pt-8 pb-4 text-xs font-semibold tracking-widest text-gray-800 uppercase border-t border-gray-100 mt-6">
+                    <Link href="/contact" onClick={() => setIsUserDropdownOpen(false)} className="hover:underline">
+                      HELP
+                    </Link>
+                    <span className="text-gray-300">|</span>
+                    <Link href="/profile/settings" onClick={() => setIsUserDropdownOpen(false)} className="hover:underline">
+                      SETTINGS
+                    </Link>
+                    <span className="text-gray-300">|</span>
+                    <button
+                      onClick={() => {
+                        setIsUserDropdownOpen(false);
+                        handleLogout();
+                      }}
+                      className="hover:underline cursor-pointer"
+                    >
+                      LOGOUT
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
 
