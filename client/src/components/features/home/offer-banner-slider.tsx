@@ -16,6 +16,27 @@ import { toast } from 'sonner';
 // Curated luxury fashion editorial fallback slides if no banners exist in database
 const FALLBACK_CAMPAIGNS: Partial<Offer>[] = [
   {
+    id: '6a9f04f3de097e23e83541f4',
+    title: 'Onam Offer',
+    description: 'Festive Season Exclusive: Get Extra 15% Off!',
+    code: 'ONAM15',
+    offerType: 'CELEBRATION',
+    discountType: 'PERCENTAGE',
+    discountValue: 15,
+    badgeText: 'FESTIVE SALE',
+    badgeColor: '#DC2626',
+    isLimitedTime: false,
+    banner: {
+      imageUrl: 'https://res.cloudinary.com/s9pshncg/image/upload/v1788806365/yox_ecommerce_products/ch0jejugozsuzd3fpmoy.png',
+      title: 'Onam Offer',
+      subtitle: 'Festive Season Exclusive: Get Extra 15% Off!',
+      ctaText: 'Explore Offer',
+      ctaLink: '/offers/6a9f04f3de097e23e83541f4',
+      showOnHome: true,
+      position: 'BANNER_STRIP',
+    },
+  },
+  {
     id: 'default-luxe-linen',
     title: 'The Modern Linen Edit',
     description: 'Relaxed tailoring and natural breathable weaves designed for timeless ease.',
@@ -55,32 +76,27 @@ const FALLBACK_CAMPAIGNS: Partial<Offer>[] = [
       position: 'BANNER_STRIP',
     },
   },
-  {
-    id: 'default-street-modern',
-    title: 'Contemporary Streetwear Drop',
-    description: 'Heavyweight cottons, drop shoulders, and structured architectural lines.',
-    code: 'STREET25',
-    offerType: 'LIMITED_TIME',
-    discountType: 'PERCENTAGE',
-    discountValue: 25,
-    badgeText: 'FLASH DROP',
-    isLimitedTime: true,
-    banner: {
-      imageUrl: '/images/hero-streetwear-2.jpg',
-      title: 'Contemporary Streetwear Drop',
-      subtitle: 'Heavyweight cottons, drop shoulders, and structured architectural lines.',
-      ctaText: 'Discover Drop',
-      ctaLink: '/shop',
-      showOnHome: true,
-      position: 'BANNER_STRIP',
-    },
-  },
 ];
 
+const OFFER_CACHE_KEY = 'yox_offer_banners_cache_v2';
+
 export function OfferBannerSlider() {
-  const [banners, setBanners] = useState<Offer[]>([]);
+  const [banners, setBanners] = useState<Offer[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem(OFFER_CACHE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        }
+      } catch {}
+    }
+    return [FALLBACK_CAMPAIGNS[0] as Offer];
+  });
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -95,11 +111,17 @@ export function OfferBannerSlider() {
         if (isMounted) {
           if (data && data.length > 0) {
             setBanners(data);
+            try {
+              localStorage.setItem(OFFER_CACHE_KEY, JSON.stringify(data));
+            } catch {}
           } else {
             const active = await offersApi.getActive();
             const offersWithBanner = active.filter((o) => o.banner?.imageUrl || o.banner?.showOnHome);
             if (offersWithBanner.length > 0) {
               setBanners(offersWithBanner);
+              try {
+                localStorage.setItem(OFFER_CACHE_KEY, JSON.stringify(offersWithBanner));
+              } catch {}
             } else if (active.length > 0) {
               const formatted: Offer[] = active.map((o, idx) => ({
                 ...o,
@@ -114,6 +136,9 @@ export function OfferBannerSlider() {
                 },
               }));
               setBanners(formatted);
+              try {
+                localStorage.setItem(OFFER_CACHE_KEY, JSON.stringify(formatted));
+              } catch {}
             } else {
               setBanners(FALLBACK_CAMPAIGNS as Offer[]);
             }

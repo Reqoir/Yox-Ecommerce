@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
+import { DEFAULT_STORE_CONFIG } from '@/api/admin/settings';
 
 export function CartSummary() {
   const router = useRouter();
@@ -28,8 +29,8 @@ export function CartSummary() {
   const itemCount = getItemCount();
 
   // Dynamic free shipping threshold & standard shipping fee from store settings
-  const freeShippingThreshold = config.freeShippingThreshold || 699;
-  const standardShippingFee = config.standardShippingFee ?? 99;
+  const freeShippingThreshold = config.freeShippingThreshold ?? DEFAULT_STORE_CONFIG.freeShippingThreshold;
+  const standardShippingFee = config.standardShippingFee ?? DEFAULT_STORE_CONFIG.standardShippingFee;
   const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : standardShippingFee;
   const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
 

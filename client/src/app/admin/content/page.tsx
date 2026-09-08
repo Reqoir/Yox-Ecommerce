@@ -84,7 +84,7 @@ export default function AdminContentPage() {
       buttonLink: '/shop',
       secondaryButtonText: 'Learn More',
       secondaryButtonLink: '/shop',
-      imageUrl: '/images/hero-banner.png',
+      imageUrl: DEFAULT_HERO_CONFIG.slides[0]?.imageUrl || '',
       textAlign: 'left',
       theme: 'dark',
       overlayOpacity: 45,
@@ -720,7 +720,9 @@ export default function AdminContentPage() {
                         alt={currentSlide?.title || 'Banner'}
                         className="absolute inset-0 w-full h-full object-cover object-center"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/images/hero-banner.png';
+                          if (DEFAULT_HERO_CONFIG.slides[0]?.imageUrl) {
+                            (e.target as HTMLImageElement).src = DEFAULT_HERO_CONFIG.slides[0].imageUrl;
+                          }
                         }}
                       />
                     ) : (

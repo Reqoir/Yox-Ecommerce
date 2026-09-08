@@ -14,11 +14,11 @@ interface NavCategory {
 }
 
 const DEFAULT_NAV_CATEGORIES: NavCategory[] = [
-  { name: 'T-SHIRT', slug: 't-shirt' },
-  { name: 'JACKET', slug: 'jacket' },
-  { name: 'ACCESSORIES', slug: 'accessories' },
-  { name: 'PANTS', slug: 'pants' },
-  { name: 'SHIRTS', slug: 'shirts' },
+  { id: '6a93d021dede7faa4aa3a104', name: 'T-SHIRT', slug: 't-shirt' },
+  { id: '6a93cff6dede7faa4aa3a0fb', name: 'JACKET', slug: 'jacket' },
+  { id: '6a93cfdbdede7faa4aa3a0f2', name: 'ACCESSORIES', slug: 'accessories' },
+  { id: '6a93cf81dede7faa4aa3a0dd', name: 'PANTS', slug: 'pants' },
+  { id: '6a93cf5adede7faa4aa3a0d4', name: 'SHIRTS', slug: 'shirts' },
 ];
 
 function CategoryNavContent() {

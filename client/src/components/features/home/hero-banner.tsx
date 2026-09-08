@@ -10,7 +10,7 @@ import {
   DEFAULT_HERO_CONFIG,
 } from '@/api/admin/content';
 
-const HERO_CACHE_KEY = 'yox_hero_banners_cache';
+const HERO_CACHE_KEY = 'yox_hero_banners_cache_v2';
 
 export function HeroBanner() {
   const [config, setConfig] = useState<HeroBannersConfig>(() => {

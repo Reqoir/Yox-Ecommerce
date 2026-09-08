@@ -106,6 +106,17 @@ export const useStoreSettingsStore = create<StoreSettingsState>()(
     }),
     {
       name: 'yox_store_settings',
+      version: 2,
+      migrate: (persistedState: any, version: number) => {
+        if (!version || version < 2) {
+          return {
+            config: DEFAULT_STORE_CONFIG,
+            lastFetchedAt: null,
+            hasLoaded: false,
+          };
+        }
+        return persistedState;
+      },
       storage: createJSONStorage(() => (typeof window !== 'undefined' ? localStorage : {
         getItem: () => null,
         setItem: () => {},

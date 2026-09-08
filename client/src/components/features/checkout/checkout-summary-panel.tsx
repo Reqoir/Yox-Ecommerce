@@ -6,6 +6,7 @@ import { useCartStore } from '@/store/useCartStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCheckoutStore } from '@/store/useCheckoutStore';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
+import { DEFAULT_STORE_CONFIG } from '@/api/admin/settings';
 import { ordersApi } from '@/lib/api/orders';
 import { toast } from 'sonner';
 
@@ -19,7 +20,6 @@ export function CheckoutSummaryPanel() {
     setOrderSuccess,
   } = useCheckoutStore();
   const { user } = useAuthStore();
-
   const [isProcessing, setIsProcessing] = useState(false);
 
   const userRole = (user as any)?.role || user?.roleId || '';
@@ -31,8 +31,8 @@ export function CheckoutSummaryPanel() {
   const savings = getSavingsTotal();
   const itemCount = getItemCount();
 
-  const freeShippingThreshold = config.freeShippingThreshold || 699;
-  const standardShippingFee = config.standardShippingFee ?? 99;
+  const freeShippingThreshold = config.freeShippingThreshold ?? DEFAULT_STORE_CONFIG.freeShippingThreshold;
+  const standardShippingFee = config.standardShippingFee ?? DEFAULT_STORE_CONFIG.standardShippingFee;
   const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : standardShippingFee;
   const grandTotal = subtotal + shippingFee;
 
