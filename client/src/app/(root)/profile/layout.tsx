@@ -49,8 +49,12 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
     if (pathname.includes('/orders')) return 'My Orders';
     if (pathname.includes('/addresses')) return 'Saved Addresses';
     if (pathname.includes('/settings')) return 'Account Settings';
-    return 'Personal Information';
+    if (pathname.includes('/favourites')) return 'My Favourites';
+    if (pathname.includes('/personal-info')) return 'Personal Information';
+    return 'Account Overview';
   };
+
+  const isOverviewPage = pathname === '/profile';
 
   return (
     <div className="w-full bg-white min-h-screen pb-16 pt-4 lg:pt-8">
@@ -62,8 +66,12 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
             <Link href="/" className="hover:text-gray-900 transition-colors">Home</Link>
             <span>&gt;</span>
             <Link href="/profile" className="hover:text-gray-900 transition-colors">My Account</Link>
-            <span>&gt;</span>
-            <span className="text-gray-900 font-bold">{getPageTitle()}</span>
+            {!isOverviewPage && (
+              <>
+                <span>&gt;</span>
+                <span className="text-gray-900 font-bold">{getPageTitle()}</span>
+              </>
+            )}
           </div>
 
           {/* User Profile Header Card */}
@@ -102,8 +110,8 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
         {/* 2-Column Main Layout */}
         <div className="flex flex-col lg:flex-row gap-6 items-start">
           
-          {/* Navigation Sidebar */}
-          <aside className="w-full lg:w-72 shrink-0">
+          {/* Navigation Sidebar (Hidden on mobile if on root overview page) */}
+          <aside className={`w-full lg:w-72 shrink-0 ${isOverviewPage ? 'hidden lg:block' : ''}`}>
             <div className="bg-white border border-gray-200/90 rounded-sm p-3 shadow-2xs">
               <div className="px-3.5 py-2 border-b border-gray-100 mb-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Account Menu</span>
@@ -157,7 +165,14 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
           {/* Dynamic Page Content */}
           <main className="flex-1 w-full">
-            <div className="bg-white border border-gray-200/90 rounded-sm p-6 lg:p-8 shadow-2xs min-h-[520px]">
+            <div className="bg-white border border-gray-200/90 rounded-sm p-4 sm:p-6 lg:p-8 shadow-2xs min-h-[520px]">
+              {!isOverviewPage && (
+                <div className="lg:hidden mb-4 pb-3 border-b border-gray-100">
+                  <Link href="/profile" className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 hover:text-black">
+                    <span>← Back to Account Menu</span>
+                  </Link>
+                </div>
+              )}
               {children}
             </div>
           </main>

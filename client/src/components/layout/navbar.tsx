@@ -331,7 +331,13 @@ export function Navbar() {
             {mounted && user ? (
               <button
                 suppressHydrationWarning
-                onClick={() => setIsUserDropdownOpen((prev) => !prev)}
+                onClick={() => {
+                  if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                    router.push('/profile');
+                  } else {
+                    setIsUserDropdownOpen((prev) => !prev);
+                  }
+                }}
                 className="flex items-center gap-1.5 p-1 rounded-md hover:bg-gray-100 transition-all focus:outline-none group cursor-pointer"
                 aria-expanded={isUserDropdownOpen}
                 aria-label="User account menu"
