@@ -42,7 +42,7 @@ const navItems = [
   { name: 'Offers', href: '/admin/offers', icon: Gift, permission: 'manage_offers' },
   { name: 'Content Management', href: '/admin/content', icon: LayoutTemplate, permission: 'manage_content' },
   { name: 'Roles', href: '/admin/role', icon: Shield, permission: 'manage_roles' },
-  { name: 'Notifications', href: '/admin/notifications', icon: Bell, permission: 'manage_notifications' },
+  { name: 'Notifications', href: '/admin/notifications', icon: Bell },
   { name: 'Settings', href: '/admin/settings', icon: Settings, permission: 'manage_settings' },
 ];
 

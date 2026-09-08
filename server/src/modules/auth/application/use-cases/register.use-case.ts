@@ -12,6 +12,7 @@ import { IRoleRepository } from '../../../roles/domain/repositories/role.reposit
 import { User } from '../../../users/domain/entities/user.entity';
 import { RegisterUserRequestDTO, RegisterUserResponseDTO } from '../dtos/register.dto';
 import { signAccessToken, signRefreshToken } from '@shared/utils/jwt.helper';
+import { NotificationService } from '../../../notifications/application/services/notification.service';
 
 export class RegisterUserUseCase implements IUseCase<RegisterUserRequestDTO, RegisterUserResponseDTO> {
   constructor(
@@ -43,6 +44,23 @@ export class RegisterUserUseCase implements IUseCase<RegisterUserRequestDTO, Reg
 
     // 3. Persist to Infrastructure (Database)
     const savedUser = await this.userRepository.create(userEntity);
+
+    // 🔔 Real-time staff notification for new user registration
+    try {
+      await NotificationService.getInstance().notify({
+        userId: null,
+        type: 'NEW_USER',
+        title: '👤 New Customer Registered!',
+        message: `${savedUser.fullName} (${savedUser.email}) just created an account.`,
+        metadata: {
+          userId: savedUser.id,
+          fullName: savedUser.fullName,
+          email: savedUser.email,
+        },
+      });
+    } catch {
+      // Notification failure should not block user registration
+    }
 
     // 4. Generate auth tokens
     const tokenPayload = {

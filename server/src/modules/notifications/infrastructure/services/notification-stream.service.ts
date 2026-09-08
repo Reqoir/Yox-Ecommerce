@@ -14,10 +14,22 @@ import { Response } from 'express';
 import { logger } from '@shared/logger/logger';
 import { NotificationModel } from '../repositories/notification.model';
 
+export const NOTIFICATION_TYPE_PERMISSION_MAP: Record<string, string> = {
+  NEW_ORDER: 'manage_orders',
+  ORDER_CANCELLED: 'manage_orders',
+  ORDER_STATUS: 'manage_orders',
+  RETURN_REQUEST: 'manage_orders',
+  LOW_STOCK: 'manage_inventory',
+  NEW_REVIEW: 'manage_reviews',
+  NEW_USER: 'manage_users',
+};
+
 interface SSEClient {
   id: string;
   res: Response;
   userId: string;
+  permissions: string[];
+  isAdmin: boolean;
 }
 
 export class NotificationStreamService {
@@ -41,7 +53,13 @@ export class NotificationStreamService {
    * Registers a new SSE client. Sets SSE headers and sends an initial "connected" event.
    * Returns a cleanup function to call when the client disconnects.
    */
-  public addClient(clientId: string, userId: string, res: Response): () => void {
+  public addClient(
+    clientId: string,
+    userId: string,
+    res: Response,
+    permissions: string[] = [],
+    isAdmin = false
+  ): () => void {
     // Set SSE headers
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
@@ -49,7 +67,7 @@ export class NotificationStreamService {
     res.setHeader('X-Accel-Buffering', 'no'); // Disable Nginx buffering
     res.flushHeaders();
 
-    const client: SSEClient = { id: clientId, userId, res };
+    const client: SSEClient = { id: clientId, userId, res, permissions, isAdmin };
     this.clients.set(clientId, client);
 
     logger.debug({ clientId, userId, total: this.clients.size }, 'SSE client connected');
@@ -84,7 +102,7 @@ export class NotificationStreamService {
   }
 
   /**
-   * Broadcasts a notification event to all connected SSE clients.
+   * Broadcasts a notification event to all connected SSE clients who have permission for it.
    */
   public broadcastNotification(notification: Record<string, unknown>): void {
     const id = String(notification.id || notification._id || '');
@@ -100,8 +118,39 @@ export class NotificationStreamService {
 
     logger.debug({ type: notification.type, clients: this.clients.size }, 'Broadcasting notification via SSE');
 
+    const notifUserId = notification.userId ? String(notification.userId) : null;
+    const notifType = String(notification.type || '');
+    const requiredPermission = NOTIFICATION_TYPE_PERMISSION_MAP[notifType];
+
     for (const client of this.clients.values()) {
-      this.sendToClient(client, 'notification', notification);
+      // 1. User-specific notification: only send to the intended user
+      if (notifUserId) {
+        if (client.userId === notifUserId) {
+          this.sendToClient(client, 'notification', notification);
+        }
+        continue;
+      }
+
+      // 2. Broadcast notification:
+      // Admins or users with '*' or 'manage_notifications' receive all broadcasts
+      if (
+        client.isAdmin ||
+        client.permissions.includes('*') ||
+        client.permissions.includes('manage_notifications')
+      ) {
+        this.sendToClient(client, 'notification', notification);
+        continue;
+      }
+
+      // If a specific permission is required for this notification type:
+      if (requiredPermission) {
+        if (client.permissions.includes(requiredPermission)) {
+          this.sendToClient(client, 'notification', notification);
+        }
+      } else if (notifType === 'SYSTEM' && client.permissions.length > 0) {
+        // General SYSTEM notifications reach any staff member
+        this.sendToClient(client, 'notification', notification);
+      }
     }
   }
 

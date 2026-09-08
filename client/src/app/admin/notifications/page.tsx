@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Bell,
   AlertTriangle,
@@ -16,16 +16,19 @@ import {
   CheckSquare,
   Square,
   X,
+  MessageSquare,
+  Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNotifications } from '@/hooks/admin/useNotifications';
+import { useAuthStore } from '@/store/useAuthStore';
 import { Notification } from '@/api/admin/notifications';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 
-type TypeFilter = 'all' | 'LOW_STOCK' | 'ORDER_STATUS' | 'SYSTEM' | 'NEW_ORDER' | 'ORDER_CANCELLED' | 'RETURN_REQUEST';
+type TypeFilter = 'all' | 'LOW_STOCK' | 'ORDER_STATUS' | 'SYSTEM' | 'NEW_ORDER' | 'ORDER_CANCELLED' | 'RETURN_REQUEST' | 'NEW_REVIEW' | 'NEW_USER';
 
 const TYPE_CONFIG: Record<
   Notification['type'],
@@ -73,20 +76,63 @@ const TYPE_CONFIG: Record<
     bg: 'border-l-amber-500',
     emoji: '📦',
   },
+  NEW_REVIEW: {
+    label: 'Customer Review',
+    icon: MessageSquare,
+    badge: 'bg-purple-500/15 text-purple-600 border-purple-500/30',
+    bg: 'border-l-purple-500',
+    emoji: '⭐',
+  },
+  NEW_USER: {
+    label: 'New Customer',
+    icon: Users,
+    badge: 'bg-cyan-500/15 text-cyan-600 border-cyan-500/30',
+    bg: 'border-l-cyan-500',
+    emoji: '👤',
+  },
 };
-
-const FILTER_TABS: { key: TypeFilter; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'NEW_ORDER', label: '🛒 Orders' },
-  { key: 'ORDER_CANCELLED', label: '❌ Cancelled' },
-  { key: 'RETURN_REQUEST', label: '📦 Returns' },
-  { key: 'LOW_STOCK', label: '⚠️ Low Stock' },
-  { key: 'ORDER_STATUS', label: '📋 Status' },
-  { key: 'SYSTEM', label: 'ℹ️ System' },
-];
 
 export default function AdminNotificationsPage() {
   const router = useRouter();
+  const { user } = useAuthStore();
+  const userPermissions = user?.permissions || [];
+  const userRole = (user as any)?.role || (user as any)?.roleId;
+  const roleUpper = String(userRole || '').toUpperCase();
+  const isAdmin =
+    roleUpper === 'ADMIN' ||
+    roleUpper === 'SUPER_ADMIN' ||
+    roleUpper.includes('ADMIN') ||
+    userPermissions.includes('*') ||
+    userPermissions.includes('manage_notifications');
+
+  const visibleFilterTabs = useMemo(() => {
+    const tabs: { key: TypeFilter; label: string }[] = [{ key: 'all', label: 'All' }];
+
+    if (isAdmin || userPermissions.includes('manage_orders')) {
+      tabs.push({ key: 'NEW_ORDER', label: '🛒 Orders' });
+      tabs.push({ key: 'ORDER_CANCELLED', label: '❌ Cancelled' });
+      tabs.push({ key: 'RETURN_REQUEST', label: '📦 Returns' });
+      tabs.push({ key: 'ORDER_STATUS', label: '📋 Status' });
+    }
+
+    if (isAdmin || userPermissions.includes('manage_inventory')) {
+      tabs.push({ key: 'LOW_STOCK', label: '⚠️ Low Stock' });
+    }
+
+    if (isAdmin || userPermissions.includes('manage_reviews')) {
+      tabs.push({ key: 'NEW_REVIEW', label: '⭐ Reviews' });
+    }
+
+    if (isAdmin || userPermissions.includes('manage_users')) {
+      tabs.push({ key: 'NEW_USER', label: '👥 Users' });
+    }
+
+    // System tab for everyone
+    tabs.push({ key: 'SYSTEM', label: 'ℹ️ System' });
+
+    return tabs;
+  }, [isAdmin, userPermissions]);
+
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [readFilter, setReadFilter] = useState<'all' | 'unread'>('all');
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -143,6 +189,10 @@ export default function AdminNotificationsPage() {
       }
     } else if (n.type === 'LOW_STOCK') {
       router.push('/admin/inventory');
+    } else if (n.type === 'NEW_REVIEW') {
+      router.push('/admin/reviews');
+    } else if (n.type === 'NEW_USER') {
+      router.push('/admin/user');
     }
   };
 
@@ -240,7 +290,7 @@ export default function AdminNotificationsPage() {
             )}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Real-time alerts for new orders, cancellations, returns, and stock issues
+            Real-time alerts and activity updates tailored to your role
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -303,7 +353,7 @@ export default function AdminNotificationsPage() {
       <div className="flex flex-wrap gap-2 border-b pb-4">
         {/* Type filters */}
         <div className="flex flex-wrap gap-2">
-          {FILTER_TABS.map(({ key, label }) => (
+          {visibleFilterTabs.map(({ key, label }) => (
             <Button
               key={key}
               size="sm"
@@ -585,6 +635,29 @@ export default function AdminNotificationsPage() {
                         </div>
                       )}
 
+                      {/* Review metadata */}
+                      {n.type === 'NEW_REVIEW' && meta && (
+                        <div className="mt-2 flex flex-col gap-1 text-xs rounded-md bg-purple-500/10 px-3 py-2 w-fit">
+                          {meta.rating && (
+                            <span className="font-bold text-purple-600">
+                              {'★'.repeat(Number(meta.rating)) + '☆'.repeat(Math.max(0, 5 - Number(meta.rating)))} ({meta.rating}/5)
+                            </span>
+                          )}
+                          {meta.productName && (
+                            <span className="font-medium text-foreground">
+                              Product: {String(meta.productName)}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* User metadata */}
+                      {n.type === 'NEW_USER' && meta?.email && (
+                        <div className="mt-2 text-xs rounded-md bg-cyan-500/10 px-3 py-1.5 w-fit font-medium text-cyan-700 dark:text-cyan-400">
+                          {String(meta.email)}
+                        </div>
+                      )}
+
                       {/* Action links */}
                       {(n.type === 'NEW_ORDER' || n.type === 'ORDER_CANCELLED' || n.type === 'ORDER_STATUS') && (
                         <Link
@@ -616,6 +689,24 @@ export default function AdminNotificationsPage() {
                           onClick={(e) => e.stopPropagation()}
                         >
                           View Return {meta?.orderNumber ? `for #${meta.orderNumber}` : ''} →
+                        </Link>
+                      )}
+                      {n.type === 'NEW_REVIEW' && (
+                        <Link
+                          href="/admin/reviews"
+                          className="mt-2 inline-block text-xs font-medium text-purple-600 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          View in Reviews →
+                        </Link>
+                      )}
+                      {n.type === 'NEW_USER' && (
+                        <Link
+                          href="/admin/user"
+                          className="mt-2 inline-block text-xs font-medium text-cyan-600 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          View Customer →
                         </Link>
                       )}
                     </div>

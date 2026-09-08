@@ -8,6 +8,7 @@ import { CreateReviewDTO } from '../dtos/review.dto';
 import { Review } from '../../domain/entities/review.entity';
 import { OrderModel } from '../../../orders/infrastructure/models/order.model';
 import { ProductModel } from '../../../products/infrastructure/models/product.model';
+import { NotificationService } from '../../../notifications/application/services/notification.service';
 
 export class CreateReviewUseCase {
   constructor(private reviewRepository: IReviewRepository) {}
@@ -48,6 +49,28 @@ export class CreateReviewUseCase {
       averageRating: average,
       reviewCount: count
     });
+
+    // 5. 🔔 Real-time staff notification for new review
+    try {
+      const product = await ProductModel.findById(dto.productId).select('name').lean();
+      const productName = (product as any)?.name || 'Product';
+      await NotificationService.getInstance().notify({
+        userId: null,
+        type: 'NEW_REVIEW',
+        title: `⭐ New ${savedReview.rating}★ Review!`,
+        message: `New review on "${productName}": "${savedReview.title || savedReview.comment?.substring(0, 50) || `Rated ${savedReview.rating} stars`}"`,
+        metadata: {
+          reviewId: savedReview.id,
+          productId: dto.productId,
+          productName,
+          rating: savedReview.rating,
+          title: savedReview.title,
+          comment: savedReview.comment,
+        },
+      });
+    } catch {
+      // Notification errors should not block review creation
+    }
 
     return savedReview.toJSON();
   }

@@ -5,7 +5,7 @@
 
 import { IUseCase } from '@core/application/use-cases/base.use-case.interface';
 import { INotificationRepository } from '../../domain/repositories/notification.repository.interface';
-import { Notification } from '../../domain/entities/notification.entity';
+import { Notification, NotificationType } from '../../domain/entities/notification.entity';
 import {
   CreateNotificationRequestDTO,
   NotificationResponseDTO,
@@ -45,7 +45,7 @@ export class CreateNotificationUseCase
 export class GetNotificationsUseCase
   implements
     IUseCase<
-      { userId: string | null; query: any },
+      { userId: string | null; query: any; allowedTypes?: NotificationType[] },
       { data: NotificationResponseDTO[]; total: number; unreadCount: number }
     >
 {
@@ -54,10 +54,11 @@ export class GetNotificationsUseCase
   async execute(input: {
     userId: string | null;
     query: any;
+    allowedTypes?: NotificationType[];
   }): Promise<{ data: NotificationResponseDTO[]; total: number; unreadCount: number }> {
     const [result, unreadCount] = await Promise.all([
-      this.notificationRepo.findForUser(input.userId, input.query),
-      this.notificationRepo.countUnread(input.userId),
+      this.notificationRepo.findForUser(input.userId, input.query, input.allowedTypes),
+      this.notificationRepo.countUnread(input.userId, input.allowedTypes),
     ]);
 
     return {
@@ -96,12 +97,12 @@ export class MarkNotificationReadUseCase
 }
 
 export class MarkAllNotificationsReadUseCase
-  implements IUseCase<{ userId: string | null }, void>
+  implements IUseCase<{ userId: string | null; allowedTypes?: NotificationType[] }, void>
 {
   constructor(private readonly notificationRepo: INotificationRepository) {}
 
-  async execute(input: { userId: string | null }): Promise<void> {
-    await this.notificationRepo.markAllRead(input.userId);
+  async execute(input: { userId: string | null; allowedTypes?: NotificationType[] }): Promise<void> {
+    await this.notificationRepo.markAllRead(input.userId, input.allowedTypes);
   }
 }
 
@@ -152,11 +153,11 @@ export class DeleteManyNotificationsUseCase
 }
 
 export class DeleteAllNotificationsUseCase
-  implements IUseCase<{ userId: string | null }, void>
+  implements IUseCase<{ userId: string | null; allowedTypes?: NotificationType[] }, void>
 {
   constructor(private readonly notificationRepo: INotificationRepository) {}
 
-  async execute(input: { userId: string | null }): Promise<void> {
-    await this.notificationRepo.deleteAll(input.userId);
+  async execute(input: { userId: string | null; allowedTypes?: NotificationType[] }): Promise<void> {
+    await this.notificationRepo.deleteAll(input.userId, input.allowedTypes);
   }
 }

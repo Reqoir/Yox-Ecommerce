@@ -19,7 +19,6 @@ const ROUTE_PERMISSIONS: Record<string, string> = {
   '/admin/reviews': 'manage_reviews',
   '/admin/reports': 'view_reports',
   '/admin/audit-logs': 'view_audit_logs',
-  '/admin/notifications': 'manage_notifications',
   '/admin/settings': 'manage_settings',
 };
 

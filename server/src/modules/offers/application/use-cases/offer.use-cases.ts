@@ -284,8 +284,6 @@ export class GetOfferWithProductsUseCase implements IUseCase<string, OfferWithPr
         const variants = await this.productVariantRepo.findByProductId(prodId);
         const validPrices = variants.map((v) => v.price).filter((pr) => typeof pr === 'number' && pr > 0);
         const basePrice = validPrices.length > 0 ? Math.min(...validPrices) : 999;
-        const validComparePrices = variants.map((v) => v.comparePrice).filter((cp): cp is number => typeof cp === 'number' && cp > 0);
-        const comparePrice = validComparePrices.length > 0 ? Math.max(...validComparePrices) : null;
 
         let discount = 0;
         if (offer.discountType === 'PERCENTAGE') {

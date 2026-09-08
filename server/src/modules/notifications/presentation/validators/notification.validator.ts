@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 export const notificationListQuerySchema = z.object({
   type: z
-    .enum(['LOW_STOCK', 'ORDER_STATUS', 'SYSTEM', 'NEW_ORDER', 'ORDER_CANCELLED', 'RETURN_REQUEST'])
+    .enum(['LOW_STOCK', 'ORDER_STATUS', 'SYSTEM', 'NEW_ORDER', 'ORDER_CANCELLED', 'RETURN_REQUEST', 'NEW_REVIEW', 'NEW_USER'])
     .optional(),
   isRead: z.enum(['true', 'false']).optional(),
   page: z.string().regex(/^\d+$/).optional(),

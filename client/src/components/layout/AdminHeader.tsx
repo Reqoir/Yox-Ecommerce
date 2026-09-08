@@ -13,6 +13,8 @@ import {
   Info,
   ShoppingCart,
   ChevronRight,
+  MessageSquare,
+  Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -49,6 +51,8 @@ const TYPE_CONFIG: Record<
   LOW_STOCK: { label: 'Low Stock', icon: AlertTriangle, color: 'text-rose-600 bg-rose-500/10 border-rose-500/20', emoji: '⚠️' },
   ORDER_STATUS: { label: 'Update', icon: ShoppingCart, color: 'text-blue-600 bg-blue-500/10 border-blue-500/20', emoji: '📋' },
   SYSTEM: { label: 'System', icon: Info, color: 'text-slate-600 bg-slate-500/10 border-slate-500/20', emoji: 'ℹ️' },
+  NEW_REVIEW: { label: 'Review', icon: MessageSquare, color: 'text-purple-600 bg-purple-500/10 border-purple-500/20', emoji: '⭐' },
+  NEW_USER: { label: 'New User', icon: Users, color: 'text-cyan-600 bg-cyan-500/10 border-cyan-500/20', emoji: '👤' },
 };
 
 function formatTimeAgo(dateString: string): string {
@@ -123,6 +127,10 @@ export function AdminHeader() {
       }
     } else if (n.type === 'LOW_STOCK') {
       router.push('/admin/inventory');
+    } else if (n.type === 'NEW_REVIEW') {
+      router.push('/admin/reviews');
+    } else if (n.type === 'NEW_USER') {
+      router.push('/admin/user');
     } else {
       router.push('/admin/notifications');
     }

@@ -4,7 +4,7 @@
  */
 
 import { INotificationRepository } from '../../domain/repositories/notification.repository.interface';
-import { Notification } from '../../domain/entities/notification.entity';
+import { Notification, NotificationType } from '../../domain/entities/notification.entity';
 import { NotificationModel, INotificationDocument } from './notification.model';
 import { Types } from 'mongoose';
 
@@ -46,21 +46,44 @@ export class NotificationRepository implements INotificationRepository {
     return doc ? this.mapToDomain(doc) : null;
   }
 
+  private buildUserFilter(userId: string | null, allowedTypes?: NotificationType[]): any {
+    if (userId) {
+      if (allowedTypes && allowedTypes.length > 0) {
+        return {
+          $or: [{ userId }, { userId: null, type: { $in: allowedTypes } }],
+        };
+      }
+      if (allowedTypes && allowedTypes.length === 0) {
+        return { userId };
+      }
+      return { $or: [{ userId }, { userId: null }] };
+    }
+
+    if (allowedTypes && allowedTypes.length > 0) {
+      return { userId: null, type: { $in: allowedTypes } };
+    }
+    return { userId: null };
+  }
+
   /**
    * Fetches notifications for a user.
-   * - If userId is provided: returns user-specific + broadcast (userId=null) notifications
-   * - If userId is null: returns only broadcast notifications (admin view)
+   * - If userId is provided: returns user-specific + permitted broadcast notifications
+   * - If userId is null: returns only permitted broadcast notifications (admin view)
    */
   async findForUser(
     userId: string | null,
-    query: any
+    query: any,
+    allowedTypes?: NotificationType[]
   ): Promise<{ data: Notification[]; total: number }> {
-    const filter: any =
-      userId
-        ? { $or: [{ userId }, { userId: null }] }
-        : { userId: null };
+    const baseFilter = this.buildUserFilter(userId, allowedTypes);
+    const filter: any = { ...baseFilter };
 
-    if (query.type) filter.type = query.type;
+    if (query.type) {
+      if (allowedTypes && allowedTypes.length > 0 && !allowedTypes.includes(query.type)) {
+        return { data: [], total: 0 };
+      }
+      filter.type = query.type;
+    }
     if (query.isRead !== undefined) filter.isRead = query.isRead === 'true';
 
     const limit = parseInt(query.limit) || 20;
@@ -78,18 +101,20 @@ export class NotificationRepository implements INotificationRepository {
     };
   }
 
-  async countUnread(userId: string | null): Promise<number> {
-    const filter: any = userId
-      ? { $or: [{ userId }, { userId: null }], isRead: false }
-      : { userId: null, isRead: false };
+  async countUnread(userId: string | null, allowedTypes?: NotificationType[]): Promise<number> {
+    const filter: any = {
+      ...this.buildUserFilter(userId, allowedTypes),
+      isRead: false,
+    };
 
     return NotificationModel.countDocuments(filter).exec();
   }
 
-  async markAllRead(userId: string | null): Promise<void> {
-    const filter: any = userId
-      ? { $or: [{ userId }, { userId: null }], isRead: false }
-      : { userId: null, isRead: false };
+  async markAllRead(userId: string | null, allowedTypes?: NotificationType[]): Promise<void> {
+    const filter: any = {
+      ...this.buildUserFilter(userId, allowedTypes),
+      isRead: false,
+    };
 
     await NotificationModel.updateMany(filter, { isRead: true, updatedAt: new Date() }).exec();
   }
@@ -116,10 +141,8 @@ export class NotificationRepository implements INotificationRepository {
     }
   }
 
-  async deleteAll(userId: string | null): Promise<void> {
-    const filter: any = userId
-      ? { $or: [{ userId }, { userId: null }] }
-      : { userId: null };
+  async deleteAll(userId: string | null, allowedTypes?: NotificationType[]): Promise<void> {
+    const filter: any = this.buildUserFilter(userId, allowedTypes);
 
     await NotificationModel.deleteMany(filter).exec();
   }

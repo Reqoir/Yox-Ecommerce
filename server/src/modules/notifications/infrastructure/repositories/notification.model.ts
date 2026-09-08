@@ -9,7 +9,7 @@ import { baseSchemaOptions } from '@core/infrastructure/database/mongoose/base.s
 export interface INotificationDocument extends Document {
   /** null = admin broadcast, string = specific user */
   userId: string | null;
-  type: 'LOW_STOCK' | 'ORDER_STATUS' | 'SYSTEM' | 'NEW_ORDER' | 'ORDER_CANCELLED' | 'RETURN_REQUEST';
+  type: 'LOW_STOCK' | 'ORDER_STATUS' | 'SYSTEM' | 'NEW_ORDER' | 'ORDER_CANCELLED' | 'RETURN_REQUEST' | 'NEW_REVIEW' | 'NEW_USER';
   title: string;
   message: string;
   isRead: boolean;
@@ -18,7 +18,7 @@ export interface INotificationDocument extends Document {
   updatedAt: Date;
 }
 
-const ALL_TYPES = ['LOW_STOCK', 'ORDER_STATUS', 'SYSTEM', 'NEW_ORDER', 'ORDER_CANCELLED', 'RETURN_REQUEST'] as const;
+const ALL_TYPES = ['LOW_STOCK', 'ORDER_STATUS', 'SYSTEM', 'NEW_ORDER', 'ORDER_CANCELLED', 'RETURN_REQUEST', 'NEW_REVIEW', 'NEW_USER'] as const;
 
 const notificationSchema = new Schema<INotificationDocument>(
   {

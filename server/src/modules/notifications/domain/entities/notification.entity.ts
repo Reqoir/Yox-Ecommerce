@@ -15,7 +15,9 @@ export type NotificationType =
   | 'SYSTEM'
   | 'NEW_ORDER'
   | 'ORDER_CANCELLED'
-  | 'RETURN_REQUEST';
+  | 'RETURN_REQUEST'
+  | 'NEW_REVIEW'
+  | 'NEW_USER';
 
 export interface NotificationProps extends EntityProps {
   userId: string | null;

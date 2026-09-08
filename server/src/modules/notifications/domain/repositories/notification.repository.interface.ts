@@ -3,7 +3,7 @@
  * @layer Domain
  */
 
-import { Notification } from '../entities/notification.entity';
+import { Notification, NotificationType } from '../entities/notification.entity';
 
 export interface INotificationRepository {
   save(notification: Notification): Promise<Notification>;
@@ -11,13 +11,14 @@ export interface INotificationRepository {
   /**
    * Returns notifications for a specific user, PLUS any broadcast notifications (userId = null).
    * Admins call this with userId = null to get only broadcast notifications.
+   * allowedTypes restricts broadcast notifications according to the caller's role/permissions.
    */
-  findForUser(userId: string | null, query: any): Promise<{ data: Notification[]; total: number }>;
-  /** Count unread notifications for a user (includes broadcasts) */
-  countUnread(userId: string | null): Promise<number>;
-  markAllRead(userId: string | null): Promise<void>;
+  findForUser(userId: string | null, query: any, allowedTypes?: NotificationType[]): Promise<{ data: Notification[]; total: number }>;
+  /** Count unread notifications for a user (includes permitted broadcasts) */
+  countUnread(userId: string | null, allowedTypes?: NotificationType[]): Promise<number>;
+  markAllRead(userId: string | null, allowedTypes?: NotificationType[]): Promise<void>;
   markManyRead(ids: string[]): Promise<void>;
   delete(id: string): Promise<void>;
   deleteMany(ids: string[]): Promise<void>;
-  deleteAll(userId: string | null): Promise<void>;
+  deleteAll(userId: string | null, allowedTypes?: NotificationType[]): Promise<void>;
 }

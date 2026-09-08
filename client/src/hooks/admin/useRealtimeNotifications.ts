@@ -20,7 +20,7 @@ import { getApiBaseUrl } from '@/lib/axios';
 
 interface RealtimeNotification {
   id: string;
-  type: 'NEW_ORDER' | 'ORDER_CANCELLED' | 'RETURN_REQUEST' | 'LOW_STOCK' | 'ORDER_STATUS' | 'SYSTEM';
+  type: 'NEW_ORDER' | 'ORDER_CANCELLED' | 'RETURN_REQUEST' | 'LOW_STOCK' | 'ORDER_STATUS' | 'SYSTEM' | 'NEW_REVIEW' | 'NEW_USER';
   title: string;
   message: string;
   metadata?: Record<string, unknown> | null;
@@ -77,29 +77,56 @@ const TYPE_CONFIG = {
     bgColor: '#f9fafb',
     borderColor: '#d1d5db',
   },
+  NEW_REVIEW: {
+    icon: '⭐',
+    color: '#8b5cf6',
+    confirmText: 'View Reviews',
+    href: '/admin/reviews',
+    bgColor: '#f5f3ff',
+    borderColor: '#c4b5fd',
+  },
+  NEW_USER: {
+    icon: '👤',
+    color: '#06b6d4',
+    confirmText: 'View Customers',
+    href: '/admin/user',
+    bgColor: '#ecfeff',
+    borderColor: '#a5f3fc',
+  },
 };
+
+const NOTIFICATION_PERMISSION_MAP: Record<string, string> = {
+  NEW_ORDER: 'manage_orders',
+  ORDER_CANCELLED: 'manage_orders',
+  ORDER_STATUS: 'manage_orders',
+  RETURN_REQUEST: 'manage_orders',
+  LOW_STOCK: 'manage_inventory',
+  NEW_REVIEW: 'manage_reviews',
+  NEW_USER: 'manage_users',
+};
+
+function hasNotificationPermission(notificationType: string, permissions: string[], role?: string): boolean {
+  const roleUpper = String(role || '').toUpperCase();
+  if (roleUpper === 'ADMIN' || roleUpper === 'SUPER_ADMIN' || roleUpper.includes('ADMIN')) return true;
+  if (!permissions || permissions.length === 0) return false;
+  if (permissions.includes('*') || permissions.includes('manage_notifications')) return true;
+
+  const required = NOTIFICATION_PERMISSION_MAP[notificationType];
+  if (!required) {
+    return permissions.length > 0;
+  }
+  return permissions.includes(required);
+}
 
 /**
  * Checks whether the current user is an admin/staff member who should receive
  * real-time notifications. Any non-empty permissions array means the user has a role.
  */
-function isAdminUser(permissions: string[]): boolean {
+function isAdminUser(permissions: string[], role?: string): boolean {
+  const roleUpper = String(role || '').toUpperCase();
+  if (roleUpper === 'ADMIN' || roleUpper === 'SUPER_ADMIN' || roleUpper.includes('ADMIN')) return true;
   if (!permissions || permissions.length === 0) return false;
-  if (permissions.includes('*')) return true;
-  // If they have ANY of these permissions, they're at least staff
-  const adminPerms = [
-    'manage_orders',
-    'manage_users',
-    'manage_products',
-    'manage_inventory',
-    'view_analytics',
-    'manage_staff',
-    'manage_roles',
-    'manage_settings',
-    'view_orders',
-    'manage_notifications',
-  ];
-  return adminPerms.some(p => permissions.includes(p));
+  return true;
 }
 
 export function useRealtimeNotifications() {
@@ -122,7 +149,8 @@ export function useRealtimeNotifications() {
     if (!isAuthenticated || !user) return;
 
     const permissions = user.permissions || [];
-    if (!isAdminUser(permissions)) return;
+    const userRole = (user as any)?.role || (user as any)?.roleId;
+    if (!isAdminUser(permissions, userRole)) return;
 
     let isMounted = true;
 
@@ -181,6 +209,13 @@ export function useRealtimeNotifications() {
       if (seenNotificationIdsRef.current.has(notification.id)) return;
       seenNotificationIdsRef.current.add(notification.id);
 
+      // Verify caller permission for this notification type
+      const userPermissions = user?.permissions || [];
+      const userRole = (user as any)?.role || (user as any)?.roleId;
+      if (!hasNotificationPermission(notification.type, userPermissions, userRole)) {
+        return;
+      }
+
       // 1. Synchronously update ALL TanStack Query notification caches
       //    This makes the sidebar badge AND notification page list update
       //    at the exact same instant in the same React render tick!
@@ -230,19 +265,46 @@ export function useRealtimeNotifications() {
       void queryClient.invalidateQueries({ queryKey: ['notifications'] });
       void queryClient.invalidateQueries({ queryKey: ['orders'] });
 
-      // 3b. Dispatch window event so non-React-Query pages (like admin orders) refresh immediately
+      // 3b. Dispatch window event so non-React-Query pages refresh immediately
       if (typeof window !== 'undefined') {
         const meta = notification.metadata as any;
-        window.dispatchEvent(
-          new CustomEvent('admin:order-updated', {
-            detail: {
-              type: notification.type,
-              metadata: meta,
-              orderId: meta?.orderNumber || meta?.orderId,
-              returnId: meta?.returnId,
-            },
-          })
-        );
+        if (
+          notification.type === 'NEW_ORDER' ||
+          notification.type === 'ORDER_CANCELLED' ||
+          notification.type === 'ORDER_STATUS' ||
+          notification.type === 'RETURN_REQUEST'
+        ) {
+          window.dispatchEvent(
+            new CustomEvent('admin:order-updated', {
+              detail: {
+                type: notification.type,
+                metadata: meta,
+                orderId: meta?.orderNumber || meta?.orderId,
+                returnId: meta?.returnId,
+              },
+            })
+          );
+        } else if (notification.type === 'NEW_REVIEW') {
+          window.dispatchEvent(
+            new CustomEvent('admin:review-updated', {
+              detail: {
+                type: notification.type,
+                metadata: meta,
+                reviewId: meta?.reviewId,
+              },
+            })
+          );
+        } else if (notification.type === 'NEW_USER') {
+          window.dispatchEvent(
+            new CustomEvent('admin:user-updated', {
+              detail: {
+                type: notification.type,
+                metadata: meta,
+                userId: meta?.userId,
+              },
+            })
+          );
+        }
       }
 
       // 4. Show SweetAlert2 popup
@@ -264,6 +326,22 @@ export function useRealtimeNotifications() {
       }
       if (customerNote) {
         extraHtml += `<div style="margin-top:8px;padding:8px 12px;background:#f8fafc;border-left:3px solid ${config.color};border-radius:4px;text-align:left;font-size:13px;color:#374151;font-style:italic;">"${customerNote}"</div>`;
+      }
+      if (notification.type === 'NEW_REVIEW') {
+        const rating = notification.metadata?.rating as number | undefined;
+        const productName = notification.metadata?.productName as string | undefined;
+        if (rating) {
+          extraHtml += `<div style="font-size:15px;font-weight:700;color:#8b5cf6;margin-bottom:4px;">${'★'.repeat(rating)}${'☆'.repeat(Math.max(0, 5 - rating))} (${rating}/5)</div>`;
+        }
+        if (productName) {
+          extraHtml += `<div style="display:inline-block;padding:2px 10px;background:#8b5cf622;border-radius:6px;font-weight:600;font-size:12px;margin-bottom:8px;color:#6d28d9;">${productName}</div>`;
+        }
+      }
+      if (notification.type === 'NEW_USER') {
+        const email = notification.metadata?.email as string | undefined;
+        if (email) {
+          extraHtml += `<div style="display:inline-block;padding:2px 10px;background:#06b6d422;border-radius:6px;font-weight:600;font-size:12px;margin-bottom:8px;color:#0891b2;">${email}</div>`;
+        }
       }
 
       let targetHref = config.href;
