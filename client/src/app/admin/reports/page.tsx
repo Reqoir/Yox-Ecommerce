@@ -14,6 +14,7 @@ import {
   InventoryReport,
 } from '@/api/admin/reports';
 import { PaymentReportsTab } from '@/components/admin/reports/PaymentReportsTab';
+import { paymentReportsApi } from '@/lib/api/payment-reports';
 import { subDays, format } from 'date-fns';
 import { Download, BarChart3, Package, Users, Warehouse, CreditCard, Printer, FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
@@ -37,7 +38,10 @@ export default function AdminReportsPage() {
   const [exporting, setExporting] = useState<boolean>(false);
 
   const fetchCurrentTabReport = async () => {
-    if (activeTab === 'payments') return;
+    if (activeTab === 'payments') {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const queryParams = { startDate, endDate, groupBy };
@@ -89,7 +93,7 @@ export default function AdminReportsPage() {
     }
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     try {
       const periodStr = activeTab === 'inventory' ? 'Current Snapshot' : `${startDate} to ${endDate}`;
 
@@ -245,7 +249,64 @@ export default function AdminReportsPage() {
           ],
         });
       } else if (activeTab === 'payments') {
-        toast.info('Payment transactions can be exported via CSV or the audit log below.');
+        try {
+          setExporting(true);
+          const paymentData = await paymentReportsApi.getFullReport({ limit: 100 });
+          const s = paymentData?.summary;
+          const b = paymentData?.breakdown;
+          const txns = paymentData?.transactions?.data || [];
+
+          exportReportToPDF({
+            title: 'Payment Transactions & Financial Audit Report',
+            subtitle: 'Aggregated Financial Overview & Audit Trail',
+            dateRange: `${startDate} to ${endDate}`,
+            kpis: [
+              { label: 'Gross Collected', value: `₹${(s?.grossCollected || 0).toLocaleString('en-IN')}` },
+              { label: 'Total Refunded', value: `₹${(s?.totalRefunded || 0).toLocaleString('en-IN')}` },
+              { label: 'Net Collected', value: `₹${(s?.netCollected || 0).toLocaleString('en-IN')}` },
+              { label: 'Successful', value: `${(s?.successfulTransactions || 0).toLocaleString('en-IN')}` },
+              { label: 'Pending', value: `${(s?.pendingTransactions || 0).toLocaleString('en-IN')}` },
+              { label: 'Failed', value: `${(s?.failedTransactions || 0).toLocaleString('en-IN')}` },
+            ],
+            sections: [
+              {
+                heading: 'Payment Method Breakdown',
+                headers: ['Payment Method', 'Transactions Count', 'Amount Collected (₹)'],
+                rows: Object.entries(b?.byMethod || {}).map(([method, data]) => [
+                  method,
+                  data.transactionCount,
+                  `₹${data.amount.toLocaleString('en-IN')}`,
+                ]),
+              },
+              {
+                heading: 'Payment Status Distribution',
+                headers: ['Payment Status', 'Orders Count', 'Total Amount (₹)'],
+                rows: Object.entries(b?.byStatus || {}).map(([status, data]) => [
+                  status,
+                  data.count,
+                  `₹${data.amount.toLocaleString('en-IN')}`,
+                ]),
+              },
+              {
+                heading: 'Financial Transactions Audit Trail',
+                headers: ['Order Number', 'Customer Name', 'Payment Method', 'Amount (₹)', 'Status', 'Transaction ID', 'Date'],
+                rows: txns.map((tx) => [
+                  `#${tx.orderNumber}`,
+                  tx.customerName || 'Customer',
+                  tx.method,
+                  `₹${tx.amount.toLocaleString('en-IN')}`,
+                  tx.status,
+                  tx.transactionId || 'N/A',
+                  new Date(tx.createdAt).toLocaleDateString('en-IN'),
+                ]),
+              },
+            ],
+          });
+        } catch (err) {
+          toast.error('Failed to load payment transactions for PDF report.');
+        } finally {
+          setExporting(false);
+        }
       }
     } catch (err: any) {
       toast.error('Failed to generate PDF report.');
@@ -270,18 +331,18 @@ export default function AdminReportsPage() {
             className="inline-flex items-center gap-2 px-3.5 py-2 border border-border bg-card text-foreground font-medium text-xs rounded-xl shadow-xs hover:bg-muted transition-colors disabled:opacity-50"
             title="Download CSV Spreadsheet"
           >
-            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-            {exporting ? 'Exporting...' : 'Export CSV'}
+            <Download className="h-3.5 w-3.5 text-emerald-600" />
+            {exporting ? 'Downloading...' : 'Download CSV'}
           </button>
 
           <button
             onClick={handleExportPDF}
-            disabled={loading || activeTab === 'payments'}
+            disabled={exporting || loading}
             className="inline-flex items-center gap-2 px-3.5 py-2 bg-[#1A2E4C] text-white font-medium text-xs rounded-xl shadow-xs hover:bg-[#1A2E4C]/90 transition-colors disabled:opacity-50"
-            title="Print or Save as PDF"
+            title="Download PDF Document"
           >
-            <Printer className="h-3.5 w-3.5 text-[#D2925D]" />
-            Export PDF
+            <Download className="h-3.5 w-3.5 text-[#D2925D]" />
+            {exporting ? 'Generating...' : 'Download PDF'}
           </button>
         </div>
       </div>

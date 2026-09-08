@@ -4,7 +4,7 @@ import { GetCustomerInsightsReportUseCase } from './get-customer-insights-report
 import { GetInventoryReportUseCase } from './get-inventory-report.use-case';
 import { CsvExporterService } from '../../infrastructure/services/csv-exporter.service';
 import { ReportQueryParams } from '../dtos/report-query.dto';
-import { PaymentModel } from '../../../payments/infrastructure/models/payment.model';
+import { OrderModel } from '../../../orders/infrastructure/models/order.model';
 
 export class ExportReportUseCase {
   constructor(
@@ -95,19 +95,23 @@ export class ExportReportUseCase {
       const endDate = params.endDate ? new Date(params.endDate) : new Date();
       endDate.setHours(23, 59, 59, 999);
 
-      const payments = await PaymentModel.find({
-        createdAt: { $gte: startDate, $lte: endDate },
-      }).sort({ createdAt: -1 }).lean();
+      const orders = await OrderModel.find({
+        $or: [
+          { placedAt: { $gte: startDate, $lte: endDate } },
+          { createdAt: { $gte: startDate, $lte: endDate } },
+        ],
+      }).sort({ placedAt: -1, createdAt: -1 }).lean();
 
-      const rows = payments.map((p, index) => ({
+      const rows = orders.map((o: any, index: number) => ({
         '#': index + 1,
-        'Order ID': p.orderId,
-        'Payment Method': p.paymentMethod,
-        'Amount (INR)': p.amount,
-        Status: p.paymentStatus,
-        'Transaction ID': p.transactionId || 'N/A',
-        'Refunded Amount': p.refundedAmount || 0,
-        Date: p.createdAt ? new Date(p.createdAt).toISOString().split('T')[0] : 'N/A',
+        'Order Number': o.orderNumber,
+        'Customer Name': o.shippingAddress?.fullName || 'Customer',
+        'Payment Method': o.paymentMethod,
+        'Amount (INR)': o.totalAmount,
+        'Payment Status': o.paymentStatus,
+        'Order Status': o.orderStatus,
+        'Transaction ID / Ref': o.paymentId || o.trackingNumber || `TXN-${o.orderNumber}`,
+        Date: o.placedAt ? new Date(o.placedAt).toISOString().split('T')[0] : (o.createdAt ? new Date(o.createdAt).toISOString().split('T')[0] : 'N/A'),
       }));
 
       return {
