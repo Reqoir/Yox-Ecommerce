@@ -7,22 +7,17 @@ import { offersApi, Offer } from '@/api/admin/offers';
 import {
   Clock,
   ArrowRight,
-  Copy,
-  Check,
-  Tag,
   Search,
   ChevronLeft,
   ChevronRight,
   ArrowUpRight,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 type OfferFilterType = 'ALL' | 'LIMITED_TIME' | 'CELEBRATION' | 'CATEGORY' | 'PRODUCT';
 
 export default function OffersPage() {
   const [selectedFilter, setSelectedFilter] = useState<OfferFilterType>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [spotlightIndex, setSpotlightIndex] = useState(0);
   const [isSpotlightHovered, setIsSpotlightHovered] = useState(false);
 
@@ -30,17 +25,6 @@ export default function OffersPage() {
     queryKey: ['active-offers'],
     queryFn: offersApi.getActive,
   });
-
-  const handleCopyCode = (e: React.MouseEvent, code: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    navigator.clipboard.writeText(code);
-    setCopiedCode(code);
-    toast.success(`Coupon code ${code} copied!`, {
-      description: 'Applied automatically during checkout.',
-    });
-    setTimeout(() => setCopiedCode(null), 2500);
-  };
 
   // Filter & Search Offers
   const filteredOffers = useMemo(() => {
@@ -133,7 +117,7 @@ export default function OffersPage() {
             </div>
 
             <p className="text-xs sm:text-sm text-gray-600 max-w-md leading-relaxed font-normal">
-              Explore our current promotional campaigns, festive privileges, and curated voucher codes applicable across handcrafted garments and contemporary collections.
+              Explore our current promotional campaigns, festive privileges, and curated seasonal discounts applicable across handcrafted garments and contemporary collections.
             </p>
           </div>
         </div>
@@ -203,25 +187,6 @@ export default function OffersPage() {
                     <span>View Campaign Products</span>
                     <ArrowRight size={14} />
                   </Link>
-
-                  {currentSpotlight.code && (
-                    <button
-                      type="button"
-                      onClick={(e) => handleCopyCode(e, currentSpotlight.code!)}
-                      className={`inline-flex items-center gap-2 px-3.5 py-2 sm:py-2.5 text-xs font-mono tracking-wider transition-all cursor-pointer border ${
-                        copiedCode === currentSpotlight.code
-                          ? 'bg-white text-black border-white'
-                          : 'bg-black/50 hover:bg-black/80 text-white border-white/30'
-                      }`}
-                    >
-                      <span>CODE: <strong className="tracking-widest">{currentSpotlight.code}</strong></span>
-                      {copiedCode === currentSpotlight.code ? (
-                        <Check size={13} className="text-emerald-500" />
-                      ) : (
-                        <Copy size={13} className="text-gray-400" />
-                      )}
-                    </button>
-                  )}
                 </div>
               </div>
 
@@ -324,7 +289,6 @@ export default function OffersPage() {
         {!isLoading && filteredOffers.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             {filteredOffers.map((offer) => {
-              const hasCode = Boolean(offer.code);
               const discountText =
                 offer.discountType === 'PERCENTAGE'
                   ? `${offer.discountValue}% OFF`
@@ -403,28 +367,6 @@ export default function OffersPage() {
 
                     {/* Card Actions */}
                     <div className="mt-4 sm:mt-5 pt-3 border-t border-gray-100 flex flex-col gap-2">
-                      {hasCode && (
-                        <button
-                          type="button"
-                          onClick={(e) => handleCopyCode(e, offer.code!)}
-                          className={`w-full py-2 px-3 flex items-center justify-between text-xs font-mono tracking-wider transition-colors cursor-pointer border ${
-                            copiedCode === offer.code
-                              ? 'bg-neutral-900 text-white border-neutral-900'
-                              : 'bg-neutral-50 hover:bg-neutral-100 text-gray-800 border-gray-200'
-                          }`}
-                        >
-                          <span className="flex items-center gap-1.5">
-                            <Tag size={12} className="text-gray-400" />
-                            <span>CODE: <strong>{offer.code}</strong></span>
-                          </span>
-                          {copiedCode === offer.code ? (
-                            <span className="text-emerald-400 font-sans text-[11px] font-semibold">COPIED</span>
-                          ) : (
-                            <span className="text-gray-400 text-[11px]">COPY</span>
-                          )}
-                        </button>
-                      )}
-
                       <Link
                         href={`/offers/${offer.id}`}
                         className="w-full bg-gray-900 hover:bg-black text-white text-xs font-semibold tracking-wider uppercase py-2.5 px-4 text-center transition-colors inline-flex items-center justify-center gap-1.5"

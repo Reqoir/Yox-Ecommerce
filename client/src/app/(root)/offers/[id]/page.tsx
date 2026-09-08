@@ -452,7 +452,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
             </div>
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">Automatic Savings</h4>
-              <p className="text-[11px] text-gray-500 mt-0.5">Discounts automatically deducted at checkout with zero coupon codes needed.</p>
+              <p className="text-[11px] text-gray-500 mt-0.5">Discounts are automatically deducted at checkout.</p>
             </div>
           </div>
 

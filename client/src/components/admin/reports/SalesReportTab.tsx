@@ -99,7 +99,7 @@ export function SalesReportTab({ data, loading }: SalesReportTabProps) {
             <div className="text-2xl font-bold">
               ₹{summary.totalDiscounts.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Total coupons & discounts</p>
+            <p className="text-xs text-muted-foreground mt-1">Total store discounts</p>
           </CardContent>
         </Card>
       </div>

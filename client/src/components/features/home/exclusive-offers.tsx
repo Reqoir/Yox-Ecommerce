@@ -12,8 +12,6 @@ import {
   Flame,
   ChevronLeft,
   ChevronRight,
-  Copy,
-  Check,
   Tag,
   Clock,
   Percent,
@@ -21,7 +19,6 @@ import {
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { optimizeCloudinaryUrl } from '@/lib/utils';
-import { toast } from 'sonner';
 
 interface FormattedProduct {
   id: string;
@@ -43,7 +40,6 @@ export function ExclusiveOffers() {
   const [isLoadingOffers, setIsLoadingOffers] = useState(true);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; mins: number; secs: number } | null>(null);
 
   // Fallback legacy products if no new offers exist
@@ -221,17 +217,6 @@ export function ExclusiveOffers() {
       e.stopPropagation();
     }
     setSelectedOfferIndex((prev) => (prev + 1) % activeOffers.length);
-  };
-
-  const handleCopyCode = (e: React.MouseEvent, code: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    navigator.clipboard.writeText(code);
-    setCopiedCode(code);
-    toast.success(`Coupon code ${code} copied!`, {
-      description: 'Applied automatically during checkout.',
-    });
-    setTimeout(() => setCopiedCode(null), 2500);
   };
 
   // Products to render for current view
@@ -485,31 +470,6 @@ export function ExclusiveOffers() {
                 </span>
               )}
             </div>
-
-            {/* Coupon Code Copy Strip */}
-            {currentOffer?.code && (
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className="text-xs text-gray-600 font-medium">Use Code:</span>
-                <button
-                  type="button"
-                  onClick={(e) => handleCopyCode(e, currentOffer.code!)}
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-mono font-bold tracking-wider rounded-xs transition-colors cursor-pointer border ${copiedCode === currentOffer.code
-                    ? 'bg-emerald-600 text-white border-emerald-600'
-                    : 'bg-white text-[#40362C] border-gray-300 hover:border-[#40362C]'
-                    }`}
-                  title="Click to copy coupon code"
-                >
-                  <span>{currentOffer.code}</span>
-                  {copiedCode === currentOffer.code ? (
-                    <span className="text-[10px] font-sans font-bold flex items-center gap-1">
-                      <Check size={11} /> COPIED
-                    </span>
-                  ) : (
-                    <Copy size={11} className="text-gray-400" />
-                  )}
-                </button>
-              </div>
-            )}
 
             {currentOffer && (
               <Link

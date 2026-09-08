@@ -7,11 +7,8 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
-  Copy,
-  Check,
 } from 'lucide-react';
 import { offersApi, Offer } from '@/api/admin/offers';
-import { toast } from 'sonner';
 
 // Curated luxury fashion editorial fallback slides if no banners exist in database
 const FALLBACK_CAMPAIGNS: Partial<Offer>[] = [
@@ -206,17 +203,6 @@ export function OfferBannerSlider() {
     return () => clearInterval(autoPlay);
   }, [banners.length, isHovered]);
 
-  const handleCopyCode = (e: React.MouseEvent, code: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    navigator.clipboard.writeText(code);
-    setCopiedCode(code);
-    toast.success(`Code ${code} copied`, {
-      description: 'Applied automatically during checkout.',
-    });
-    setTimeout(() => setCopiedCode(null), 2400);
-  };
-
   const handlePrev = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -245,10 +231,9 @@ export function OfferBannerSlider() {
 
   const current = banners[currentIndex] || banners[0];
   const bannerInfo = current.banner;
-  const couponCode = current.code || (current.id && current.id.length < 12 ? current.id : null);
   const targetLink =
     bannerInfo?.ctaLink ||
-    (current.id.startsWith('default-')
+    (current.id?.startsWith('default-')
       ? '/shop'
       : `/offers/${current.id}`);
 
@@ -319,10 +304,9 @@ export function OfferBannerSlider() {
                 'Impeccable silhouettes, handcrafted textures, and modern essentials tailored for elevated wardrobes.'}
             </p>
 
-            {/* Timer & Coupon Code Bar */}
-            <div className="flex flex-wrap items-center gap-3 sm:gap-5 mt-4 sm:mt-6 pt-3 border-t border-white/15 max-w-xl">
-              {/* Minimalist Countdown */}
-              {timeLeft && (
+            {/* Timer Bar */}
+            {timeLeft && (
+              <div className="flex flex-wrap items-center gap-3 sm:gap-5 mt-4 sm:mt-6 pt-3 border-t border-white/15 max-w-xl">
                 <div className="flex items-center gap-2 text-white">
                   <Clock size={13} className="text-gray-400" />
                   <span className="font-mono text-[11px] sm:text-xs tracking-widest text-gray-300 uppercase">
@@ -332,30 +316,8 @@ export function OfferBannerSlider() {
                     </strong>
                   </span>
                 </div>
-              )}
-
-              {/* Minimalist Coupon Copy Action */}
-              {couponCode && (
-                <button
-                  type="button"
-                  onClick={(e) => handleCopyCode(e, couponCode)}
-                  className={`inline-flex items-center gap-2 px-3 py-1 text-xs font-mono tracking-wider transition-all cursor-pointer border ${copiedCode === couponCode
-                      ? 'bg-white text-black border-white'
-                      : 'bg-black/50 hover:bg-black/80 text-white border-white/30'
-                    }`}
-                  title="Copy promo code"
-                >
-                  <span>CODE: <strong className="tracking-widest">{couponCode}</strong></span>
-                  {copiedCode === couponCode ? (
-                    <span className="inline-flex items-center gap-1 font-sans text-[11px] font-bold text-emerald-600">
-                      <Check size={12} /> COPIED
-                    </span>
-                  ) : (
-                    <Copy size={12} className="text-gray-400 hover:text-white" />
-                  )}
-                </button>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Primary Action Button */}
             <div className="flex items-center gap-3 mt-5 sm:mt-7">

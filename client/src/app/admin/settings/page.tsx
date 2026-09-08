@@ -892,7 +892,7 @@ export default function AdminSettingsPage() {
                     <div>
                       <CardTitle className="text-base font-bold">Top Announcement Banner</CardTitle>
                       <CardDescription className="text-xs">
-                        Broadcast flash sales, coupon codes, and notices at the very top of every store page.
+                        Broadcast flash sales, announcements, and notices at the very top of every store page.
                       </CardDescription>
                     </div>
                   </div>

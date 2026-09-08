@@ -452,7 +452,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
         <p className="text-[11px] text-gray-600 font-medium mt-2 flex items-center gap-1.5">
           <Check size={13} className="text-emerald-600 shrink-0" />
-          <span>Discount is automatically applied to your cart — No promo code needed!</span>
+          <span>Offer discount is automatically applied to your cart!</span>
         </p>
       </div>
     );
