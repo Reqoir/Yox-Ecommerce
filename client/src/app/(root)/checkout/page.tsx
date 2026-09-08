@@ -159,25 +159,6 @@ function CheckoutContent() {
         {/* Header Breadcrumb & Security Indicator */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-200 pb-4 mb-6 lg:mb-8 gap-2">
           <div>
-            <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-              {isDirectCheckout ? (
-                <button
-                  type="button"
-                  onClick={() => router.back()}
-                  className="hover:text-gray-900 flex items-center gap-1 cursor-pointer"
-                >
-                  <ArrowLeft size={12} /> Back to Product
-                </button>
-              ) : (
-                <Link href="/cart" className="hover:text-gray-900 flex items-center gap-1">
-                  <ArrowLeft size={12} /> Back to Cart
-                </Link>
-              )}
-              <span>&gt;</span>
-              <span className="text-gray-900 font-semibold">
-                {isDirectCheckout ? 'Direct Buy Checkout' : 'Checkout'}
-              </span>
-            </div>
             <h1 className="text-xl lg:text-2xl font-bold text-gray-900 tracking-tight">
               {isDirectCheckout ? 'Direct Buy Checkout & Payment' : 'Checkout & Payment'}
             </h1>

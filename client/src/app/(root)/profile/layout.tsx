@@ -38,34 +38,14 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
     }
   };
 
-  const getPageTitle = () => {
-    if (pathname.includes('/orders')) return 'My Orders';
-    if (pathname.includes('/addresses')) return 'Saved Addresses';
-    if (pathname.includes('/settings')) return 'Account Settings';
-    if (pathname.includes('/favourites')) return 'My Favourites';
-    if (pathname.includes('/personal-info')) return 'Personal Information';
-    return 'Account Overview';
-  };
-
   const isOverviewPage = pathname === '/profile';
 
   return (
     <div className="w-full bg-white min-h-screen pb-16 pt-4 lg:pt-8">
       <div className="w-[98%] max-w-[1500px] mx-auto space-y-6">
         
-        {/* Top Breadcrumb & Banner */}
+        {/* Top Banner */}
         <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <Link href="/" className="hover:text-gray-900 transition-colors">Home</Link>
-            <span>&gt;</span>
-            <Link href="/profile" className="hover:text-gray-900 transition-colors">My Account</Link>
-            {!isOverviewPage && (
-              <>
-                <span>&gt;</span>
-                <span className="text-gray-900 font-bold">{getPageTitle()}</span>
-              </>
-            )}
-          </div>
 
           {/* User Profile Header Card */}
           <div className="relative overflow-hidden bg-white text-gray-900 rounded-sm p-6 lg:p-8 shadow-2xs border border-gray-200/90">
@@ -147,7 +127,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
           <main className="flex-1 w-full">
             <div className="bg-white border border-gray-200/90 rounded-sm p-4 sm:p-6 lg:p-8 shadow-2xs min-h-[520px]">
               {!isOverviewPage && (
-                <div className="lg:hidden mb-4 relative z-20">
+                <div className="lg:hidden mb-4 sticky top-20 z-30 pt-2 pb-2 -mt-2 bg-white">
                   <button 
                     onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
                     className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-sm p-4 shadow-2xs"

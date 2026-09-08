@@ -27,11 +27,6 @@ export default function CartPage() {
         {/* Header Breadcrumb & Title */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 pb-4 mb-6 lg:mb-8 gap-2">
           <div>
-            <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-              <Link href="/" className="hover:text-gray-900">Home</Link>
-              <span>&gt;</span>
-              <span className="text-gray-900 font-semibold">Shopping Basket</span>
-            </div>
             <h1 className="text-xl lg:text-2xl font-bold text-gray-900 tracking-tight">
               Shopping Basket ({items.length} {items.length === 1 ? 'item' : 'items'})
             </h1>
