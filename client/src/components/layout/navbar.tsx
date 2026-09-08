@@ -373,28 +373,45 @@ export function Navbar() {
                 {/* Links */}
                 <div className="flex flex-col divide-y divide-gray-100">
                   <Link href="/profile/personal-info" onClick={() => setIsUserDropdownOpen(false)} className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group">
-                    <span className="text-sm font-medium text-gray-800">My Profile</span>
+                    <div className="flex items-center gap-3">
+                      <User className="w-4 h-4 text-gray-400 group-hover:text-gray-800 transition-colors" />
+                      <span className="text-sm font-medium text-gray-800">My Profile</span>
+                    </div>
                     <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
                   </Link>
                   <Link href="/profile/orders" onClick={() => setIsUserDropdownOpen(false)} className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group">
-                    <span className="text-sm font-medium text-gray-800">My Orders</span>
+                    <div className="flex items-center gap-3">
+                      <Package className="w-4 h-4 text-gray-400 group-hover:text-gray-800 transition-colors" />
+                      <span className="text-sm font-medium text-gray-800">My Orders</span>
+                    </div>
                     <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
                   </Link>
                   <Link href="/profile/addresses" onClick={() => setIsUserDropdownOpen(false)} className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group">
-                    <span className="text-sm font-medium text-gray-800">Saved Addresses</span>
+                    <div className="flex items-center gap-3">
+                      <MapPin className="w-4 h-4 text-gray-400 group-hover:text-gray-800 transition-colors" />
+                      <span className="text-sm font-medium text-gray-800">Saved Addresses</span>
+                    </div>
                     <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
                   </Link>
                   <Link href="/profile/favourites" onClick={() => setIsUserDropdownOpen(false)} className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group">
-                    <span className="text-sm font-medium text-gray-800">My Wishlist</span>
+                    <div className="flex items-center gap-3">
+                      <Heart className="w-4 h-4 text-gray-400 group-hover:text-gray-800 transition-colors" />
+                      <span className="text-sm font-medium text-gray-800">My Wishlist</span>
+                    </div>
                     <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
                   </Link>
                   <Link href="/profile/settings" onClick={() => setIsUserDropdownOpen(false)} className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group">
-                    <span className="text-sm font-medium text-gray-800">Account Settings</span>
+                    <div className="flex items-center gap-3">
+                      <Settings className="w-4 h-4 text-gray-400 group-hover:text-gray-800 transition-colors" />
+                      <span className="text-sm font-medium text-gray-800">Account Settings</span>
+                    </div>
                     <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
                   </Link>
                   <button onClick={handleLogout} className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group w-full text-left">
-                    <span className="text-sm font-medium text-gray-800">Sign Out</span>
-                    <LogOut className="w-4 h-4 text-gray-400 group-hover:text-gray-700 transition-colors" />
+                    <div className="flex items-center gap-3">
+                      <LogOut className="w-4 h-4 text-gray-400 group-hover:text-red-600 transition-colors" />
+                      <span className="text-sm font-medium text-gray-800 group-hover:text-red-600 transition-colors">Sign Out</span>
+                    </div>
                   </button>
                 </div>
               </div>
@@ -524,28 +541,45 @@ export function Navbar() {
           {/* Links */}
           <div className="flex-1 flex flex-col divide-y divide-gray-100">
             <Link href="/profile/personal-info" onClick={() => setIsMobileProfileOpen(false)} className="flex items-center justify-between p-5 bg-white hover:bg-gray-50 transition-colors group">
-              <span className="text-base font-medium text-gray-800">My Profile</span>
+              <div className="flex items-center gap-3.5">
+                <User className="w-5 h-5 text-gray-400 group-hover:text-gray-800 transition-colors" />
+                <span className="text-base font-medium text-gray-800">My Profile</span>
+              </div>
               <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-700 transition-colors" />
             </Link>
             <Link href="/profile/orders" onClick={() => setIsMobileProfileOpen(false)} className="flex items-center justify-between p-5 bg-white hover:bg-gray-50 transition-colors group">
-              <span className="text-base font-medium text-gray-800">My Orders</span>
+              <div className="flex items-center gap-3.5">
+                <Package className="w-5 h-5 text-gray-400 group-hover:text-gray-800 transition-colors" />
+                <span className="text-base font-medium text-gray-800">My Orders</span>
+              </div>
               <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-700 transition-colors" />
             </Link>
             <Link href="/profile/addresses" onClick={() => setIsMobileProfileOpen(false)} className="flex items-center justify-between p-5 bg-white hover:bg-gray-50 transition-colors group">
-              <span className="text-base font-medium text-gray-800">Saved Addresses</span>
+              <div className="flex items-center gap-3.5">
+                <MapPin className="w-5 h-5 text-gray-400 group-hover:text-gray-800 transition-colors" />
+                <span className="text-base font-medium text-gray-800">Saved Addresses</span>
+              </div>
               <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-700 transition-colors" />
             </Link>
             <Link href="/profile/favourites" onClick={() => setIsMobileProfileOpen(false)} className="flex items-center justify-between p-5 bg-white hover:bg-gray-50 transition-colors group">
-              <span className="text-base font-medium text-gray-800">My Wishlist</span>
+              <div className="flex items-center gap-3.5">
+                <Heart className="w-5 h-5 text-gray-400 group-hover:text-gray-800 transition-colors" />
+                <span className="text-base font-medium text-gray-800">My Wishlist</span>
+              </div>
               <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-700 transition-colors" />
             </Link>
             <Link href="/profile/settings" onClick={() => setIsMobileProfileOpen(false)} className="flex items-center justify-between p-5 bg-white hover:bg-gray-50 transition-colors group">
-              <span className="text-base font-medium text-gray-800">Account Settings</span>
+              <div className="flex items-center gap-3.5">
+                <Settings className="w-5 h-5 text-gray-400 group-hover:text-gray-800 transition-colors" />
+                <span className="text-base font-medium text-gray-800">Account Settings</span>
+              </div>
               <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-700 transition-colors" />
             </Link>
             <button onClick={() => { setIsMobileProfileOpen(false); handleLogout(); }} className="flex items-center justify-between p-5 bg-white hover:bg-gray-50 transition-colors group w-full text-left">
-              <span className="text-base font-medium text-gray-800">Sign Out</span>
-              <LogOut className="w-5 h-5 text-gray-400 group-hover:text-gray-700 transition-colors" />
+              <div className="flex items-center gap-3.5">
+                <LogOut className="w-5 h-5 text-gray-400 group-hover:text-red-600 transition-colors" />
+                <span className="text-base font-medium text-gray-800 group-hover:text-red-600 transition-colors">Sign Out</span>
+              </div>
             </button>
           </div>
         </div>
