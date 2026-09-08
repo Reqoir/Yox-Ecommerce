@@ -64,17 +64,17 @@ export function FashionQuote() {
   return (
     <section 
       aria-label="Fashion Philosophy"
-      className="w-full bg-white border-t border-gray-100 py-8 sm:py-10 px-4 overflow-hidden relative"
+      className="w-full bg-[#F8F7F4] border-t border-[#EAE6DF] py-8 sm:py-10 px-4 overflow-hidden relative"
     >
       <div className="w-[98%] max-w-[1100px] mx-auto flex flex-col items-center justify-center text-center relative">
         
         {/* Subtle decorative quotation watermark */}
-        <div className="flex items-center justify-center gap-2 mb-2 text-[#1A2E4C]/60">
-          <span className="h-px w-8 bg-gray-200" />
-          <span className="text-[10px] tracking-[0.28em] uppercase font-bold text-gray-400">
+        <div className="flex items-center justify-center gap-2 mb-2 text-[#1A2E4C]/70">
+          <span className="h-px w-8 bg-[#E2DCD3]" />
+          <span className="text-[10px] tracking-[0.28em] uppercase font-bold text-gray-500">
             {current.tagline}
           </span>
-          <span className="h-px w-8 bg-gray-200" />
+          <span className="h-px w-8 bg-[#E2DCD3]" />
         </div>
 
         {/* Interactive Quote Container */}
@@ -84,7 +84,7 @@ export function FashionQuote() {
           <button
             onClick={handlePrev}
             aria-label="Previous quote"
-            className="absolute left-0 top-1/2 -translate-y-1/2 p-1.5 text-gray-300 hover:text-[#1A2E4C] transition-colors rounded-full hover:bg-gray-50 cursor-pointer"
+            className="absolute left-0 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-[#1A2E4C] transition-colors rounded-full hover:bg-white/80 hover:shadow-2xs cursor-pointer"
           >
             <ChevronLeft size={18} strokeWidth={1.75} />
           </button>
@@ -108,7 +108,7 @@ export function FashionQuote() {
           <button
             onClick={handleNext}
             aria-label="Next quote"
-            className="absolute right-0 top-1/2 -translate-y-1/2 p-1.5 text-gray-300 hover:text-[#1A2E4C] transition-colors rounded-full hover:bg-gray-50 cursor-pointer"
+            className="absolute right-0 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-[#1A2E4C] transition-colors rounded-full hover:bg-white/80 hover:shadow-2xs cursor-pointer"
           >
             <ChevronRight size={18} strokeWidth={1.75} />
           </button>
@@ -132,7 +132,7 @@ export function FashionQuote() {
               className={`h-1 rounded-full transition-all duration-300 cursor-pointer ${
                 idx === currentIndex
                   ? 'w-5 bg-[#1A2E4C]'
-                  : 'w-1.5 bg-gray-200 hover:bg-gray-400'
+                  : 'w-1.5 bg-[#D8D2C7] hover:bg-gray-400'
               }`}
             />
           ))}
