@@ -23,13 +23,15 @@ export interface UpdateRoleDTO {
 }
 
 export const PERMISSIONS_LIST = [
+  { id: 'dashboard:read', label: 'View Dashboard & Analytics' },
   { id: 'manage_products', label: 'Manage Products' },
   { id: 'manage_inventory', label: 'Manage Inventory' },
   { id: 'manage_brands', label: 'Manage Brands' },
   { id: 'manage_categories', label: 'Manage Categories' },
   { id: 'manage_orders', label: 'Manage Orders' },
-  { id: 'manage_users', label: 'Manage Users' },
-  { id: 'manage_roles', label: 'Manage Roles' },
+  { id: 'manage_users', label: 'Manage Customers' },
+  { id: 'manage_staff', label: 'Manage Staff Members' },
+  { id: 'manage_roles', label: 'Manage Roles & Permissions' },
   { id: 'manage_settings', label: 'Manage Settings' },
   { id: 'view_analytics', label: 'View Analytics' },
   { id: 'view_reports', label: 'View Payment & Financial Reports' },
@@ -38,7 +40,6 @@ export const PERMISSIONS_LIST = [
   { id: 'manage_offers', label: 'Manage Offers' },
   { id: 'manage_content', label: 'Manage Content' },
   { id: 'manage_notifications', label: 'Manage Notifications' },
-  { id: 'dashboard:read', label: 'View Dashboard' },
 ];
 
 export const roleApi = {

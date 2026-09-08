@@ -5,15 +5,17 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import { toast } from 'sonner';
 
-const ROUTE_PERMISSIONS: Record<string, string> = {
+import { navItems, hasNavPermission } from '@/components/layout/AdminSidebar';
+
+const ROUTE_PERMISSIONS: Record<string, string | string[]> = {
   '/admin/user': 'manage_users',
-  '/admin/staff': 'manage_users',
+  '/admin/staff': 'manage_staff',
   '/admin/product': 'manage_products',
   '/admin/category': 'manage_categories',
   '/admin/brand': 'manage_brands',
   '/admin/role': 'manage_roles',
   '/admin/inventory': 'manage_inventory',
-  '/admin/order': 'manage_orders',
+  '/admin/order': ['manage_orders', 'manage_shipments', 'manage_returns'],
   '/admin/offers': 'manage_offers',
   '/admin/content': 'manage_content',
   '/admin/reviews': 'manage_reviews',
@@ -21,6 +23,7 @@ const ROUTE_PERMISSIONS: Record<string, string> = {
   '/admin/audit-logs': 'view_audit_logs',
   '/admin/notifications': 'manage_notifications',
   '/admin/settings': 'manage_settings',
+  '/admin': ['dashboard:read', 'view_analytics'],
 };
 
 export function AdminGuard({ children }: { children: React.ReactNode }) {
@@ -46,29 +49,47 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
           router.push('/login');
         }
       } else {
-        // Check baseline access to admin panel
         const userPermissions = user.permissions || [];
-        if (pathname.startsWith('/admin') && userPermissions.length === 0) {
+        const userRole = user.role || user.roleId || '';
+        const userRoleUpper = typeof userRole === 'string' ? userRole.toUpperCase() : '';
+        const isAdmin = userRoleUpper === 'ADMIN' || userRoleUpper === 'SUPER_ADMIN' || userPermissions.includes('*');
+
+        // Check baseline access to admin panel
+        if (pathname.startsWith('/admin') && userPermissions.length === 0 && !isAdmin) {
           toast.error('You do not have permission to access the admin panel.');
           router.push('/');
           return;
         }
 
-        // Check if the current route requires specific permissions
-        let hasAccess = true;
+        // Check if current route requires specific permissions
+        let requiredPermission: string | string[] | undefined;
 
-        for (const [route, requiredPermission] of Object.entries(ROUTE_PERMISSIONS)) {
-          if (pathname === route || pathname.startsWith(route + '/')) {
-            if (!userPermissions.includes(requiredPermission)) {
-              hasAccess = false;
-              break;
-            }
+        if (pathname === '/admin' || pathname === '/admin/') {
+          requiredPermission = ['dashboard:read', 'view_analytics'];
+        } else {
+          const matchedEntry = Object.entries(ROUTE_PERMISSIONS)
+            .filter(([route]) => route !== '/admin' && (pathname === route || pathname.startsWith(route + '/') || pathname.startsWith(route + '?')))
+            .sort((a, b) => b[0].length - a[0].length)[0];
+          if (matchedEntry) {
+            requiredPermission = matchedEntry[1];
           }
         }
 
+        const hasAccess = hasNavPermission(requiredPermission, user, userPermissions);
+
         if (!hasAccess) {
-          toast.error('You do not have permission to access this page.');
-          router.push('/admin'); // Redirect to the main dashboard
+          // Find first permitted route
+          const firstAllowed = navItems.find((item) => hasNavPermission(item.permission, user, userPermissions));
+
+          if (firstAllowed && firstAllowed.href !== pathname) {
+            if (pathname !== '/admin' && pathname !== '/admin/') {
+              toast.error('You do not have permission to access this page.');
+            }
+            router.replace(firstAllowed.href);
+          } else {
+            toast.error('You do not have permission to access the admin panel.');
+            router.replace('/');
+          }
         } else {
           setIsChecking(false);
         }

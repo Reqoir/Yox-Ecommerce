@@ -11,6 +11,8 @@ import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
+import { navItems, hasNavPermission } from '@/components/layout/AdminSidebar';
+
 export default function LoginPage() {
   const router = useRouter();
   const loginUser = useAuthStore((state) => state.loginUser);
@@ -34,8 +36,10 @@ export default function LoginPage() {
       
       toast.success('Logged in successfully');
       
-      // Default to redirecting to /admin, could be customized based on role later
-      router.push('/admin');
+      // Determine destination based on user permissions
+      const userPermissions = user.permissions || [];
+      const firstAllowed = navItems.find((item) => hasNavPermission(item.permission, user, userPermissions));
+      router.push(firstAllowed?.href || '/admin');
     } catch (error: any) {
       const message = error.response?.data?.message || 'Invalid email or password';
       toast.error(message);

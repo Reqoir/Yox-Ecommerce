@@ -49,6 +49,7 @@ export class LoginUseCase {
     // 4. Fetch Role to get permissions
     const role = await this.roleRepository.findById(user.roleId);
     const permissions = role ? role.permissions : [];
+    const roleName = role ? role.name.toUpperCase() : 'CUSTOMER';
 
     // 5. Return user info and tokens
     return {
@@ -57,6 +58,7 @@ export class LoginUseCase {
         fullName: user.fullName,
         email: user.email,
         roleId: user.roleId,
+        role: roleName,
         permissions,
       },
       accessToken,

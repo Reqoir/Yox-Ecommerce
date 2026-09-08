@@ -22,6 +22,7 @@ import {
   GetOfferWithProductsUseCase,
 } from '../../application/use-cases/offer.use-cases';
 import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
+import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
 
 const router = Router();
 
@@ -50,9 +51,9 @@ router.get('/:id', offerController.getById);
 router.get('/', offerController.getAll);
 
 // --- Protected Admin Endpoints ---
-router.post('/', requireAuth, offerController.create);
-router.patch('/:id', requireAuth, offerController.update);
-router.patch('/:id/toggle-status', requireAuth, offerController.toggleStatus);
-router.delete('/:id', requireAuth, offerController.delete);
+router.post('/', requireAuth, requirePermission('manage_offers'), offerController.create);
+router.patch('/:id', requireAuth, requirePermission('manage_offers'), offerController.update);
+router.patch('/:id/toggle-status', requireAuth, requirePermission('manage_offers'), offerController.toggleStatus);
+router.delete('/:id', requireAuth, requirePermission('manage_offers'), offerController.delete);
 
 export const offerRoutes = router;

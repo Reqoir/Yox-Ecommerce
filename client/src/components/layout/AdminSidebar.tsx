@@ -27,14 +27,21 @@ import { useNotifications } from '@/hooks/admin/useNotifications';
 import { toast } from 'sonner';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 
-const navItems = [
-  { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+export interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ElementType;
+  permission?: string | string[];
+}
+
+export const navItems: NavItem[] = [
+  { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, permission: ['dashboard:read', 'view_analytics'] },
   { name: 'Reports', href: '/admin/reports', icon: BarChart3, permission: 'view_reports' },
   { name: 'Audit Logs', href: '/admin/audit-logs', icon: ShieldCheck, permission: 'view_audit_logs' },
-  { name: 'Orders', href: '/admin/order', icon: ShoppingBag, permission: 'manage_orders' },
+  { name: 'Orders', href: '/admin/order', icon: ShoppingBag, permission: ['manage_orders', 'manage_shipments', 'manage_returns'] },
   { name: 'Reviews', href: '/admin/reviews', icon: MessageSquare, permission: 'manage_reviews' },
   { name: 'Customers', href: '/admin/user', icon: Users, permission: 'manage_users' },
-  { name: 'Staff Members', href: '/admin/staff', icon: UserCog, permission: 'manage_users' },
+  { name: 'Staff Members', href: '/admin/staff', icon: UserCog, permission: 'manage_staff' },
   { name: 'Products', href: '/admin/product', icon: Package, permission: 'manage_products' },
   { name: 'Categories', href: '/admin/category', icon: FolderTree, permission: 'manage_categories' },
   { name: 'Brands', href: '/admin/brand', icon: Tag, permission: 'manage_brands' },
@@ -45,6 +52,23 @@ const navItems = [
   { name: 'Notifications', href: '/admin/notifications', icon: Bell, permission: 'manage_notifications' },
   { name: 'Settings', href: '/admin/settings', icon: Settings, permission: 'manage_settings' },
 ];
+
+export function hasNavPermission(
+  itemPermission: string | string[] | undefined,
+  user: any,
+  userPermissions: string[]
+): boolean {
+  if (!itemPermission) return true;
+  const userRole = user?.role || user?.roleId || '';
+  const userRoleUpper = typeof userRole === 'string' ? userRole.toUpperCase() : '';
+  const isAdmin = userRoleUpper === 'ADMIN' || userRoleUpper === 'SUPER_ADMIN' || userPermissions.includes('*');
+  if (isAdmin) return true;
+
+  if (Array.isArray(itemPermission)) {
+    return itemPermission.some((p) => userPermissions.includes(p));
+  }
+  return userPermissions.includes(itemPermission);
+}
 
 export function AdminSidebar() {
   const pathname = usePathname();
@@ -71,12 +95,9 @@ export function AdminSidebar() {
       </div>
       <nav className="flex-1 overflow-y-auto p-4 space-y-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {navItems.map((item) => {
-          const userRole = (user as any)?.role || user?.roleId || '';
-          const userRoleUpper = typeof userRole === 'string' ? userRole.toUpperCase() : '';
-          const isAdmin = userRoleUpper === 'ADMIN' || userRoleUpper === 'SUPER_ADMIN' || !user;
-          const hasPermission = isAdmin || userPermissions.includes('*') || (item.permission && userPermissions.includes(item.permission));
+          const hasAccess = hasNavPermission(item.permission, user, userPermissions);
 
-          if (item.permission && !hasPermission) {
+          if (!hasAccess) {
             return null;
           }
 
