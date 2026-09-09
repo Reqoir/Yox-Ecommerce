@@ -219,9 +219,6 @@ function CheckoutContent() {
         </div>
 
       </div>
-
-      {/* Order Success Confirmation Modal */}
-      <OrderSuccessModal />
     </main>
   );
 }

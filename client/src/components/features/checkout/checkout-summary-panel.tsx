@@ -7,11 +7,15 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useCheckoutStore } from '@/store/useCheckoutStore';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
 import { DEFAULT_STORE_CONFIG } from '@/api/admin/settings';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { ordersApi } from '@/lib/api/orders';
+import { paymentsApi } from '@/lib/api/payments';
+import { loadRazorpayScript } from '@/lib/razorpay';
+import { PaymentProcessingOverlay } from '@/components/features/checkout/payment-processing-overlay';
 import { toast } from 'sonner';
 
 export function CheckoutSummaryPanel() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const isBuyNow = searchParams?.get('buyNow') === '1' || searchParams?.get('buyNow') === 'true';
 
@@ -27,6 +31,7 @@ export function CheckoutSummaryPanel() {
   } = useCheckoutStore();
   const { user } = useAuthStore();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoadingOverlay, setIsLoadingOverlay] = useState(false);
 
   const isDirectCheckout = isBuyNow && !!directBuyItem;
 
@@ -74,28 +79,184 @@ export function CheckoutSummaryPanel() {
 
     setIsProcessing(true);
 
-    try {
-      const orderPayload: any = {
-        shippingAddress: {
-          fullName: selectedAddress.fullName,
-          phone: selectedAddress.phone,
-          streetAddress: `${(selectedAddress as any).streetAddress || (selectedAddress as any).street || ''}${((selectedAddress as any).landmark) ? `, ${(selectedAddress as any).landmark}` : ''}`,
-          landmark: (selectedAddress as any).landmark || '',
-          city: selectedAddress.city,
-          state: selectedAddress.state,
-          country: selectedAddress.country || 'India',
-          postalCode: (selectedAddress as any).pincode || (selectedAddress as any).zipCode || '400001',
-        },
-        paymentMethod: paymentMethod,
+    const shippingAddressSnapshot = {
+      fullName: selectedAddress.fullName,
+      phone: selectedAddress.phone,
+      streetAddress: `${(selectedAddress as any).streetAddress || (selectedAddress as any).street || ''}${((selectedAddress as any).landmark) ? `, ${(selectedAddress as any).landmark}` : ''}`,
+      landmark: (selectedAddress as any).landmark || '',
+      city: selectedAddress.city,
+      state: selectedAddress.state,
+      country: selectedAddress.country || 'India',
+      postalCode: (selectedAddress as any).pincode || (selectedAddress as any).zipCode || '400001',
+    };
+
+    const directBuyPayload = isDirectCheckout && directBuyItem ? {
+      variantId: directBuyItem.variantId || directBuyItem.id,
+      quantity: directBuyItem.quantity,
+      price: directBuyItem.price,
+    } : undefined;
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // FLOW 1: RAZORPAY ONLINE PAYMENT
+    // ──────────────────────────────────────────────────────────────────────────
+    if (paymentMethod === 'RAZORPAY') {
+      let rzpInstance: any = null;
+
+      const forceCloseRazorpay = () => {
+        try {
+          if (rzpInstance && typeof rzpInstance.close === 'function') {
+            rzpInstance.close();
+          }
+        } catch {}
+        if (typeof document !== 'undefined') {
+          const elements = document.querySelectorAll('.razorpay-container, iframe[name^="razorpay"]');
+          elements.forEach((el) => {
+            try {
+              el.remove();
+            } catch {}
+          });
+          document.body.style.overflow = '';
+        }
       };
 
-      if (isDirectCheckout && directBuyItem) {
-        orderPayload.directBuyItem = {
-          variantId: directBuyItem.variantId || directBuyItem.id,
-          quantity: directBuyItem.quantity,
-          price: directBuyItem.price,
+      try {
+        const isScriptLoaded = await loadRazorpayScript();
+        if (!isScriptLoaded) {
+          throw new Error('Razorpay SDK failed to load. Please check your internet connection and try again.');
+        }
+
+        // 1. Authoritative order initialization on server (only button spinner shows)
+        const rzpInitData = await paymentsApi.createRazorpayOrder({
+          shippingAddress: shippingAddressSnapshot,
+          addressId: selectedAddress.id,
+          directBuyItem: directBuyPayload,
+        });
+
+        // 2. Configure and Open Razorpay Checkout Popup
+        const options = {
+          key: rzpInitData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+          amount: rzpInitData.amount,
+          currency: rzpInitData.currency || 'INR',
+          name: "YOX Men's Fashion",
+          description: `Order #${rzpInitData.orderNumber}`,
+          order_id: rzpInitData.razorpayOrderId,
+          prefill: {
+            name: user?.fullName || selectedAddress.fullName,
+            email: user?.email || '',
+            contact: selectedAddress.phone || user?.phone || '',
+          },
+          theme: {
+            color: '#1A2E4C',
+          },
+          modal: {
+            ondismiss: () => {
+              setIsProcessing(false);
+              setIsLoadingOverlay(false);
+              if (isDirectCheckout) {
+                toast.info('Payment was cancelled. You can retry checkout anytime.');
+              } else {
+                toast.info('Payment was cancelled. Your items remain saved in your bag.');
+              }
+            },
+          },
+          handler: async (response: {
+            razorpay_payment_id: string;
+            razorpay_order_id: string;
+            razorpay_signature: string;
+          }) => {
+            // STEP A: Automatically and immediately close the Razorpay modal
+            forceCloseRazorpay();
+
+            // STEP B: Show minimal YOX spinner loading animation during verification
+            setIsLoadingOverlay(true);
+
+            try {
+              // 3. Cryptographic Signature Verification on Backend
+              const verifiedOrder = await paymentsApi.verifyRazorpayPayment({
+                orderId: rzpInitData.orderId,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+              });
+
+              // Delivery date estimation
+              const deliveryDays = config.estimatedDeliveryDaysMax || 4;
+              const deliveryDate = new Date();
+              deliveryDate.setDate(deliveryDate.getDate() + deliveryDays);
+              const formattedDate = deliveryDate.toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+              });
+
+              if (isDirectCheckout) {
+                setDirectBuyItem(null);
+              } else {
+                clearCart();
+              }
+
+              setOrderSuccess(true, {
+                orderId: verifiedOrder.orderNumber,
+                total: verifiedOrder.totalAmount,
+                paymentMethod: 'RAZORPAY',
+                deliveryDate: formattedDate,
+                itemCount: verifiedOrder.items?.length || itemCount,
+              });
+
+              // Brief pause with the spinner before redirect
+              await new Promise((r) => setTimeout(r, 600));
+
+              // STEP D: Redirect to Payment Success Page
+              router.push(`/order-success?orderId=${verifiedOrder.orderNumber}`);
+            } catch (verifyError: any) {
+              console.error('Payment verification failed:', verifyError);
+              const msg = verifyError?.response?.data?.message || 'Payment verification failed.';
+
+              await new Promise((r) => setTimeout(r, 600));
+              router.push(`/order-failed?orderId=${rzpInitData.orderNumber}&paymentId=${response.razorpay_payment_id}&reason=${encodeURIComponent(msg)}`);
+            } finally {
+              setIsProcessing(false);
+            }
+          },
         };
+
+        rzpInstance = new window.Razorpay(options);
+
+        // On Payment Failed: Automatically close Razorpay panel -> show spinner -> redirect to failure page
+        rzpInstance.on('payment.failed', async (response: any) => {
+          setIsProcessing(false);
+          forceCloseRazorpay();
+          setIsLoadingOverlay(true);
+
+          const reason = response?.error?.description || 'Payment was declined by your bank or UPI app.';
+          await new Promise((r) => setTimeout(r, 600));
+          router.push(`/order-failed?orderId=${rzpInitData.orderNumber}&paymentId=${response?.error?.metadata?.payment_id || ''}&reason=${encodeURIComponent(reason)}`);
+        });
+
+        // Open Razorpay Popup
+        rzpInstance.open();
+        setIsProcessing(false);
+      } catch (error: any) {
+        setIsProcessing(false);
+        setIsLoadingOverlay(false);
+        console.error('Razorpay initialization failed:', error);
+        const msg = error?.response?.data?.message || error?.message || 'Failed to initialize payment. Please try again.';
+        toast.error(msg);
       }
+      return;
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // FLOW 2: CASH ON DELIVERY (COD)
+    // ──────────────────────────────────────────────────────────────────────────
+    try {
+      setIsLoadingOverlay(true);
+
+      const orderPayload: any = {
+        shippingAddress: shippingAddressSnapshot,
+        paymentMethod: paymentMethod,
+        directBuyItem: directBuyPayload,
+      };
 
       const order = await ordersApi.placeOrder(orderPayload);
 
@@ -126,7 +287,11 @@ export function CheckoutSummaryPanel() {
       });
 
       toast.success('Order placed successfully!');
+      
+      // Redirect to dedicated YOX Order Success Page
+      router.push(`/order-success?orderId=${order.orderNumber}`);
     } catch (error: any) {
+      setIsLoadingOverlay(false);
       console.error('Order placement failed:', error);
       const msg = error?.response?.data?.message || error?.response?.data?.error || 'Failed to complete order placement. Please check your login status or try again.';
       toast.error(msg);
@@ -232,6 +397,9 @@ export function CheckoutSummaryPanel() {
         <Lock size={14} className="text-emerald-600" />
         <span>Safe & Encrypted Transactions</span>
       </div>
+
+      {/* Full-Screen Minimalist YOX Loading Spinner */}
+      <PaymentProcessingOverlay isOpen={isLoadingOverlay} />
     </div>
   );
 }

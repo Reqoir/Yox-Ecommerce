@@ -54,6 +54,11 @@ const envSchema = z.object({
 
   // ── Bcrypt ────────────────────────────────────────────────────────────────
   BCRYPT_SALT_ROUNDS: z.coerce.number().int().min(10).max(15).default(12),
+
+  // ── Razorpay ──────────────────────────────────────────────────────────────
+  RAZORPAY_KEY_ID: z.string().default(''),
+  RAZORPAY_KEY_SECRET: z.string().default(''),
+  RAZORPAY_WEBHOOK_SECRET: z.string().default(''),
 });
 
 export type Env = z.infer<typeof envSchema>;
