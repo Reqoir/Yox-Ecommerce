@@ -776,24 +776,24 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       {/* ─────────────────────────────────────────────────────────────────── */}
       <div className="bg-white border border-gray-200/90 rounded-[2px] p-6 lg:p-7 shadow-2xs space-y-4">
         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-          <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+          <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
             <MapPin size={16} className="text-black" />
             Shipping Address
           </h3>
-          <span className="text-xs font-semibold text-gray-500">Destination</span>
+          <span className="text-xs font-medium text-gray-500">Destination</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-1.5 text-xs text-gray-700">
-            <p className="font-bold text-sm text-gray-900">{order.shippingAddress?.fullName || 'Customer'}</p>
+            <p className="font-medium text-sm text-gray-900">{order.shippingAddress?.fullName || 'Customer'}</p>
             <p className="text-gray-600">{order.shippingAddress?.streetAddress}</p>
             {order.shippingAddress?.landmark && <p className="text-gray-500 italic">Landmark: {order.shippingAddress.landmark}</p>}
             <p className="text-gray-800 font-medium">
-              {order.shippingAddress?.city}, {order.shippingAddress?.state} - <span className="font-mono font-bold">{order.shippingAddress?.postalCode}</span>
+              {order.shippingAddress?.city}, {order.shippingAddress?.state} - <span className="font-mono font-medium">{order.shippingAddress?.postalCode}</span>
             </p>
             <p className="text-gray-800 font-medium">{order.shippingAddress?.country}</p>
             {order.shippingAddress?.phone && (
-              <p className="text-gray-900 font-bold pt-1 flex items-center gap-1.5">
+              <p className="text-gray-900 font-medium pt-1 flex items-center gap-1.5">
                 <Phone size={12} className="text-black" />
                 <span>Phone: {order.shippingAddress.phone}</span>
               </p>
@@ -818,11 +818,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       {/* ─────────────────────────────────────────────────────────────────── */}
       <div className="bg-white border border-gray-200/90 rounded-[2px] p-6 lg:p-7 shadow-2xs space-y-6">
         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-          <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+          <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
             <FileText size={16} className="text-black" />
             Order Details & Items ({order.items?.length || 0})
           </h3>
-          <span className="text-xs font-mono font-bold text-gray-500">Ref: #{order.id.substring(0, 10)}</span>
+          <span className="text-xs font-mono font-medium text-gray-500">Ref: #{order.id.substring(0, 10)}</span>
         </div>
 
         {/* Purchased Items List */}
@@ -837,12 +837,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   className="w-14 h-16 object-cover rounded-[2px] bg-gray-100 border border-gray-200 shrink-0"
                 />
                 <div>
-                  <h4 className="font-bold text-gray-900 text-sm">{item.productName}</h4>
+                  <h4 className="font-medium text-gray-900 text-sm">{item.productName}</h4>
                   <div className="flex items-center gap-3 text-gray-500 mt-1">
-                    <span>SKU: <span className="font-mono text-gray-700 font-semibold">{item.sku}</span></span>
-                    {item.color && <span>Color: <span className="font-semibold text-gray-800">{item.color}</span></span>}
-                    {item.size && <span>Size: <span className="font-semibold text-gray-800">{item.size}</span></span>}
-                    <span>Qty: <span className="font-bold text-gray-900">x{item.quantity}</span></span>
+                    <span>SKU: <span className="font-mono text-gray-700 font-medium">{item.sku}</span></span>
+                    {item.color && <span>Color: <span className="font-medium text-gray-800">{item.color}</span></span>}
+                    {item.size && <span>Size: <span className="font-medium text-gray-800">{item.size}</span></span>}
+                    <span>Qty: <span className="font-medium text-gray-900">x{item.quantity}</span></span>
                   </div>
                 </div>
               </div>
@@ -881,7 +881,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 )}
 
                 <div className="text-right">
-                  <span className="font-bold text-gray-900 text-sm">₹{item.subtotal}</span>
+                  <span className="font-medium text-gray-900 text-sm">₹{item.subtotal}</span>
                   <span className="block text-[10px] text-gray-400">₹{item.unitPrice} / unit</span>
                 </div>
               </div>
@@ -893,17 +893,17 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-gray-100 text-xs">
           {/* Summary Breakdown */}
           <div className="bg-gray-50 p-4 rounded-[2px] border border-gray-200 space-y-2 md:col-span-2">
-            <h4 className="font-bold text-gray-900 text-xs uppercase tracking-wider mb-2">Order Summary</h4>
+            <h4 className="font-medium text-gray-900 text-xs uppercase tracking-wider mb-2">Order Summary</h4>
             <div className="flex justify-between text-gray-600">
               <span>Items Subtotal:</span>
-              <span className="font-semibold text-gray-900">₹{order.subtotal}</span>
+              <span className="font-medium text-gray-900">₹{order.subtotal}</span>
             </div>
             <div className="flex justify-between text-gray-600">
               <span>Shipping Fee:</span>
-              <span className="font-semibold text-gray-900">{order.shippingCharge === 0 ? 'FREE Shipping' : `₹${order.shippingCharge}`}</span>
+              <span className="font-medium text-gray-900">{order.shippingCharge === 0 ? 'FREE Shipping' : `₹${order.shippingCharge}`}</span>
             </div>
             {order.discount > 0 && (
-              <div className="flex justify-between text-emerald-700 font-semibold">
+              <div className="flex justify-between text-emerald-700 font-medium">
                 <span>Promotional Discount:</span>
                 <span>-₹{order.discount}</span>
               </div>
@@ -911,10 +911,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             {order.tax > 0 && (
               <div className="flex justify-between text-gray-600">
                 <span>Estimated Tax (GST):</span>
-                <span className="font-semibold text-gray-900">₹{order.tax}</span>
+                <span className="font-medium text-gray-900">₹{order.tax}</span>
               </div>
             )}
-            <div className="border-t border-gray-200 pt-2 flex justify-between font-bold text-sm text-gray-900">
+            <div className="border-t border-gray-200 pt-2 flex justify-between font-medium text-sm text-gray-900">
               <span>Grand Total:</span>
               <span className="text-black text-base">₹{order.totalAmount}</span>
             </div>
@@ -923,9 +923,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           {/* Payment Method & Ship To */}
           <div className="bg-gray-50 p-4 rounded-[2px] border border-gray-200 space-y-3">
             <div>
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Payment Method</span>
-              <p className="font-bold text-gray-900 text-xs mt-0.5 uppercase">{order.paymentMethod}</p>
-              <span className={`inline-block px-2.5 py-0.5 rounded text-[10px] font-bold mt-1 ${
+              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider block">Payment Method</span>
+              <p className="font-medium text-gray-900 text-xs mt-0.5 uppercase">{order.paymentMethod}</p>
+              <span className={`inline-block px-2.5 py-0.5 rounded text-[10px] font-medium mt-1 ${
                 order.paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
               }`}>
                 {order.paymentStatus}
@@ -933,8 +933,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             </div>
 
             <div className="border-t border-gray-200 pt-2">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Ship To</span>
-              <p className="font-bold text-gray-900 text-xs mt-0.5">{order.shippingAddress?.fullName}</p>
+              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider block">Ship To</span>
+              <p className="font-medium text-gray-900 text-xs mt-0.5">{order.shippingAddress?.fullName}</p>
               <p className="text-[11px] text-gray-600 truncate">{order.shippingAddress?.city}, {order.shippingAddress?.country}</p>
             </div>
           </div>
