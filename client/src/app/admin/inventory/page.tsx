@@ -160,7 +160,7 @@ export default function AdminInventoryPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Inventory Management</h1>
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">Inventory Management</h1>
           <p className="text-muted-foreground mt-1">
             Monitor stock levels, adjust quantities, and track all movements
           </p>

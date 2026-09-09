@@ -334,7 +334,7 @@ export default function AdminNotificationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
             <Bell className="h-8 w-8" />
             Notifications
             {unreadCount > 0 && (
@@ -524,8 +524,13 @@ export default function AdminNotificationsPage() {
 
       {/* Notification List */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-24">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <div className="p-6 md:p-8 space-y-6 w-full animate-pulse">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 bg-muted rounded-xl" />
+            <div className="h-8 w-48 bg-muted rounded-md" />
+          </div>
+          <div className="h-24 w-full bg-muted rounded-xl" />
+          <div className="h-[400px] w-full bg-muted rounded-xl" />
         </div>
       ) : notifications.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-muted-foreground gap-3">

@@ -318,7 +318,7 @@ export default function AdminReportsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-5">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Analytics & Reports</h1>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2.5">Analytics & Reports</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Deep insights into financial payment collections, store sales, product performance, customer behavior, and inventory health.
           </p>

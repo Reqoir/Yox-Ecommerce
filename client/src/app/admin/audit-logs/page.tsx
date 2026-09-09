@@ -389,7 +389,7 @@ export default function AdminAuditLogsPage() {
       <div className="bg-card border border-border rounded-2xl shadow-xs w-full overflow-hidden">
         <div className="w-full overflow-x-auto [scrollbar-width:thin]">
           <table className="w-full min-w-[900px] text-left text-xs border-collapse">
-            <thead className="bg-[#1A2E4C] text-white uppercase tracking-wider font-extrabold border-b border-[#132238] text-[10px] md:text-xs">
+            <thead className="bg-muted/40 border-b border-border text-muted-foreground text-[11px] font-bold uppercase tracking-wider">
               <tr>
                 <th className="p-3 pl-4 w-[14%] whitespace-nowrap">Time & Date</th>
                 <th className="p-3 w-[26%] whitespace-nowrap">Staff / Actor</th>
@@ -603,15 +603,15 @@ export default function AdminAuditLogsPage() {
       {/* Audit State Snapshot & Deep Inspector Modal */}
       {selectedLog && (
         <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-slate-900 rounded-2xl max-w-3xl w-full p-6 space-y-4 shadow-2xl border border-slate-800 text-slate-100 max-h-[90vh] overflow-y-auto">
+          <div className="bg-card rounded-2xl max-w-3xl w-full p-6 space-y-4 shadow-2xl border border-border text-foreground max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[#D2925D] flex items-center justify-center shrink-0">
                   <FileCode size={20} />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-white tracking-tight">
+                  <h3 className="text-base font-black text-foreground tracking-tight">
                     Audit Snapshot — {selectedLog.action}
                   </h3>
                   <p className="text-xs text-muted-foreground font-medium">
@@ -621,7 +621,7 @@ export default function AdminAuditLogsPage() {
               </div>
               <button
                 onClick={() => setSelectedLog(null)}
-                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-muted-foreground flex items-center justify-center font-bold text-sm cursor-pointer transition-colors"
+                className="w-8 h-8 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground flex items-center justify-center font-bold text-sm cursor-pointer transition-colors"
               >
                 <X size={16} />
               </button>
@@ -633,7 +633,7 @@ export default function AdminAuditLogsPage() {
                 const effectiveRole = getEffectiveRole(selectedLog);
                 const displayEmail = selectedLog.actorEmail && selectedLog.actorEmail !== 'system@internal' ? selectedLog.actorEmail : null;
                 return (
-                  <div className="p-3.5 bg-slate-800/80 rounded-xl border border-slate-700/80 space-y-2">
+                  <div className="p-3.5 bg-muted/40 rounded-xl border border-border space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground uppercase font-bold text-[10px] tracking-wider">
                         Staff / Actor Responsible
@@ -644,15 +644,15 @@ export default function AdminAuditLogsPage() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-[#1A2E4C] border border-[#2d4d7a] text-amber-300 font-bold text-xs flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-full bg-primary border border-primary text-primary-foreground font-bold text-xs flex items-center justify-center">
                         {getActorAvatarInitials(selectedLog.actorName, displayEmail, effectiveRole)}
                       </div>
                       <div className="space-y-0.5">
-                        <p className="text-sm font-bold text-white">
+                        <p className="text-sm font-bold text-foreground">
                           {selectedLog.actorName || (effectiveRole === 'SYSTEM' ? 'Automated Service' : 'Staff Team Member')}
                         </p>
                         <p className="text-xs text-muted-foreground font-medium">
-                          {displayEmail ? <>Email: <span className="text-slate-200">{displayEmail}</span> &bull; </> : null}
+                          {displayEmail ? <>Email: <span className="text-foreground">{displayEmail}</span> &bull; </> : null}
                           ID: <span className="font-mono text-muted-foreground">{selectedLog.actorId}</span>
                         </p>
                       </div>
@@ -663,24 +663,24 @@ export default function AdminAuditLogsPage() {
 
               {/* Event Details Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/60">
+                <div className="p-3 bg-muted/40 rounded-xl border border-border">
                   <span className="text-muted-foreground block text-[10px] uppercase font-bold tracking-wider">Resource Target</span>
-                  <p className="font-bold text-white text-xs mt-0.5">{selectedLog.resourceType} : {selectedLog.resourceId}</p>
+                  <p className="font-bold text-foreground text-xs mt-0.5">{selectedLog.resourceType} : {selectedLog.resourceId}</p>
                 </div>
-                <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/60">
+                <div className="p-3 bg-muted/40 rounded-xl border border-border">
                   <span className="text-muted-foreground block text-[10px] uppercase font-bold tracking-wider">Timestamp</span>
-                  <p className="font-mono font-bold text-slate-200 text-xs mt-0.5">
+                  <p className="font-mono font-bold text-foreground text-xs mt-0.5">
                     {new Date(selectedLog.createdAt).toLocaleString()}
                   </p>
                 </div>
               </div>
 
               {/* Narrative */}
-              <div className="p-3 bg-slate-800 rounded-xl border border-slate-700">
+              <div className="p-3 bg-muted rounded-xl border border-border">
                 <span className="text-muted-foreground uppercase font-bold text-[10px] tracking-wider block mb-1">
                   Event Narrative
                 </span>
-                <p className="text-xs text-slate-100 font-semibold leading-relaxed">
+                <p className="text-xs text-foreground font-semibold leading-relaxed">
                   {selectedLog.description}
                 </p>
               </div>
@@ -693,21 +693,21 @@ export default function AdminAuditLogsPage() {
                   </span>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {/* Before */}
-                    <div className="bg-slate-950 p-3 rounded-xl border border-rose-900/50 space-y-1">
+                    <div className="bg-card p-3 rounded-xl border border-rose-500/20 space-y-1">
                       <div className="flex items-center justify-between text-rose-400 font-bold text-[11px]">
                         <span>Previous State (Before)</span>
                       </div>
-                      <pre className="text-rose-300 text-[11px] font-mono overflow-x-auto max-h-44 p-1">
+                      <pre className="text-rose-600 dark:text-rose-400 text-[11px] font-mono overflow-x-auto max-h-44 p-1">
                         {selectedLog.before ? JSON.stringify(selectedLog.before, null, 2) : '// None'}
                       </pre>
                     </div>
 
                     {/* After */}
-                    <div className="bg-slate-950 p-3 rounded-xl border border-emerald-900/50 space-y-1">
+                    <div className="bg-card p-3 rounded-xl border border-emerald-500/20 space-y-1">
                       <div className="flex items-center justify-between text-emerald-400 font-bold text-[11px]">
                         <span>Updated State (After)</span>
                       </div>
-                      <pre className="text-emerald-300 text-[11px] font-mono overflow-x-auto max-h-44 p-1">
+                      <pre className="text-emerald-600 dark:text-emerald-400 text-[11px] font-mono overflow-x-auto max-h-44 p-1">
                         {selectedLog.after ? JSON.stringify(selectedLog.after, null, 2) : '// None'}
                       </pre>
                     </div>
@@ -721,7 +721,7 @@ export default function AdminAuditLogsPage() {
                   <span className="text-muted-foreground uppercase font-bold text-[10px] tracking-wider block mb-1">
                     Metadata
                   </span>
-                  <pre className="bg-slate-950 text-sky-300 p-3 rounded-xl overflow-x-auto text-[11px] font-mono border border-slate-800 max-h-36">
+                  <pre className="bg-card text-sky-600 dark:text-sky-400 p-3 rounded-xl overflow-x-auto text-[11px] font-mono border border-border max-h-36">
                     {JSON.stringify(selectedLog.metadata, null, 2)}
                   </pre>
                 </div>
@@ -729,11 +729,11 @@ export default function AdminAuditLogsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+            <div className="flex items-center justify-between pt-3 border-t border-border">
               <button
                 type="button"
                 onClick={() => copyToClipboard(JSON.stringify(selectedLog, null, 2))}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl cursor-pointer transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs font-bold rounded-xl cursor-pointer transition-colors"
               >
                 {copiedId ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
                 <span>{copiedId ? 'Copied Full JSON' : 'Copy JSON'}</span>
@@ -742,7 +742,7 @@ export default function AdminAuditLogsPage() {
               <button
                 type="button"
                 onClick={() => setSelectedLog(null)}
-                className="px-4 py-1.5 bg-[#D2925D] hover:bg-[#b87c4b] text-slate-950 text-xs font-black rounded-xl shadow-xs cursor-pointer transition-colors"
+                className="px-4 py-1.5 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-black rounded-xl shadow-xs cursor-pointer transition-colors"
               >
                 Close Inspector
               </button>

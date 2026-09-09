@@ -201,7 +201,7 @@ export default function AdminReviewsPage() {
       {/* Header section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-foreground tracking-tight flex items-center gap-2.5">
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
             Reviews Moderation
             <span className="text-xs font-semibold px-2.5 py-0.5 bg-muted text-muted-foreground rounded-full">
               {totalCount} Total

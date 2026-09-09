@@ -296,7 +296,7 @@ export default function AdminCategoryPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 dark:text-foreground">
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
             Categories
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">

@@ -414,7 +414,7 @@ export default function AdminOffersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-5">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Offers & Promotions Manager</h1>
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">Offers & Promotions Manager</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Configure Brand, Category, Product, Celebration, and Flash Countdown sales. Discounts auto-apply on products with dedicated offer pages.
           </p>

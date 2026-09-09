@@ -794,7 +794,7 @@ export default function AdminProductPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Products</h1>
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">Products</h1>
           <p className="text-muted-foreground mt-1">
             Manage your store&apos;s apparel, variants, pricing, media, and inventory.
           </p>

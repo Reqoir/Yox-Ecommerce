@@ -974,7 +974,7 @@ function AdminOrdersContent() {
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Order Management</h1>
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">Order Management</h1>
           <p className="text-muted-foreground mt-1">
             Review and fulfill customer orders, advance delivery pipelines, audit returns, and issue refunds.
           </p>
@@ -3321,8 +3321,13 @@ export default function AdminOrdersPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center py-24">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <div className="p-6 md:p-8 space-y-6 w-full animate-pulse">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 bg-muted rounded-xl" />
+            <div className="h-8 w-48 bg-muted rounded-md" />
+          </div>
+          <div className="h-24 w-full bg-muted rounded-xl" />
+          <div className="h-[400px] w-full bg-muted rounded-xl" />
         </div>
       }
     >
