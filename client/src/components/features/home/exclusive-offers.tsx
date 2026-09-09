@@ -237,13 +237,13 @@ export function ExclusiveOffers() {
   if (isLoadingOffers) {
     return (
       <section className="w-full bg-[#F1EFEA] py-12 sm:py-16 border-t border-gray-200 animate-in fade-in duration-300">
-        <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-0 space-y-8">
-          <div className="flex items-center justify-between">
+        <div className="w-full sm:w-[98%] max-w-[1500px] mx-auto space-y-8">
+          <div className="flex items-center justify-between px-4 sm:px-0">
             <Skeleton className="h-7 sm:h-8 w-64 md:w-80 rounded-none bg-gray-200" />
             <Skeleton className="h-6 w-32 rounded-none bg-gray-200" />
           </div>
           <Skeleton className="w-full aspect-[1440/520] min-h-[200px] sm:min-h-[320px] rounded-none bg-gray-200" />
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 px-4 sm:px-0">
             {Array.from({ length: 4 }).map((_, idx) => (
               <div key={idx} className="flex items-center gap-3">
                 <Skeleton className="w-[110px] aspect-[3/4] rounded-none bg-gray-200" />
@@ -271,24 +271,14 @@ export function ExclusiveOffers() {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-0 space-y-7">
+      <div className="w-full sm:w-[98%] max-w-[1500px] mx-auto space-y-7">
 
         {/* Top Header: Title, Global Offers Link, and Offer Switcher Tabs */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 px-4 sm:px-0">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-gray-300/80 pb-4">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="inline-flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-[#7B6E61]">
-                  Curated Seasonal Promotions
-                </span>
-                {activeOffers.length > 1 && (
-                  <span className="bg-[#40362C]/10 text-[#40362C] font-mono text-[10px] font-bold px-2 py-0.5 rounded-full">
-                    {activeOffers.length} Active Offers
-                  </span>
-                )}
-              </div>
               <h2 className="text-[22px] md:text-[28px] font-bold text-[#40362C] uppercase tracking-wide">
-                Special Offers & Privileges
+                Special Offers
               </h2>
             </div>
 
@@ -460,7 +450,7 @@ export function ExclusiveOffers() {
         )}
 
         {/* Offer Subheader Details & Countdown Timer Bar */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pt-1">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pt-1 px-4 sm:px-0">
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-[18px] md:text-[22px] font-bold text-[#40362C] uppercase tracking-wide">
@@ -512,7 +502,7 @@ export function ExclusiveOffers() {
 
         {/* Offers Products Grid: 2 per row on mobile, 4 on desktop */}
         {isLoadingProducts ? (
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-y-8 sm:gap-y-12 gap-x-3 sm:gap-x-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-y-8 sm:gap-y-12 gap-x-3 sm:gap-x-6 px-4 sm:px-0">
             {Array.from({ length: 4 }).map((_, idx) => (
               <div key={idx} className="flex flex-col sm:flex-row sm:items-center">
                 <Skeleton className="w-full sm:w-[110px] md:w-[130px] aspect-[3/4] rounded-none bg-gray-200" />
@@ -525,7 +515,7 @@ export function ExclusiveOffers() {
             ))}
           </div>
         ) : currentProducts.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-y-8 sm:gap-y-12 gap-x-3 sm:gap-x-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-y-8 sm:gap-y-12 gap-x-3 sm:gap-x-6 px-4 sm:px-0">
             {currentProducts.slice(0, 4).map((item) => (
               <Link
                 href={`/product/${item.slug}`}
@@ -592,7 +582,7 @@ export function ExclusiveOffers() {
             ))}
           </div>
         ) : (
-          <div className="py-8 text-center bg-white/50 border border-dashed border-gray-300 rounded-sm">
+          <div className="py-8 text-center bg-white/50 border border-dashed border-gray-300 rounded-sm mx-4 sm:mx-0">
             <p className="text-xs text-gray-500">
               Explore eligible items for this offer by viewing the complete collection.
             </p>

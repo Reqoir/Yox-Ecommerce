@@ -165,13 +165,12 @@ export function Navbar() {
 
               <div className="flex flex-col py-3 overflow-y-auto">
                 <div className="px-5 py-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Navigation</p>
                   <div className="space-y-1">
                     <SheetClose render={<Link href="/" className="block py-2 text-sm font-semibold text-gray-800 hover:text-black" />}>
                       Home
                     </SheetClose>
                     <SheetClose render={<Link href="/shop" className="block py-2 text-sm font-semibold text-gray-800 hover:text-black" />}>
-                      Shop All Catalog
+                      Shop All
                     </SheetClose>
                     <SheetClose render={<Link href="/offers" className="block py-2 text-sm font-semibold text-gray-800 hover:text-black" />}>
                       Exclusive Offers & Drops
@@ -567,6 +566,20 @@ export function Navbar() {
                 <span className="text-base font-medium text-gray-800">My Wishlist</span>
               </div>
               <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-700 transition-colors" />
+            </Link>
+            <Link href="/cart" onClick={() => setIsMobileProfileOpen(false)} className="flex items-center justify-between p-5 bg-white hover:bg-gray-50 transition-colors group">
+              <div className="flex items-center gap-3.5">
+                <BsHandbag className="w-5 h-5 text-gray-400 group-hover:text-gray-800 transition-colors" />
+                <span className="text-base font-medium text-gray-800">My Cart</span>
+              </div>
+              <div className="flex items-center gap-3">
+                {mounted && cartCount > 0 && (
+                  <span className="bg-red-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full">
+                    {cartCount}
+                  </span>
+                )}
+                <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-700 transition-colors" />
+              </div>
             </Link>
             <Link href="/profile/settings" onClick={() => setIsMobileProfileOpen(false)} className="flex items-center justify-between p-5 bg-white hover:bg-gray-50 transition-colors group">
               <div className="flex items-center gap-3.5">
