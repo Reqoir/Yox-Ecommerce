@@ -76,8 +76,8 @@ export function StyleSeekers() {
 
   if (isLoading) {
     return (
-      <section className="w-full mt-0 sm:mt-1 pt-2 sm:pt-4 pb-[2px] mb-8 sm:mb-16 bg-white overflow-hidden">
-        <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-8 mb-7 sm:mb-10 md:mb-14">
+      <section className="w-full py-8 sm:py-16 bg-white overflow-hidden">
+        <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-8 mb-5 sm:mb-8">
           <Skeleton className="h-7 w-48 bg-gray-200" />
         </div>
         <div className="flex items-end gap-3 sm:gap-4 px-4 md:px-8 overflow-hidden pb-[2px]">
@@ -86,7 +86,7 @@ export function StyleSeekers() {
               key={i}
               className={`flex-shrink-0 w-[160px] sm:w-[240px] md:w-[280px] lg:w-[320px] ${
                 i % 2 === 0 ? 'h-[225px] sm:h-[450px]' : 'h-[150px] sm:h-[300px]'
-              } bg-gray-200 rounded-sm`}
+              } bg-gray-200 rounded-[2px]`}
             />
           ))}
         </div>
@@ -97,9 +97,9 @@ export function StyleSeekers() {
   if (categories.length === 0) return null;
 
   return (
-    <section className="w-full mt-0 sm:mt-1 pt-2 sm:pt-4 pb-[2px] mb-8 sm:mb-16 bg-white overflow-hidden">
+    <section className="w-full py-8 sm:py-16 bg-white overflow-hidden">
       {/* Header Section with SHOP BY CATEGORY Title and Sliding Navigation Arrows */}
-      <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-8 mb-7 sm:mb-10 md:mb-14 flex items-center justify-between">
+      <div className="w-[98%] max-w-[1500px] mx-auto px-4 md:px-8 mb-5 sm:mb-8 flex items-center justify-between">
         <h2 className="text-lg md:text-2xl lg:text-3xl font-bold text-gray-900 tracking-wide uppercase">
           SHOP BY CATEGORY
         </h2>
@@ -134,7 +134,7 @@ export function StyleSeekers() {
           <Link
             key={`${category.id}-${index}`}
             href={`/shop?category=${category.slug}`}
-            className={`relative flex-shrink-0 w-[160px] sm:w-[240px] md:w-[280px] lg:w-[320px] ${category.height} group overflow-hidden bg-gray-100 cursor-pointer rounded-sm block`}
+            className={`relative flex-shrink-0 w-[160px] sm:w-[240px] md:w-[280px] lg:w-[320px] ${category.height} group overflow-hidden bg-gray-100 cursor-pointer rounded-[2px] block`}
           >
             {/* Image */}
             <Image

@@ -47,7 +47,7 @@ export default function ProfileOverviewPage() {
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-1 mb-2.5">
           ACCOUNT
         </h3>
-        <div className="bg-white border border-gray-200 rounded-sm divide-y divide-gray-100 overflow-hidden shadow-2xs">
+        <div className="bg-white border border-gray-200 rounded-[2px] divide-y divide-gray-100 overflow-hidden shadow-2xs">
           {accountItems.map((item) => {
             const Icon = item.icon;
             return (

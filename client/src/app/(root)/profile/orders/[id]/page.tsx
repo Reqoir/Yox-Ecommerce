@@ -13,8 +13,7 @@ import { reviewsApi } from '@/lib/api/reviews';
 import { useCartStore } from '@/store/useCartStore';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
 import { IoBagCheckOutline } from "react-icons/io5";
-import { GiConfirmed } from "react-icons/gi";
-import { LuPackageCheck } from "react-icons/lu";
+import { LuPackageCheck, LuPackage } from "react-icons/lu";
 import { FaShippingFast } from "react-icons/fa";
 import { GoPackageDependents } from "react-icons/go";
 import {
@@ -49,8 +48,8 @@ import { toast } from 'sonner';
 
 const STATUS_STEPS = [
   { key: 'PLACED', label: 'Ordered', icon: IoBagCheckOutline },
-  { key: 'CONFIRMED', label: 'Confirmed', icon: GiConfirmed },
-  { key: 'PACKED', label: 'Packed', icon: LuPackageCheck },
+  { key: 'CONFIRMED', label: 'Confirmed', icon: CheckCircle2 },
+  { key: 'PACKED', label: 'Packed', icon: LuPackage },
   { key: 'SHIPPED', label: 'Shipped', icon: FaShippingFast },
   { key: 'OUT_FOR_DELIVERY', label: 'Out for Delivery', icon: GoPackageDependents },
   { key: 'DELIVERED', label: 'Delivered', icon: LuPackageCheck },
@@ -442,7 +441,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
         <button
           onClick={handleDownloadInvoice}
-          className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-800 font-bold text-xs rounded-sm transition-colors shadow-2xs"
+          className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-800 font-bold text-xs rounded-[2px] transition-colors shadow-2xs"
         >
           <Download size={14} />
           <span>Download Invoice</span>
@@ -452,21 +451,19 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* SECTION 1: ORDER RECEIVING / ARRIVAL HEADER                        */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="bg-black text-white rounded-sm p-6 lg:p-7 shadow-2xs relative overflow-hidden print:bg-white print:text-black print:border">
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-        
+      <div className="bg-white border border-gray-200/90 text-gray-900 rounded-[2px] p-6 lg:p-7 shadow-2xs relative overflow-hidden print:border">
         <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3.5">
-            <div className="w-12 h-12 rounded-sm bg-white/10 text-[#D2925D] flex items-center justify-center shrink-0 border border-white/10">
+            <div className="w-12 h-12 rounded-[2px] bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
               <Truck size={24} />
             </div>
             <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-200 block mb-0.5">Estimated Receiving Details</span>
-              <h2 className="text-lg lg:text-xl font-bold text-white leading-tight">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500 block mb-0.5">Estimated Receiving Details</span>
+              <h2 className="text-lg lg:text-xl font-bold text-emerald-600 leading-tight">
                 {getEstimatedArrivalText()}
               </h2>
               {shipment?.trackingNumber && (
-                <p className="text-xs text-blue-200 mt-1 flex items-center gap-2 font-mono">
+                <p className="text-xs text-gray-500 mt-1 flex items-center gap-2 font-mono">
                   <span>Tracking: #{shipment.trackingNumber}</span>
                   <span>•</span>
                   <span>Carrier: {shipment.deliveryPartnerId || 'YOX Express Courier'}</span>
@@ -478,12 +475,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           <span
             className={`self-start sm:self-auto px-3.5 py-1 rounded-full text-xs font-bold border shadow-2xs ${
               order.orderStatus === 'DELIVERED'
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                 : order.orderStatus === 'CANCELLED'
                 ? order.paymentStatus === 'REFUNDED'
-                  ? 'bg-purple-500/20 text-purple-200 border-purple-400/30'
-                  : 'bg-rose-500/20 text-rose-300 border-rose-400/30'
-                : 'bg-amber-500/20 text-amber-300 border-amber-400/30'
+                  ? 'bg-purple-50 text-purple-700 border-purple-200'
+                  : 'bg-rose-50 text-rose-700 border-rose-200'
+                : 'bg-amber-50 text-amber-700 border-amber-200'
             }`}
           >
             {order.orderStatus === 'CANCELLED' && order.paymentStatus === 'REFUNDED'
@@ -496,7 +493,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* SECTION 2: ORDER TRACKING DETAILS & ACTIONS CHART                   */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="bg-white border border-gray-200/90 rounded-sm p-6 lg:p-7 shadow-2xs space-y-6 print:hidden">
+      <div className="bg-white border border-gray-200/90 rounded-[2px] p-6 lg:p-7 shadow-2xs space-y-6 print:hidden">
         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
           <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
             <Clock size={16} className="text-black" />
@@ -514,7 +511,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         {/* Visual Progress Bar Chart */}
         {order.orderStatus !== 'CANCELLED' ? (
           <div className="space-y-4 pt-2">
-            <div className="relative w-full bg-gray-100 h-2 rounded-full">
+            <div className="relative w-full bg-gray-100 h-1 rounded-full">
               <div
                 className="absolute left-0 top-0 h-full bg-emerald-500 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${getStepProgressPercentage()}%` }}
@@ -539,13 +536,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 return (
                   <div key={step.key} className="flex flex-col items-center gap-1.5">
                     <div
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                      className={`flex items-center justify-center transition-all ${
                         isPassed
-                          ? 'bg-white border-2 border-emerald-500 text-black shadow-2xs'
-                          : 'bg-gray-100 text-gray-400 border border-gray-200'
-                      } ${isCurrent ? 'ring-4 ring-emerald-500/20 scale-110' : ''}`}
+                          ? 'text-emerald-500'
+                          : 'text-gray-300'
+                      } ${isCurrent ? 'scale-110' : ''}`}
                     >
-                      <step.icon size={14} />
+                      <step.icon size={22} />
                     </div>
                     <span className={`text-[11px] font-semibold leading-tight ${isCurrent ? 'text-emerald-600 font-bold' : isPassed ? 'text-gray-800' : 'text-gray-400'}`}>
                       {step.label}
@@ -557,10 +554,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         ) : order.paymentStatus === 'REFUNDED' ? (
           /* Cancelled & Refunded Banner */
-          <div className="p-5 bg-gradient-to-br from-emerald-50/90 via-white to-purple-50/40 border-2 border-emerald-300/90 rounded-sm text-xs space-y-3 shadow-2xs">
+          <div className="p-5 bg-gradient-to-br from-emerald-50/90 via-white to-purple-50/40 border-2 border-emerald-300/90 rounded-[2px] text-xs space-y-3 shadow-2xs">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-100 pb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-sm bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 shadow-2xs">
+                <div className="w-10 h-10 rounded-[2px] bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 shadow-2xs">
                   <CheckCircle2 size={22} />
                 </div>
                 <div>
@@ -574,7 +571,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             </div>
 
             {order.cancellationBankDetails && (
-              <div className="p-3.5 bg-white rounded-sm border border-gray-200 text-xs space-y-1.5 text-gray-800 shadow-2xs">
+              <div className="p-3.5 bg-white rounded-[2px] border border-gray-200 text-xs space-y-1.5 text-gray-800 shadow-2xs">
                 <div className="flex items-center justify-between font-bold text-emerald-900">
                   <span className="flex items-center gap-1.5">
                     <CreditCard size={14} className="text-emerald-700" />
@@ -590,7 +587,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <p className="text-[11px] text-gray-700">
                   A/C: <strong className="font-mono">••••{order.cancellationBankDetails.accountNumber.slice(-4)}</strong> | IFSC: <strong className="font-mono">{order.cancellationBankDetails.ifscCode}</strong>
                 </p>
-                <div className="p-2.5 bg-emerald-50 rounded-sm border border-emerald-200 text-[11px] text-emerald-800 font-bold flex items-center gap-2 mt-2">
+                <div className="p-2.5 bg-emerald-50 rounded-[2px] border border-emerald-200 text-[11px] text-emerald-800 font-bold flex items-center gap-2 mt-2">
                   <Check size={14} className="text-emerald-600 shrink-0" />
                   <span>Refund of ₹{order.totalAmount} has been successfully processed and credited to your bank account.</span>
                 </div>
@@ -599,7 +596,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         ) : (
           /* Cancelled & Refund Processing Banner */
-          <div className="p-4 bg-rose-50 border border-rose-200 rounded-sm text-xs text-rose-800 space-y-2">
+          <div className="p-4 bg-rose-50 border border-rose-200 rounded-[2px] text-xs text-rose-800 space-y-2">
             <div className="flex items-center gap-3">
               <XCircle size={20} className="text-rose-600 shrink-0" />
               <div>
@@ -608,7 +605,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
             {order.cancellationBankDetails && (
-              <div className="p-3 bg-white/80 border border-rose-200 rounded-sm text-xs space-y-1 text-gray-800">
+              <div className="p-3 bg-white/80 border border-rose-200 rounded-[2px] text-xs space-y-1 text-gray-800">
                 <span className="font-bold text-rose-900 block">Refund Bank Details Submitted:</span>
                 <p>Account Holder: {order.cancellationBankDetails.accountHolderName}</p>
                 <p>A/C: ••••{order.cancellationBankDetails.accountNumber.slice(-4)} | IFSC: {order.cancellationBankDetails.ifscCode}</p>
@@ -628,7 +625,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               <button
                 onClick={() => setIsCancelModalOpen(true)}
                 disabled={isCancelling}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-rose-50 border border-rose-300 text-rose-600 font-bold text-xs rounded-sm transition-colors shadow-2xs disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-rose-50 border border-rose-300 text-rose-600 font-bold text-xs rounded-[2px] transition-colors shadow-2xs disabled:opacity-50"
               >
                 <XCircle size={14} />
                 <span>Cancel Order</span>
@@ -642,7 +639,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   setDeliveryNote(savedNote || '');
                   setIsInstructionsOpen(true);
                 }}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs rounded-sm transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs rounded-[2px] transition-colors"
               >
                 <MessageSquare size={14} />
                 <span>{savedNote ? 'Update Delivery Instructions' : 'Add Delivery Instructions'}</span>
@@ -666,7 +663,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                     });
                   }
                 }}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-amber-400 hover:bg-amber-500 text-black text-xs font-bold rounded-sm transition-colors shadow-2xs cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-amber-400 hover:bg-amber-500 text-black text-xs font-bold rounded-[2px] transition-colors shadow-2xs cursor-pointer"
               >
                 <Star size={14} className="fill-black" />
                 <span>{unreviewedItem ? 'Rate & Review' : 'Reviewed ★'}</span>
@@ -675,7 +672,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
             <button
               onClick={handleBuyAgain}
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-black hover:bg-gray-800 text-white text-xs font-bold rounded-sm transition-colors shadow-2xs cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-black hover:bg-gray-800 text-white text-xs font-bold rounded-[2px] transition-colors shadow-2xs cursor-pointer"
             >
               <RefreshCw size={14} />
               <span>Buy Again</span>
@@ -688,7 +685,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       {/* SEPARATE SECTION: RETURN & REFUND MANAGEMENT (WHEN DELIVERED & WITHIN 7 DAYS / HAS RETURN) */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       {(isWithinReturnWindow || userReturns.length > 0) && (
-        <div className="bg-white border border-gray-200/90 rounded-sm p-6 lg:p-7 shadow-2xs space-y-6 print:hidden">
+        <div className="bg-white border border-gray-200/90 rounded-[2px] p-6 lg:p-7 shadow-2xs space-y-6 print:hidden">
           <div className="flex items-center justify-between border-b border-gray-100 pb-3">
             <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
               <RotateCcw size={16} className="text-black" />
@@ -709,14 +706,14 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               const existingReturn = userReturns.find((r) => r.orderItemId === itemId);
 
               return (
-                <div key={idx} className="p-4 bg-gray-50/70 border border-gray-200 rounded-sm space-y-4">
+                <div key={idx} className="p-4 bg-gray-50/70 border border-gray-200 rounded-[2px] space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <img
                         src={item.imageUrl || (item as any).image || (item as any).productImage || '/images/product-1.jpeg'}
                         alt={item.productName}
                         onError={(e) => { (e.target as HTMLImageElement).src = '/images/product-1.jpeg'; }}
-                        className="w-12 h-14 object-cover rounded-sm bg-white border border-gray-200 shrink-0"
+                        className="w-12 h-14 object-cover rounded-[2px] bg-white border border-gray-200 shrink-0"
                       />
                       <div>
                         <h4 className="font-bold text-gray-900 text-xs">{item.productName}</h4>
@@ -730,7 +727,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                       isWithinReturnWindow ? (
                         <button
                           onClick={() => handleOpenReturnModal(item)}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-gray-800 text-white text-xs font-bold rounded-sm transition-colors shadow-2xs cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-gray-800 text-white text-xs font-bold rounded-[2px] transition-colors shadow-2xs cursor-pointer"
                         >
                           <RotateCcw size={14} />
                           <span>Request Return & Refund</span>
@@ -777,7 +774,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* SECTION 3: SHIPPING ADDRESS                                        */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="bg-white border border-gray-200/90 rounded-sm p-6 lg:p-7 shadow-2xs space-y-4">
+      <div className="bg-white border border-gray-200/90 rounded-[2px] p-6 lg:p-7 shadow-2xs space-y-4">
         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
           <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
             <MapPin size={16} className="text-black" />
@@ -805,7 +802,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
           {/* Delivery Note Display if present */}
           {savedNote && (
-            <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-sm text-xs space-y-1 text-amber-950">
+            <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-[2px] text-xs space-y-1 text-amber-950">
               <span className="font-bold flex items-center gap-1.5 text-amber-900">
                 <MessageSquare size={13} className="text-amber-700" />
                 Delivery Instructions Saved:
@@ -819,7 +816,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* SECTION 4: ORDER DETAILS & RECEIPT                                 */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="bg-white border border-gray-200/90 rounded-sm p-6 lg:p-7 shadow-2xs space-y-6">
+      <div className="bg-white border border-gray-200/90 rounded-[2px] p-6 lg:p-7 shadow-2xs space-y-6">
         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
           <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
             <FileText size={16} className="text-black" />
@@ -837,7 +834,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   src={item.imageUrl || (item as any).image || (item as any).productImage || '/images/product-1.jpeg'}
                   alt={item.productName}
                   onError={(e) => { (e.target as HTMLImageElement).src = '/images/product-1.jpeg'; }}
-                  className="w-14 h-16 object-cover rounded-sm bg-gray-100 border border-gray-200 shrink-0"
+                  className="w-14 h-16 object-cover rounded-[2px] bg-gray-100 border border-gray-200 shrink-0"
                 />
                 <div>
                   <h4 className="font-bold text-gray-900 text-sm">{item.productName}</h4>
@@ -857,7 +854,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                       const itemReview = userReviews.find((r) => r.productId === item.productId);
                       if (itemReview) {
                         return (
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-amber-50 border border-amber-200 text-amber-900 font-semibold text-xs">
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[2px] bg-amber-50 border border-amber-200 text-amber-900 font-semibold text-xs">
                             <Star size={13} className="fill-amber-400 text-amber-400 shrink-0" />
                             <span>Rated {itemReview.rating}★</span>
                           </div>
@@ -873,7 +870,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                             size: item.size,
                             color: item.color,
                           })}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 rounded-sm text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 rounded-[2px] text-xs font-bold transition-all shadow-2xs cursor-pointer"
                         >
                           <Star size={13} className="fill-amber-500 text-amber-500 shrink-0" />
                           <span>Rate & Review</span>
@@ -895,7 +892,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         {/* Order Summary & Payment Receipt Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-gray-100 text-xs">
           {/* Summary Breakdown */}
-          <div className="bg-gray-50 p-4 rounded-sm border border-gray-200 space-y-2 md:col-span-2">
+          <div className="bg-gray-50 p-4 rounded-[2px] border border-gray-200 space-y-2 md:col-span-2">
             <h4 className="font-bold text-gray-900 text-xs uppercase tracking-wider mb-2">Order Summary</h4>
             <div className="flex justify-between text-gray-600">
               <span>Items Subtotal:</span>
@@ -924,7 +921,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </div>
 
           {/* Payment Method & Ship To */}
-          <div className="bg-gray-50 p-4 rounded-sm border border-gray-200 space-y-3">
+          <div className="bg-gray-50 p-4 rounded-[2px] border border-gray-200 space-y-3">
             <div>
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Payment Method</span>
               <p className="font-bold text-gray-900 text-xs mt-0.5 uppercase">{order.paymentMethod}</p>
@@ -947,7 +944,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       {/* Delivery Instructions Modal */}
       {isInstructionsOpen && (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-sm max-w-md w-full p-6 space-y-4 shadow-2xl border border-gray-200 text-gray-900">
+          <div className="bg-white rounded-[2px] max-w-md w-full p-6 space-y-4 shadow-2xl border border-gray-200 text-gray-900">
             <div className="flex items-center justify-between border-b border-gray-200 pb-3">
               <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
                 <MessageSquare className="text-black" size={18} /> Update Delivery Instructions
@@ -963,7 +960,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 value={deliveryNote}
                 onChange={(e) => setDeliveryNote(e.target.value)}
                 placeholder="e.g. Please ring doorbell twice or call +91 9876543210 upon arrival."
-                className="w-full border border-gray-300 rounded-sm p-3 text-xs h-28 focus:ring-2 focus:ring-black"
+                className="w-full border border-gray-300 rounded-[2px] p-3 text-xs h-28 focus:ring-2 focus:ring-black"
               />
             </div>
 
@@ -971,14 +968,14 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               <button
                 type="button"
                 onClick={() => setIsInstructionsOpen(false)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 text-xs font-semibold rounded-sm hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 text-gray-700 text-xs font-semibold rounded-[2px] hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleSaveInstructions}
-                className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-xs font-bold rounded-sm shadow-sm cursor-pointer"
+                className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-xs font-bold rounded-[2px] shadow-sm cursor-pointer"
               >
                 Save Instructions
               </button>
@@ -990,7 +987,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       {/* Return Request Modal */}
       {returnModalTarget && (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-sm max-w-lg w-full p-6 space-y-4 shadow-2xl border border-gray-200 text-gray-900 my-8">
+          <div className="bg-white rounded-[2px] max-w-lg w-full p-6 space-y-4 shadow-2xl border border-gray-200 text-gray-900 my-8">
             <div className="flex items-center justify-between border-b border-gray-200 pb-3">
               <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
                 <RotateCcw className="text-black" size={18} /> Request Item Return & Refund
@@ -999,7 +996,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             </div>
 
             <div className="space-y-4 text-xs">
-              <div className="p-3 bg-gray-50 rounded-sm border border-gray-200 flex items-center gap-3">
+              <div className="p-3 bg-gray-50 rounded-[2px] border border-gray-200 flex items-center gap-3">
                 <img
                   src={returnModalTarget.item.imageUrl || (returnModalTarget.item as any).image || '/images/product-1.jpeg'}
                   alt={returnModalTarget.item.productName}
@@ -1017,7 +1014,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <select
                   value={returnReason}
                   onChange={(e) => setReturnReason(e.target.value as ReturnReason)}
-                  className="w-full border border-gray-300 rounded-sm p-2.5 text-xs bg-white focus:ring-2 focus:ring-black"
+                  className="w-full border border-gray-300 rounded-[2px] p-2.5 text-xs bg-white focus:ring-2 focus:ring-black"
                 >
                   <option value="WRONG_SIZE">Wrong Size / Fit Issue</option>
                   <option value="WRONG_PRODUCT">Wrong Product Delivered</option>
@@ -1037,7 +1034,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   max={returnModalTarget.item.quantity}
                   value={returnQuantity}
                   onChange={(e) => setReturnQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-24 border border-gray-300 rounded-sm p-2 text-xs font-bold focus:ring-2 focus:ring-black"
+                  className="w-24 border border-gray-300 rounded-[2px] p-2 text-xs font-bold focus:ring-2 focus:ring-black"
                 />
               </div>
 
@@ -1047,7 +1044,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   value={customerNote}
                   onChange={(e) => setCustomerNote(e.target.value)}
                   placeholder="Describe the issue with the item..."
-                  className="w-full border border-gray-300 rounded-sm p-2.5 text-xs h-20 focus:ring-2 focus:ring-black"
+                  className="w-full border border-gray-300 rounded-[2px] p-2.5 text-xs h-20 focus:ring-2 focus:ring-black"
                 />
               </div>
 
@@ -1073,7 +1070,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   accept="image/*"
                   multiple
                   onChange={handleAddImageFile}
-                  className="text-xs mb-2 block file:mr-2 file:py-1 file:px-3 file:rounded-sm file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                  className="text-xs mb-2 block file:mr-2 file:py-1 file:px-3 file:rounded-[2px] file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
                 />
                 <div className="flex gap-2 items-center">
                   <input
@@ -1081,12 +1078,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                     placeholder="Or enter image URL"
                     value={imageUrlInput}
                     onChange={(e) => setImageUrlInput(e.target.value)}
-                    className="flex-1 border border-gray-300 rounded-sm p-2 text-xs focus:ring-2 focus:ring-black"
+                    className="flex-1 border border-gray-300 rounded-[2px] p-2 text-xs focus:ring-2 focus:ring-black"
                   />
                   <button
                     type="button"
                     onClick={handleAddImageUrl}
-                    className="px-3 py-2 bg-gray-100 text-xs font-bold rounded-sm hover:bg-gray-200 transition-colors"
+                    className="px-3 py-2 bg-gray-100 text-xs font-bold rounded-[2px] hover:bg-gray-200 transition-colors"
                   >
                     Add
                   </button>
@@ -1095,7 +1092,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 {returnImages.length > 0 && (
                   <div className="flex flex-wrap gap-2.5 mt-3">
                     {returnImages.map((src, i) => (
-                      <div key={i} className="relative w-16 h-16 border border-gray-300 rounded-sm overflow-hidden group shadow-2xs">
+                      <div key={i} className="relative w-16 h-16 border border-gray-300 rounded-[2px] overflow-hidden group shadow-2xs">
                         <img src={src} alt={`Upload preview ${i + 1}`} className="w-full h-full object-cover" />
                         <span className="absolute bottom-0 left-0 bg-black/70 text-white text-[9px] font-bold px-1 rounded-tr">
                           #{i + 1}
@@ -1118,7 +1115,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               <button
                 type="button"
                 onClick={() => setReturnModalTarget(null)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 text-xs font-semibold rounded-sm hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 text-gray-700 text-xs font-semibold rounded-[2px] hover:bg-gray-50"
               >
                 Cancel
               </button>
@@ -1126,7 +1123,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 type="button"
                 onClick={handleSubmitReturn}
                 disabled={isSubmittingReturn || returnImages.length < minEvidencePhotos}
-                className="px-5 py-2 bg-black hover:bg-gray-800 text-white text-xs font-bold rounded-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="px-5 py-2 bg-black hover:bg-gray-800 text-white text-xs font-bold rounded-[2px] shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {isSubmittingReturn
                   ? 'Submitting...'
@@ -1142,7 +1139,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       {/* Cancel Order Modal */}
       {isCancelModalOpen && (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-sm max-w-lg w-full p-6 space-y-4 shadow-2xl border border-gray-200 text-gray-900 my-8">
+          <div className="bg-white rounded-[2px] max-w-lg w-full p-6 space-y-4 shadow-2xl border border-gray-200 text-gray-900 my-8">
             <div className="flex items-center justify-between border-b border-gray-200 pb-3">
               <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
                 <XCircle className="text-rose-600" size={20} /> Cancel Order #{order.orderNumber}
@@ -1156,7 +1153,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <select
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
-                  className="w-full border border-gray-300 rounded-sm p-2.5 text-xs bg-white focus:ring-2 focus:ring-black"
+                  className="w-full border border-gray-300 rounded-[2px] p-2.5 text-xs bg-white focus:ring-2 focus:ring-black"
                 >
                   <option value="Changed mind / Order placed by mistake">Changed mind / Order placed by mistake</option>
                   <option value="Found a better price elsewhere">Found a better price elsewhere</option>
@@ -1168,7 +1165,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
               {/* If Order is Paid / Razorpay: Ask for Bank Account Details */}
               {(order.paymentStatus === 'PAID' || (order.paymentMethod && order.paymentMethod.toUpperCase() !== 'COD')) && (
-                <div className="p-4 bg-amber-50/60 border border-amber-200 rounded-sm space-y-3">
+                <div className="p-4 bg-amber-50/60 border border-amber-200 rounded-[2px] space-y-3">
                   <div className="flex items-center gap-2 text-amber-900">
                     <CreditCard size={16} className="text-amber-700" />
                     <h4 className="font-bold text-xs">Refund Bank Account Details</h4>
@@ -1188,7 +1185,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                         value={cancelAccountHolder}
                         onChange={(e) => setCancelAccountHolder(e.target.value)}
                         placeholder="Full name as on bank passbook"
-                        className="w-full border border-gray-300 rounded-sm p-2.5 text-xs bg-white focus:ring-2 focus:ring-black"
+                        className="w-full border border-gray-300 rounded-[2px] p-2.5 text-xs bg-white focus:ring-2 focus:ring-black"
                       />
                     </div>
 
@@ -1203,7 +1200,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                           value={cancelAccountNumber}
                           onChange={(e) => setCancelAccountNumber(e.target.value)}
                           placeholder="Bank account number"
-                          className="w-full border border-gray-300 rounded-sm p-2.5 font-mono text-xs bg-white focus:ring-2 focus:ring-black"
+                          className="w-full border border-gray-300 rounded-[2px] p-2.5 font-mono text-xs bg-white focus:ring-2 focus:ring-black"
                         />
                       </div>
 
@@ -1217,7 +1214,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                           value={cancelIfscCode}
                           onChange={(e) => setCancelIfscCode(e.target.value.toUpperCase())}
                           placeholder="e.g. SBIN0001234"
-                          className="w-full border border-gray-300 rounded-sm p-2.5 font-mono uppercase text-xs bg-white focus:ring-2 focus:ring-black"
+                          className="w-full border border-gray-300 rounded-[2px] p-2.5 font-mono uppercase text-xs bg-white focus:ring-2 focus:ring-black"
                         />
                       </div>
                     </div>
@@ -1229,12 +1226,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                         value={cancelBankName}
                         onChange={(e) => setCancelBankName(e.target.value)}
                         placeholder="e.g. HDFC Bank, MG Road"
-                        className="w-full border border-gray-300 rounded-sm p-2.5 text-xs bg-white focus:ring-2 focus:ring-black"
+                        className="w-full border border-gray-300 rounded-[2px] p-2.5 text-xs bg-white focus:ring-2 focus:ring-black"
                       />
                     </div>
                   </div>
 
-                  <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-sm text-blue-900 flex items-start gap-2 text-[11px]">
+                  <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-[2px] text-blue-900 flex items-start gap-2 text-[11px]">
                     <Info size={14} className="text-blue-700 shrink-0 mt-0.5" />
                     <span>Your refund will be processed and credited to your provided bank account within <strong>2 business days</strong>.</span>
                   </div>
@@ -1245,14 +1242,14 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <button
                   type="button"
                   onClick={() => setIsCancelModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 text-xs font-semibold rounded-sm hover:bg-gray-50"
+                  className="px-4 py-2 border border-gray-300 text-gray-700 text-xs font-semibold rounded-[2px] hover:bg-gray-50"
                 >
                   Keep Order
                 </button>
                 <button
                   type="submit"
                   disabled={isCancelling}
-                  className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-sm shadow-sm disabled:opacity-50 transition-colors"
+                  className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-[2px] shadow-sm disabled:opacity-50 transition-colors"
                 >
                   {isCancelling ? 'Processing...' : 'Confirm Cancellation'}
                 </button>

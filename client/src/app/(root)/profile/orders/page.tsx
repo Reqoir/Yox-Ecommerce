@@ -113,7 +113,7 @@ export default function MyOrdersPage() {
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] bg-white rounded-sm border border-gray-200 p-8 text-center">
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] bg-white rounded-[2px] border border-gray-200 p-8 text-center">
         <Loader2 className="w-8 h-8 text-black animate-spin mb-3" />
         <p className="text-sm font-medium text-gray-500">Loading your order history...</p>
       </div>
@@ -127,13 +127,13 @@ export default function MyOrdersPage() {
           <h1 className="text-xl lg:text-2xl font-semibold text-gray-900 tracking-tight">My Orders</h1>
           <p className="text-xs text-gray-500 mt-1">Click on any order to view full tracking chart & receipt details</p>
         </div>
-        <span className="text-xs font-medium bg-gray-100 text-gray-700 px-3 py-1.5 rounded-sm">
+        <span className="text-xs font-medium bg-gray-100 text-gray-700 px-3 py-1.5 rounded-[2px]">
           {orders.length} {orders.length === 1 ? 'Order' : 'Orders'}
         </span>
       </div>
 
       {orders.length === 0 ? (
-        <div className="bg-white rounded-sm border border-gray-200 p-12 text-center max-w-lg mx-auto my-8 shadow-xs">
+        <div className="bg-white rounded-[2px] border border-gray-200 p-12 text-center max-w-lg mx-auto my-8 shadow-xs">
           <div className="w-16 h-16 bg-gray-50 text-gray-400 rounded-full flex items-center justify-center mx-auto mb-4">
             <ShoppingBag size={32} />
           </div>
@@ -143,7 +143,7 @@ export default function MyOrdersPage() {
           </p>
           <Link
             href="/shop"
-            className="inline-flex items-center gap-2 bg-black hover:bg-gray-800 text-white font-medium text-xs px-6 py-3 rounded-sm transition-all shadow-xs"
+            className="inline-flex items-center gap-2 bg-black hover:bg-gray-800 text-white font-medium text-xs px-6 py-3 rounded-[2px] transition-all shadow-xs"
           >
             <span>Explore Catalog</span>
             <ArrowRight size={14} />
@@ -159,13 +159,13 @@ export default function MyOrdersPage() {
               <Link
                 key={order.id}
                 href={`/profile/orders/${order.id}`}
-                className="block bg-white border border-gray-200 hover:border-black rounded-sm p-5 shadow-2xs hover:shadow-md transition-all duration-200 group cursor-pointer"
+                className="block bg-white border border-gray-200 hover:border-black rounded-[2px] p-5 shadow-2xs hover:shadow-md transition-all duration-200 group cursor-pointer"
               >
                 <div className="flex items-center justify-between gap-4">
                   {/* Left: Product Photo & Receiving Details */}
                   <div className="flex items-center gap-4">
                     {/* Product Photo */}
-                    <div className="relative w-20 h-24 bg-gray-100 rounded-sm overflow-hidden border border-gray-200 shrink-0 flex items-center justify-center">
+                    <div className="relative w-20 h-24 bg-gray-100 rounded-[2px] overflow-hidden border border-gray-200 shrink-0 flex items-center justify-center">
                       <img
                         src={
                           firstItem?.imageUrl ||

@@ -62,7 +62,7 @@ export default function PersonalInfoPage() {
         {!isEditing ? (
           <button
             onClick={() => setIsEditing(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-black hover:bg-gray-800 text-white text-xs font-medium rounded-sm transition-colors shadow-2xs self-start sm:self-auto cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-black hover:bg-gray-800 text-white text-xs font-medium rounded-[2px] transition-colors shadow-2xs self-start sm:self-auto cursor-pointer"
           >
             <Edit3 size={14} />
             <span>Edit Information</span>
@@ -81,7 +81,7 @@ export default function PersonalInfoPage() {
                   });
                 }
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-xs font-medium rounded-sm transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-xs font-medium rounded-[2px] transition-colors cursor-pointer"
             >
               <X size={14} />
               <span>Cancel</span>
@@ -90,7 +90,7 @@ export default function PersonalInfoPage() {
               type="button"
               onClick={handleSubmit}
               disabled={isLoading}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-gray-800 text-white text-xs font-medium rounded-sm transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-gray-800 text-white text-xs font-medium rounded-[2px] transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
             >
               <Save size={14} />
               <span>{isLoading ? 'Saving...' : 'Save Changes'}</span>
@@ -101,8 +101,8 @@ export default function PersonalInfoPage() {
 
       {/* Account Overview Cards - Admin KPI Style */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white border border-gray-200 rounded-sm p-4 flex items-center gap-3.5 shadow-2xs">
-          <div className="w-10 h-10 rounded-sm bg-gray-100 text-gray-900 flex items-center justify-center font-semibold shrink-0">
+        <div className="bg-white border border-gray-200 rounded-[2px] p-4 flex items-center gap-3.5 shadow-2xs">
+          <div className="w-10 h-10 rounded-[2px] bg-gray-100 text-gray-900 flex items-center justify-center font-semibold shrink-0">
             <User size={18} />
           </div>
           <div className="min-w-0 flex-1">
@@ -111,8 +111,8 @@ export default function PersonalInfoPage() {
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-sm p-4 flex items-center gap-3.5 shadow-2xs">
-          <div className="w-10 h-10 rounded-sm bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center justify-center font-semibold shrink-0">
+        <div className="bg-white border border-gray-200 rounded-[2px] p-4 flex items-center gap-3.5 shadow-2xs">
+          <div className="w-10 h-10 rounded-[2px] bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center justify-center font-semibold shrink-0">
             <Mail size={18} />
           </div>
           <div className="min-w-0 flex-1">
@@ -121,8 +121,8 @@ export default function PersonalInfoPage() {
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-sm p-4 flex items-center gap-3.5 shadow-2xs">
-          <div className="w-10 h-10 rounded-sm bg-amber-50 text-amber-700 border border-amber-100 flex items-center justify-center font-semibold shrink-0">
+        <div className="bg-white border border-gray-200 rounded-[2px] p-4 flex items-center gap-3.5 shadow-2xs">
+          <div className="w-10 h-10 rounded-[2px] bg-amber-50 text-amber-700 border border-amber-100 flex items-center justify-center font-semibold shrink-0">
             <Phone size={18} />
           </div>
           <div className="min-w-0 flex-1">
@@ -147,7 +147,7 @@ export default function PersonalInfoPage() {
                 onChange={handleChange}
                 disabled={!isEditing}
                 placeholder="Enter your full name"
-                className="w-full px-3.5 py-2.5 text-xs text-gray-900 border border-gray-300 rounded-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition-all disabled:bg-gray-50/70 disabled:text-gray-500 disabled:cursor-not-allowed"
+                className="w-full px-3.5 py-2.5 text-xs text-gray-900 border border-gray-300 rounded-[2px] bg-white focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition-all disabled:bg-gray-50/70 disabled:text-gray-500 disabled:cursor-not-allowed"
               />
             </div>
           </div>
@@ -157,7 +157,7 @@ export default function PersonalInfoPage() {
               <label className="text-xs font-medium text-gray-800">
                 Email Address (Primary Login)
               </label>
-              <span className="text-[10px] font-medium text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-sm flex items-center gap-1 self-start sm:self-auto">
+              <span className="text-[10px] font-medium text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-[2px] flex items-center gap-1 self-start sm:self-auto">
                 <Lock size={10} /> Locked for security
               </span>
             </div>
@@ -166,7 +166,7 @@ export default function PersonalInfoPage() {
               name="email"
               value={formData.email}
               disabled={true}
-              className="w-full px-3.5 py-2.5 text-xs text-gray-500 border border-gray-200 rounded-sm bg-gray-50/80 cursor-not-allowed font-normal"
+              className="w-full px-3.5 py-2.5 text-xs text-gray-500 border border-gray-200 rounded-[2px] bg-gray-50/80 cursor-not-allowed font-normal"
             />
             <p className="text-[11px] text-gray-400 mt-1">Your registered email address is used for order confirmations and password recovery.</p>
           </div>
@@ -182,14 +182,14 @@ export default function PersonalInfoPage() {
               onChange={handleChange}
               disabled={!isEditing}
               placeholder="+91 98765 43210"
-              className="w-full px-3.5 py-2.5 text-xs text-gray-900 border border-gray-300 rounded-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition-all disabled:bg-gray-50/70 disabled:text-gray-500 disabled:cursor-not-allowed"
+              className="w-full px-3.5 py-2.5 text-xs text-gray-900 border border-gray-300 rounded-[2px] bg-white focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition-all disabled:bg-gray-50/70 disabled:text-gray-500 disabled:cursor-not-allowed"
             />
             <p className="text-[11px] text-gray-400 mt-1">Used by delivery partners for delivery updates and return pickup calls.</p>
           </div>
         </div>
 
         {/* Security Assurance Banner */}
-        <div className="p-4 bg-white border border-gray-200 rounded-sm flex items-start gap-3.5 text-xs text-gray-900 max-w-2xl shadow-2xs">
+        <div className="p-4 bg-white border border-gray-200 rounded-[2px] flex items-start gap-3.5 text-xs text-gray-900 max-w-2xl shadow-2xs">
           <ShieldCheck size={18} className="text-black shrink-0 mt-0.5" />
           <div>
             <p className="font-semibold text-gray-900">Your Privacy & Data Protection</p>
