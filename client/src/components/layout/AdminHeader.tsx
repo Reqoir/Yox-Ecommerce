@@ -147,11 +147,9 @@ export function AdminHeader() {
         {/* Mobile Sidebar Toggle */}
         <div className="md:hidden">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="-ml-2 mr-2">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle Menu</span>
-              </Button>
+            <SheetTrigger render={<Button variant="ghost" size="icon" className="-ml-2 mr-2" />}>
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle Menu</span>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 flex flex-col w-64 border-r">
               <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
