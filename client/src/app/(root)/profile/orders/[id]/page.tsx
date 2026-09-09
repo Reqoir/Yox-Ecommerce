@@ -12,6 +12,11 @@ import { ProductReviewModal } from '@/components/features/orders/ProductReviewMo
 import { reviewsApi } from '@/lib/api/reviews';
 import { useCartStore } from '@/store/useCartStore';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
+import { IoBagCheckOutline } from "react-icons/io5";
+import { GiConfirmed } from "react-icons/gi";
+import { LuPackageCheck } from "react-icons/lu";
+import { FaShippingFast } from "react-icons/fa";
+import { GoPackageDependents } from "react-icons/go";
 import {
   Package,
   Truck,
@@ -43,12 +48,12 @@ import {
 import { toast } from 'sonner';
 
 const STATUS_STEPS = [
-  { key: 'PLACED', label: 'Ordered' },
-  { key: 'CONFIRMED', label: 'Confirmed' },
-  { key: 'PACKED', label: 'Packed' },
-  { key: 'SHIPPED', label: 'Shipped' },
-  { key: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' },
-  { key: 'DELIVERED', label: 'Delivered' },
+  { key: 'PLACED', label: 'Ordered', icon: IoBagCheckOutline },
+  { key: 'CONFIRMED', label: 'Confirmed', icon: GiConfirmed },
+  { key: 'PACKED', label: 'Packed', icon: LuPackageCheck },
+  { key: 'SHIPPED', label: 'Shipped', icon: FaShippingFast },
+  { key: 'OUT_FOR_DELIVERY', label: 'Out for Delivery', icon: GoPackageDependents },
+  { key: 'DELIVERED', label: 'Delivered', icon: LuPackageCheck },
 ];
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -540,7 +545,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                           : 'bg-gray-100 text-gray-400 border border-gray-200'
                       } ${isCurrent ? 'ring-4 ring-emerald-500/20 scale-110' : ''}`}
                     >
-                      {isPassed ? <Check size={14} /> : idx + 1}
+                      <step.icon size={14} />
                     </div>
                     <span className={`text-[11px] font-semibold leading-tight ${isCurrent ? 'text-emerald-600 font-bold' : isPassed ? 'text-gray-800' : 'text-gray-400'}`}>
                       {step.label}
