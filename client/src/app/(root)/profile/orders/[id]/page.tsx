@@ -541,7 +541,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                     <div
                       className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                         isPassed
-                          ? 'bg-emerald-500 text-white shadow-2xs'
+                          ? 'bg-white border-2 border-emerald-500 text-emerald-600 shadow-2xs'
                           : 'bg-gray-100 text-gray-400 border border-gray-200'
                       } ${isCurrent ? 'ring-4 ring-emerald-500/20 scale-110' : ''}`}
                     >
