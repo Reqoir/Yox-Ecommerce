@@ -148,7 +148,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
       <main className="w-full bg-[#FAFAFA] min-h-screen pb-24 text-gray-900 antialiased animate-in fade-in duration-300">
         {/* Hero Banner Skeleton — Exact match aspect ratio without overlays or rounded corners */}
         <section className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto mt-3 sm:mt-6 mb-8 sm:mb-14">
-          <div className="relative overflow-hidden bg-gray-200 aspect-[1440/680] w-full">
+          <div className="relative overflow-hidden bg-gray-200 aspect-[11/4] w-full">
             <Skeleton className="w-full h-full rounded-none bg-gray-200" />
             <Skeleton className="absolute top-2.5 right-2.5 sm:top-4 sm:right-4 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-300/80" />
           </div>
@@ -232,7 +232,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
     <main className="w-full bg-[#FAFAFA] min-h-screen pb-24 text-gray-900 antialiased selection:bg-black selection:text-white">
       {/* Hero Showcase Section — Banner without text overlay and with share button on top right */}
       <section className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto mt-3 sm:mt-6 mb-8 sm:mb-14">
-        <div className="relative overflow-hidden bg-gray-950 aspect-[1440/680] w-full">
+        <div className="relative overflow-hidden bg-gray-950 aspect-[11/4] w-full">
           {/* Background Hero Image */}
           {offer.banner?.imageUrl ? (
             <picture className="w-full h-full block">

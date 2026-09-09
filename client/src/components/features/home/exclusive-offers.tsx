@@ -242,7 +242,7 @@ export function ExclusiveOffers() {
             <Skeleton className="h-7 sm:h-8 w-64 md:w-80 rounded-none bg-gray-200" />
             <Skeleton className="h-6 w-32 rounded-none bg-gray-200" />
           </div>
-          <Skeleton className="w-full aspect-[1440/520] min-h-[200px] sm:min-h-[320px] rounded-none bg-gray-200" />
+          <Skeleton className="w-full aspect-[11/4] rounded-none bg-gray-200" />
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 px-4 sm:px-0">
             {Array.from({ length: 4 }).map((_, idx) => (
               <div key={idx} className="flex items-center gap-3">
@@ -352,7 +352,7 @@ export function ExclusiveOffers() {
         {currentOffer && (
           <div className="w-full relative overflow-hidden bg-gray-900 shadow-sm group rounded-none">
             {currentOffer.banner?.imageUrl ? (
-              <div className="relative w-full aspect-[1440/520] min-h-[190px] sm:min-h-[300px] md:min-h-[380px] max-h-[460px]">
+              <div className="relative w-full aspect-[11/4]">
                 <Link
                   href={currentOffer.banner.ctaLink || `/offers/${currentOffer.id}`}
                   className="block relative w-full h-full"

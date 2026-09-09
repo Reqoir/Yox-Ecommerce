@@ -1114,7 +1114,12 @@ export default function AdminOffersPage() {
 
                 <div className="space-y-3">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 block mb-1">Banner Image</label>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1 gap-1">
+                      <label className="text-xs font-semibold text-gray-700 block">Banner Image</label>
+                      <span className="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                        Please upload the banner in exactly 2079 × 756 size
+                      </span>
+                    </div>
                     <div className="flex gap-2">
                       <input
                         type="text"
@@ -1139,7 +1144,7 @@ export default function AdminOffersPage() {
 
                   {/* Banner Live Preview */}
                   {bannerImageUrl && (
-                    <div className="relative aspect-[21/8] w-full rounded-md overflow-hidden bg-gray-900 border">
+                    <div className="relative aspect-[11/4] w-full rounded-md overflow-hidden bg-gray-900 border">
                       <img src={bannerImageUrl} alt="Banner Preview" className="w-full h-full object-cover opacity-80" />
                       <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent flex flex-col justify-center p-4 sm:p-6 text-white">
                         <span className="text-[10px] uppercase font-bold tracking-widest text-amber-400 mb-1">
