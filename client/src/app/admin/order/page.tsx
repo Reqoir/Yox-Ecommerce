@@ -1254,11 +1254,43 @@ function AdminOrdersContent() {
             </div>
           </div>
 
-          {/* Orders Table */}
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center min-h-[380px] border rounded-2xl bg-card p-12 shadow-xs">
-              <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
-              <p className="text-sm font-medium text-muted-foreground">Loading orders records...</p>
+            <div className="space-y-3 animate-pulse">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-card border rounded-2xl p-5 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/50">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-5 w-24 bg-muted rounded-md" />
+                      <div className="h-5 w-20 bg-muted rounded-full" />
+                      <div className="h-4 w-32 bg-muted rounded-md" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-24 bg-muted rounded-xl" />
+                      <div className="h-8 w-20 bg-muted rounded-xl" />
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-x-8 gap-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 bg-muted rounded-full" />
+                      <div className="space-y-1.5">
+                        <div className="h-4 w-32 bg-muted rounded-md" />
+                        <div className="h-3 w-40 bg-muted rounded-md" />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 bg-muted rounded-xl" />
+                      <div className="space-y-1.5">
+                        <div className="h-4 w-28 bg-muted rounded-md" />
+                        <div className="h-3 w-20 bg-muted rounded-md" />
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5 ml-auto">
+                      <div className="h-6 w-24 bg-muted rounded-md" />
+                      <div className="h-4 w-16 bg-muted rounded-md" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filteredOrders.length === 0 ? (
             <div className="border rounded-2xl bg-card p-16 text-center max-w-lg mx-auto shadow-xs">
@@ -1729,9 +1761,42 @@ function AdminOrdersContent() {
 
           {/* Returns Presentation (Loading / Empty / Cards / Table) */}
           {loadingReturns ? (
-            <div className="flex flex-col items-center justify-center min-h-[380px] border rounded-2xl bg-card p-12 shadow-xs">
-              <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
-              <p className="text-sm font-medium text-muted-foreground">Loading customer returns...</p>
+            <div className="space-y-3 animate-pulse">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-card border rounded-2xl p-5 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/50">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-5 w-24 bg-muted rounded-md" />
+                      <div className="h-5 w-20 bg-muted rounded-full" />
+                      <div className="h-4 w-32 bg-muted rounded-md" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-24 bg-muted rounded-xl" />
+                      <div className="h-8 w-20 bg-muted rounded-xl" />
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-x-8 gap-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 bg-muted rounded-full" />
+                      <div className="space-y-1.5">
+                        <div className="h-4 w-32 bg-muted rounded-md" />
+                        <div className="h-3 w-40 bg-muted rounded-md" />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 bg-muted rounded-xl" />
+                      <div className="space-y-1.5">
+                        <div className="h-4 w-28 bg-muted rounded-md" />
+                        <div className="h-3 w-20 bg-muted rounded-md" />
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5 ml-auto">
+                      <div className="h-6 w-24 bg-muted rounded-md" />
+                      <div className="h-4 w-16 bg-muted rounded-md" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filteredReturns.length === 0 ? (
             <div className="border rounded-2xl bg-card p-16 text-center max-w-lg mx-auto shadow-xs">

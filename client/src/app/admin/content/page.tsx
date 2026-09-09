@@ -165,8 +165,66 @@ export default function AdminContentPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      <div className="space-y-8 animate-pulse pb-16">
+        {/* Top Header Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-5">
+          <div className="space-y-2">
+            <div className="h-8 w-64 bg-muted rounded-md" />
+            <div className="h-4 w-96 bg-muted rounded-md" />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-32 bg-muted rounded-md" />
+            <div className="h-9 w-36 bg-muted rounded-md" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+          {/* Left Column Skeleton */}
+          <div className="xl:col-span-7 space-y-6">
+            <div className="rounded-xl border bg-card p-6 space-y-4">
+              <div className="flex items-center justify-between pb-3">
+                <div className="h-6 w-48 bg-muted rounded-md" />
+                <div className="h-8 w-24 bg-muted rounded-md" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-24 rounded-lg bg-muted" />
+                ))}
+              </div>
+            </div>
+            
+            <div className="rounded-xl border bg-card p-6 space-y-5">
+              <div className="flex items-center justify-between pb-4">
+                <div className="h-6 w-40 bg-muted rounded-md" />
+                <div className="h-6 w-32 bg-muted rounded-md" />
+              </div>
+              <div className="space-y-4 pt-2 border-t">
+                <div className="h-10 w-full bg-muted rounded-md" />
+                <div className="h-10 w-full bg-muted rounded-md" />
+                <div className="h-24 w-full bg-muted rounded-md" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="h-10 w-full bg-muted rounded-md" />
+                  <div className="h-10 w-full bg-muted rounded-md" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column Skeleton (Preview) */}
+          <div className="xl:col-span-5 space-y-4">
+            <div className="sticky top-6">
+              <div className="rounded-xl border-2 border-muted overflow-hidden">
+                <div className="h-14 bg-muted/40 border-b flex items-center justify-between px-4">
+                  <div className="h-5 w-40 bg-muted rounded-md" />
+                  <div className="h-8 w-32 bg-muted rounded-md" />
+                </div>
+                <div className="p-4 bg-muted/10">
+                  <div className="w-full aspect-[1440/680] min-h-[240px] bg-muted rounded-md" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

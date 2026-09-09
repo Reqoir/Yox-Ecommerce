@@ -15,13 +15,51 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'
 export function ProductPerformanceTab({ data, loading }: ProductPerformanceTabProps) {
   if (loading) {
     return (
-      <div className="space-y-4 animate-pulse">
+      <div className="space-y-6 animate-pulse">
+        {/* Inventory Health Banner Skeleton */}
         <div className="grid gap-4 md:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 bg-muted rounded-xl"></div>
+            <Card key={i} className={`border-l-4 ${i===1?'border-l-blue-500':i===2?'border-l-amber-500':'border-l-rose-500'}`}>
+              <CardHeader className="flex flex-row items-center justify-between pb-1">
+                <div className="h-3 w-24 bg-muted rounded-md" />
+                <div className="h-4 w-4 bg-muted rounded-md" />
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 w-16 bg-muted rounded-md mb-2" />
+                <div className="h-3 w-32 bg-muted rounded-md" />
+              </CardContent>
+            </Card>
           ))}
         </div>
-        <div className="h-72 bg-muted rounded-xl"></div>
+
+        {/* Category Performance Bar Chart Skeleton */}
+        <Card>
+          <CardHeader>
+            <div className="h-5 w-48 bg-muted rounded-md" />
+          </CardHeader>
+          <CardContent>
+            <div className="h-64 w-full bg-muted/20 rounded-md" />
+          </CardContent>
+        </Card>
+
+        {/* Top Products Table Skeleton */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="h-5 w-64 bg-muted rounded-md" />
+          </CardHeader>
+          <CardContent>
+            <div className="w-full h-10 bg-muted/40 border-b border-border" />
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="w-full h-12 border-b border-border/60 flex items-center px-4 gap-4">
+                <div className="h-3 w-8 bg-muted rounded-md" />
+                <div className="h-4 w-48 bg-muted rounded-md" />
+                <div className="h-3 w-20 bg-muted rounded-md" />
+                <div className="h-4 w-12 bg-muted rounded-md ml-auto" />
+                <div className="h-4 w-20 bg-muted rounded-md ml-auto" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     );
   }

@@ -26,13 +26,56 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b'
 export function SalesReportTab({ data, loading }: SalesReportTabProps) {
   if (loading) {
     return (
-      <div className="space-y-4 animate-pulse">
-        <div className="grid gap-4 md:grid-cols-4">
+      <div className="space-y-6 animate-pulse">
+        {/* Metric Cards Skeleton */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-28 bg-muted rounded-xl"></div>
+            <Card key={i} className="border-border/80 relative overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="h-3 w-20 bg-muted rounded-md" />
+                <div className="h-8 w-8 bg-muted rounded-full" />
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="h-8 w-32 bg-muted rounded-md" />
+                <div className="h-3 w-40 bg-muted rounded-md" />
+              </CardContent>
+            </Card>
           ))}
         </div>
-        <div className="h-80 bg-muted rounded-xl"></div>
+
+        {/* Revenue Trend Chart Skeleton */}
+        <Card>
+          <CardHeader>
+            <div className="h-5 w-48 bg-muted rounded-md" />
+          </CardHeader>
+          <CardContent>
+            <div className="h-72 w-full bg-muted/20 rounded-md" />
+          </CardContent>
+        </Card>
+
+        {/* Breakdown Grids Skeleton */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {[1, 2].map((i) => (
+            <Card key={`grid-${i}`}>
+              <CardHeader>
+                <div className="h-5 w-40 bg-muted rounded-md" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {[1, 2, 3, 4].map((j) => (
+                    <div key={`row-${j}`} className="flex items-center justify-between p-2.5 bg-muted/40 rounded-lg">
+                      <div className="h-4 w-24 bg-muted rounded-md" />
+                      <div className="space-y-1 text-right flex flex-col items-end">
+                        <div className="h-4 w-16 bg-muted rounded-md" />
+                        <div className="h-3 w-20 bg-muted rounded-md" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }

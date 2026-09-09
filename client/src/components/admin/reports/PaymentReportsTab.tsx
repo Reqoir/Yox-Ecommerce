@@ -357,12 +357,19 @@ export function PaymentReportsTab() {
             </thead>
             <tbody className="divide-y divide-border/50">
               {loading ? (
-                <tr>
-                  <td colSpan={7} className="p-10 text-center text-muted-foreground">
-                    <Loader2 className="w-7 h-7 text-[#1A2E4C] animate-spin mx-auto mb-2" />
-                    <p className="font-medium">Aggregating transaction records...</p>
-                  </td>
-                </tr>
+                <>
+                  {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                    <tr key={i} className="animate-pulse border-b border-border/50">
+                      <td className="p-4"><div className="h-4 w-20 bg-muted rounded-md" /></td>
+                      <td className="p-4"><div className="h-4 w-32 bg-muted rounded-md" /></td>
+                      <td className="p-4"><div className="h-4 w-24 bg-muted rounded-md" /></td>
+                      <td className="p-4 text-right"><div className="h-4 w-20 bg-muted rounded-md ml-auto" /></td>
+                      <td className="p-4"><div className="h-5 w-16 bg-muted rounded-full" /></td>
+                      <td className="p-4"><div className="h-4 w-32 bg-muted rounded-md" /></td>
+                      <td className="p-4 text-right"><div className="h-4 w-20 bg-muted rounded-md ml-auto" /></td>
+                    </tr>
+                  ))}
+                </>
               ) : transactions?.data.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="p-10 text-center text-muted-foreground italic">

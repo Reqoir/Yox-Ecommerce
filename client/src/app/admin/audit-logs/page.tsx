@@ -401,12 +401,47 @@ export default function AdminAuditLogsPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white text-slate-900">
               {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="p-16 text-center text-slate-600">
-                    <Loader2 className="w-8 h-8 text-[#1A2E4C] animate-spin mx-auto mb-2" />
-                    <p className="font-bold text-sm text-slate-800">Fetching audit log history...</p>
-                  </td>
-                </tr>
+                <>
+                  {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                    <tr key={i} className="animate-pulse border-b border-slate-100">
+                      <td className="p-3 pl-4">
+                        <div className="flex flex-col gap-1">
+                          <div className="h-4 w-12 bg-slate-200 rounded-md" />
+                          <div className="h-3 w-20 bg-slate-200 rounded-md" />
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-slate-200 shrink-0" />
+                          <div className="flex flex-col gap-1 w-full">
+                            <div className="flex items-center gap-1.5">
+                              <div className="h-4 w-24 bg-slate-200 rounded-md" />
+                              <div className="h-3 w-12 bg-slate-200 rounded-md" />
+                            </div>
+                            <div className="h-3 w-32 bg-slate-200 rounded-md" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <div className="flex flex-col gap-1">
+                          <div className="h-4 w-28 bg-slate-200 rounded-md" />
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <div className="flex flex-col gap-1">
+                          <div className="h-4 w-20 bg-slate-200 rounded-md" />
+                          <div className="h-3 w-16 bg-slate-200 rounded-md" />
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <div className="h-4 w-full max-w-[120px] bg-slate-200 rounded-md" />
+                      </td>
+                      <td className="p-3 pr-4 text-right">
+                        <div className="h-6 w-6 bg-slate-200 rounded-md ml-auto" />
+                      </td>
+                    </tr>
+                  ))}
+                </>
               ) : logs.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-16 text-center text-slate-600">

@@ -237,14 +237,40 @@ export default function CustomersPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                    <span>Loading customers...</span>
-                  </div>
-                </TableCell>
-              </TableRow>
+              <>
+                {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                  <TableRow key={i} className="animate-pulse">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-full bg-muted shrink-0" />
+                        <div className="space-y-1.5 min-w-0">
+                          <div className="h-4 w-32 bg-muted rounded-md" />
+                          <div className="h-3 w-16 bg-muted rounded-md" />
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1.5">
+                        <div className="h-3.5 w-40 bg-muted rounded-md" />
+                        <div className="h-3 w-24 bg-muted rounded-md" />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-5 w-20 rounded-full bg-muted" />
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-4 w-28 bg-muted rounded-md" />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
+                        <div className="h-8 w-8 rounded-md bg-muted" />
+                        <div className="h-8 w-8 rounded-md bg-muted" />
+                        <div className="h-8 w-8 rounded-md bg-muted" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </>
             ) : customers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">

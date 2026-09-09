@@ -392,9 +392,65 @@ export default function AdminReviewsPage() {
       {/* Main Reviews Table Container */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[460px]">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-[460px]">
-            <Loader2 className="w-8 h-8 text-[#1A2E4C] animate-spin mb-3" />
-            <p className="text-gray-500 text-sm font-medium">Loading customer reviews...</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50/70 border-b border-gray-200 text-gray-500 text-[11px] font-bold uppercase tracking-wider">
+                  <th className="px-5 py-3.5">Product</th>
+                  <th className="px-5 py-3.5">Customer</th>
+                  <th className="px-5 py-3.5">Rating & Review</th>
+                  <th className="px-5 py-3.5">Status</th>
+                  <th className="px-5 py-3.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-sm">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="px-5 py-4 align-top">
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 rounded-lg bg-gray-200 shrink-0" />
+                        <div className="space-y-1.5 w-full">
+                          <div className="h-3 w-32 bg-gray-200 rounded-md" />
+                          <div className="h-2 w-20 bg-gray-200 rounded-md" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 align-top">
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-gray-200 shrink-0" />
+                        <div className="space-y-1.5 w-full">
+                          <div className="h-3 w-24 bg-gray-200 rounded-md" />
+                          <div className="h-2 w-32 bg-gray-200 rounded-md" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 align-top max-w-[320px]">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-24 bg-gray-200 rounded-md" />
+                          <div className="h-2 w-16 bg-gray-200 rounded-md" />
+                        </div>
+                        <div className="h-3 w-40 bg-gray-200 rounded-md" />
+                        <div className="space-y-1.5">
+                          <div className="h-2 w-full bg-gray-200 rounded-md" />
+                          <div className="h-2 w-3/4 bg-gray-200 rounded-md" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 align-top">
+                      <div className="h-5 w-20 bg-gray-200 rounded-full" />
+                    </td>
+                    <td className="px-5 py-4 align-top text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <div className="h-7 w-7 bg-gray-200 rounded-md" />
+                        <div className="h-7 w-7 bg-gray-200 rounded-md" />
+                        <div className="h-7 w-7 bg-gray-200 rounded-md" />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : reviews.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[460px] text-center p-8">

@@ -12,13 +12,42 @@ interface CustomerInsightsTabProps {
 export function CustomerInsightsTab({ data, loading }: CustomerInsightsTabProps) {
   if (loading) {
     return (
-      <div className="space-y-4 animate-pulse">
-        <div className="grid gap-4 md:grid-cols-4">
+      <div className="space-y-6 animate-pulse">
+        {/* Metric Cards Skeleton */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-24 bg-muted rounded-xl"></div>
+            <Card key={i} className="border-border/80">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <div className="h-3 w-24 bg-muted rounded-md" />
+                <div className="h-8 w-8 bg-muted rounded-full" />
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 w-16 bg-muted rounded-md mb-2" />
+                <div className="h-3 w-32 bg-muted rounded-md" />
+              </CardContent>
+            </Card>
           ))}
         </div>
-        <div className="h-72 bg-muted rounded-xl"></div>
+
+        {/* Top Customers Table Skeleton */}
+        <Card>
+          <CardHeader>
+            <div className="h-5 w-56 bg-muted rounded-md" />
+          </CardHeader>
+          <CardContent>
+            <div className="w-full h-10 bg-muted/40 border-b border-border" />
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="w-full h-12 border-b border-border/60 flex items-center px-4 gap-4">
+                <div className="h-3 w-8 bg-muted rounded-md" />
+                <div className="h-4 w-32 bg-muted rounded-md" />
+                <div className="h-3 w-40 bg-muted rounded-md" />
+                <div className="h-4 w-12 bg-muted rounded-md ml-auto" />
+                <div className="h-4 w-20 bg-muted rounded-md ml-auto" />
+                <div className="h-4 w-24 bg-muted rounded-md ml-auto" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     );
   }

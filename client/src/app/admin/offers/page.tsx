@@ -514,8 +514,47 @@ export default function AdminOffersPage() {
 
         {/* Offers Grid / List */}
         {isLoadingOffers ? (
-          <div className="py-20 flex justify-center items-center">
-            <Loader2 className="animate-spin text-[#1A2E4C]" size={36} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 animate-pulse">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i} className="flex flex-col justify-between border-gray-200 overflow-hidden">
+                <div>
+                  <div className="aspect-[21/9] w-full bg-gray-200 border-b" />
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-md bg-gray-200 shrink-0" />
+                        <div className="space-y-1.5">
+                          <div className="h-3 w-16 bg-gray-200 rounded-md" />
+                          <div className="h-4 w-32 bg-gray-200 rounded-md" />
+                        </div>
+                      </div>
+                      <div className="h-4 w-12 bg-gray-200 rounded-full shrink-0" />
+                    </div>
+                    <div className="h-3 w-48 bg-gray-200 rounded-md mt-2" />
+                  </CardHeader>
+                  <CardContent className="space-y-3 pb-3">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100">
+                      <div className="space-y-1">
+                        <div className="h-3 w-20 bg-gray-200 rounded-md" />
+                        <div className="h-5 w-24 bg-gray-200 rounded-md" />
+                      </div>
+                      <div className="h-5 w-16 bg-gray-200 rounded-md" />
+                    </div>
+                    <div className="space-y-1.5 pt-1">
+                      <div className="h-3 w-32 bg-gray-200 rounded-md" />
+                      <div className="h-3 w-28 bg-gray-200 rounded-md" />
+                    </div>
+                  </CardContent>
+                </div>
+                <div className="px-4 py-3 bg-gray-50/75 border-t flex items-center justify-between">
+                  <div className="h-6 w-16 bg-gray-200 rounded-md" />
+                  <div className="flex items-center gap-1">
+                    <div className="h-6 w-6 bg-gray-200 rounded-md" />
+                    <div className="h-6 w-6 bg-gray-200 rounded-md" />
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
         ) : filteredOffers.length === 0 ? (
           <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">

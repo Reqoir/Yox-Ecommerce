@@ -165,11 +165,30 @@ export default function RoleManagementPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  Loading roles...
-                </TableCell>
-              </TableRow>
+              <>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <TableRow key={i} className="animate-pulse">
+                    <TableCell>
+                      <div className="h-4 w-32 bg-muted rounded-md" />
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-4 w-48 bg-muted rounded-md" />
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-5 w-24 bg-muted rounded-full" />
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-5 w-20 bg-muted rounded-full" />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <div className="h-8 w-8 bg-muted rounded-md" />
+                        <div className="h-8 w-8 bg-muted rounded-md" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </>
             ) : roles.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">

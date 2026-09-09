@@ -249,8 +249,47 @@ export default function AdminInventoryPage() {
 
       {/* List Layout */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-16 border rounded-xl bg-card shadow-sm">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="flex flex-col gap-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="p-4 rounded-xl border bg-card flex flex-col md:flex-row items-start md:items-center gap-4 shadow-sm animate-pulse">
+              <div className="flex items-center gap-4 flex-1 min-w-0 w-full">
+                <div className="h-14 w-14 rounded-md bg-muted shrink-0" />
+                <div className="space-y-2 flex-1">
+                  <div className="h-4 w-1/3 bg-muted rounded-md" />
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-16 bg-muted rounded-md" />
+                    <div className="h-3 w-20 bg-muted rounded-md" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-24 bg-muted rounded-md" />
+                    <div className="h-3 w-24 bg-muted rounded-md" />
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-6 justify-between w-full md:w-auto px-4 py-2 md:py-0 md:px-6">
+                <div className="space-y-1.5 flex flex-col items-center">
+                  <div className="h-3 w-12 bg-muted rounded-md" />
+                  <div className="h-5 w-8 bg-muted rounded-md" />
+                </div>
+                <div className="space-y-1.5 flex flex-col items-center">
+                  <div className="h-3 w-12 bg-muted rounded-md" />
+                  <div className="h-5 w-8 bg-muted rounded-md" />
+                </div>
+                <div className="space-y-1.5 flex flex-col items-center">
+                  <div className="h-3 w-12 bg-muted rounded-md" />
+                  <div className="h-5 w-8 bg-muted rounded-md" />
+                </div>
+              </div>
+              <div className="flex items-center gap-4 justify-between w-full md:w-auto mt-2 md:mt-0">
+                <div className="h-6 w-20 bg-muted rounded-full" />
+                <div className="flex items-center gap-1">
+                  <div className="h-8 w-8 bg-muted rounded-md" />
+                  <div className="h-8 w-8 bg-muted rounded-md" />
+                  <div className="h-8 w-8 bg-muted rounded-md" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : displayedItems.length === 0 ? (
         <div className="flex items-center justify-center py-16 border rounded-xl bg-card shadow-sm text-muted-foreground">

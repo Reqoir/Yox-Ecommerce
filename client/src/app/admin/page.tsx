@@ -101,11 +101,104 @@ export default function AdminDashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-          <p className="text-xs text-muted-foreground font-medium">Aggregating store telemetry...</p>
+      <div className="space-y-8 animate-pulse pb-14">
+        {/* Top Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-5">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="h-8 w-48 bg-muted rounded-md" />
+              <div className="h-5 w-24 bg-muted rounded-full" />
+            </div>
+            <div className="h-4 w-96 bg-muted rounded-md" />
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="h-9 w-36 bg-muted rounded-xl" />
+            <div className="h-9 w-40 bg-muted rounded-xl" />
+          </div>
         </div>
+
+        {/* Primary KPI Metrics */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="border-border/80 relative overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="h-4 w-24 bg-muted rounded-md" />
+                <div className="h-8 w-8 bg-muted rounded-xl" />
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="h-8 w-32 bg-muted rounded-md" />
+                <div className="h-3 w-48 bg-muted rounded-md" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Order Status Pipeline Breakdown */}
+        <Card className="border-border shadow-2xs">
+          <CardHeader className="pb-3 border-b border-border/40">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="h-5 w-64 bg-muted rounded-md mb-2" />
+                <div className="h-3 w-80 bg-muted rounded-md" />
+              </div>
+              <div className="h-4 w-24 bg-muted rounded-md" />
+            </div>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="p-3 rounded-xl border border-border/80 bg-muted/30 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="h-3 w-16 bg-muted rounded-md" />
+                    <div className="h-4 w-4 bg-muted rounded-md" />
+                  </div>
+                  <div className="h-7 w-12 bg-muted rounded-md" />
+                  <div className="h-2 w-20 bg-muted rounded-md" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Sales Velocity Chart */}
+        <Card className="border-border shadow-2xs">
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+            <div>
+              <div className="h-5 w-64 bg-muted rounded-md mb-2" />
+              <div className="h-3 w-80 bg-muted rounded-md" />
+            </div>
+            <div className="flex items-center gap-1.5 p-1 bg-muted rounded-xl">
+              <div className="h-6 w-16 bg-muted-foreground/20 rounded-lg" />
+              <div className="h-6 w-16 bg-muted-foreground/20 rounded-lg" />
+              <div className="h-6 w-16 bg-muted-foreground/20 rounded-lg" />
+            </div>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="h-[350px] w-full bg-muted/20 rounded-md" />
+          </CardContent>
+        </Card>
+
+        {/* Recent Orders Live Table */}
+        <Card className="border-border shadow-2xs overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
+            <div>
+              <div className="h-5 w-48 bg-muted rounded-md mb-2" />
+              <div className="h-3 w-64 bg-muted rounded-md" />
+            </div>
+            <div className="h-4 w-20 bg-muted rounded-md" />
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="w-full h-10 bg-muted/40 border-b border-border" />
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="w-full h-16 border-b border-border/60 flex items-center px-4 gap-4">
+                <div className="h-4 w-24 bg-muted rounded-md" />
+                <div className="h-4 w-32 bg-muted rounded-md" />
+                <div className="h-4 w-12 bg-muted rounded-md ml-auto" />
+                <div className="h-4 w-20 bg-muted rounded-md ml-auto" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     );
   }

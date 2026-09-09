@@ -349,11 +349,9 @@ export function Navbar() {
               <button
                 suppressHydrationWarning
                 onClick={() => router.push('/login')}
-                className="flex items-center text-black hover:opacity-70 transition-opacity p-1 cursor-pointer"
-                title="Sign In / Register"
-                aria-label="Sign In"
+                className="flex items-center justify-center bg-black text-white px-3 sm:px-4 py-1.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors whitespace-nowrap rounded-sm cursor-pointer"
               >
-                <IoPersonOutline size={22} />
+                LOGIN
               </button>
             )}
 

@@ -358,14 +358,36 @@ export default function AdminCategoryPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center">
-                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>Loading categories...</span>
-                  </div>
-                </TableCell>
-              </TableRow>
+              <>
+                {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                  <TableRow key={i} className="animate-pulse">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-muted shrink-0" />
+                        <div className="space-y-1.5">
+                          <div className="h-4 w-32 bg-muted rounded-md" />
+                          <div className="h-3 w-24 bg-muted rounded-md" />
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-5 w-20 bg-muted rounded-md" />
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-6 w-32 bg-muted rounded-md" />
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-4 w-8 bg-muted rounded-md" />
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-5 w-16 rounded-full bg-muted" />
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-8 w-8 bg-muted rounded-md ml-auto" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </>
             ) : filteredCategories.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">

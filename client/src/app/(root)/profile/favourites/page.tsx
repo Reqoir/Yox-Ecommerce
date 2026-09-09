@@ -63,18 +63,30 @@ export default function FavouritesPage() {
   if (isLoading && !isInitialized) {
     return (
       <div className="flex-1 space-y-6">
-        <div className="h-6 w-40 bg-gray-100 animate-pulse rounded" />
+        <div className="h-6 w-40 bg-gray-100 animate-pulse rounded-sm" />
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4, 5].map((i) => (
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div
               key={i}
-              className="border border-gray-100 rounded overflow-hidden space-y-3 p-3 animate-pulse bg-white"
+              className="flex flex-col bg-white border border-gray-100 rounded-sm overflow-hidden animate-pulse"
             >
-              <div className="aspect-[3/4] bg-gray-100 rounded" />
-              <div className="h-3 w-16 bg-gray-100 rounded" />
-              <div className="h-4 w-3/4 bg-gray-100 rounded" />
-              <div className="h-4 w-1/3 bg-gray-100 rounded" />
-              <div className="h-9 w-full bg-gray-100 rounded" />
+              <div className="aspect-[3/4] bg-gray-100 w-full" />
+              <div className="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between gap-1 mb-2">
+                    <div className="h-3 w-16 bg-gray-100 rounded-xs" />
+                    <div className="h-3 w-12 bg-gray-100 rounded-xs" />
+                  </div>
+                  <div className="h-3.5 w-3/4 bg-gray-100 rounded-xs mb-3" />
+                  <div className="flex items-baseline gap-2 mb-3">
+                    <div className="h-4 w-1/3 bg-gray-100 rounded-xs" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 mt-auto pt-2">
+                  <div className="flex-1 h-9 bg-gray-100 rounded-sm" />
+                  <div className="h-9 w-9 bg-gray-100 rounded-sm shrink-0" />
+                </div>
+              </div>
             </div>
           ))}
         </div>
