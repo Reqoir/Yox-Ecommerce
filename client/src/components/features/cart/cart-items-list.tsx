@@ -75,7 +75,7 @@ export function CartItemsList({ items }: CartItemsListProps) {
                 </div>
 
                 {/* Variants Info */}
-                <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 mb-3">
                   <span>Color: <strong className="text-gray-800">{item.color}</strong></span>
                   <span>•</span>
                   <span>Size: <strong className="text-gray-800">{item.size}</strong></span>
@@ -94,7 +94,7 @@ export function CartItemsList({ items }: CartItemsListProps) {
               </div>
 
               {/* Controls & Actions */}
-              <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-gray-50">
                 {/* Quantity Buttons */}
                 <div className="flex items-center border border-gray-200 rounded bg-white">
                   <button

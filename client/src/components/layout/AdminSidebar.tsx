@@ -141,7 +141,7 @@ export function AdminNavContent({ onLinkClick }: { onLinkClick?: () => void }) {
 
 export function AdminSidebar() {
   return (
-    <aside className="hidden md:flex w-64 border-r bg-card h-full shrink-0 flex-col transition-all z-20">
+    <aside className="hidden xl:flex w-64 border-r bg-card h-full shrink-0 flex-col transition-all z-20">
       <AdminNavContent />
     </aside>
   );

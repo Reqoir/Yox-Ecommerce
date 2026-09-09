@@ -145,10 +145,10 @@ export function AdminHeader() {
       {/* Left: Breadcrumbs / Title */}
       <div className="flex items-center gap-2 text-sm">
         {/* Mobile Sidebar Toggle */}
-        <div className="md:hidden">
+        <div className="xl:hidden">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger render={<Button variant="ghost" size="icon" className="-ml-2 mr-2" />}>
-              <Menu className="h-5 w-5" />
+            <SheetTrigger render={<Button variant="ghost" size="icon" className="-ml-2 mr-2 md:h-12 md:w-12 p-0" />}>
+              <Menu className="h-5 w-5 md:h-7 md:w-7" />
               <span className="sr-only">Toggle Menu</span>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 flex flex-col w-64 border-r">
@@ -287,7 +287,7 @@ export function AdminHeader() {
             <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs uppercase border border-primary/20">
               {user.fullName ? user.fullName.charAt(0) : user.email?.charAt(0) || 'A'}
             </div>
-            <div className="hidden md:block text-left text-xs leading-tight">
+            <div className="hidden xl:block text-left text-xs leading-tight">
               <p className="font-semibold truncate max-w-[120px]">{user.fullName || user.email}</p>
               <p className="text-[10px] text-muted-foreground capitalize">{user.role ? user.role.toLowerCase() : 'Staff'}</p>
             </div>
