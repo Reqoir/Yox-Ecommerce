@@ -509,11 +509,19 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         {/* Visual Progress Bar Chart */}
         {order.orderStatus !== 'CANCELLED' ? (
           <div className="space-y-4 pt-2">
-            <div className="relative w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+            <div className="relative w-full bg-gray-100 h-2 rounded-full">
               <div
-                className="bg-black h-full transition-all duration-500 ease-out"
+                className="absolute left-0 top-0 h-full bg-emerald-500 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${getStepProgressPercentage()}%` }}
-              />
+              >
+                {/* Pulsing Tip */}
+                {getStepProgressPercentage() > 0 && getStepProgressPercentage() < 100 && (
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 flex items-center justify-center">
+                    <div className="absolute w-4 h-4 bg-emerald-400 rounded-full animate-ping opacity-75"></div>
+                    <div className="relative w-3 h-3 bg-emerald-500 rounded-full shadow-sm border-2 border-white"></div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-6 gap-2 text-center pt-1">
@@ -528,13 +536,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                     <div
                       className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                         isPassed
-                          ? 'bg-black text-white shadow-2xs'
+                          ? 'bg-emerald-500 text-white shadow-2xs'
                           : 'bg-gray-100 text-gray-400 border border-gray-200'
-                      } ${isCurrent ? 'ring-4 ring-black/20 scale-110' : ''}`}
+                      } ${isCurrent ? 'ring-4 ring-emerald-500/20 scale-110' : ''}`}
                     >
                       {isPassed ? <Check size={14} /> : idx + 1}
                     </div>
-                    <span className={`text-[11px] font-semibold leading-tight ${isCurrent ? 'text-black font-bold' : isPassed ? 'text-gray-800' : 'text-gray-400'}`}>
+                    <span className={`text-[11px] font-semibold leading-tight ${isCurrent ? 'text-emerald-600 font-bold' : isPassed ? 'text-gray-800' : 'text-gray-400'}`}>
                       {step.label}
                     </span>
                   </div>
