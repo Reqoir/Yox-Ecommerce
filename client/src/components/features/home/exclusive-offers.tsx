@@ -357,7 +357,7 @@ export function ExclusiveOffers() {
                   href={currentOffer.banner.ctaLink || `/offers/${currentOffer.id}`}
                   className="block relative w-full h-full"
                 >
-                  <picture className="w-full h-full block">
+                  <picture className="w-full h-full block relative">
                     {currentOffer.banner.mobileImageUrl && (
                       <source
                         media="(max-width: 640px)"
