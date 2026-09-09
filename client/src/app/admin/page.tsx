@@ -220,7 +220,7 @@ export default function AdminDashboardPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-5">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Dashboard</h1>
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">Dashboard</h1>
             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
               Live Operations
             </span>

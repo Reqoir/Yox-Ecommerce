@@ -193,13 +193,13 @@ export default function AdminAuditLogsPage() {
   const getRoleBadgeStyle = (effectiveRole: string) => {
     switch (effectiveRole) {
       case 'ADMIN':
-        return 'bg-purple-100 text-purple-900 border-purple-300 font-extrabold';
+        return 'bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400 border-purple-200 dark:border-purple-900 font-extrabold';
       case 'STAFF':
-        return 'bg-sky-100 text-sky-900 border-sky-300 font-bold';
+        return 'bg-sky-50 text-sky-700 dark:bg-sky-950/30 dark:text-sky-400 border-sky-200 dark:border-sky-900 font-bold';
       case 'CUSTOMER':
-        return 'bg-emerald-100 text-emerald-900 border-emerald-300 font-bold';
+        return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900 font-bold';
       default:
-        return 'bg-slate-100 text-slate-800 border-slate-300 font-medium';
+        return 'bg-muted text-foreground border-border font-medium';
     }
   };
 
@@ -220,15 +220,15 @@ export default function AdminAuditLogsPage() {
 
   const getActionBadgeStyle = (action: string) => {
     if (action.includes('CREATED') || action.includes('APPROVED') || action.includes('COMPLETED') || action.includes('VERIFIED')) {
-      return 'bg-emerald-50 text-emerald-800 border-emerald-200';
+      return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900';
     }
     if (action.includes('CANCELLED') || action.includes('REJECTED') || action.includes('FAILED')) {
-      return 'bg-rose-50 text-rose-800 border-rose-200';
+      return 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border-rose-200 dark:border-rose-900';
     }
     if (action.includes('STATUS') || action.includes('ADJUSTED') || action.includes('UPDATED')) {
-      return 'bg-amber-50 text-amber-900 border-amber-200';
+      return 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200 dark:border-amber-900';
     }
-    return 'bg-blue-50 text-blue-800 border-blue-200';
+    return 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border-blue-200 dark:border-blue-900';
   };
 
   // Helper to detect if log has a status change transition
@@ -242,18 +242,17 @@ export default function AdminAuditLogsPage() {
   };
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-300 text-slate-900 w-full max-w-full">
-      {/* Top Banner Header */}
-      <div className="bg-[#1A2E4C] text-white p-5 rounded-2xl shadow-sm border border-[#132238] flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
-        <div className="absolute top-0 right-0 -mt-8 -mr-8 w-48 h-48 bg-white/5 rounded-full blur-xl pointer-events-none" />
-        <div className="relative">
-          <h1 className="text-xl lg:text-2xl font-black text-white flex items-center gap-2.5 tracking-tight">
-            <div className="w-9 h-9 rounded-xl bg-white/10 text-[#D2925D] flex items-center justify-center border border-white/10 shrink-0">
-              <ShieldCheck size={22} />
-            </div>
-            <span>Audit Trail & Activity Logs</span>
+    <div className="space-y-5 animate-in fade-in duration-300 text-foreground w-full max-w-full">
+      {/* Header section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2.5">
+            Audit Trail & Activity Logs
+            <span className="text-xs font-semibold px-2.5 py-0.5 bg-secondary text-secondary-foreground rounded-full">
+              {total} Total
+            </span>
           </h1>
-          <p className="text-xs font-medium text-slate-300 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-sm text-muted-foreground mt-0.5 max-w-2xl leading-relaxed">
             Record tracking order status updates, fulfillment actions, and store activities by staff team members and administrators.
           </p>
         </div>
@@ -262,16 +261,17 @@ export default function AdminAuditLogsPage() {
           <button
             onClick={handleExportCSV}
             disabled={isExporting || isLoading}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl transition-all border border-white/15 cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-foreground bg-card border border-border hover:bg-muted shadow-sm transition-all rounded-lg cursor-pointer disabled:opacity-50"
             title="Download CSV report of audit logs"
           >
             <Download size={14} className={isExporting ? 'animate-bounce' : ''} />
-            <span>{isExporting ? 'Exporting...' : 'Download CSV'}</span>
+            <span>{isExporting ? 'Exporting...' : 'Export CSV'}</span>
           </button>
 
           <button
             onClick={() => fetchAuditLogs(page)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#D2925D] hover:bg-[#b87c4b] text-slate-950 font-extrabold text-xs rounded-xl transition-colors shadow-sm cursor-pointer"
+            disabled={isLoading}
+            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-sm transition-all rounded-lg cursor-pointer disabled:opacity-50"
           >
             <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
             <span>Refresh</span>
@@ -280,17 +280,17 @@ export default function AdminAuditLogsPage() {
       </div>
 
       {/* Filter & Search Toolbar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+      <div className="bg-card p-4 rounded-2xl border border-border shadow-xs space-y-3">
         <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 text-xs">
           {/* Search Query */}
           <div className="relative col-span-1 sm:col-span-2">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search by staff name, email, order #, action..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 border border-slate-300 bg-white text-slate-900 font-medium rounded-xl text-xs focus:ring-2 focus:ring-[#1A2E4C] focus:outline-none placeholder:text-slate-400"
+              className="w-full pl-9 pr-3 py-2 border border-border bg-background text-foreground font-medium rounded-xl text-xs focus:ring-2 focus:ring-[#1A2E4C] focus:outline-none placeholder:text-muted-foreground"
             />
           </div>
 
@@ -302,7 +302,7 @@ export default function AdminAuditLogsPage() {
                 setActionFilter(e.target.value);
                 setPage(1);
               }}
-              className="w-full border border-slate-300 rounded-xl p-2 text-xs bg-white text-slate-900 font-medium focus:ring-2 focus:ring-[#1A2E4C] focus:outline-none cursor-pointer"
+              className="w-full border border-border rounded-xl p-2 text-xs bg-background text-foreground font-medium focus:ring-2 focus:ring-[#1A2E4C] focus:outline-none cursor-pointer"
             >
               {ACTION_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -320,7 +320,7 @@ export default function AdminAuditLogsPage() {
                 setRoleFilter(e.target.value);
                 setPage(1);
               }}
-              className="w-full border border-slate-300 rounded-xl p-2 text-xs bg-white text-slate-900 font-medium focus:ring-2 focus:ring-[#1A2E4C] focus:outline-none cursor-pointer"
+              className="w-full border border-border rounded-xl p-2 text-xs bg-background text-foreground font-medium focus:ring-2 focus:ring-[#1A2E4C] focus:outline-none cursor-pointer"
             >
               <option value="">All Actors & Roles</option>
               <option value="STAFF">STAFF (Team Members)</option>
@@ -343,24 +343,24 @@ export default function AdminAuditLogsPage() {
         </form>
 
         {/* Date Range Inputs & Clear */}
-        <div className="flex flex-wrap items-center justify-between gap-3 text-xs pt-2.5 border-t border-slate-100">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs pt-2.5 border-t border-border">
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-slate-600">From:</span>
+              <span className="font-semibold text-muted-foreground">From:</span>
               <input
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
-                className="border border-slate-300 bg-white text-slate-900 font-medium rounded-lg px-2.5 py-1 text-xs focus:ring-2 focus:ring-[#1A2E4C]"
+                className="border border-border bg-background text-foreground font-medium rounded-lg px-2.5 py-1 text-xs focus:ring-2 focus:ring-[#1A2E4C]"
               />
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-slate-600">To:</span>
+              <span className="font-semibold text-muted-foreground">To:</span>
               <input
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
-                className="border border-slate-300 bg-white text-slate-900 font-medium rounded-lg px-2.5 py-1 text-xs focus:ring-2 focus:ring-[#1A2E4C]"
+                className="border border-border bg-background text-foreground font-medium rounded-lg px-2.5 py-1 text-xs focus:ring-2 focus:ring-[#1A2E4C]"
               />
             </div>
           </div>
@@ -385,69 +385,69 @@ export default function AdminAuditLogsPage() {
         </div>
       </div>
 
-      {/* Main Audit Log Table: FITS ON ONE SCREEN WITHOUT HORIZONTAL SLIDER */}
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs w-full">
-        <div className="w-full">
-          <table className="w-full text-left text-xs border-collapse table-fixed">
-            <thead className="bg-[#1A2E4C] text-white uppercase tracking-wider font-extrabold border-b border-[#132238]">
+      {/* Main Audit Log Table */}
+      <div className="bg-card border border-border rounded-2xl shadow-xs w-full overflow-hidden">
+        <div className="w-full overflow-x-auto [scrollbar-width:thin]">
+          <table className="w-full min-w-[900px] text-left text-xs border-collapse">
+            <thead className="bg-[#1A2E4C] text-white uppercase tracking-wider font-extrabold border-b border-[#132238] text-[10px] md:text-xs">
               <tr>
-                <th className="p-3 pl-4 w-[14%]">Time & Date</th>
-                <th className="p-3 w-[26%]">Staff / Actor</th>
-                <th className="p-3 w-[21%]">Action & State</th>
-                <th className="p-3 w-[14%]">Target Resource</th>
+                <th className="p-3 pl-4 w-[14%] whitespace-nowrap">Time & Date</th>
+                <th className="p-3 w-[26%] whitespace-nowrap">Staff / Actor</th>
+                <th className="p-3 w-[21%] whitespace-nowrap">Action & State</th>
+                <th className="p-3 w-[14%] whitespace-nowrap">Target Resource</th>
                 <th className="p-3 w-[18%]">Narrative</th>
-                <th className="p-3 pr-4 text-right w-[7%]">View</th>
+                <th className="p-3 pr-4 text-right w-[7%] whitespace-nowrap">View</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white text-slate-900">
+            <tbody className="divide-y divide-border bg-card text-foreground">
               {isLoading ? (
                 <>
                   {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-                    <tr key={i} className="animate-pulse border-b border-slate-100">
+                    <tr key={i} className="animate-pulse border-b border-border">
                       <td className="p-3 pl-4">
                         <div className="flex flex-col gap-1">
-                          <div className="h-4 w-12 bg-slate-200 rounded-md" />
-                          <div className="h-3 w-20 bg-slate-200 rounded-md" />
+                          <div className="h-4 w-12 bg-muted-foreground/20 rounded-md" />
+                          <div className="h-3 w-20 bg-muted-foreground/20 rounded-md" />
                         </div>
                       </td>
                       <td className="p-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-slate-200 shrink-0" />
+                          <div className="w-7 h-7 rounded-full bg-muted-foreground/20 shrink-0" />
                           <div className="flex flex-col gap-1 w-full">
                             <div className="flex items-center gap-1.5">
-                              <div className="h-4 w-24 bg-slate-200 rounded-md" />
-                              <div className="h-3 w-12 bg-slate-200 rounded-md" />
+                              <div className="h-4 w-24 bg-muted-foreground/20 rounded-md" />
+                              <div className="h-3 w-12 bg-muted-foreground/20 rounded-md" />
                             </div>
-                            <div className="h-3 w-32 bg-slate-200 rounded-md" />
+                            <div className="h-3 w-32 bg-muted-foreground/20 rounded-md" />
                           </div>
                         </div>
                       </td>
                       <td className="p-3">
                         <div className="flex flex-col gap-1">
-                          <div className="h-4 w-28 bg-slate-200 rounded-md" />
+                          <div className="h-4 w-28 bg-muted-foreground/20 rounded-md" />
                         </div>
                       </td>
                       <td className="p-3">
                         <div className="flex flex-col gap-1">
-                          <div className="h-4 w-20 bg-slate-200 rounded-md" />
-                          <div className="h-3 w-16 bg-slate-200 rounded-md" />
+                          <div className="h-4 w-20 bg-muted-foreground/20 rounded-md" />
+                          <div className="h-3 w-16 bg-muted-foreground/20 rounded-md" />
                         </div>
                       </td>
                       <td className="p-3">
-                        <div className="h-4 w-full max-w-[120px] bg-slate-200 rounded-md" />
+                        <div className="h-4 w-full max-w-[120px] bg-muted-foreground/20 rounded-md" />
                       </td>
                       <td className="p-3 pr-4 text-right">
-                        <div className="h-6 w-6 bg-slate-200 rounded-md ml-auto" />
+                        <div className="h-6 w-6 bg-muted-foreground/20 rounded-md ml-auto" />
                       </td>
                     </tr>
                   ))}
                 </>
               ) : logs.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-16 text-center text-slate-600">
-                    <Database className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                    <p className="font-bold text-base text-slate-900">No Audit Logs Found</p>
-                    <p className="text-xs text-slate-500 mt-1">Try modifying your search filter or selecting a wider date range.</p>
+                  <td colSpan={6} className="p-16 text-center text-muted-foreground">
+                    <Database className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
+                    <p className="font-bold text-base text-foreground">No Audit Logs Found</p>
+                    <p className="text-xs text-muted-foreground mt-1">Try modifying your search filter or selecting a wider date range.</p>
                   </td>
                 </tr>
               ) : (
@@ -461,15 +461,15 @@ export default function AdminAuditLogsPage() {
                   return (
                     <tr
                       key={log.id}
-                      className={`transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'} hover:bg-amber-50/40`}
+                      className={`transition-colors ${idx % 2 === 0 ? 'bg-card' : 'bg-muted/30'} hover:bg-muted`}
                     >
                       {/* Timestamp */}
-                      <td className="p-3 pl-4 text-slate-800">
+                      <td className="p-3 pl-4 text-foreground">
                         <div className="flex flex-col">
-                          <span className="font-bold text-slate-900 text-xs">
+                          <span className="font-bold text-foreground text-xs">
                             {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
-                          <span className="text-[11px] text-slate-500 font-medium">
+                          <span className="text-[11px] text-muted-foreground font-medium">
                             {new Date(log.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                           </span>
                         </div>
@@ -482,11 +482,11 @@ export default function AdminAuditLogsPage() {
                           <div
                             className={`w-7 h-7 rounded-full flex items-center justify-center font-black text-[10px] shrink-0 border ${
                               isSystem
-                                ? 'bg-slate-100 text-slate-700 border-slate-300'
+                                ? 'bg-muted text-foreground border-border'
                                 : effectiveRole === 'ADMIN'
-                                ? 'bg-purple-100 text-purple-800 border-purple-300'
+                                ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400 border-purple-200 dark:border-purple-900'
                                 : effectiveRole === 'STAFF'
-                                ? 'bg-sky-100 text-sky-800 border-sky-300'
+                                ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/30 dark:text-sky-400 border-sky-200 dark:border-sky-900'
                                 : 'bg-emerald-100 text-emerald-800 border-emerald-300'
                             }`}
                           >
@@ -495,7 +495,7 @@ export default function AdminAuditLogsPage() {
 
                           <div className="flex flex-col min-w-0 truncate">
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="font-bold text-slate-900 text-xs truncate">
+                              <span className="font-bold text-foreground text-xs truncate">
                                 {log.actorName || (isSystem ? 'Automated Service' : effectiveRole)}
                               </span>
                               <span className={`px-1.5 py-0.2 rounded text-[9px] uppercase border ${getRoleBadgeStyle(effectiveRole)}`}>
@@ -504,7 +504,7 @@ export default function AdminAuditLogsPage() {
                             </div>
 
                             {/* Email or Reference (never system@internal) */}
-                            <span className="text-[11px] text-slate-500 font-medium truncate" title={displayEmail || ''}>
+                            <span className="text-[11px] text-muted-foreground font-medium truncate" title={displayEmail || ''}>
                               {displayEmail ? displayEmail : isSystem ? 'Automated Job' : (log.actorId ? `#${log.actorId.slice(-6)}` : '')}
                             </span>
                           </div>
@@ -520,8 +520,8 @@ export default function AdminAuditLogsPage() {
 
                           {/* Visual Status Transition (if status changed) */}
                           {transition && (
-                            <div className="inline-flex items-center gap-1 text-[10px] font-bold bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded border border-slate-200 truncate">
-                              <span className="text-slate-600">{transition.from}</span>
+                            <div className="inline-flex items-center gap-1 text-[10px] font-bold bg-muted text-foreground px-1.5 py-0.5 rounded border border-border truncate">
+                              <span className="text-muted-foreground">{transition.from}</span>
                               <ArrowRight size={9} className="text-amber-600 shrink-0" />
                               <span className="text-emerald-700 font-black">{transition.to}</span>
                             </div>
@@ -532,15 +532,15 @@ export default function AdminAuditLogsPage() {
                       {/* Target Resource */}
                       <td className="p-3">
                         <div className="flex flex-col min-w-0">
-                          <span className="font-black text-slate-900 text-xs">{log.resourceType}</span>
-                          <span className="font-mono text-[11px] text-slate-500 font-medium truncate">
+                          <span className="font-black text-foreground text-xs">{log.resourceType}</span>
+                          <span className="font-mono text-[11px] text-muted-foreground font-medium truncate">
                             {log.resourceId ? `#${log.resourceId.slice(-8)}` : '—'}
                           </span>
                         </div>
                       </td>
 
                       {/* Narrative / Description */}
-                      <td className="p-3 text-slate-800 font-medium">
+                      <td className="p-3 text-foreground font-medium">
                         <p className="text-xs leading-tight truncate" title={log.description}>
                           {log.description}
                         </p>
@@ -550,7 +550,7 @@ export default function AdminAuditLogsPage() {
                       <td className="p-3 pr-4 text-right">
                         <button
                           onClick={() => setSelectedLog(log)}
-                          className="inline-flex items-center justify-center p-1.5 bg-slate-100 hover:bg-[#1A2E4C] text-slate-700 hover:text-white font-bold rounded-lg transition-colors border border-slate-200 hover:border-[#1A2E4C] cursor-pointer"
+                          className="inline-flex items-center justify-center p-1.5 bg-muted hover:bg-[#1A2E4C] text-foreground hover:text-white font-bold rounded-lg transition-colors border border-border hover:border-[#1A2E4C] cursor-pointer"
                           title="Inspect Event Snapshot"
                         >
                           <Eye size={13} />
@@ -565,9 +565,9 @@ export default function AdminAuditLogsPage() {
         </div>
 
         {/* Pagination Footer */}
-        <div className="p-3.5 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600 bg-slate-50/80 font-medium">
+        <div className="p-3.5 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground bg-muted/30/80 font-medium">
           <span>
-            Showing <strong className="text-slate-900 font-bold">{logs.length}</strong> of <strong className="text-slate-900 font-bold">{total}</strong> audit logs
+            Showing <strong className="text-foreground font-bold">{logs.length}</strong> of <strong className="text-foreground font-bold">{total}</strong> audit logs
           </span>
 
           <div className="flex items-center gap-2">
@@ -578,11 +578,11 @@ export default function AdminAuditLogsPage() {
                 fetchAuditLogs(p);
               }}
               disabled={page <= 1 || isLoading}
-              className="p-1 border border-slate-300 rounded-lg bg-white text-slate-800 font-bold hover:bg-slate-100 disabled:opacity-40 cursor-pointer"
+              className="p-1 border border-border rounded-lg bg-background text-foreground font-bold hover:bg-muted disabled:opacity-40 cursor-pointer"
             >
               <ChevronLeft size={16} />
             </button>
-            <span className="font-bold text-slate-900 px-2">
+            <span className="font-bold text-foreground px-2">
               Page {page} of {totalPages}
             </span>
             <button
@@ -592,7 +592,7 @@ export default function AdminAuditLogsPage() {
                 fetchAuditLogs(p);
               }}
               disabled={page >= totalPages || isLoading}
-              className="p-1 border border-slate-300 rounded-lg bg-white text-slate-800 font-bold hover:bg-slate-100 disabled:opacity-40 cursor-pointer"
+              className="p-1 border border-border rounded-lg bg-background text-foreground font-bold hover:bg-muted disabled:opacity-40 cursor-pointer"
             >
               <ChevronRight size={16} />
             </button>
@@ -614,14 +614,14 @@ export default function AdminAuditLogsPage() {
                   <h3 className="text-base font-black text-white tracking-tight">
                     Audit Snapshot — {selectedLog.action}
                   </h3>
-                  <p className="text-xs text-slate-400 font-medium">
-                    Event ID: <span className="font-mono text-slate-300">{selectedLog.id}</span>
+                  <p className="text-xs text-muted-foreground font-medium">
+                    Event ID: <span className="font-mono text-muted-foreground">{selectedLog.id}</span>
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedLog(null)}
-                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-sm cursor-pointer transition-colors"
+                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-muted-foreground flex items-center justify-center font-bold text-sm cursor-pointer transition-colors"
               >
                 <X size={16} />
               </button>
@@ -635,7 +635,7 @@ export default function AdminAuditLogsPage() {
                 return (
                   <div className="p-3.5 bg-slate-800/80 rounded-xl border border-slate-700/80 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-400 uppercase font-bold text-[10px] tracking-wider">
+                      <span className="text-muted-foreground uppercase font-bold text-[10px] tracking-wider">
                         Staff / Actor Responsible
                       </span>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getRoleBadgeStyle(effectiveRole)}`}>
@@ -651,9 +651,9 @@ export default function AdminAuditLogsPage() {
                         <p className="text-sm font-bold text-white">
                           {selectedLog.actorName || (effectiveRole === 'SYSTEM' ? 'Automated Service' : 'Staff Team Member')}
                         </p>
-                        <p className="text-xs text-slate-400 font-medium">
+                        <p className="text-xs text-muted-foreground font-medium">
                           {displayEmail ? <>Email: <span className="text-slate-200">{displayEmail}</span> &bull; </> : null}
-                          ID: <span className="font-mono text-slate-300">{selectedLog.actorId}</span>
+                          ID: <span className="font-mono text-muted-foreground">{selectedLog.actorId}</span>
                         </p>
                       </div>
                     </div>
@@ -664,11 +664,11 @@ export default function AdminAuditLogsPage() {
               {/* Event Details Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/60">
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Resource Target</span>
+                  <span className="text-muted-foreground block text-[10px] uppercase font-bold tracking-wider">Resource Target</span>
                   <p className="font-bold text-white text-xs mt-0.5">{selectedLog.resourceType} : {selectedLog.resourceId}</p>
                 </div>
                 <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/60">
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Timestamp</span>
+                  <span className="text-muted-foreground block text-[10px] uppercase font-bold tracking-wider">Timestamp</span>
                   <p className="font-mono font-bold text-slate-200 text-xs mt-0.5">
                     {new Date(selectedLog.createdAt).toLocaleString()}
                   </p>
@@ -677,7 +677,7 @@ export default function AdminAuditLogsPage() {
 
               {/* Narrative */}
               <div className="p-3 bg-slate-800 rounded-xl border border-slate-700">
-                <span className="text-slate-400 uppercase font-bold text-[10px] tracking-wider block mb-1">
+                <span className="text-muted-foreground uppercase font-bold text-[10px] tracking-wider block mb-1">
                   Event Narrative
                 </span>
                 <p className="text-xs text-slate-100 font-semibold leading-relaxed">
@@ -688,7 +688,7 @@ export default function AdminAuditLogsPage() {
               {/* Before vs After State Comparison */}
               {(selectedLog.before || selectedLog.after) && (
                 <div className="space-y-2">
-                  <span className="text-slate-400 uppercase font-bold text-[10px] tracking-wider block">
+                  <span className="text-muted-foreground uppercase font-bold text-[10px] tracking-wider block">
                     State Transition
                   </span>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -718,7 +718,7 @@ export default function AdminAuditLogsPage() {
               {/* Additional Metadata */}
               {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 && (
                 <div>
-                  <span className="text-slate-400 uppercase font-bold text-[10px] tracking-wider block mb-1">
+                  <span className="text-muted-foreground uppercase font-bold text-[10px] tracking-wider block mb-1">
                     Metadata
                   </span>
                   <pre className="bg-slate-950 text-sky-300 p-3 rounded-xl overflow-x-auto text-[11px] font-mono border border-slate-800 max-h-36">

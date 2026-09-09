@@ -70,7 +70,7 @@ export function hasNavPermission(
   return userPermissions.includes(itemPermission);
 }
 
-export function AdminSidebar() {
+export function AdminNavContent({ onLinkClick }: { onLinkClick?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const { logoutUser, user } = useAuthStore();
@@ -89,7 +89,7 @@ export function AdminSidebar() {
   };
 
   return (
-    <aside className="w-64 border-r bg-card h-full shrink-0 flex flex-col transition-all z-20">
+    <>
       <div className="p-6 border-b shrink-0">
         <h2 className="text-2xl font-bold tracking-tight text-primary">YOX Admin</h2>
       </div>
@@ -108,6 +108,7 @@ export function AdminSidebar() {
             <Link
               key={item.name}
               href={item.href}
+              onClick={onLinkClick}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -134,7 +135,14 @@ export function AdminSidebar() {
           Logout
         </button>
       </div>
-    </aside>
+    </>
   );
 }
 
+export function AdminSidebar() {
+  return (
+    <aside className="hidden md:flex w-64 border-r bg-card h-full shrink-0 flex-col transition-all z-20">
+      <AdminNavContent />
+    </aside>
+  );
+}

@@ -414,7 +414,7 @@ export default function AdminOffersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-5">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Offers & Promotions Manager</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Offers & Promotions Manager</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Configure Brand, Category, Product, Celebration, and Flash Countdown sales. Discounts auto-apply on products with dedicated offer pages.
           </p>
@@ -431,52 +431,48 @@ export default function AdminOffersPage() {
       </div>
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-border shadow-xs">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Offers</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{metrics.total}</p>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
-              <Tag size={20} />
-            </div>
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <Card className="border bg-card/60 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Offers</CardTitle>
+            <Tag className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.total}</div>
+            <p className="text-xs text-muted-foreground mt-1">All promotional offers</p>
           </CardContent>
         </Card>
 
-        <Card className="border-border shadow-xs">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Active Offers</p>
-              <p className="text-2xl font-bold text-emerald-600 mt-1">{metrics.active}</p>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <Sparkles size={20} />
-            </div>
+        <Card className="border bg-card/60 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Active Offers</CardTitle>
+            <Sparkles className="h-4 w-4 text-emerald-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{metrics.active}</div>
+            <p className="text-xs text-muted-foreground mt-1">Currently live on store</p>
           </CardContent>
         </Card>
 
-        <Card className="border-border shadow-xs">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Flash Sales</p>
-              <p className="text-2xl font-bold text-rose-600 mt-1">{metrics.flashSales}</p>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
-              <Flame size={20} />
-            </div>
+        <Card className="border bg-card/60 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Flash Sales</CardTitle>
+            <Flame className="h-4 w-4 text-rose-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-rose-600 dark:text-rose-400">{metrics.flashSales}</div>
+            <p className="text-xs text-muted-foreground mt-1">Time-sensitive deals</p>
           </CardContent>
         </Card>
 
-        <Card className="border-border shadow-xs">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Home Banners</p>
-              <p className="text-2xl font-bold text-amber-600 mt-1">{metrics.homeBanners}</p>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
-              <LayoutTemplate size={20} />
-            </div>
+        <Card className="border bg-card/60 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Home Banners</CardTitle>
+            <LayoutTemplate className="h-4 w-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{metrics.homeBanners}</div>
+            <p className="text-xs text-muted-foreground mt-1">Active storefront banners</p>
           </CardContent>
         </Card>
       </div>
@@ -485,13 +481,13 @@ export default function AdminOffersPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
           <div className="relative w-full sm:w-80">
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+            <Search className="absolute left-3 top-2.5 text-muted-foreground" size={16} />
             <input
               type="text"
               placeholder="Search offer title, code, or description..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1A2E4C]/20"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#1A2E4C]/20"
             />
           </div>
 
@@ -502,8 +498,8 @@ export default function AdminOffersPage() {
                 onClick={() => setFilterType(type)}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide cursor-pointer transition-colors ${
                   filterType === type
-                    ? 'bg-[#1A2E4C] text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
                 }`}
               >
                 {type === 'ALL' ? 'All Types' : type.replace('_', ' ')}
@@ -516,51 +512,51 @@ export default function AdminOffersPage() {
         {isLoadingOffers ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 animate-pulse">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} className="flex flex-col justify-between border-gray-200 overflow-hidden">
+              <Card key={i} className="flex flex-col justify-between border-border overflow-hidden">
                 <div>
-                  <div className="aspect-[21/9] w-full bg-gray-200 border-b" />
+                  <div className="aspect-[21/9] w-full bg-muted-foreground/20 border-b" />
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-md bg-gray-200 shrink-0" />
+                        <div className="h-8 w-8 rounded-md bg-muted-foreground/20 shrink-0" />
                         <div className="space-y-1.5">
-                          <div className="h-3 w-16 bg-gray-200 rounded-md" />
-                          <div className="h-4 w-32 bg-gray-200 rounded-md" />
+                          <div className="h-3 w-16 bg-muted-foreground/20 rounded-md" />
+                          <div className="h-4 w-32 bg-muted-foreground/20 rounded-md" />
                         </div>
                       </div>
-                      <div className="h-4 w-12 bg-gray-200 rounded-full shrink-0" />
+                      <div className="h-4 w-12 bg-muted-foreground/20 rounded-full shrink-0" />
                     </div>
-                    <div className="h-3 w-48 bg-gray-200 rounded-md mt-2" />
+                    <div className="h-3 w-48 bg-muted-foreground/20 rounded-md mt-2" />
                   </CardHeader>
                   <CardContent className="space-y-3 pb-3">
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border">
                       <div className="space-y-1">
-                        <div className="h-3 w-20 bg-gray-200 rounded-md" />
-                        <div className="h-5 w-24 bg-gray-200 rounded-md" />
+                        <div className="h-3 w-20 bg-muted-foreground/20 rounded-md" />
+                        <div className="h-5 w-24 bg-muted-foreground/20 rounded-md" />
                       </div>
-                      <div className="h-5 w-16 bg-gray-200 rounded-md" />
+                      <div className="h-5 w-16 bg-muted-foreground/20 rounded-md" />
                     </div>
                     <div className="space-y-1.5 pt-1">
-                      <div className="h-3 w-32 bg-gray-200 rounded-md" />
-                      <div className="h-3 w-28 bg-gray-200 rounded-md" />
+                      <div className="h-3 w-32 bg-muted-foreground/20 rounded-md" />
+                      <div className="h-3 w-28 bg-muted-foreground/20 rounded-md" />
                     </div>
                   </CardContent>
                 </div>
-                <div className="px-4 py-3 bg-gray-50/75 border-t flex items-center justify-between">
-                  <div className="h-6 w-16 bg-gray-200 rounded-md" />
+                <div className="px-4 py-3 bg-muted/30/75 border-t flex items-center justify-between">
+                  <div className="h-6 w-16 bg-muted-foreground/20 rounded-md" />
                   <div className="flex items-center gap-1">
-                    <div className="h-6 w-6 bg-gray-200 rounded-md" />
-                    <div className="h-6 w-6 bg-gray-200 rounded-md" />
+                    <div className="h-6 w-6 bg-muted-foreground/20 rounded-md" />
+                    <div className="h-6 w-6 bg-muted-foreground/20 rounded-md" />
                   </div>
                 </div>
               </Card>
             ))}
           </div>
         ) : filteredOffers.length === 0 ? (
-          <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
-            <Tag size={40} className="mx-auto text-gray-400 mb-3" />
-            <h3 className="text-base font-bold text-gray-800">No Offers Found</h3>
-            <p className="text-sm text-gray-500 max-w-md mx-auto mt-1 mb-5">
+          <div className="text-center py-16 border-2 border-dashed border-border rounded-xl bg-muted/20">
+            <Tag size={40} className="mx-auto text-muted-foreground mb-3" />
+            <h3 className="text-base font-bold text-foreground">No Offers Found</h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto mt-1 mb-5">
               {searchQuery || filterType !== 'ALL'
                 ? 'No offers match your current search and type filters.'
                 : 'Get started by creating your first celebration, category, brand, or flash countdown offer!'}
@@ -581,11 +577,11 @@ export default function AdminOffersPage() {
                 const countdown = formatCountdown(offer.endDate);
 
                 return (
-                  <Card key={offer.id} className="flex flex-col justify-between border-gray-200 hover:shadow-md transition-shadow overflow-hidden group">
+                  <Card key={offer.id} className="flex flex-col justify-between border-border hover:shadow-md transition-shadow overflow-hidden group">
                     <div>
                       {/* Banner thumbnail preview if set */}
                       {offer.banner?.imageUrl && (
-                        <div className="relative aspect-[21/9] w-full bg-gray-100 overflow-hidden border-b">
+                        <div className="relative aspect-[21/9] w-full bg-muted overflow-hidden border-b">
                           <img
                             src={offer.banner.imageUrl}
                             alt={offer.title}
@@ -608,10 +604,10 @@ export default function AdminOffersPage() {
                               <TypeIcon size={16} />
                             </span>
                             <div>
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                                 {typeConfig.label}
                               </span>
-                              <CardTitle className="text-base font-bold text-gray-900 line-clamp-1">
+                              <CardTitle className="text-base font-bold text-foreground line-clamp-1">
                                 {offer.title}
                               </CardTitle>
                             </div>
@@ -620,23 +616,23 @@ export default function AdminOffersPage() {
                             className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
                               offer.isActive
                                 ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-gray-100 text-gray-600'
+                                : 'bg-muted text-muted-foreground'
                             }`}
                           >
                             {offer.isActive ? 'Active' : 'Inactive'}
                           </span>
                         </div>
                         {offer.description && (
-                          <p className="text-xs text-gray-500 line-clamp-2 mt-1">{offer.description}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{offer.description}</p>
                         )}
                       </CardHeader>
 
                       <CardContent className="space-y-3 pb-3">
                         {/* Discount Banner Preview */}
-                        <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100">
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border">
                           <div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Discount Rate</p>
-                            <p className="text-lg font-black text-gray-900">
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Discount Rate</p>
+                            <p className="text-lg font-black text-foreground">
                               {offer.discountType === 'PERCENTAGE'
                                 ? `${offer.discountValue}% OFF`
                                 : `₹${offer.discountValue} OFF`}
@@ -661,7 +657,7 @@ export default function AdminOffersPage() {
                         )}
 
                         {/* Scope summary */}
-                        <div className="text-[11px] text-gray-600 space-y-1">
+                        <div className="text-[11px] text-muted-foreground space-y-1">
                           {offer.applicableProductIds?.length > 0 && (
                             <p>🎯 <span className="font-semibold">{offer.applicableProductIds.length}</span> specific products targeted</p>
                           )}
@@ -679,13 +675,13 @@ export default function AdminOffersPage() {
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="px-4 py-3 bg-gray-50/75 border-t flex items-center justify-between">
+                    <div className="px-4 py-3 bg-muted/30/75 border-t flex items-center justify-between">
                       <button
                         type="button"
                         onClick={() => handleToggleStatus(offer.id)}
                         className={`text-xs font-semibold px-2.5 py-1 rounded transition-colors cursor-pointer ${
                           offer.isActive
-                            ? 'text-gray-700 hover:bg-gray-200'
+                            ? 'text-foreground hover:bg-muted-foreground/20'
                             : 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
                         }`}
                       >
@@ -696,7 +692,7 @@ export default function AdminOffersPage() {
                         <button
                           type="button"
                           onClick={() => handleOpenEditModal(offer)}
-                          className="p-1.5 text-gray-500 hover:text-[#1A2E4C] hover:bg-gray-100 rounded transition-colors cursor-pointer"
+                          className="p-1.5 text-muted-foreground hover:text-[#1A2E4C] hover:bg-muted rounded transition-colors cursor-pointer"
                           title="Edit Offer"
                         >
                           <Edit3 size={15} />
@@ -704,7 +700,7 @@ export default function AdminOffersPage() {
                         <button
                           type="button"
                           onClick={() => handleDeleteOffer(offer.id, offer.title)}
-                          className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                          className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
                           title="Delete Offer"
                         >
                           <Trash2 size={15} />
@@ -732,20 +728,20 @@ export default function AdminOffersPage() {
       {/* Modal: Create or Edit Offer */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-card text-foreground rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
             
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50/80">
+            <div className="flex items-center justify-between px-6 py-4 border-b bg-muted/30/80">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">
+                <h3 className="text-lg font-bold text-foreground">
                   {editingOfferId ? 'Edit Promotional Offer' : 'Create New Promotional Offer'}
                 </h3>
-                <p className="text-xs text-gray-500">Configure offer type, discount, products, and dedicated offer page banner.</p>
+                <p className="text-xs text-muted-foreground">Configure offer type, discount, products, and dedicated offer page banner.</p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
+                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted-foreground/20 rounded-full transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -756,7 +752,7 @@ export default function AdminOffersPage() {
               
               {/* Step 1: Offer Type Selector */}
               <div>
-                <label className="text-xs font-bold text-gray-900 uppercase tracking-wider block mb-2">
+                <label className="text-xs font-bold text-foreground uppercase tracking-wider block mb-2">
                   Select Offer Type *
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -773,16 +769,16 @@ export default function AdminOffersPage() {
                         className={`border rounded-lg p-3 cursor-pointer transition-all flex flex-col justify-between ${
                           isSelected
                             ? 'border-[#1A2E4C] bg-[#1A2E4C]/5 ring-1 ring-[#1A2E4C]'
-                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                            : 'border-border hover:border-border bg-white'
                         }`}
                       >
                         <div className="flex items-center gap-2 mb-1.5">
                           <div className={`p-1.5 rounded-md ${t.color}`}>
                             <Icon size={14} />
                           </div>
-                          <span className="text-xs font-bold text-gray-900">{t.label}</span>
+                          <span className="text-xs font-bold text-foreground">{t.label}</span>
                         </div>
-                        <p className="text-[10px] text-gray-500 leading-snug">{t.desc}</p>
+                        <p className="text-[10px] text-muted-foreground leading-snug">{t.desc}</p>
                       </div>
                     );
                   })}
@@ -792,7 +788,7 @@ export default function AdminOffersPage() {
               {/* Step 2: Basic Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-gray-700 block mb-1">Offer Title *</label>
+                  <label className="text-xs font-bold text-foreground block mb-1">Offer Title *</label>
                   <input
                     type="text"
                     required
@@ -803,7 +799,7 @@ export default function AdminOffersPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-700 block mb-1">Display Tag / Badge (Optional)</label>
+                  <label className="text-xs font-bold text-foreground block mb-1">Display Tag / Badge (Optional)</label>
                   <input
                     type="text"
                     placeholder="e.g., FESTIVE SALE or FLASH DEAL"
@@ -815,7 +811,7 @@ export default function AdminOffersPage() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Description (Optional)</label>
+                <label className="text-xs font-bold text-foreground block mb-1">Description (Optional)</label>
                 <textarea
                   rows={2}
                   placeholder="Describe the offer highlights for the offer page..."
@@ -826,20 +822,20 @@ export default function AdminOffersPage() {
               </div>
 
               {/* Step 3: Discount Configuration */}
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
-                <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+              <div className="bg-muted/30 p-4 rounded-lg border border-border space-y-4">
+                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
                   Discount Value (Auto-Applied to Products)
                 </h4>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 block mb-1">Discount Type</label>
-                    <div className="flex rounded-md border overflow-hidden bg-white">
+                    <label className="text-xs font-semibold text-foreground block mb-1">Discount Type</label>
+                    <div className="flex rounded-md border border-border overflow-hidden bg-background">
                       <button
                         type="button"
                         onClick={() => setDiscountType('PERCENTAGE')}
                         className={`flex-1 py-1.5 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer ${
-                          discountType === 'PERCENTAGE' ? 'bg-[#1A2E4C] text-white' : 'text-gray-600 hover:bg-gray-50'
+                          discountType === 'PERCENTAGE' ? 'bg-[#1A2E4C] text-white' : 'text-muted-foreground hover:bg-muted/30'
                         }`}
                       >
                         <Percent size={12} /> Percentage
@@ -848,7 +844,7 @@ export default function AdminOffersPage() {
                         type="button"
                         onClick={() => setDiscountType('FLAT')}
                         className={`flex-1 py-1.5 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer ${
-                          discountType === 'FLAT' ? 'bg-[#1A2E4C] text-white' : 'text-gray-600 hover:bg-gray-50'
+                          discountType === 'FLAT' ? 'bg-[#1A2E4C] text-white' : 'text-muted-foreground hover:bg-muted/30'
                         }`}
                       >
                         <DollarSign size={12} /> Flat (₹)
@@ -857,7 +853,7 @@ export default function AdminOffersPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 block mb-1">
+                    <label className="text-xs font-semibold text-foreground block mb-1">
                       Discount Value ({discountType === 'PERCENTAGE' ? '%' : '₹'}) *
                     </label>
                     <input
@@ -867,18 +863,18 @@ export default function AdminOffersPage() {
                       max={discountType === 'PERCENTAGE' ? 100 : 50000}
                       value={discountValue}
                       onChange={(e) => setDiscountValue(Number(e.target.value))}
-                      className="w-full px-3 py-1.5 text-sm border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1A2E4C]/20"
+                      className="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-[#1A2E4C]/20"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 block mb-1">Max Discount Cap (Optional ₹)</label>
+                    <label className="text-xs font-semibold text-foreground block mb-1">Max Discount Cap (Optional ₹)</label>
                     <input
                       type="number"
                       placeholder="e.g. 1500"
                       value={maxDiscountAmount}
                       onChange={(e) => setMaxDiscountAmount(e.target.value)}
-                      className="w-full px-3 py-1.5 text-sm border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#1A2E4C]/20"
+                      className="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-[#1A2E4C]/20"
                     />
                   </div>
                 </div>
@@ -887,10 +883,10 @@ export default function AdminOffersPage() {
               {/* Step 4: Target Selection (Categories, Brands, and Products) */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between border-b pb-2">
-                  <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
                     Target Selection (Select Category, Brand, & Specific Products)
                   </h4>
-                  <span className="text-[11px] text-gray-500 font-medium">
+                  <span className="text-[11px] text-muted-foreground font-medium">
                     {selectedProductIds.length} Products Chosen
                   </span>
                 </div>
@@ -898,7 +894,7 @@ export default function AdminOffersPage() {
                 {/* Category Selector if Category or Celebration */}
                 {(offerType === 'CATEGORY' || offerType === 'CELEBRATION') && (
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 block mb-1.5">
+                    <label className="text-xs font-semibold text-foreground block mb-1.5">
                       Select Target Categories {offerType === 'CATEGORY' && '(Products in category qualify)'}
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -916,7 +912,7 @@ export default function AdminOffersPage() {
                               }
                             }}
                             className={`px-3 py-1.5 rounded-md text-xs font-semibold border transition-all cursor-pointer ${
-                              isSelected ? 'bg-[#1A2E4C] text-white border-[#1A2E4C]' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                              isSelected ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-foreground border-border hover:border-gray-400'
                             }`}
                           >
                             {cat.name}
@@ -930,7 +926,7 @@ export default function AdminOffersPage() {
                 {/* Brand Selector if Brand or Celebration */}
                 {(offerType === 'BRAND' || offerType === 'CELEBRATION') && (
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 block mb-1.5">
+                    <label className="text-xs font-semibold text-foreground block mb-1.5">
                       Select Target Brands {offerType === 'BRAND' && '(Products of brand qualify)'}
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -948,7 +944,7 @@ export default function AdminOffersPage() {
                               }
                             }}
                             className={`px-3 py-1.5 rounded-md text-xs font-semibold border transition-all cursor-pointer ${
-                              isSelected ? 'bg-[#1A2E4C] text-white border-[#1A2E4C]' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                              isSelected ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-foreground border-border hover:border-gray-400'
                             }`}
                           >
                             {brand.name}
@@ -963,14 +959,14 @@ export default function AdminOffersPage() {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <label className="text-xs font-semibold text-gray-700">
+                      <label className="text-xs font-semibold text-foreground">
                         {offerType === 'CATEGORY' 
                           ? 'Select Specific Products from Selected Category' 
                           : offerType === 'BRAND'
                           ? 'Select Specific Products from Selected Brand'
                           : 'Select Specific Products for this Offer'}
                       </label>
-                      <p className="text-[11px] text-gray-500">
+                      <p className="text-[11px] text-muted-foreground">
                         {offerType === 'CATEGORY' && selectedCategoryIds.length > 0 && (
                           <span>Showing {availableModalProducts.length} products belonging to selected category(s). (Optional: leave blank to apply to all products in category)</span>
                         )}
@@ -995,14 +991,14 @@ export default function AdminOffersPage() {
                         >
                           Select All ({availableModalProducts.length})
                         </button>
-                        <span className="text-gray-300">|</span>
+                        <span className="text-muted-foreground">|</span>
                         <button
                           type="button"
                           onClick={() => {
                             const availableIds = new Set(availableModalProducts.map((p: any) => p.id));
                             setSelectedProductIds(selectedProductIds.filter((id) => !availableIds.has(id)));
                           }}
-                          className="text-[11px] text-gray-500 hover:underline cursor-pointer"
+                          className="text-[11px] text-muted-foreground hover:underline cursor-pointer"
                         >
                           Clear
                         </button>
@@ -1012,33 +1008,33 @@ export default function AdminOffersPage() {
 
                   {/* Empty Guidance States */}
                   {offerType === 'CATEGORY' && selectedCategoryIds.length === 0 ? (
-                    <div className="p-6 text-center border-2 border-dashed rounded-lg bg-gray-50/70">
+                    <div className="p-6 text-center border-2 border-dashed rounded-lg bg-muted/40">
                       <Layers size={22} className="mx-auto text-blue-500 mb-2" />
-                      <p className="text-xs font-bold text-gray-800">No Categories Selected</p>
-                      <p className="text-[11px] text-gray-500 max-w-sm mx-auto mt-0.5">
+                      <p className="text-xs font-bold text-foreground">No Categories Selected</p>
+                      <p className="text-[11px] text-muted-foreground max-w-sm mx-auto mt-0.5">
                         Please select one or more categories above. Only products belonging to the selected categories will appear here.
                       </p>
                     </div>
                   ) : offerType === 'BRAND' && selectedBrandIds.length === 0 ? (
-                    <div className="p-6 text-center border-2 border-dashed rounded-lg bg-gray-50/70">
+                    <div className="p-6 text-center border-2 border-dashed rounded-lg bg-muted/40">
                       <Tag size={22} className="mx-auto text-indigo-500 mb-2" />
-                      <p className="text-xs font-bold text-gray-800">No Brands Selected</p>
-                      <p className="text-[11px] text-gray-500 max-w-sm mx-auto mt-0.5">
+                      <p className="text-xs font-bold text-foreground">No Brands Selected</p>
+                      <p className="text-[11px] text-muted-foreground max-w-sm mx-auto mt-0.5">
                         Please select one or more brands above. Only products belonging to the selected brands will appear here.
                       </p>
                     </div>
                   ) : availableModalProducts.length === 0 ? (
-                    <div className="p-6 text-center border-2 border-dashed rounded-lg bg-gray-50/70">
-                      <Package size={22} className="mx-auto text-gray-400 mb-2" />
-                      <p className="text-xs font-bold text-gray-800">No Products Found</p>
-                      <p className="text-[11px] text-gray-500 max-w-sm mx-auto mt-0.5">
+                    <div className="p-6 text-center border-2 border-dashed rounded-lg bg-muted/40">
+                      <Package size={22} className="mx-auto text-muted-foreground mb-2" />
+                      <p className="text-xs font-bold text-foreground">No Products Found</p>
+                      <p className="text-[11px] text-muted-foreground max-w-sm mx-auto mt-0.5">
                         There are currently no products associated with the selected category or brand.
                       </p>
                     </div>
                   ) : (
                     <>
                       <div className="relative mb-2">
-                        <Search className="absolute left-2.5 top-2 text-gray-400" size={14} />
+                        <Search className="absolute left-2.5 top-2 text-muted-foreground" size={14} />
                         <input
                           type="text"
                           placeholder="Search in available products..."
@@ -1048,7 +1044,7 @@ export default function AdminOffersPage() {
                         />
                       </div>
 
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 max-h-56 overflow-y-auto p-1 border rounded-md bg-gray-50/50">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 max-h-56 overflow-y-auto p-1 border rounded-md bg-muted/20">
                         {searchedModalProducts.map((p: any) => {
                           const isSelected = selectedProductIds.includes(p.id);
                           return (
@@ -1061,20 +1057,20 @@ export default function AdminOffersPage() {
                                   setSelectedProductIds([...selectedProductIds, p.id]);
                                 }
                               }}
-                              className={`p-2 border rounded-md bg-white cursor-pointer transition-all flex items-center gap-2 ${
-                                isSelected ? 'border-[#1A2E4C] ring-1 ring-[#1A2E4C] bg-blue-50/30' : 'border-gray-200 hover:border-gray-300'
+                              className={`p-2 border border-border rounded-md bg-background cursor-pointer transition-all flex items-center gap-2 ${
+                                isSelected ? 'border-[#1A2E4C] ring-1 ring-[#1A2E4C] bg-blue-50/30' : 'border-border hover:border-border'
                               }`}
                             >
-                              <div className="w-9 h-9 rounded bg-gray-100 overflow-hidden shrink-0">
+                              <div className="w-9 h-9 rounded bg-muted overflow-hidden shrink-0">
                                 {p.thumbnail ? (
                                   <img src={p.thumbnail} alt={p.name} className="w-full h-full object-cover" />
                                 ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-[8px] text-gray-400">No img</div>
+                                  <div className="w-full h-full flex items-center justify-center text-[8px] text-muted-foreground">No img</div>
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-[11px] font-semibold text-gray-900 truncate">{p.name}</p>
-                                <p className="text-[10px] text-gray-500">₹{p.variants?.[0]?.price || '0'}</p>
+                                <p className="text-[11px] font-semibold text-foreground truncate">{p.name}</p>
+                                <p className="text-[10px] text-muted-foreground">₹{p.variants?.[0]?.price || '0'}</p>
                               </div>
                               {isSelected && <Check size={14} className="text-[#1A2E4C] shrink-0" />}
                             </div>
@@ -1109,22 +1105,22 @@ export default function AdminOffersPage() {
                 {isLimitedTime && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                     <div>
-                      <label className="text-xs font-semibold text-gray-700 block mb-1">Start Date & Time</label>
+                      <label className="text-xs font-semibold text-foreground block mb-1">Start Date & Time</label>
                       <input
                         type="datetime-local"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full px-3 py-1.5 text-xs border rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-[#1A2E4C]"
+                        className="w-full px-3 py-1.5 text-xs border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-[#1A2E4C]"
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-700 block mb-1">End Date & Time (Expiry) *</label>
+                      <label className="text-xs font-semibold text-foreground block mb-1">End Date & Time (Expiry) *</label>
                       <input
                         type="datetime-local"
                         required={isLimitedTime}
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        className="w-full px-3 py-1.5 text-xs border rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-[#1A2E4C]"
+                        className="w-full px-3 py-1.5 text-xs border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-[#1A2E4C]"
                       />
                     </div>
                   </div>
@@ -1154,7 +1150,7 @@ export default function AdminOffersPage() {
                 <div className="space-y-3">
                   <div>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1 gap-1">
-                      <label className="text-xs font-semibold text-gray-700 block">Banner Image</label>
+                      <label className="text-xs font-semibold text-foreground block">Banner Image</label>
                       <span className="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
                         Please upload the banner in exactly 2079 × 756 size
                       </span>
@@ -1165,7 +1161,7 @@ export default function AdminOffersPage() {
                         placeholder="Paste banner image URL or upload below..."
                         value={bannerImageUrl}
                         onChange={(e) => setBannerImageUrl(e.target.value)}
-                        className="flex-1 px-3 py-1.5 text-xs border rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-[#1A2E4C]"
+                        className="flex-1 px-3 py-1.5 text-xs border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-[#1A2E4C]"
                       />
                       <label className="flex items-center gap-1.5 bg-[#1A2E4C] hover:bg-[#132238] text-white px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer shrink-0">
                         {isUploadingBanner ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
@@ -1192,7 +1188,7 @@ export default function AdminOffersPage() {
                         <h4 className="text-lg sm:text-2xl font-black">{bannerTitle || title}</h4>
                         <p className="text-xs sm:text-sm text-gray-200 line-clamp-1 max-w-sm mt-0.5">{bannerSubtitle || description}</p>
                         <div className="mt-3">
-                          <span className="inline-flex items-center gap-1 bg-white text-black text-xs font-bold px-3 py-1 rounded">
+                          <span className="inline-flex items-center gap-1 bg-background text-foreground text-xs font-bold px-3 py-1 rounded border border-border">
                             {bannerCtaText || 'Explore Offer'} <ArrowRight size={12} />
                           </span>
                         </div>
@@ -1202,35 +1198,35 @@ export default function AdminOffersPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-semibold text-gray-700 block mb-1">Banner Heading</label>
+                      <label className="text-xs font-semibold text-foreground block mb-1">Banner Heading</label>
                       <input
                         type="text"
                         placeholder="e.g. Flash Sale Ending Tonight"
                         value={bannerTitle}
                         onChange={(e) => setBannerTitle(e.target.value)}
-                        className="w-full px-3 py-1.5 text-xs border rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-[#1A2E4C]"
+                        className="w-full px-3 py-1.5 text-xs border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-[#1A2E4C]"
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-700 block mb-1">Banner Subheading</label>
+                      <label className="text-xs font-semibold text-foreground block mb-1">Banner Subheading</label>
                       <input
                         type="text"
                         placeholder="e.g. Extra 20% off all apparel"
                         value={bannerSubtitle}
                         onChange={(e) => setBannerSubtitle(e.target.value)}
-                        className="w-full px-3 py-1.5 text-xs border rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-[#1A2E4C]"
+                        className="w-full px-3 py-1.5 text-xs border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-[#1A2E4C]"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-700 block mb-1">CTA Button Text</label>
+                    <label className="text-xs font-semibold text-foreground block mb-1">CTA Button Text</label>
                     <input
                       type="text"
                       placeholder="Explore Offer"
                       value={bannerCtaText}
                       onChange={(e) => setBannerCtaText(e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs border rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-[#1A2E4C]"
+                      className="w-full px-3 py-1.5 text-xs border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-[#1A2E4C]"
                     />
                   </div>
                 </div>
@@ -1238,7 +1234,7 @@ export default function AdminOffersPage() {
 
               {/* Step 7: Priority & Active Status */}
               <div className="flex items-center justify-between pt-2">
-                <label className="flex items-center gap-2 text-xs font-bold text-gray-800 cursor-pointer">
+                <label className="flex items-center gap-2 text-xs font-bold text-foreground cursor-pointer">
                   <input
                     type="checkbox"
                     checked={isActive}
@@ -1249,7 +1245,7 @@ export default function AdminOffersPage() {
                 </label>
 
                 <div className="flex items-center gap-2">
-                  <label className="text-xs font-semibold text-gray-700">Display Priority:</label>
+                  <label className="text-xs font-semibold text-foreground">Display Priority:</label>
                   <input
                     type="number"
                     value={priority}
@@ -1264,7 +1260,7 @@ export default function AdminOffersPage() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+                  className="px-4 py-2 text-xs font-semibold text-muted-foreground hover:bg-muted rounded-md transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>

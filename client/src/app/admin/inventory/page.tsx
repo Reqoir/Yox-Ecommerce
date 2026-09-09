@@ -160,7 +160,7 @@ export default function AdminInventoryPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Inventory Management</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Inventory Management</h1>
           <p className="text-muted-foreground mt-1">
             Monitor stock levels, adjust quantities, and track all movements
           </p>
@@ -216,7 +216,7 @@ export default function AdminInventoryPage() {
 
       {/* Filters + Search */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {(['all', 'low-stock'] as Filter[]).map((f) => (
             <Button
               key={f}
@@ -305,7 +305,7 @@ export default function AdminInventoryPage() {
               }`}
             >
               {/* Product Info (Left) */}
-              <div className="flex items-center gap-4 flex-1 min-w-0">
+              <div className="flex items-center gap-4 flex-1 min-w-0 w-full">
                 <div className="h-14 w-14 rounded-md bg-muted border overflow-hidden flex-shrink-0 flex items-center justify-center">
                   {item.productImage ? (
                     <img
@@ -350,8 +350,7 @@ export default function AdminInventoryPage() {
                 </div>
               </div>
 
-              {/* Stock Numbers (Middle) */}
-              <div className="flex items-center gap-6 justify-between w-full md:w-auto px-4 py-2 md:py-0 md:px-6 bg-muted/20 md:bg-transparent rounded-lg">
+              <div className="flex items-center gap-3 sm:gap-6 justify-between w-full md:w-auto px-4 py-2 md:py-0 md:px-6 bg-muted/20 md:bg-transparent rounded-lg">
                 <div className="text-center">
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Available</p>
                   <p className="font-bold text-emerald-600 text-base">{item.availableStock}</p>
@@ -367,7 +366,7 @@ export default function AdminInventoryPage() {
               </div>
 
               {/* Actions & Status (Right) */}
-              <div className="flex items-center gap-4 justify-between w-full md:w-auto mt-2 md:mt-0">
+              <div className="flex flex-wrap items-center gap-4 justify-between w-full md:w-auto mt-2 md:mt-0">
                 {item.isLowStock ? (
                   <Badge className="bg-rose-500/15 text-rose-600 border-rose-500/30 border">
                     Low Stock

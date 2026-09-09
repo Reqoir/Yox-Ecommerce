@@ -15,9 +15,12 @@ import {
   ChevronRight,
   MessageSquare,
   Users,
+  Menu,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+import { AdminNavContent } from '@/components/layout/AdminSidebar';
 import { useNotifications } from '@/hooks/admin/useNotifications';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Notification } from '@/api/admin/notifications';
@@ -74,6 +77,7 @@ export function AdminHeader() {
   const { notifications, unreadCount, markRead, markAllRead, isMarkingAllRead } = useNotifications();
 
   const [isOpen, setIsOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown on outside click
@@ -140,9 +144,25 @@ export function AdminHeader() {
     <header className="h-16 border-b bg-card/80 backdrop-blur-sm px-6 flex items-center justify-between shrink-0 z-20 sticky top-0">
       {/* Left: Breadcrumbs / Title */}
       <div className="flex items-center gap-2 text-sm">
-        <span className="text-muted-foreground font-medium">Admin</span>
-        <ChevronRight className="h-4 w-4 text-muted-foreground/60" />
-        <span className="font-semibold text-foreground text-base tracking-tight">{currentTitle}</span>
+        {/* Mobile Sidebar Toggle */}
+        <div className="md:hidden">
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="-ml-2 mr-2">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle Menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 flex flex-col w-64 border-r">
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+              <AdminNavContent onLinkClick={() => setIsMobileMenuOpen(false)} />
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        <span className="hidden sm:inline text-muted-foreground font-medium">Admin</span>
+        <ChevronRight className="hidden sm:inline h-4 w-4 text-muted-foreground/60" />
+        <span className="font-semibold text-foreground text-base tracking-tight truncate max-w-[150px] sm:max-w-none">{currentTitle}</span>
       </div>
 
       {/* Right: Notification Indicator & Profile */}

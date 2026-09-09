@@ -234,12 +234,12 @@ export default function AdminContentPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-5">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Web Content Management</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Web Content Management</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Customize homepage hero banners, promotional headlines, CTA buttons, and visuals with live preview.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Button
             variant="outline"
             size="sm"
@@ -573,7 +573,7 @@ export default function AdminContentPage() {
                   {/* Desktop Banner Image Card */}
                   <div className="space-y-1">
                     <span className="text-[11px] font-medium text-muted-foreground">Desktop Banner Graphic (Default)</span>
-                    <div className="flex items-center gap-4 p-3 border rounded-lg bg-card">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 border rounded-lg bg-card">
                       <div className="relative w-24 h-14 rounded overflow-hidden bg-muted border flex items-center justify-center shrink-0">
                         {currentSlide.imageUrl ? (
                           <img
@@ -614,7 +614,7 @@ export default function AdminContentPage() {
                   {/* Mobile Banner Image Card */}
                   <div className="space-y-1">
                     <span className="text-[11px] font-medium text-muted-foreground">Mobile Banner Graphic (Optional)</span>
-                    <div className="flex items-center gap-4 p-3 border rounded-lg bg-card">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 border rounded-lg bg-card">
                       <div className="relative w-16 h-20 rounded overflow-hidden bg-muted border flex items-center justify-center shrink-0">
                         {currentSlide.mobileImageUrl || currentSlide.imageUrl ? (
                           <img
@@ -634,7 +634,7 @@ export default function AdminContentPage() {
                           Upload portrait/square banner optimized specifically for smartphones.
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex flex-wrap items-center gap-2 shrink-0 w-full sm:w-auto">
                         {currentSlide.mobileImageUrl && (
                           <button
                             type="button"

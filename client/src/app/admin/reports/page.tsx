@@ -363,10 +363,10 @@ export default function AdminReportsPage() {
 
       {/* Navigation Tabs */}
       <div className="border-b">
-        <nav className="flex space-x-6">
+        <nav className="flex space-x-4 sm:space-x-6 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           <button
             onClick={() => setActiveTab('payments')}
-            className={`flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-all ${
+            className={`flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-all whitespace-nowrap shrink-0 ${
               activeTab === 'payments'
                 ? 'border-primary text-primary font-semibold'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -378,7 +378,7 @@ export default function AdminReportsPage() {
 
           <button
             onClick={() => setActiveTab('sales')}
-            className={`flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-all ${
+            className={`flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-all whitespace-nowrap shrink-0 ${
               activeTab === 'sales'
                 ? 'border-primary text-primary font-semibold'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -390,7 +390,7 @@ export default function AdminReportsPage() {
 
           <button
             onClick={() => setActiveTab('products')}
-            className={`flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-all ${
+            className={`flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-all whitespace-nowrap shrink-0 ${
               activeTab === 'products'
                 ? 'border-primary text-primary font-semibold'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -402,7 +402,7 @@ export default function AdminReportsPage() {
 
           <button
             onClick={() => setActiveTab('customers')}
-            className={`flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-all ${
+            className={`flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-all whitespace-nowrap shrink-0 ${
               activeTab === 'customers'
                 ? 'border-primary text-primary font-semibold'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -414,7 +414,7 @@ export default function AdminReportsPage() {
 
           <button
             onClick={() => setActiveTab('inventory')}
-            className={`flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-all ${
+            className={`flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-all whitespace-nowrap shrink-0 ${
               activeTab === 'inventory'
                 ? 'border-primary text-primary font-semibold'
                 : 'border-transparent text-muted-foreground hover:text-foreground'

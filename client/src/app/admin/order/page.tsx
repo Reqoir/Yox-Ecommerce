@@ -970,21 +970,14 @@ function AdminOrdersContent() {
   };
 
   return (
-    <div className="flex-1 p-6 md:p-8 bg-background max-w-7xl mx-auto space-y-8">
+    <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
-              <ShoppingBag className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Order Management</h1>
-              <p className="text-muted-foreground text-xs md:text-sm mt-0.5">
-                Review and fulfill customer orders, advance delivery pipelines, audit returns, and issue refunds.
-              </p>
-            </div>
-          </div>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Order Management</h1>
+          <p className="text-muted-foreground mt-1">
+            Review and fulfill customer orders, advance delivery pipelines, audit returns, and issue refunds.
+          </p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -2628,7 +2621,7 @@ function AdminOrdersContent() {
                             <Truck size={16} className="text-amber-600" />
                             <h3 className="font-bold text-sm">Logistics & Tracking</h3>
                           </div>
-                          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200 dark:border-amber-900">
                             {selectedOrder.deliveryPartnerId || 'Delhivery / BlueDart'}
                           </span>
                         </div>

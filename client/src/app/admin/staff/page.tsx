@@ -291,7 +291,7 @@ export default function StaffManagementPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold tracking-tight">Staff Members</h1>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Staff Members</h1>
             <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 text-xs">
               Internal Team
             </Badge>

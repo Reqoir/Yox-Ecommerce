@@ -334,7 +334,7 @@ export default function AdminNotificationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
             <Bell className="h-8 w-8" />
             Notifications
             {unreadCount > 0 && (
@@ -404,7 +404,7 @@ export default function AdminNotificationsPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-wrap gap-2 border-b pb-4">
+      <div className="flex flex-col md:flex-row justify-between gap-4 border-b pb-4 w-full">
         {/* Type filters */}
         <div className="flex flex-wrap gap-2">
           {visibleFilterTabs.map(({ key, label }) => (
@@ -422,7 +422,7 @@ export default function AdminNotificationsPage() {
             </Button>
           ))}
         </div>
-        <div className="ml-auto flex gap-2">
+        <div className="flex flex-wrap gap-2 shrink-0">
           <Button
             size="sm"
             variant={readFilter === 'all' ? 'default' : 'outline'}
@@ -585,7 +585,7 @@ export default function AdminNotificationsPage() {
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex flex-col sm:flex-row items-start justify-between gap-2 w-full">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className={`font-semibold text-sm ${!n.isRead ? '' : 'text-muted-foreground'}`}>
@@ -597,7 +597,7 @@ export default function AdminNotificationsPage() {
 
                       {/* New Order metadata */}
                       {n.type === 'NEW_ORDER' && meta && (
-                        <div className="mt-2 flex flex-wrap gap-3 text-xs rounded-md bg-emerald-500/10 px-3 py-2 w-fit">
+                        <div className="mt-2 flex flex-wrap gap-3 text-xs rounded-md bg-emerald-500/10 px-3 py-2 max-w-full w-fit">
                           {meta.orderNumber && (
                             <span>
                               <span className="text-muted-foreground">Order: </span>
@@ -623,7 +623,7 @@ export default function AdminNotificationsPage() {
 
                       {/* Cancelled order metadata */}
                       {n.type === 'ORDER_CANCELLED' && meta && (
-                        <div className="mt-2 flex flex-wrap gap-3 text-xs rounded-md bg-red-500/10 px-3 py-2 w-fit">
+                        <div className="mt-2 flex flex-wrap gap-3 text-xs rounded-md bg-red-500/10 px-3 py-2 max-w-full w-fit">
                           {meta.orderNumber && (
                             <span>
                               <span className="text-muted-foreground">Order: </span>
@@ -642,7 +642,7 @@ export default function AdminNotificationsPage() {
                       {/* Return request metadata + customer note */}
                       {n.type === 'RETURN_REQUEST' && meta && (
                         <div className="mt-2 space-y-1">
-                          <div className="flex flex-wrap gap-3 text-xs rounded-md bg-amber-500/10 px-3 py-2 w-fit">
+                          <div className="flex flex-wrap gap-3 text-xs rounded-md bg-amber-500/10 px-3 py-2 max-w-full w-fit">
                             {meta.orderNumber && (
                               <span>
                                 <span className="text-muted-foreground">Order: </span>
@@ -672,7 +672,7 @@ export default function AdminNotificationsPage() {
 
                       {/* Low stock metadata */}
                       {n.type === 'LOW_STOCK' && meta && (
-                        <div className="mt-2 flex gap-4 text-xs rounded-md bg-rose-500/10 px-3 py-2 w-fit">
+                        <div className="mt-2 flex flex-wrap gap-4 text-xs rounded-md bg-rose-500/10 px-3 py-2 max-w-full w-fit">
                           <span>
                             <span className="text-muted-foreground">Stock: </span>
                             <span className="font-semibold text-rose-600">{meta.currentStock}</span>
@@ -691,7 +691,7 @@ export default function AdminNotificationsPage() {
 
                       {/* Review metadata */}
                       {n.type === 'NEW_REVIEW' && meta && (
-                        <div className="mt-2 flex flex-col gap-1 text-xs rounded-md bg-purple-500/10 px-3 py-2 w-fit">
+                        <div className="mt-2 flex flex-col gap-1 text-xs rounded-md bg-purple-500/10 px-3 py-2 max-w-full w-fit">
                           {meta.rating && (
                             <span className="font-bold text-purple-600">
                               {'★'.repeat(Number(meta.rating)) + '☆'.repeat(Math.max(0, 5 - Number(meta.rating)))} ({meta.rating}/5)
@@ -707,7 +707,7 @@ export default function AdminNotificationsPage() {
 
                       {/* User metadata */}
                       {n.type === 'NEW_USER' && meta?.email && (
-                        <div className="mt-2 text-xs rounded-md bg-cyan-500/10 px-3 py-1.5 w-fit font-medium text-cyan-700 dark:text-cyan-400">
+                        <div className="mt-2 text-xs rounded-md bg-cyan-500/10 px-3 py-1.5 max-w-full w-fit break-all sm:break-normal font-medium text-cyan-700 dark:text-cyan-400">
                           {String(meta.email)}
                         </div>
                       )}
@@ -765,7 +765,7 @@ export default function AdminNotificationsPage() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-1 shrink-0 self-end sm:self-auto mt-2 sm:mt-0">
                       <span className="text-xs text-muted-foreground">
                         {new Date(n.createdAt).toLocaleDateString('en-IN', {
                           day: '2-digit',

@@ -794,7 +794,7 @@ export default function AdminProductPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Products</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Products</h1>
           <p className="text-muted-foreground mt-1">
             Manage your store&apos;s apparel, variants, pricing, media, and inventory.
           </p>
@@ -923,7 +923,7 @@ export default function AdminProductPage() {
                   </TableCell>
                   <TableCell>{product.salesCount}</TableCell>
                   <TableCell>
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${product.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${product.isActive ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900' : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700'}`}>
                       {product.isActive ? 'Active' : 'Draft'}
                     </span>
                   </TableCell>
@@ -1012,7 +1012,7 @@ export default function AdminProductPage() {
                           Tag: {viewProduct.tag}
                         </span>
                       )}
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${viewProduct.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${viewProduct.isActive ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900' : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700'}`}>
                         {viewProduct.isActive ? 'Active' : 'Draft'}
                       </span>
                       {viewProduct.isFeatured && (

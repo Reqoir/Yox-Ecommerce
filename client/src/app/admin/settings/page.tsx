@@ -192,7 +192,7 @@ export default function AdminSettingsPage() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b pb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Store Settings</h1>
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">Store Settings</h1>
             <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-mono text-xs">
               Live E-Commerce Engine
             </Badge>

@@ -63,22 +63,22 @@ export function Pagination({
 
   return (
     <div
-      className={`flex flex-col sm:flex-row items-center justify-between gap-3 px-2 py-3.5 bg-white border border-gray-200 rounded-lg shadow-2xs ${className}`}
+      className={`flex flex-col sm:flex-row items-center justify-between gap-3 px-2 py-3.5 bg-card border border-border rounded-lg shadow-2xs ${className}`}
     >
       {/* Left info & Per-page selector */}
-      <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600 w-full sm:w-auto justify-between sm:justify-start">
+      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground w-full sm:w-auto justify-between sm:justify-start">
         {showDetails && (
           <div>
             {totalItems !== undefined ? (
               <span>
-                Showing <strong className="font-semibold text-gray-900">{startItem}</strong> to{' '}
-                <strong className="font-semibold text-gray-900">{endItem}</strong> of{' '}
-                <strong className="font-semibold text-gray-900">{totalItems}</strong> entries
+                Showing <strong className="font-semibold text-foreground">{startItem}</strong> to{' '}
+                <strong className="font-semibold text-foreground">{endItem}</strong> of{' '}
+                <strong className="font-semibold text-foreground">{totalItems}</strong> entries
               </span>
             ) : (
               <span>
-                Page <strong className="font-semibold text-gray-900">{currentPage}</strong> of{' '}
-                <strong className="font-semibold text-gray-900">{effectiveTotalPages}</strong>
+                Page <strong className="font-semibold text-foreground">{currentPage}</strong> of{' '}
+                <strong className="font-semibold text-foreground">{effectiveTotalPages}</strong>
               </span>
             )}
           </div>
@@ -86,7 +86,7 @@ export function Pagination({
 
         {onItemsPerPageChange && (
           <div className="flex items-center gap-1.5 ml-auto sm:ml-2">
-            <span className="text-[11px] text-gray-500 font-medium whitespace-nowrap">Rows per page:</span>
+            <span className="text-[11px] text-muted-foreground font-medium whitespace-nowrap">Rows per page:</span>
             <select
               value={itemsPerPage}
               onChange={(e) => {
@@ -95,7 +95,7 @@ export function Pagination({
                 onPageChange(1);
               }}
               aria-label="Rows per page"
-              className="text-xs font-semibold bg-gray-50 border border-gray-300 rounded px-2 py-1 text-gray-900 focus:outline-none focus:border-[#1A2E4C] cursor-pointer"
+              className="text-xs font-semibold bg-secondary border border-border rounded px-2 py-1 text-foreground focus:outline-none focus:border-primary cursor-pointer"
             >
               {itemsPerPageOptions.map((opt) => (
                 <option key={opt} value={opt}>
@@ -114,7 +114,7 @@ export function Pagination({
           type="button"
           variant="outline"
           size="sm"
-          className="h-8 w-8 p-0 cursor-pointer hidden sm:flex text-gray-600 hover:text-gray-900 disabled:opacity-40"
+          className="h-8 w-8 p-0 cursor-pointer hidden sm:flex text-muted-foreground hover:text-foreground disabled:opacity-40"
           onClick={() => onPageChange(1)}
           disabled={currentPage === 1}
           title="First Page"
@@ -128,7 +128,7 @@ export function Pagination({
           type="button"
           variant="outline"
           size="sm"
-          className="h-8 w-8 p-0 cursor-pointer text-gray-600 hover:text-gray-900 disabled:opacity-40"
+          className="h-8 w-8 p-0 cursor-pointer text-muted-foreground hover:text-foreground disabled:opacity-40"
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
           title="Previous Page"
@@ -142,7 +142,7 @@ export function Pagination({
           {pageNumbers.map((page, idx) =>
             page === '...' ? (
               <div key={`ellipsis-${idx}`} className="flex h-8 w-7 items-center justify-center">
-                <MoreHorizontal className="h-3.5 w-3.5 text-gray-400" />
+                <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
               </div>
             ) : (
               <button
@@ -150,8 +150,8 @@ export function Pagination({
                 type="button"
                 className={`h-8 min-w-[32px] px-2 rounded-md text-xs font-bold transition-all cursor-pointer ${
                   currentPage === page
-                    ? 'bg-[#1A2E4C] text-white shadow-xs'
-                    : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-200'
+                    ? 'bg-primary text-primary-foreground shadow-xs'
+                    : 'bg-background hover:bg-muted text-foreground border border-border'
                 }`}
                 onClick={() => onPageChange(Number(page))}
               >
@@ -166,7 +166,7 @@ export function Pagination({
           type="button"
           variant="outline"
           size="sm"
-          className="h-8 w-8 p-0 cursor-pointer text-gray-600 hover:text-gray-900 disabled:opacity-40"
+          className="h-8 w-8 p-0 cursor-pointer text-muted-foreground hover:text-foreground disabled:opacity-40"
           onClick={() => onPageChange(Math.min(effectiveTotalPages, currentPage + 1))}
           disabled={currentPage === effectiveTotalPages}
           title="Next Page"
@@ -180,7 +180,7 @@ export function Pagination({
           type="button"
           variant="outline"
           size="sm"
-          className="h-8 w-8 p-0 cursor-pointer hidden sm:flex text-gray-600 hover:text-gray-900 disabled:opacity-40"
+          className="h-8 w-8 p-0 cursor-pointer hidden sm:flex text-muted-foreground hover:text-foreground disabled:opacity-40"
           onClick={() => onPageChange(effectiveTotalPages)}
           disabled={currentPage === effectiveTotalPages}
           title="Last Page"
