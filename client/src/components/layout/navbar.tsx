@@ -159,10 +159,14 @@ export function Navbar() {
           <Sheet>
             <SheetTrigger
               suppressHydrationWarning
-              className="lg:hidden flex items-center text-black hover:opacity-70 transition-opacity p-1 -ml-1 cursor-pointer"
+              className="lg:hidden flex items-center justify-center w-10 h-10 -ml-2 text-black hover:opacity-75 active:scale-95 transition-all cursor-pointer group"
               aria-label="Open mobile navigation menu"
             >
-              <Menu size={24} />
+              <div className="flex flex-col justify-center items-start gap-[5px] w-6 h-5">
+                <span className="w-[22px] h-[2px] bg-black rounded-full transition-all duration-200 group-hover:w-[24px]"></span>
+                <span className="w-[15px] h-[2px] bg-black rounded-full transition-all duration-200 group-hover:w-[20px]"></span>
+                <span className="w-[19px] h-[2px] bg-black rounded-full transition-all duration-200 group-hover:w-[24px]"></span>
+              </div>
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] sm:w-[340px] p-0 bg-white border-r border-gray-200">
               <SheetHeader className="p-5 border-b border-gray-100 flex flex-row items-center justify-between">

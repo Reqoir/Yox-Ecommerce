@@ -253,6 +253,7 @@ export function Footer() {
               </li>
               <li>
                 <button
+                  suppressHydrationWarning
                   type="button"
                   onClick={() => setIsStoreLocatorOpen(true)}
                   className="text-left text-black font-semibold hover:underline flex items-center gap-1.5 cursor-pointer"
@@ -338,8 +339,9 @@ export function Footer() {
                 <span>Thank you! You&apos;re now on our VIP subscriber list.</span>
               </div>
             ) : (
-              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2 mt-1">
+              <form suppressHydrationWarning onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2 mt-1">
                 <input
+                  suppressHydrationWarning
                   type="email"
                   required
                   value={email}
@@ -348,6 +350,7 @@ export function Footer() {
                   className="flex-1 bg-white/70 border border-[#C4BA9D] rounded-sm px-4 py-2.5 h-11 text-sm text-gray-900 placeholder-gray-600 outline-none focus:border-black transition-colors"
                 />
                 <button
+                  suppressHydrationWarning
                   type="submit"
                   className="bg-black text-white hover:bg-gray-800 transition-colors text-xs sm:text-sm font-bold uppercase tracking-wider px-6 h-11 rounded-sm whitespace-nowrap cursor-pointer shadow-xs"
                 >
@@ -460,7 +463,7 @@ export function Footer() {
 
           {/* Copyright & Developed by Reqoir Technologies */}
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-center sm:text-left">
-            <span>© {new Date().getFullYear()} YOX Men&apos;s Fashion. All rights reserved.</span>
+            <span suppressHydrationWarning>© {new Date().getFullYear()} YOX Men&apos;s Fashion. All rights reserved.</span>
             <span className="hidden sm:inline text-gray-400">|</span>
             <span className="flex items-center gap-1">
               <span>Developed by</span>

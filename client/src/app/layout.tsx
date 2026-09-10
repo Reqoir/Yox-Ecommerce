@@ -58,6 +58,46 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${figtree.variable} font-sans h-full antialiased`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var clean = function(el) {
+                    if (el && el.removeAttribute && el.hasAttribute('fdprocessedid')) {
+                      el.removeAttribute('fdprocessedid');
+                    }
+                  };
+                  var observer = new MutationObserver(function(mutations) {
+                    for (var i = 0; i < mutations.length; i++) {
+                      var m = mutations[i];
+                      if (m.type === 'attributes' && m.attributeName === 'fdprocessedid') {
+                        clean(m.target);
+                      } else if (m.type === 'childList') {
+                        for (var j = 0; j < m.addedNodes.length; j++) {
+                          var node = m.addedNodes[j];
+                          if (node.nodeType === 1) {
+                            clean(node);
+                            var els = node.querySelectorAll ? node.querySelectorAll('[fdprocessedid]') : [];
+                            for (var k = 0; k < els.length; k++) clean(els[k]);
+                          }
+                        }
+                      }
+                    }
+                  });
+                  observer.observe(document.documentElement, {
+                    attributes: true,
+                    childList: true,
+                    subtree: true,
+                    attributeFilter: ['fdprocessedid']
+                  });
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body suppressHydrationWarning className="min-h-full flex flex-col bg-background text-foreground">
         <ThemeProvider>
           <QueryProvider>

@@ -80,6 +80,7 @@ function CategoryNavContent() {
             onMouseEnter={() => setHoveredCat(cat.slug)}
           >
             <button
+              suppressHydrationWarning
               onClick={() => handleCategoryClick(cat.slug)}
               className="flex items-center gap-1 cursor-pointer hover:text-black transition-colors whitespace-nowrap py-3.5 font-medium uppercase tracking-wider text-[12px]"
             >

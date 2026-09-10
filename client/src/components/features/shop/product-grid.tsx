@@ -199,60 +199,56 @@ export function ProductGrid({ onOpenFilter, onOpenSort }: ProductGridProps = {})
   return (
     <div className="w-full lg:pl-8 pb-16 lg:pb-0">
 
-      {/* Mobile Title & Sticky Filter/Sort Bar (Sticks right below header on scroll) */}
-      <div className="lg:hidden mb-3">
+      {/* Mobile Sticky Filter By & Relevance/Sort Bar (Sticks right below navbar on scroll) */}
+      <div className="lg:hidden sticky top-20 z-30 bg-white/95 backdrop-blur-md py-2.5 px-1 border-b border-gray-200 shadow-xs mb-3">
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={onOpenFilter}
+            className="flex items-center justify-center gap-2 border border-gray-300 bg-white py-2 px-3 text-xs font-semibold text-gray-800 active:bg-gray-100 transition-colors shadow-2xs cursor-pointer rounded-xs"
+          >
+            <SlidersHorizontal size={14} className="text-gray-700" />
+            <span>Filter By</span>
+          </button>
 
-        {/* Sticky Filter By & Relevance/Sort Bar */}
-        <div className="sticky top-20 z-30 bg-white/95 backdrop-blur-xs py-2 border-b border-gray-100 shadow-[0_2px_6px_rgba(0,0,0,0.03)] -mx-1 px-1">
-          <div className="grid grid-cols-2 gap-2">
+          {/* Relevance / Sort Dropdown Menu (Anchored below button matching reference screenshot) */}
+          <div className="relative" ref={sortDropdownRef}>
             <button
               type="button"
-              onClick={onOpenFilter}
-              className="flex items-center justify-center gap-2 border border-gray-300 bg-white py-2 px-3 text-xs font-semibold text-gray-800 active:bg-gray-100 transition-colors shadow-2xs cursor-pointer rounded-none"
+              onClick={() => setIsSortDropdownOpen((prev) => !prev)}
+              className="w-full flex items-center justify-between border border-gray-300 bg-white py-2 px-3 text-xs font-semibold text-gray-800 active:bg-gray-100 transition-colors shadow-2xs cursor-pointer rounded-xs"
             >
-              <SlidersHorizontal size={14} />
-              <span>Filter By</span>
+              <span className="truncate">{sortDisplayLabel}</span>
+              <ChevronDown size={14} className={`shrink-0 text-gray-500 transition-transform duration-200 ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
-            {/* Relevance / Sort Dropdown Menu (Anchored below button matching reference screenshot) */}
-            <div className="relative" ref={sortDropdownRef}>
-              <button
-                type="button"
-                onClick={() => setIsSortDropdownOpen((prev) => !prev)}
-                className="w-full flex items-center justify-between border border-gray-300 bg-white py-2 px-3 text-xs font-semibold text-gray-800 active:bg-gray-100 transition-colors shadow-2xs cursor-pointer rounded-none"
-              >
-                <span className="truncate">{sortDisplayLabel}</span>
-                <ChevronDown size={14} className={`shrink-0 text-gray-500 transition-transform duration-200 ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
+            {isSortDropdownOpen && (
+              <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-200 shadow-xl z-50 py-1.5 animate-in fade-in-50 zoom-in-95 duration-100 rounded-xs">
+                {SORT_OPTIONS_LIST.map((option) => {
+                  const isSelected = sortBy === option || 
+                    (option === 'Date, new to old' && sortBy === 'Newest Arrivals') || 
+                    (option === 'Price, low to high' && sortBy === 'Price: Low to High') || 
+                    (option === 'Price, high to low' && sortBy === 'Price: High to Low') || 
+                    (option === '% Sale off' && sortBy === 'Discount');
 
-              {isSortDropdownOpen && (
-                <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-200 shadow-xl z-50 py-1.5 animate-in fade-in-50 zoom-in-95 duration-100 rounded-xs">
-                  {SORT_OPTIONS_LIST.map((option) => {
-                    const isSelected = sortBy === option || 
-                      (option === 'Date, new to old' && sortBy === 'Newest Arrivals') || 
-                      (option === 'Price, low to high' && sortBy === 'Price: Low to High') || 
-                      (option === 'Price, high to low' && sortBy === 'Price: High to Low') || 
-                      (option === '% Sale off' && sortBy === 'Discount');
-
-                    return (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => {
-                          setSortBy(option as SortOption);
-                          setIsSortDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-2.5 text-xs transition-colors cursor-pointer block ${
-                          isSelected ? 'font-bold text-black bg-gray-50' : 'text-gray-700 hover:text-black hover:bg-gray-50 font-normal'
-                        }`}
-                      >
-                        {option}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => {
+                        setSortBy(option as SortOption);
+                        setIsSortDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2.5 text-xs transition-colors cursor-pointer block ${
+                        isSelected ? 'font-bold text-black bg-gray-50' : 'text-gray-700 hover:text-black hover:bg-gray-50 font-normal'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
