@@ -44,10 +44,20 @@ export interface Product {
   offerBadge?: string;
   offerSavings?: number;
   offerDiscountPct?: number;
+  createdAt?: string | Date;
 }
 
 export type SortOption = 
   | 'Relevance'
+  | 'Availability'
+  | 'Best Selling'
+  | 'Alphabetically, A-Z'
+  | 'Alphabetically, Z-A'
+  | 'Price, low to high'
+  | 'Price, high to low'
+  | 'Date, new to old'
+  | 'Date, old to new'
+  | '% Sale off'
   | 'Price: Low to High'
   | 'Price: High to Low'
   | 'Newest Arrivals'

@@ -4,7 +4,6 @@ import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { FilterSidebar } from '@/components/features/shop/filter-sidebar';
 import { ProductGrid } from '@/components/features/shop/product-grid';
-import { MobileBottomBar } from '@/components/features/shop/mobile-bottom-bar';
 import { MobileFilterModal } from '@/components/features/shop/mobile-filter-modal';
 import { MobileSortModal } from '@/components/features/shop/mobile-sort-modal';
 import { useProductFilters } from '@/hooks/useProductFilters';
@@ -23,16 +22,14 @@ function ShopContent() {
       <div className="w-[98%] max-w-[1500px] mx-auto flex items-start pt-0 lg:pt-8">
         {/* Product Grid Area - Now Full Width on Desktop */}
         <div className="w-full">
-          <ProductGrid />
+          <ProductGrid 
+            onOpenFilter={() => setIsFilterOpen(true)}
+            onOpenSort={() => setIsSortOpen(true)}
+          />
         </div>
       </div>
 
-      {/* Mobile Only Components */}
-      <MobileBottomBar 
-        onSortClick={() => setIsSortOpen(true)}
-        onFilterClick={() => setIsFilterOpen(true)}
-      />
-
+      {/* Mobile Modals (Triggered from inline Filter & Sort buttons) */}
       <MobileFilterModal 
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}

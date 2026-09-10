@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { ArrowUpRight, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import {
   contentApi,
   HeroBannersConfig,
@@ -109,12 +109,12 @@ export function HeroBanner() {
 
   return (
     <section
-      className="w-full relative mt-0 py-0 sm:py-4 overflow-hidden flex justify-center items-center"
+      className="w-full relative z-0 isolate mt-0 py-0 overflow-hidden flex justify-center items-center"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="w-full sm:w-[98%] max-w-[1500px] mx-auto">
-        <div className="relative overflow-hidden shadow-none sm:shadow-lg border-0 sm:border sm:border-gray-100 bg-gray-950 h-auto aspect-auto sm:aspect-[1440/680] sm:min-h-[400px] md:min-h-[500px]">
+      <div className="w-full">
+        <div className="relative overflow-hidden shadow-none border-0 bg-gray-950 w-full h-[calc(100dvh-185px)] min-h-[400px] max-h-[560px] sm:h-auto sm:aspect-[1440/680] sm:min-h-[400px] md:min-h-[500px]">
           {/* Sliding Track Container */}
           <div
             className={`flex w-full h-full ${
@@ -138,7 +138,7 @@ export function HeroBanner() {
                       <img
                         src={slide.imageUrl || DEFAULT_HERO_CONFIG.slides[0]?.imageUrl}
                         alt={slide.title || 'YOX Collection'}
-                        className="w-full h-auto sm:h-full object-contain sm:object-cover object-center"
+                        className="w-full h-full object-cover object-top sm:object-center"
                         onError={(e) => {
                           if (DEFAULT_HERO_CONFIG.slides[0]?.imageUrl) {
                             (e.target as HTMLImageElement).src = DEFAULT_HERO_CONFIG.slides[0].imageUrl;
@@ -147,7 +147,7 @@ export function HeroBanner() {
                       />
                     </picture>
 
-                    {/* Render Text Overlay per slide inside track */}
+                    {/* Render Text Overlay per slide inside track if enabled */}
                     {slide.showTextOverlay && (
                       <>
                         <div
@@ -160,7 +160,7 @@ export function HeroBanner() {
                         />
 
                         <div
-                          className={`absolute inset-0 z-20 flex flex-col justify-center px-6 sm:px-12 md:px-16 pointer-events-none ${
+                          className={`absolute inset-0 z-20 flex flex-col justify-center px-5 py-6 sm:px-12 md:px-16 pointer-events-none ${
                             slide.textAlign === 'center'
                               ? 'items-center text-center'
                               : slide.textAlign === 'right'
@@ -169,7 +169,7 @@ export function HeroBanner() {
                           } ${slideIsLight ? 'text-gray-950' : 'text-white'}`}
                         >
                           {slide.badgeText && (
-                            <div className="flex items-center gap-1.5 mb-2.5 sm:mb-3">
+                            <div className="flex items-center gap-1.5 mb-2 sm:mb-3">
                               <span
                                 className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-xs ${
                                   slideIsLight
@@ -177,81 +177,69 @@ export function HeroBanner() {
                                     : 'bg-white/20 backdrop-blur-md text-white border border-white/30'
                                 }`}
                               >
-                                <Sparkles size={12} className="text-amber-300" />
+                                <Sparkles size={11} className="text-amber-300" />
                                 {slide.badgeText}
                               </span>
                             </div>
                           )}
 
-                          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-none drop-shadow-md max-w-2xl">
+                          <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight sm:leading-none drop-shadow-md max-w-2xl">
                             {slide.title}
                           </h1>
 
                           {slide.subtitle && (
                             <p
-                              className={`text-xs sm:text-base md:text-lg mt-2.5 sm:mt-3.5 max-w-xl font-normal leading-relaxed line-clamp-2 sm:line-clamp-3 drop-shadow-sm ${
+                              className={`text-xs sm:text-base md:text-lg mt-2 sm:mt-3.5 max-w-xl font-normal leading-snug line-clamp-2 sm:line-clamp-3 drop-shadow-sm ${
                                 slideIsLight ? 'text-gray-700' : 'text-gray-200'
                               }`}
                             >
                               {slide.subtitle}
                             </p>
                           )}
-
-                          <div className="flex flex-wrap items-center gap-3 mt-5 sm:mt-7 pointer-events-auto">
-                            {slide.buttonText && slide.buttonLink && (
-                              <span
-                                className={`inline-flex items-center gap-2 font-bold text-xs sm:text-sm px-6 py-3 rounded-md shadow-lg transition-all ${
-                                  slideIsLight
-                                    ? 'bg-gray-950 text-white'
-                                    : 'bg-white text-gray-950'
-                                }`}
-                              >
-                                <span>{slide.buttonText}</span>
-                                <ArrowRight size={15} />
-                              </span>
-                            )}
-
-                            {slide.secondaryButtonText && slide.secondaryButtonLink && (
-                              <span
-                                className={`inline-flex items-center gap-2 font-semibold text-xs sm:text-sm px-5 py-3 rounded-md backdrop-blur-md border ${
-                                  slideIsLight
-                                    ? 'border-gray-400 bg-white/70 text-gray-900'
-                                    : 'border-white/30 bg-black/40 text-white'
-                                }`}
-                              >
-                                <span>{slide.secondaryButtonText}</span>
-                              </span>
-                            )}
-                          </div>
                         </div>
                       </>
                     )}
                   </Link>
+
+                  {/* Centered "Shop Now" Button: links directly to /shop (separate from slide image link) */}
+                  <div className="absolute bottom-5 sm:bottom-12 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
+                    <Link
+                      href="/shop"
+                      className="inline-flex items-center gap-2.5 sm:gap-3 pl-5 pr-1.5 sm:pl-7 sm:pr-2.5 py-1.5 sm:py-2.5 rounded-full bg-white/95 hover:bg-white text-gray-950 shadow-[0_10px_35px_rgba(0,0,0,0.28)] backdrop-blur-md border border-white/80 transition-all duration-300 hover:scale-105 active:scale-95 group cursor-pointer"
+                    >
+                      <span className="text-[11px] sm:text-xs md:text-[13px] font-extrabold tracking-[0.2em] uppercase text-gray-950">
+                        Shop Now
+                      </span>
+                      <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-black text-white flex items-center justify-center transition-all duration-300 group-hover:bg-neutral-800 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 shadow-xs shrink-0">
+                        <ArrowUpRight size={13} strokeWidth={2.5} />
+                      </span>
+                    </Link>
+                  </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Carousel Arrows (Only when > 1 slide) */}
+          {/* Carousel Arrows (Desktop Only - Hidden on Mobile) */}
           {slidesToRender.length > 1 && (
             <>
               <button
                 onClick={handlePrev}
-                className="absolute left-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-black/40 hover:bg-black/75 backdrop-blur-xs text-white flex items-center justify-center transition-all cursor-pointer hover:scale-105"
+                className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-black/40 hover:bg-black/75 backdrop-blur-xs text-white items-center justify-center transition-all cursor-pointer hover:scale-105"
                 aria-label="Previous Slide"
               >
                 <ChevronLeft size={20} />
               </button>
               <button
                 onClick={handleNext}
-                className="absolute right-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-black/40 hover:bg-black/75 backdrop-blur-xs text-white flex items-center justify-center transition-all cursor-pointer hover:scale-105"
+                className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-black/40 hover:bg-black/75 backdrop-blur-xs text-white items-center justify-center transition-all cursor-pointer hover:scale-105"
                 aria-label="Next Slide"
               >
                 <ChevronRight size={20} />
               </button>
 
               {/* Indicator Dots */}
-              <div className="absolute bottom-3.5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
+              <div className="absolute bottom-1.5 sm:bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
                 {slidesToRender.map((_, idx) => (
                   <button
                     key={idx}

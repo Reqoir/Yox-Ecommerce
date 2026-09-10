@@ -43,7 +43,7 @@ export function ShopSkeleton() {
           </div>
 
           {/* Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-10 px-1 lg:px-0">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-2.5 sm:gap-x-4 lg:gap-x-5 gap-y-6 sm:gap-y-8 lg:gap-y-10 px-0.5 sm:px-1 lg:px-0">
             {Array.from({ length: 15 }).map((_, idx) => (
               <SkeletonProductCard key={idx} />
             ))}

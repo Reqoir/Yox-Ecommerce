@@ -557,20 +557,57 @@ export function useProductFilters() {
 
     // Sorting
     switch (sortBy) {
+      case 'Availability':
+        result.sort((a, b) => (b.inStock !== false ? 1 : 0) - (a.inStock !== false ? 1 : 0));
+        break;
+      case 'Best Selling':
+        result.sort((a, b) => {
+          const scoreA = (a as any).salesCount || (a.tag === 'BESTSELLER' ? 2 : (a.tag as string) === 'POPULAR' ? 1 : 0);
+          const scoreB = (b as any).salesCount || (b.tag === 'BESTSELLER' ? 2 : (b.tag as string) === 'POPULAR' ? 1 : 0);
+          return scoreB - scoreA;
+        });
+        break;
+      case 'Alphabetically, A-Z':
+        result.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case 'Alphabetically, Z-A':
+        result.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      case 'Price, low to high':
       case 'Price: Low to High':
         result.sort((a, b) => a.price - b.price);
         break;
+      case 'Price, high to low':
       case 'Price: High to Low':
         result.sort((a, b) => b.price - a.price);
         break;
+      case 'Date, new to old':
       case 'Newest Arrivals':
-        result.sort((a, b) => (b.tag === 'NEW' ? 1 : 0) - (a.tag === 'NEW' ? 1 : 0));
+        result.sort((a, b) => {
+          const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          if (timeA && timeB) return timeB - timeA;
+          return (b.tag === 'NEW' ? 1 : 0) - (a.tag === 'NEW' ? 1 : 0);
+        });
         break;
+      case 'Date, old to new':
+        result.sort((a, b) => {
+          const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          if (timeA && timeB) return timeA - timeB;
+          return (a.tag === 'NEW' ? 1 : 0) - (b.tag === 'NEW' ? 1 : 0);
+        });
+        break;
+      case '% Sale off':
       case 'Discount':
         result.sort((a, b) => {
-          const discountA = a.originalPrice ? a.originalPrice - a.price : 0;
-          const discountB = b.originalPrice ? b.originalPrice - b.price : 0;
-          return discountB - discountA;
+          const discountPctA = a.originalPrice && a.originalPrice > a.price 
+            ? ((a.originalPrice - a.price) / a.originalPrice) * 100 
+            : (a.offerDiscountPct || 0);
+          const discountPctB = b.originalPrice && b.originalPrice > b.price 
+            ? ((b.originalPrice - b.price) / b.originalPrice) * 100 
+            : (b.offerDiscountPct || 0);
+          return discountPctB - discountPctA;
         });
         break;
       default:

@@ -1,0 +1,90 @@
+"use client";
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { LayoutGrid, Search, User } from 'lucide-react';
+import { BsHandbag } from 'react-icons/bs';
+import { useCartStore } from '@/store/useCartStore';
+import { useAuthStore } from '@/store/useAuthStore';
+
+export function BottomNav() {
+  const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+  const cartCount = useCartStore((state) => state.getItemCount());
+  const user = useAuthStore((state) => state.user);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isShopActive = pathname.startsWith('/shop');
+  const isCartActive = pathname === '/cart';
+  const isAccountActive = pathname.startsWith('/profile') || pathname === '/login';
+
+  const handleSearchClick = () => {
+    window.dispatchEvent(new CustomEvent('open-mobile-search'));
+  };
+
+  return (
+    <nav 
+      suppressHydrationWarning
+      className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 lg:hidden shadow-[0_-2px_8px_rgba(0,0,0,0.04)] pb-[max(0px,env(safe-area-inset-bottom))]"
+      aria-label="Mobile Navigation Bar"
+    >
+      <div className="grid grid-cols-4 h-14 items-center">
+        {/* 1. Shop */}
+        <Link
+          href="/shop"
+          className={`flex flex-col items-center justify-center py-1 transition-colors ${
+            isShopActive ? 'text-black font-semibold' : 'text-gray-600 hover:text-black'
+          }`}
+        >
+          <LayoutGrid size={19} strokeWidth={isShopActive ? 2.3 : 1.8} />
+          <span className="text-[10px] tracking-tight mt-1">Shop</span>
+        </Link>
+
+        {/* 2. Cart */}
+        <Link
+          href="/cart"
+          className={`flex flex-col items-center justify-center py-1 transition-colors ${
+            isCartActive ? 'text-black font-semibold' : 'text-gray-600 hover:text-black'
+          }`}
+        >
+          <div className="relative flex items-center justify-center">
+            <BsHandbag size={18} />
+            <span 
+              suppressHydrationWarning
+              className="absolute -top-1.5 -right-2.5 bg-black text-white text-[9px] font-bold min-w-[15px] h-[15px] px-1 rounded-full flex items-center justify-center"
+            >
+              {mounted ? cartCount : 0}
+            </span>
+          </div>
+          <span className="text-[10px] tracking-tight mt-1">Cart</span>
+        </Link>
+
+        {/* 3. Search */}
+        <button
+          type="button"
+          suppressHydrationWarning
+          onClick={handleSearchClick}
+          className="flex flex-col items-center justify-center py-1 text-gray-600 hover:text-black transition-colors cursor-pointer"
+        >
+          <Search size={19} strokeWidth={1.8} />
+          <span className="text-[10px] tracking-tight mt-1">Search</span>
+        </button>
+
+        {/* 4. Account */}
+        <Link
+          href={mounted && user ? '/profile/personal-info' : '/login'}
+          className={`flex flex-col items-center justify-center py-1 transition-colors ${
+            isAccountActive ? 'text-black font-semibold' : 'text-gray-600 hover:text-black'
+          }`}
+        >
+          <User size={19} strokeWidth={isAccountActive ? 2.3 : 1.8} />
+          <span className="text-[10px] tracking-tight mt-1">Account</span>
+        </Link>
+      </div>
+    </nav>
+  );
+}

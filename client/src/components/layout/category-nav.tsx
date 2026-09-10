@@ -69,10 +69,10 @@ function CategoryNavContent() {
 
   return (
     <div 
-      className="hidden lg:flex w-full border-b border-gray-100 bg-white sticky top-20 z-30 shadow-[0_2px_4px_rgba(0,0,0,0.02)] relative"
+      className="hidden lg:flex w-full border-t border-white/10 border-b border-white/10 bg-[#162b55] sticky top-20 z-30 shadow-[0_2px_4px_rgba(0,0,0,0.1)] relative"
       onMouseLeave={() => setHoveredCat(null)}
     >
-      <div className="w-[95%] max-w-7xl mx-auto flex items-center justify-center gap-7 lg:gap-9 text-[12px] font-medium text-gray-700 uppercase tracking-wider">
+      <div className="w-[95%] max-w-7xl mx-auto flex items-center justify-center gap-7 lg:gap-9 text-[12px] font-medium text-white/85 uppercase tracking-wider">
         {categories.map((cat) => (
           <div 
             key={cat.slug} 
@@ -81,10 +81,10 @@ function CategoryNavContent() {
           >
             <button
               onClick={() => handleCategoryClick(cat.slug)}
-              className="flex items-center gap-1 cursor-pointer hover:text-black transition-colors whitespace-nowrap py-3.5 font-medium uppercase tracking-wider text-[12px]"
+              className="flex items-center gap-1 cursor-pointer hover:text-white transition-colors whitespace-nowrap py-3.5 font-medium uppercase tracking-wider text-[12px]"
             >
               {cat.name.toUpperCase()}
-              <ChevronDown size={13} className={`transition-transform duration-200 ${hoveredCat === cat.slug ? 'rotate-180 text-black' : 'text-gray-400'}`} />
+              <ChevronDown size={13} className={`transition-transform duration-200 ${hoveredCat === cat.slug ? 'rotate-180 text-white' : 'text-white/60'}`} />
             </button>
           </div>
         ))}
@@ -110,7 +110,7 @@ function CategoryNavContent() {
 
 export function CategoryNav() {
   return (
-    <Suspense fallback={<div className="hidden lg:block w-full h-[45px] border-b border-gray-100 bg-white sticky top-20 z-30 shadow-[0_2px_4px_rgba(0,0,0,0.02)]" />}>
+    <Suspense fallback={<div className="hidden lg:block w-full h-[45px] border-t border-white/10 border-b border-white/10 bg-[#162b55] sticky top-20 z-30 shadow-[0_2px_4px_rgba(0,0,0,0.1)]" />}>
       <CategoryNavContent />
     </Suspense>
   );

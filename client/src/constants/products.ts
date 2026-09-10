@@ -92,9 +92,13 @@ export function getColorHex(colorName: string): string {
 }
 
 export const SORT_OPTIONS_LIST = [
-  'Relevance',
-  'Price: Low to High',
-  'Price: High to Low',
-  'Newest Arrivals',
-  'Discount'
+  'Availability',
+  'Best Selling',
+  'Alphabetically, A-Z',
+  'Alphabetically, Z-A',
+  'Price, low to high',
+  'Price, high to low',
+  'Date, new to old',
+  'Date, old to new',
+  '% Sale off'
 ] as const;

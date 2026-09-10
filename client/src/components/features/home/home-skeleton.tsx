@@ -5,19 +5,10 @@ export function HomeSkeleton() {
   return (
     <main className="w-full flex flex-col bg-white min-h-screen pb-16 animate-in fade-in duration-300">
       {/* 1. Hero Banner Skeleton */}
-      <section className="w-full relative py-2 sm:py-4 overflow-hidden">
-        <div className="w-[98%] max-w-[1500px] mx-auto">
-          <div className="relative rounded-2xl overflow-hidden border border-gray-100 bg-gray-100 aspect-[16/9] sm:aspect-[21/9] md:aspect-[24/9] min-h-[300px] sm:min-h-[360px] md:min-h-[440px] max-h-[520px] flex items-center px-6 sm:px-12 md:px-16">
-            <div className="w-full max-w-xl flex flex-col gap-3">
-              <Skeleton className="w-28 h-6 rounded-full bg-gray-200" />
-              <Skeleton className="w-4/5 h-9 sm:h-12 rounded-md bg-gray-200" />
-              <Skeleton className="w-3/5 h-9 sm:h-12 rounded-md bg-gray-200" />
-              <Skeleton className="w-2/3 h-4 sm:h-5 rounded-xs mt-1 bg-gray-200" />
-              <div className="flex gap-3 mt-4">
-                <Skeleton className="w-36 h-11 rounded-md bg-gray-300" />
-                <Skeleton className="w-32 h-11 rounded-md bg-gray-200" />
-              </div>
-            </div>
+      <section className="w-full relative z-0 isolate py-0 overflow-hidden">
+        <div className="w-full">
+          <div className="relative overflow-hidden border-0 bg-gray-100 w-full h-[calc(100dvh-185px)] min-h-[400px] max-h-[560px] sm:h-auto sm:aspect-[1440/680] sm:min-h-[400px] md:min-h-[500px] flex items-end justify-center pb-8 sm:pb-10">
+            <Skeleton className="w-36 h-10 sm:h-11 rounded-full bg-gray-300 shadow-md" />
           </div>
         </div>
       </section>

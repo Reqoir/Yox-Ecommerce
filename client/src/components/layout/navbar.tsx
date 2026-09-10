@@ -95,8 +95,16 @@ export function Navbar() {
         setIsUserDropdownOpen(false);
       }
     };
+    const handleOpenSearchEvent = () => {
+      setIsMobileSearchOpen(true);
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    window.addEventListener('open-mobile-search', handleOpenSearchEvent);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('open-mobile-search', handleOpenSearchEvent);
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -143,14 +151,15 @@ export function Navbar() {
   };
 
   return (
-    <nav suppressHydrationWarning className={`w-full bg-white sticky top-0 z-40 ${pathname !== '/' ? 'shadow-sm border-b border-gray-100' : 'border-b border-gray-100'}`}>
+    <nav suppressHydrationWarning className={`w-full bg-[#162b55] sticky top-0 z-40 ${pathname !== '/' ? 'shadow-sm border-b border-white/10' : 'border-b border-white/10'}`}>
       <div className="w-full px-4 lg:px-0 lg:w-[95%] mx-auto h-20 flex items-center justify-between">
         
         {/* Left Side: Hamburger Menu on Mobile, Empty Flex-1 on Desktop */}
         <div className="flex-1 flex items-center justify-start">
           <Sheet>
             <SheetTrigger 
-              className="lg:hidden flex items-center text-black hover:opacity-70 transition-opacity p-1 -ml-1 cursor-pointer"
+              suppressHydrationWarning
+              className="lg:hidden flex items-center text-white hover:opacity-80 transition-opacity p-1 -ml-1 cursor-pointer"
               aria-label="Open mobile navigation menu"
             >
               <Menu size={24} />
@@ -246,8 +255,9 @@ export function Navbar() {
           
           {/* Desktop Search Bar */}
           <div className="hidden md:block relative w-full max-w-[280px]" ref={containerRef}>
-            <form onSubmit={handleSearchSubmit} className="flex items-center bg-white border border-black rounded-none px-3 h-10 transition-all">
+            <form suppressHydrationWarning onSubmit={handleSearchSubmit} className="flex items-center bg-white border border-transparent rounded-sm px-3 h-10 shadow-sm transition-all">
               <input 
+                suppressHydrationWarning
                 type="text" 
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
@@ -257,6 +267,7 @@ export function Navbar() {
               />
               {inputValue ? (
                 <button 
+                  suppressHydrationWarning
                   type="button" 
                   onClick={handleClearSearch}
                   className="text-gray-400 hover:text-black p-1"
@@ -264,7 +275,7 @@ export function Navbar() {
                   <X size={16} />
                 </button>
               ) : (
-                <button type="submit" className="text-black ml-1">
+                <button suppressHydrationWarning type="submit" className="text-gray-700 hover:text-black ml-1">
                   <Search size={18} strokeWidth={2} />
                 </button>
               )}
@@ -316,18 +327,36 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Mobile Search Trigger Button (Right Side) */}
-          <button 
-            suppressHydrationWarning
-            onClick={() => setIsMobileSearchOpen(true)}
-            className="md:hidden flex items-center text-black hover:opacity-70 transition-opacity p-1 cursor-pointer"
-            aria-label="Search"
-          >
-            <Search size={22} />
-          </button>
+          {/* Mobile Right Controls: Search & Cart (Matching Reference Header) */}
+          <div className="flex md:hidden items-center gap-3">
+            <button 
+              suppressHydrationWarning
+              onClick={() => setIsMobileSearchOpen(true)}
+              className="flex items-center text-white hover:opacity-80 transition-opacity p-1 cursor-pointer"
+              aria-label="Search"
+            >
+              <Search size={22} />
+            </button>
 
-          {/* User Icon & Account Dropdown (Right Side on Mobile & Desktop) */}
-          <div className="relative" ref={userDropdownRef}>
+            <Link 
+              href="/cart" 
+              className="flex items-center relative text-white hover:opacity-80 transition-opacity p-1"
+              aria-label="Shopping Cart"
+            >
+              <div className="relative">
+                <BsHandbag size={22} />
+                <span 
+                  suppressHydrationWarning
+                  className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[9px] font-bold h-4 px-1 min-w-[16px] rounded-full flex items-center justify-center"
+                >
+                  {mounted ? cartCount : 0}
+                </span>
+              </div>
+            </Link>
+          </div>
+
+          {/* User Icon & Account Dropdown (Desktop Only) */}
+          <div className="hidden md:block relative" ref={userDropdownRef}>
             {mounted && user ? (
               <button
                 suppressHydrationWarning
@@ -338,7 +367,7 @@ export function Navbar() {
                     setIsUserDropdownOpen((prev) => !prev);
                   }
                 }}
-                className="flex items-center text-black hover:opacity-70 transition-opacity p-1 cursor-pointer focus:outline-none"
+                className="flex items-center text-white hover:opacity-80 transition-opacity p-1 cursor-pointer focus:outline-none"
                 aria-expanded={isUserDropdownOpen}
                 aria-label="User account menu"
                 title={user.fullName || "My Account"}
@@ -349,7 +378,7 @@ export function Navbar() {
               <button
                 suppressHydrationWarning
                 onClick={() => router.push('/login')}
-                className="flex items-center justify-center bg-black text-white px-3 sm:px-4 py-1.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors whitespace-nowrap rounded-sm cursor-pointer"
+                className="flex items-center justify-center bg-white text-[#162b55] px-3 sm:px-4 py-1.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider hover:bg-gray-100 transition-colors whitespace-nowrap rounded-sm cursor-pointer shadow-sm"
               >
                 LOGIN
               </button>
@@ -416,7 +445,7 @@ export function Navbar() {
           </div>
 
           {/* Wishlist Icon (Desktop Only - Hidden on Mobile) */}
-          <Link href="/profile/favourites" className="hidden lg:flex items-center relative text-black hover:opacity-70 transition-opacity" title="Wishlist">
+          <Link href="/profile/favourites" className="hidden lg:flex items-center relative text-white hover:opacity-80 transition-opacity" title="Wishlist">
             <div className="relative">
               <Heart size={21} />
               {mounted && favouritesCount > 0 && (
@@ -428,7 +457,7 @@ export function Navbar() {
           </Link>
 
           {/* Cart Icon (Desktop Only - Hidden on Mobile) */}
-          <Link href="/cart" className="hidden lg:flex items-center relative text-black hover:opacity-70 transition-opacity">
+          <Link href="/cart" className="hidden lg:flex items-center relative text-white hover:opacity-80 transition-opacity">
             <div className="relative">
               <BsHandbag size={22} />
               {mounted && cartCount > 0 && (
@@ -446,9 +475,10 @@ export function Navbar() {
       {isMobileSearchOpen && (
         <div className="fixed inset-0 z-50 bg-white flex flex-col p-4 animate-in slide-in-from-top-4 duration-200">
           <div className="flex items-center gap-2 border-b pb-3">
-            <form onSubmit={handleSearchSubmit} className="flex-1 flex items-center bg-white border border-black rounded-none px-3 h-10">
+            <form suppressHydrationWarning onSubmit={handleSearchSubmit} className="flex-1 flex items-center bg-white border border-black rounded-none px-3 h-10">
               <Search size={18} className="text-gray-500 mr-2" />
               <input 
+                suppressHydrationWarning
                 type="text" 
                 autoFocus
                 value={inputValue}
@@ -457,12 +487,13 @@ export function Navbar() {
                 className="bg-transparent border-none outline-none w-full text-sm text-gray-900"
               />
               {inputValue && (
-                <button type="button" onClick={() => setInputValue('')} className="p-1 text-gray-400">
+                <button suppressHydrationWarning type="button" onClick={() => setInputValue('')} className="p-1 text-gray-400">
                   <X size={18} />
                 </button>
               )}
             </form>
             <button 
+              suppressHydrationWarning
               onClick={() => setIsMobileSearchOpen(false)}
               className="text-xs font-bold text-gray-700 px-2 py-2"
             >

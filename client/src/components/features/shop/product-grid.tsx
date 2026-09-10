@@ -15,7 +15,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { FilterSidebar } from '@/components/features/shop/filter-sidebar';
 
-export function ProductGrid() {
+interface ProductGridProps {
+  onOpenFilter?: () => void;
+  onOpenSort?: () => void;
+}
+
+export function ProductGrid({ onOpenFilter, onOpenSort }: ProductGridProps = {}) {
   const {
     searchQuery,
     category,
@@ -36,6 +41,30 @@ export function ProductGrid() {
   const { categories: apiCategories } = useCategories();
   const { brands: apiBrands } = useBrands();
   const { isFavourite, toggleFavourite } = useFavouritesStore();
+
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = React.useState(false);
+  const sortDropdownRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setIsSortDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const sortDisplayLabel = React.useMemo(() => {
+    switch (sortBy) {
+      case 'Newest Arrivals': return 'Date, new to old';
+      case 'Price: Low to High': return 'Price, low to high';
+      case 'Price: High to Low': return 'Price, high to low';
+      case 'Discount': return '% Sale off';
+      case 'Relevance': return 'Relevance';
+      default: return (sortBy as string) || 'Relevance';
+    }
+  }, [sortBy]);
 
   // Show ONLY parent categories (no subcategories) in tabs
   const parentCategories = React.useMemo(() => {
@@ -169,32 +198,89 @@ export function ProductGrid() {
 
   return (
     <div className="w-full lg:pl-8 pb-16 lg:pb-0">
-      
-      {/* Top Meta Area */}
-      <div className="mb-6 lg:mb-8">
-        
+
+      {/* Mobile Title & Sticky Filter/Sort Bar (Sticks right below header on scroll) */}
+      <div className="lg:hidden mb-3">
+
+        {/* Sticky Filter By & Relevance/Sort Bar */}
+        <div className="sticky top-20 z-30 bg-white/95 backdrop-blur-xs py-2 border-b border-gray-100 shadow-[0_2px_6px_rgba(0,0,0,0.03)] -mx-1 px-1">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={onOpenFilter}
+              className="flex items-center justify-center gap-2 border border-gray-300 bg-white py-2 px-3 text-xs font-semibold text-gray-800 active:bg-gray-100 transition-colors shadow-2xs cursor-pointer rounded-none"
+            >
+              <SlidersHorizontal size={14} />
+              <span>Filter By</span>
+            </button>
+
+            {/* Relevance / Sort Dropdown Menu (Anchored below button matching reference screenshot) */}
+            <div className="relative" ref={sortDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsSortDropdownOpen((prev) => !prev)}
+                className="w-full flex items-center justify-between border border-gray-300 bg-white py-2 px-3 text-xs font-semibold text-gray-800 active:bg-gray-100 transition-colors shadow-2xs cursor-pointer rounded-none"
+              >
+                <span className="truncate">{sortDisplayLabel}</span>
+                <ChevronDown size={14} className={`shrink-0 text-gray-500 transition-transform duration-200 ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isSortDropdownOpen && (
+                <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-200 shadow-xl z-50 py-1.5 animate-in fade-in-50 zoom-in-95 duration-100 rounded-xs">
+                  {SORT_OPTIONS_LIST.map((option) => {
+                    const isSelected = sortBy === option || 
+                      (option === 'Date, new to old' && sortBy === 'Newest Arrivals') || 
+                      (option === 'Price, low to high' && sortBy === 'Price: Low to High') || 
+                      (option === 'Price, high to low' && sortBy === 'Price: High to Low') || 
+                      (option === '% Sale off' && sortBy === 'Discount');
+
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => {
+                          setSortBy(option as SortOption);
+                          setIsSortDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-xs transition-colors cursor-pointer block ${
+                          isSelected ? 'font-bold text-black bg-gray-50' : 'text-gray-700 hover:text-black hover:bg-gray-50 font-normal'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Top Meta Area (Desktop Only) */}
+      <div className="hidden lg:block mb-6 lg:mb-8">
+
         {/* Title */}
         <h1 className="text-[22px] font-extrabold text-black uppercase tracking-wide mb-6">
           {pageTitle}
         </h1>
-        
+
         {/* Tabs and Sort */}
         <div className="flex items-center justify-between gap-4">
           {/* Horizontal Tabs - Parent categories only */}
           <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-1 flex-1">
             {isLoading ? (
-               Array.from({ length: 7 }).map((_, idx) => (
-                 <Skeleton key={idx} className="h-8 w-24 rounded-none shrink-0" />
-               ))
+              Array.from({ length: 7 }).map((_, idx) => (
+                <Skeleton key={idx} className="h-8 w-24 rounded-none shrink-0" />
+              ))
             ) : tabs.map((tabItem) => (
               <button
                 key={tabItem.label}
                 onClick={() => handleTabClick(tabItem)}
-                className={`px-3 py-1.5 text-[10px] tracking-widest uppercase transition-colors border cursor-pointer shrink-0 ${
-                  activeTab === tabItem.label
+                className={`px-3 py-1.5 text-[10px] tracking-widest uppercase transition-colors border cursor-pointer shrink-0 ${activeTab === tabItem.label
                     ? 'bg-black text-white border-black font-medium'
                     : 'bg-white text-gray-800 border-gray-800 hover:bg-gray-100 font-normal'
-                }`}
+                  }`}
               >
                 {tabItem.label}
               </button>
@@ -224,10 +310,10 @@ export function ProductGrid() {
                   <span>Sort By</span>
                 </div>
               </SelectTrigger>
-              <SelectContent align="end" className="bg-white border border-gray-200 rounded-none">
+              <SelectContent align="end" className="bg-white border border-gray-200 rounded-none w-48">
                 {SORT_OPTIONS_LIST.map((option) => (
-                  <SelectItem key={option} value={option} className="text-xs capitalize text-gray-800 cursor-pointer rounded-none">
-                    {option.toLowerCase()}
+                  <SelectItem key={option} value={option} className="text-xs text-gray-800 cursor-pointer rounded-none">
+                    {option}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -247,11 +333,10 @@ export function ProductGrid() {
             <button
               type="button"
               onClick={() => setCategory(currentParentCategory.slug || currentParentCategory.name.toLowerCase())}
-              className={`px-3 py-1 text-[11px] font-semibold rounded-full transition-all cursor-pointer ${
-                (!subCategory && (category?.toLowerCase() === currentParentCategory.slug?.toLowerCase() || category?.toLowerCase() === currentParentCategory.name.toLowerCase()))
+              className={`px-3 py-1 text-[11px] font-semibold rounded-full transition-all cursor-pointer ${(!subCategory && (category?.toLowerCase() === currentParentCategory.slug?.toLowerCase() || category?.toLowerCase() === currentParentCategory.name.toLowerCase()))
                   ? 'bg-black text-white shadow-xs'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               All {currentParentCategory.name}
             </button>
@@ -275,11 +360,10 @@ export function ProductGrid() {
                       setCategory(sub.slug || sub.name.toLowerCase());
                     }
                   }}
-                  className={`px-3 py-1 text-[11px] font-semibold rounded-full transition-all cursor-pointer ${
-                    isSubActive
+                  className={`px-3 py-1 text-[11px] font-semibold rounded-full transition-all cursor-pointer ${isSubActive
                       ? 'bg-black text-white shadow-xs'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                    }`}
                 >
                   {sub.name}
                 </button>
@@ -292,10 +376,10 @@ export function ProductGrid() {
       {/* Grid, Loading, Error, or Empty State */}
       {isLoading ? (
         /* Amazon / Flipkart Style Shimmer Loading Skeletons */
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-10 px-1 lg:px-0">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-2.5 sm:gap-x-4 lg:gap-x-5 gap-y-6 sm:gap-y-8 lg:gap-y-10 px-0.5 sm:px-1 lg:px-0">
           {Array.from({ length: 10 }).map((_, i) => (
             <div key={i} className="flex flex-col gap-2.5 animate-pulse">
-              <div className="w-full aspect-[3/4] bg-gray-100 rounded-sm" />
+              <div className="w-full aspect-[1/1.42] sm:aspect-[3/4] bg-gray-100 rounded-sm" />
               <div className="h-3.5 bg-gray-100 rounded-xs w-3/4" />
               <div className="h-2.5 bg-gray-100 rounded-xs w-1/3" />
               <div className="h-3.5 bg-gray-100 rounded-xs w-1/2" />
@@ -321,39 +405,36 @@ export function ProductGrid() {
           </button>
         </div>
       ) : filteredProducts.length > 0 ? (
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-10 px-1 lg:px-0">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-2.5 sm:gap-x-4 lg:gap-x-5 gap-y-6 sm:gap-y-8 lg:gap-y-10 px-0.5 sm:px-1 lg:px-0">
           {filteredProducts.map((product) => {
             const prodIdStr = String(product.productId || product.id);
             const cardColor = product.currentColor || null;
             const isFav = isFavourite(prodIdStr, cardColor);
 
             return (
-              <Link 
-                href={product.href || `/product/${product.productId || product.id}${cardColor ? `?color=${encodeURIComponent(cardColor)}` : ''}`} 
-                key={product.colorCardId || `${prodIdStr}_${cardColor || 'default'}`} 
+              <Link
+                href={product.href || `/product/${product.productId || product.id}${cardColor ? `?color=${encodeURIComponent(cardColor)}` : ''}`}
+                key={product.colorCardId || `${prodIdStr}_${cardColor || 'default'}`}
                 className="flex flex-col group cursor-pointer"
               >
                 {/* Image Box */}
-                <div className="relative w-full aspect-[3/4] bg-[#f2f2f2] overflow-hidden mb-3">
-                  <img 
-                    src={product.image} 
-                    alt={`${product.name}${cardColor ? ` - ${cardColor}` : ''}`} 
-                    className={`w-full h-full object-cover object-top transition-opacity duration-300 ${
-                      product.inStock === false ? 'opacity-80 grayscale-[20%]' : ''
-                    } ${
-                      product.secondImage && product.secondImage !== product.image ? 'group-hover:opacity-0' : ''
-                    }`}
+                <div className="relative w-full aspect-[1/1.42] sm:aspect-[3/4] bg-[#f2f2f2] overflow-hidden mb-2.5 sm:mb-3">
+                  <img
+                    src={product.image}
+                    alt={`${product.name}${cardColor ? ` - ${cardColor}` : ''}`}
+                    className={`w-full h-full object-cover object-top transition-opacity duration-300 ${product.inStock === false ? 'opacity-80 grayscale-[20%]' : ''
+                      } ${product.secondImage && product.secondImage !== product.image ? 'group-hover:opacity-0' : ''
+                      }`}
                   />
                   {product.secondImage && product.secondImage !== product.image && (
-                    <img 
-                      src={product.secondImage} 
-                      alt={`${product.name}${cardColor ? ` - ${cardColor}` : ''} alternate view`} 
-                      className={`absolute inset-0 w-full h-full object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none ${
-                        product.inStock === false ? 'grayscale-[20%]' : ''
-                      }`}
+                    <img
+                      src={product.secondImage}
+                      alt={`${product.name}${cardColor ? ` - ${cardColor}` : ''} alternate view`}
+                      className={`absolute inset-0 w-full h-full object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none ${product.inStock === false ? 'grayscale-[20%]' : ''
+                        }`}
                     />
                   )}
-                  
+
                   {/* Sold Out or Offer Badge */}
                   {product.inStock === false ? (
                     <div className="absolute top-2 left-2 z-10">
@@ -368,9 +449,9 @@ export function ProductGrid() {
                       </span>
                     </div>
                   ) : null}
-                  
+
                   {/* Wishlist Button */}
-                  <button 
+                  <button
                     className="absolute top-2 right-2 p-1.5 text-gray-600 hover:text-red-500 transition-colors z-10"
                     aria-label={isFav ? "Remove from Wishlist" : "Add to Wishlist"}
                     onClick={(e) => {
@@ -390,10 +471,10 @@ export function ProductGrid() {
 
                     }}
                   >
-                    <Heart 
-                      size={18} 
-                      strokeWidth={1.5} 
-                      className={isFav ? "fill-red-500 text-red-500 transition-colors" : "text-gray-600 hover:text-red-500 transition-colors"} 
+                    <Heart
+                      size={18}
+                      strokeWidth={1.5}
+                      className={isFav ? "fill-red-500 text-red-500 transition-colors" : "text-gray-600 hover:text-red-500 transition-colors"}
                     />
                   </button>
                 </div>
@@ -426,17 +507,17 @@ export function ProductGrid() {
                     )}
                   </div>
                   {product.colors && product.colors.length > 1 && (() => {
-                    const displayColors = product.currentColor 
+                    const displayColors = product.currentColor
                       ? [
-                          product.colors.find((c: string) => c.toLowerCase() === product.currentColor?.toLowerCase()) || product.currentColor,
-                          ...product.colors.filter((c: string) => c.toLowerCase() !== product.currentColor?.toLowerCase())
-                        ]
+                        product.colors.find((c: string) => c.toLowerCase() === product.currentColor?.toLowerCase()) || product.currentColor,
+                        ...product.colors.filter((c: string) => c.toLowerCase() !== product.currentColor?.toLowerCase())
+                      ]
                       : product.colors;
-                    
+
                     return (
                       <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                         {displayColors.slice(0, 4).map((c: string) => (
-                          <div 
+                          <div
                             key={c}
                             title={c}
                             className="w-2 h-2 shadow-xs shrink-0"
