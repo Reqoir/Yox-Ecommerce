@@ -11,12 +11,38 @@ import { useAuthStore } from '@/store/useAuthStore';
 export function BottomNav() {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const isHomePage = pathname === '/';
+  const [isVisible, setIsVisible] = useState(!isHomePage);
   const cartCount = useCartStore((state) => state.getItemCount());
   const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!isHomePage) {
+      setIsVisible(true);
+      return;
+    }
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > 60) {
+        setIsVisible(true);
+      } else {
+        setIsVisible(false);
+      }
+    };
+
+    // Check initial scroll position on mount/page change
+    handleScroll();
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [isHomePage]);
 
   const isShopActive = pathname.startsWith('/shop');
   const isCartActive = pathname === '/cart';
@@ -29,7 +55,11 @@ export function BottomNav() {
   return (
     <nav 
       suppressHydrationWarning
-      className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 lg:hidden shadow-[0_-2px_8px_rgba(0,0,0,0.04)] pb-[max(0px,env(safe-area-inset-bottom))]"
+      className={`fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 lg:hidden shadow-[0_-2px_8px_rgba(0,0,0,0.04)] pb-[max(0px,env(safe-area-inset-bottom))] transition-all duration-300 ease-in-out ${
+        isVisible
+          ? 'translate-y-0 opacity-100 pointer-events-auto'
+          : 'translate-y-full opacity-0 pointer-events-none'
+      }`}
       aria-label="Mobile Navigation Bar"
     >
       <div className="grid grid-cols-4 h-14 items-center">
