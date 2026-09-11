@@ -7,7 +7,7 @@ export function HomeSkeleton() {
       {/* 1. Hero Banner Skeleton */}
       <section className="w-full relative z-0 isolate py-0 overflow-hidden">
         <div className="w-full">
-          <div className="relative overflow-hidden border-0 bg-gray-100 w-full h-[calc(100dvh-185px)] min-h-[400px] max-h-[560px] sm:h-auto sm:aspect-[1440/680] sm:min-h-[400px] md:min-h-[500px] flex items-end justify-center pb-8 sm:pb-10">
+          <div className="relative overflow-hidden border-0 bg-gray-100 w-full h-[calc(100svh-114px)] min-h-[calc(100svh-114px)] sm:h-auto sm:aspect-[1440/680] sm:min-h-[400px] md:min-h-[500px] flex items-end justify-center pb-8 sm:pb-10">
             <Skeleton className="w-36 h-10 sm:h-11 rounded-full bg-gray-300 shadow-md" />
           </div>
         </div>

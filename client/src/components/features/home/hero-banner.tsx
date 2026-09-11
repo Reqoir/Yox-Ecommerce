@@ -114,7 +114,7 @@ export function HeroBanner() {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="w-full">
-        <div className="relative overflow-hidden shadow-none border-0 bg-gray-950 w-full h-[calc(100dvh-185px)] min-h-[400px] max-h-[560px] sm:h-auto sm:aspect-[1440/680] sm:min-h-[400px] md:min-h-[500px]">
+        <div className="relative overflow-hidden shadow-none border-0 bg-gray-950 w-full h-[calc(100svh-114px)] min-h-[calc(100svh-114px)] sm:h-auto sm:aspect-[1440/680] sm:min-h-[400px] md:min-h-[500px]">
           {/* Sliding Track Container */}
           <div
             className={`flex w-full h-full ${
@@ -202,7 +202,7 @@ export function HeroBanner() {
                   </Link>
 
                   {/* Centered "Shop Now" Button: links directly to /shop (separate from slide image link) */}
-                  <div className="absolute bottom-5 sm:bottom-12 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
+                  <div className="absolute bottom-8 sm:bottom-12 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
                     <Link
                       href="/shop"
                       className="inline-flex items-center gap-2.5 sm:gap-3 pl-5 pr-1.5 sm:pl-7 sm:pr-2.5 py-1.5 sm:py-2.5 rounded-full bg-white/95 hover:bg-white text-gray-950 shadow-[0_10px_35px_rgba(0,0,0,0.28)] backdrop-blur-md border border-white/80 transition-all duration-300 hover:scale-105 active:scale-95 group cursor-pointer"
@@ -239,7 +239,7 @@ export function HeroBanner() {
               </button>
 
               {/* Indicator Dots */}
-              <div className="absolute bottom-1.5 sm:bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
+              <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
                 {slidesToRender.map((_, idx) => (
                   <button
                     key={idx}
