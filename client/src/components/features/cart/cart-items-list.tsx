@@ -39,11 +39,11 @@ export function CartItemsList({ items }: CartItemsListProps) {
           : 0;
 
         return (
-          <div key={item.id} className="py-6 flex gap-4 lg:gap-6 items-start">
+          <div key={item.id} className="py-4 sm:py-6 flex gap-3 sm:gap-5 items-start">
             {/* Image */}
             <Link
               href={`/product/${item.productId}`}
-              className="w-28 lg:w-36 flex-shrink-0 aspect-[3/4] bg-gray-50 overflow-hidden rounded relative group"
+              className="w-22 sm:w-28 lg:w-32 flex-shrink-0 aspect-[3/4] bg-gray-50 overflow-hidden rounded-md border border-gray-100 relative group"
             >
               <img
                 src={item.image}
@@ -53,58 +53,64 @@ export function CartItemsList({ items }: CartItemsListProps) {
             </Link>
 
             {/* Details */}
-            <div className="flex-1 flex flex-col justify-between min-h-[8rem]">
+            <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch gap-2.5">
               <div>
                 <div className="flex justify-between items-start gap-2 mb-1">
                   <Link
                     href={`/product/${item.productId}`}
-                    className="text-sm font-bold text-gray-900 hover:text-[#1A2E4C] transition-colors line-clamp-1"
+                    className="text-xs sm:text-sm font-bold text-gray-900 hover:text-[#1A2E4C] transition-colors line-clamp-1"
+                    title={item.name}
                   >
                     {item.name}
                   </Link>
                   
                   {/* Item Price */}
                   <div className="text-right flex-shrink-0">
-                    <span className="text-base font-bold text-gray-900">₹{item.price * item.quantity}</span>
+                    <span className="text-sm sm:text-base font-bold text-gray-900">
+                      ₹{(item.price * item.quantity).toLocaleString()}
+                    </span>
                     {item.comparePrice && (
-                      <div className="text-[11px] text-gray-400 line-through">
-                        ₹{item.comparePrice * item.quantity}
+                      <div className="text-[10px] sm:text-[11px] text-gray-400 line-through">
+                        ₹{(item.comparePrice * item.quantity).toLocaleString()}
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* Variants Info */}
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 mb-3">
-                  <span>Color: <strong className="text-gray-800">{item.color}</strong></span>
-                  <span>•</span>
-                  <span>Size: <strong className="text-gray-800">{item.size}</strong></span>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs text-gray-500 mb-1.5">
+                  <span>Color: <strong className="text-gray-800 font-semibold">{item.color}</strong></span>
+                  <span className="text-gray-300">•</span>
+                  <span>Size: <strong className="text-gray-800 font-semibold">{item.size}</strong></span>
                   {discountPercentage > 0 && (
                     <>
-                      <span>•</span>
-                      <span className="text-emerald-600 font-bold">{discountPercentage}% OFF</span>
+                      <span className="text-gray-300">•</span>
+                      <span className="text-emerald-700 bg-emerald-50 text-[10px] font-bold px-1.5 py-0.2 rounded-xs">
+                        {discountPercentage}% OFF
+                      </span>
                     </>
                   )}
                 </div>
+
                 {item.stock !== undefined && item.quantity >= item.stock && (
-                  <div className="text-[11px] font-semibold text-amber-600 mb-2">
+                  <div className="text-[10px] sm:text-[11px] font-semibold text-amber-600 mb-1">
                     ⚠️ Maximum available stock reached ({item.stock})
                   </div>
                 )}
               </div>
 
-              {/* Controls & Actions */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-gray-50">
+              {/* Controls & Actions Row */}
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100 flex-wrap sm:flex-nowrap">
                 {/* Quantity Buttons */}
-                <div className="flex items-center border border-gray-200 rounded bg-white">
+                <div className="flex items-center border border-gray-200 rounded-sm bg-white shadow-2xs">
                   <button
                     onClick={() => updateQuantity(item.id, -1)}
-                    className="p-1.5 text-gray-500 hover:text-gray-900 transition-colors disabled:opacity-30"
+                    className="p-1 sm:p-1.5 text-gray-500 hover:text-gray-900 transition-colors disabled:opacity-30 cursor-pointer"
                     aria-label="Decrease quantity"
                   >
-                    <Minus size={14} />
+                    <Minus size={13} />
                   </button>
-                  <span className="px-3 py-1.5 text-xs font-bold text-gray-900 min-w-[2.5rem] text-center border-l border-r border-gray-200">
+                  <span className="px-2 sm:px-3 py-1 text-xs font-bold text-gray-900 min-w-[2rem] text-center border-l border-r border-gray-200">
                     {item.quantity}
                   </span>
                   <button
@@ -116,21 +122,22 @@ export function CartItemsList({ items }: CartItemsListProps) {
                       updateQuantity(item.id, 1);
                     }}
                     disabled={item.stock !== undefined && item.quantity >= item.stock}
-                    className="p-1.5 text-gray-500 hover:text-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="p-1 sm:p-1.5 text-gray-500 hover:text-gray-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                     aria-label="Increase quantity"
                   >
-                    <Plus size={14} />
+                    <Plus size={13} />
                   </button>
                 </div>
 
                 {/* Save for later & Remove */}
-                <div className="flex items-center gap-2 text-[11px] font-bold tracking-wider uppercase">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <button
                     onClick={() => handleMoveToFavourites(item)}
-                    className="hidden sm:flex items-center gap-1.5 text-black border border-gray-300 px-3 py-2 hover:border-black transition-colors"
+                    className="flex items-center gap-1 text-[11px] font-medium text-gray-600 hover:text-black border border-gray-200 hover:border-gray-400 px-2 sm:px-2.5 py-1.5 rounded-sm transition-colors cursor-pointer bg-white"
+                    title="Save to Favourites"
                   >
-                    <Heart size={14} strokeWidth={2} />
-                    <span>Move to Favourites</span>
+                    <Heart size={13} className="text-gray-500" />
+                    <span className="hidden xs:inline sm:inline">Save</span>
                   </button>
 
                   <button
@@ -138,10 +145,11 @@ export function CartItemsList({ items }: CartItemsListProps) {
                       removeItem(item.id);
                       toast.success('Removed item from basket');
                     }}
-                    className="flex items-center gap-1.5 text-black border border-gray-300 px-3 py-2 hover:border-black hover:text-red-600 transition-colors"
+                    className="flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-red-600 border border-gray-200 hover:border-red-200 hover:bg-red-50/50 px-2 sm:px-2.5 py-1.5 rounded-sm transition-colors cursor-pointer bg-white"
+                    title="Remove item"
                     aria-label="Remove item"
                   >
-                    <Trash2 size={14} strokeWidth={2} />
+                    <Trash2 size={13} />
                     <span className="hidden sm:inline">Remove</span>
                   </button>
                 </div>

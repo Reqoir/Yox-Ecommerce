@@ -52,15 +52,15 @@ export function FavouriteCard({ item }: FavouriteCardProps) {
     : 0;
 
   return (
-    <div className="group relative flex flex-col bg-white border border-gray-100 rounded-sm overflow-hidden hover:shadow-md transition-shadow">
+    <div className="group relative flex flex-col bg-white border border-gray-200/80 rounded-md overflow-hidden hover:shadow-md transition-all duration-200">
       {/* Product Image */}
-      <div className="aspect-[3/4] overflow-hidden bg-[#f2f2f2] relative">
+      <div className="aspect-[3/4] overflow-hidden bg-[#f5f5f5] relative">
         <Link href={productUrl} className="block w-full h-full">
           <img
             src={item.image || '/images/product-1.jpeg'}
             alt={item.name}
             className={`w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500 ${
-              item.inStock === false ? 'opacity-80 grayscale-[20%]' : ''
+              item.inStock === false ? 'opacity-75 grayscale-[25%]' : ''
             }`}
             onError={(e) => {
               e.currentTarget.src = '/images/product-1.jpeg';
@@ -68,42 +68,54 @@ export function FavouriteCard({ item }: FavouriteCardProps) {
           />
         </Link>
 
-        {/* Sold Out or Tag */}
+        {/* Floating Remove Button on Image Top-Right */}
+        <button
+          onClick={handleRemove}
+          className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-white/95 backdrop-blur-xs text-gray-500 hover:text-red-600 hover:bg-white flex items-center justify-center shadow-xs transition-all active:scale-90 cursor-pointer"
+          title="Remove from favourites"
+          aria-label="Remove item"
+        >
+          <Trash2 size={14} strokeWidth={2} />
+        </button>
+
+        {/* Sold Out or Tag Badge */}
         {item.inStock === false ? (
-          <div className="absolute top-2.5 left-2.5 z-10 bg-black text-white px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-xs shadow-xs">
+          <div className="absolute top-2 left-2 z-10 bg-black/85 backdrop-blur-xs text-white px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-xs shadow-xs">
             SOLD OUT
           </div>
         ) : item.tag ? (
-          <div className="absolute top-2.5 left-2.5 z-10 bg-white/90 backdrop-blur px-2.5 py-0.5 text-[10px] font-medium text-gray-800 uppercase shadow-sm rounded-sm">
+          <div className="absolute top-2 left-2 z-10 bg-white/95 backdrop-blur-xs px-2 py-0.5 text-[9px] font-semibold text-gray-800 uppercase shadow-2xs rounded-xs">
             {item.tag}
           </div>
         ) : null}
       </div>
 
       {/* Details */}
-      <div className="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
+      <div className="p-2.5 sm:p-3.5 flex-1 flex flex-col justify-between gap-2.5">
         <div>
-          <div className="flex items-center justify-between gap-1 mb-1">
-            <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wider block truncate">
-              {item.category || 'Apparel'}
-            </span>
+          {/* Category and Color Row */}
+          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-gray-400 font-medium mb-1 min-w-0">
+            <span className="truncate">{item.category || 'Apparel'}</span>
             {item.color && (
-              <span className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider shrink-0">
-                {item.color}
-              </span>
+              <>
+                <span className="text-gray-300">•</span>
+                <span className="text-gray-600 font-semibold truncate">{item.color}</span>
+              </>
             )}
           </div>
 
+          {/* Title */}
           <Link
             href={productUrl}
-            className="text-xs font-semibold text-gray-800 hover:text-[#1A2E4C] transition-colors line-clamp-1 mb-2 block"
+            className="text-xs sm:text-sm font-semibold text-gray-900 hover:text-[#1A2E4C] transition-colors line-clamp-1 mb-1.5 block"
+            title={item.name}
           >
             {item.name}
           </Link>
 
           {/* Pricing */}
-          <div className="flex items-baseline gap-2 mb-3">
-            <span className={`text-sm font-semibold ${item.inStock === false ? 'text-gray-500' : 'text-gray-900'}`}>
+          <div className="flex items-baseline flex-wrap gap-1.5">
+            <span className={`text-xs sm:text-sm font-bold ${item.inStock === false ? 'text-gray-400' : 'text-gray-900'}`}>
               ₹{item.price.toLocaleString()}
             </span>
             {item.inStock === false ? (
@@ -113,10 +125,12 @@ export function FavouriteCard({ item }: FavouriteCardProps) {
             ) : (
               <>
                 {item.comparePrice && item.comparePrice > item.price && (
-                  <span className="text-xs text-gray-400 line-through">₹{item.comparePrice.toLocaleString()}</span>
+                  <span className="text-[11px] text-gray-400 line-through">
+                    ₹{item.comparePrice.toLocaleString()}
+                  </span>
                 )}
                 {discountPercentage > 0 && (
-                  <span className="text-[11px] font-semibold text-emerald-600 ml-auto">
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-xs">
                     {discountPercentage}% OFF
                   </span>
                 )}
@@ -125,28 +139,19 @@ export function FavouriteCard({ item }: FavouriteCardProps) {
           </div>
         </div>
 
-        {/* Move to Basket & Remove Row */}
-        <div className="flex items-center gap-1.5 mt-auto pt-2">
+        {/* Full-width Move to Basket Button */}
+        <div className="w-full pt-1">
           <button
             onClick={handleMoveToCart}
             disabled={item.inStock === false}
-            className={`flex-1 flex items-center justify-center gap-2 text-xs font-medium py-2.5 px-3 rounded-sm transition-colors border ${
+            className={`w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 px-2 rounded-sm transition-all border ${
               item.inStock === false
                 ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                : 'bg-white hover:bg-gray-50 text-black border-black active:scale-[0.99] cursor-pointer'
+                : 'bg-white hover:bg-black hover:text-white text-black border-black active:scale-[0.98] cursor-pointer shadow-2xs'
             }`}
           >
-            <BsHandbag size={16} className="shrink-0" />
+            <BsHandbag size={14} className="shrink-0" />
             <span className="truncate">{item.inStock === false ? 'Out of Stock' : 'Move to Basket'}</span>
-          </button>
-
-          <button
-            onClick={handleRemove}
-            className="h-9 w-9 flex items-center justify-center rounded-sm border border-gray-200 text-gray-400 hover:text-red-600 hover:border-gray-300 transition-colors shrink-0 cursor-pointer"
-            title="Remove from wishlist"
-            aria-label="Remove item"
-          >
-            <Trash2 size={14} />
           </button>
         </div>
       </div>

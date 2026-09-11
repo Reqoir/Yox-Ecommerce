@@ -125,12 +125,12 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
           {/* Dynamic Page Content */}
           <main className="flex-1 w-full">
-            <div className="bg-white border border-gray-200/90 rounded-sm p-4 sm:p-6 lg:p-8 shadow-2xs min-h-[520px]">
+            <div className="bg-white border border-gray-200/90 rounded-sm p-3 sm:p-6 lg:p-8 shadow-2xs min-h-[520px]">
               {!isOverviewPage && (
-                <div className="lg:hidden mb-4 sticky top-18 z-30 pt-2 pb-2 -mt-2 bg-white">
+                <div className="lg:hidden mb-4 sticky top-18 z-30 pt-1 pb-1 -mt-1 bg-white">
                   <button 
                     onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
-                    className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-sm p-4 shadow-2xs"
+                    className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-sm p-3.5 shadow-2xs"
                   >
                     <div className="flex items-center gap-3">
                       {(() => {

@@ -53,22 +53,25 @@ export function CartSummary() {
   const grandTotal = Math.max(0, subtotal + shippingFee);
 
   return (
-    <div className="w-full bg-white border border-gray-200 rounded-none p-6 sticky top-24">
-      <h3 className="text-base font-bold text-gray-900 mb-4 pb-3 border-b border-gray-200">
-        Order Summary ({itemCount} {itemCount === 1 ? 'item' : 'items'})
+    <div className="w-full bg-white border border-gray-200/90 rounded-md p-4 sm:p-6 sticky top-24 shadow-2xs">
+      <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-3 sm:mb-4 pb-2.5 sm:pb-3 border-b border-gray-200 flex items-center justify-between">
+        <span>Order Summary</span>
+        <span className="text-xs font-semibold text-gray-500">
+          {itemCount} {itemCount === 1 ? 'item' : 'items'}
+        </span>
       </h3>
 
       {/* Free Shipping Progress Indicator */}
-      <div className="bg-white border border-emerald-100 rounded p-3 mb-5">
-        <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 mb-1">
-          <Truck size={16} className="text-emerald-600" />
+      <div className="bg-emerald-50/50 border border-emerald-100 rounded-sm p-3 mb-4 sm:mb-5">
+        <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 mb-1.5">
+          <Truck size={15} className="text-emerald-600 shrink-0" />
           {remainingForFreeShipping === 0 ? (
             <span>You qualify for FREE Delivery!</span>
           ) : (
-            <span>Add ₹{remainingForFreeShipping} more to get FREE Delivery</span>
+            <span>Add ₹{remainingForFreeShipping} more for FREE Delivery</span>
           )}
         </div>
-        <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+        <div className="w-full bg-emerald-100/60 h-1.5 rounded-full overflow-hidden">
           <div
             className="bg-emerald-500 h-full transition-all duration-300"
             style={{ width: `${Math.min(100, (subtotal / freeShippingThreshold) * 100)}%` }}
@@ -77,16 +80,16 @@ export function CartSummary() {
       </div>
 
       {/* Pricing Breakdown */}
-      <div className="space-y-3 text-xs mb-6">
+      <div className="space-y-2.5 text-xs mb-5">
         <div className="flex justify-between text-gray-600">
           <span>Subtotal</span>
-          <span className="font-bold text-gray-900">₹{subtotal}</span>
+          <span className="font-bold text-gray-900">₹{subtotal.toLocaleString()}</span>
         </div>
 
         {savings > 0 && (
           <div className="flex justify-between text-emerald-600 font-medium">
             <span>Bag Savings</span>
-            <span className="font-bold">-₹{savings}</span>
+            <span className="font-bold">-₹{savings.toLocaleString()}</span>
           </div>
         )}
 
@@ -102,7 +105,7 @@ export function CartSummary() {
         <div className="pt-3 border-t border-gray-200 flex justify-between items-baseline">
           <span className="text-sm font-bold text-gray-900">Grand Total</span>
           <div className="text-right">
-            <span className="text-xl font-bold text-gray-900">₹{grandTotal}</span>
+            <span className="text-lg sm:text-xl font-bold text-gray-900">₹{grandTotal.toLocaleString()}</span>
             <p className="text-[10px] text-gray-400">Inclusive of all taxes</p>
           </div>
         </div>
@@ -120,15 +123,15 @@ export function CartSummary() {
       <button
         onClick={handleProceedToCheckout}
         disabled={itemCount === 0 || isMaintenance}
-        className="w-full flex items-center justify-center gap-2 bg-black hover:bg-gray-900 text-white text-xs font-bold tracking-wider py-4 rounded-none transition-colors shadow-sm mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2 bg-black hover:bg-gray-900 text-white text-xs font-bold tracking-wider py-3.5 sm:py-4 rounded-sm transition-all shadow-sm mb-3.5 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] cursor-pointer"
       >
         <span>{isMaintenance ? 'CHECKOUT PAUSED (MAINTENANCE)' : 'PROCEED TO CHECKOUT'}</span>
-        {!isMaintenance && <ArrowRight size={16} />}
+        {!isMaintenance && <ArrowRight size={15} />}
       </button>
 
       {/* Security Guarantee */}
-      <div className="flex items-center justify-center gap-2 text-[11px] text-gray-500 font-medium">
-        <ShieldCheck size={16} className="text-emerald-600" />
+      <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-500 font-medium">
+        <ShieldCheck size={15} className="text-emerald-600 shrink-0" />
         <span>100% Safe & Secure Checkout</span>
       </div>
     </div>

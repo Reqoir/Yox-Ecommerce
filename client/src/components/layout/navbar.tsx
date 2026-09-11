@@ -332,15 +332,15 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Mobile Right Controls: Search & Cart (Matching Reference Header) */}
-          <div className="flex md:hidden items-center gap-3">
+          {/* Mobile Right Controls: Search & Cart */}
+          <div className="flex md:hidden items-center gap-2.5">
             <button
               suppressHydrationWarning
               onClick={() => setIsMobileSearchOpen(true)}
               className="flex items-center text-black hover:opacity-70 transition-opacity p-1 cursor-pointer"
-              aria-label="Search"
+              aria-label="Search products"
             >
-              <Search size={22} />
+              <Search size={21} />
             </button>
 
             <Link
@@ -349,7 +349,7 @@ export function Navbar() {
               aria-label="Shopping Cart"
             >
               <div className="relative">
-                <BsHandbag size={22} />
+                <BsHandbag size={21} />
                 <span
                   suppressHydrationWarning
                   className="absolute -top-1.5 -right-2 bg-black text-white text-[9px] font-bold h-4 px-1 min-w-[16px] rounded-full flex items-center justify-center"

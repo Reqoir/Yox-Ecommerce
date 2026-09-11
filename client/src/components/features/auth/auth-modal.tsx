@@ -137,9 +137,9 @@ export function AuthModal() {
       {/* Backdrop click dismiss */}
       <div className="absolute inset-0" onClick={closeModal} />
 
-      {/* Modal Card — Exact styling matching reference image */}
+      {/* Modal Card — Responsive and elegant styling */}
       <div
-        className="relative z-10 bg-white rounded-none max-w-[560px] w-full p-8 sm:p-12 shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200"
+        className="relative z-10 bg-white rounded-md max-w-[560px] w-full p-6 sm:p-10 lg:p-12 shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200 mx-3 sm:mx-auto"
         role="dialog"
         aria-modal="true"
       >
@@ -266,23 +266,23 @@ export function AuthModal() {
               </span>
             </p>
 
-            {/* Bottom Action Row: Continue Button aligned right */}
-            <div className="pt-4 flex items-center justify-between">
+            {/* Bottom Action Row: Responsive Full-width on mobile, side-by-side on desktop */}
+            <div className="pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
               <button
                 type="button"
                 onClick={() => setMode('register')}
-                className="text-xs font-medium text-gray-500 hover:text-black underline transition-colors cursor-pointer"
+                className="order-2 sm:order-1 text-center sm:text-left text-xs font-medium text-gray-500 hover:text-black transition-colors cursor-pointer py-1"
               >
-                Don&apos;t have an account? Sign Up
+                Don&apos;t have an account? <span className="font-bold text-black underline underline-offset-2 hover:text-[#C09B7A]">Sign Up</span>
               </button>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="bg-black hover:bg-neutral-800 text-white font-bold text-xs sm:text-sm uppercase tracking-wider py-3.5 px-8 sm:px-12 rounded-none transition-all cursor-pointer disabled:opacity-60 shadow-xs"
+                className="order-1 sm:order-2 w-full sm:w-auto bg-black hover:bg-neutral-800 text-white font-bold text-xs sm:text-sm uppercase tracking-wider py-3.5 px-8 sm:px-12 rounded-sm transition-all cursor-pointer disabled:opacity-60 shadow-xs active:scale-[0.99]"
               >
                 {isLoading ? (
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center justify-center gap-2">
                     <Loader2 size={16} className="animate-spin" />
                     <span>PLEASE WAIT</span>
                   </span>
@@ -378,23 +378,23 @@ export function AuthModal() {
               </span>
             </p>
 
-            {/* Bottom Action Row: Continue Button aligned right */}
-            <div className="pt-4 flex items-center justify-between">
+            {/* Bottom Action Row: Responsive Full-width on mobile, side-by-side on desktop */}
+            <div className="pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
               <button
                 type="button"
                 onClick={() => setMode('login')}
-                className="text-xs font-medium text-gray-500 hover:text-black underline transition-colors cursor-pointer"
+                className="order-2 sm:order-1 text-center sm:text-left text-xs font-medium text-gray-500 hover:text-black transition-colors cursor-pointer py-1"
               >
-                Already have an account? Sign In
+                Already have an account? <span className="font-bold text-black underline underline-offset-2 hover:text-[#C09B7A]">Sign In</span>
               </button>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="bg-black hover:bg-neutral-800 text-white font-bold text-xs sm:text-sm uppercase tracking-wider py-3.5 px-8 sm:px-12 rounded-none transition-all cursor-pointer disabled:opacity-60 shadow-xs"
+                className="order-1 sm:order-2 w-full sm:w-auto bg-black hover:bg-neutral-800 text-white font-bold text-xs sm:text-sm uppercase tracking-wider py-3.5 px-8 sm:px-12 rounded-sm transition-all cursor-pointer disabled:opacity-60 shadow-xs active:scale-[0.99]"
               >
                 {isLoading ? (
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center justify-center gap-2">
                     <Loader2 size={16} className="animate-spin" />
                     <span>PLEASE WAIT</span>
                   </span>
@@ -446,11 +446,11 @@ export function AuthModal() {
                   />
                 </div>
 
-                <div className="pt-4 flex items-center justify-between">
+                <div className="pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                   <button
                     type="button"
                     onClick={() => setMode('login')}
-                    className="text-xs font-medium text-gray-500 hover:text-black underline transition-colors cursor-pointer"
+                    className="order-2 sm:order-1 text-center sm:text-left text-xs font-medium text-gray-500 hover:text-black underline transition-colors cursor-pointer py-1"
                   >
                     Back to Sign In
                   </button>
@@ -458,10 +458,10 @@ export function AuthModal() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="bg-black hover:bg-neutral-800 text-white font-bold text-xs sm:text-sm uppercase tracking-wider py-3.5 px-8 rounded-none transition-all cursor-pointer disabled:opacity-60 shadow-xs"
+                    className="order-1 sm:order-2 w-full sm:w-auto bg-black hover:bg-neutral-800 text-white font-bold text-xs sm:text-sm uppercase tracking-wider py-3.5 px-8 rounded-sm transition-all cursor-pointer disabled:opacity-60 shadow-xs active:scale-[0.99]"
                   >
                     {isLoading ? (
-                      <span className="flex items-center gap-2">
+                      <span className="flex items-center justify-center gap-2">
                         <Loader2 size={16} className="animate-spin" />
                         <span>SENDING</span>
                       </span>
