@@ -127,7 +127,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
 
     if (eligibility?.alreadyReviewed) {
       return (
-        <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 h-10 text-xs font-semibold rounded-xs">
+        <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 h-10 text-xs font-semibold rounded-none">
           <CheckCircle2 size={15} className="text-emerald-600" />
           <span>You have reviewed this product</span>
         </div>
@@ -149,8 +149,8 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
 
     if (eligibility?.reason === 'NOT_DELIVERED') {
       return (
-        <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 px-4 h-10 text-xs font-medium rounded-xs">
-          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+        <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 px-4 h-10 text-xs font-medium rounded-none">
+          <span className="w-2 h-2 rounded-none bg-amber-500 animate-pulse"></span>
           <span>Order in transit • Review available upon delivery</span>
         </div>
       );
@@ -158,7 +158,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
 
     // Default: NOT_PURCHASED
     return (
-      <div className="inline-flex items-center gap-1.5 text-gray-500 bg-gray-50 border border-gray-200 px-4 h-10 text-xs font-medium rounded-xs">
+      <div className="inline-flex items-center gap-1.5 text-gray-500 bg-gray-50 border border-gray-200 px-4 h-10 text-xs font-medium rounded-none">
         <ShieldCheck size={14} className="text-[#B58546]" />
         <span>Verified buyers only</span>
       </div>
@@ -176,7 +176,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
               Customer Reviews
             </h2>
             {totalReviews > 0 && (
-              <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-none">
                 {totalReviews}
               </span>
             )}
@@ -202,7 +202,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
       ) : reviews.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {reviews.map((review: any, idx: number) => (
-            <div key={review.id || review._id || `review-${idx}`} className="p-5 border border-gray-100 bg-[#FAFAFA] rounded-xs flex flex-col justify-between">
+            <div key={review.id || review._id || `review-${idx}`} className="p-5 border border-gray-100 bg-[#FAFAFA] rounded-none flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between gap-2 mb-2.5">
                   <div className="flex gap-0.5">
@@ -229,14 +229,14 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
               </div>
 
               <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-200/60">
-                <div className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-bold uppercase">
+                <div className="w-6 h-6 rounded-none bg-black text-white flex items-center justify-center text-[10px] font-bold uppercase">
                   {(review.user?.fullName || 'A')[0]}
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-[11px] font-semibold text-gray-800">
                     {review.user?.fullName || 'Verified Customer'}
                   </span>
-                  <span className="text-[9px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded font-semibold uppercase">
+                  <span className="text-[9px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-none font-semibold uppercase">
                     Verified Buyer
                   </span>
                 </div>
@@ -245,8 +245,8 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
           ))}
         </div>
       ) : (
-        <div className="py-14 border border-dashed border-gray-200 bg-[#FAFAFA] rounded-xs flex flex-col items-center justify-center text-center px-4">
-          <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 mb-3 shadow-xs">
+        <div className="py-14 border border-dashed border-gray-200 bg-[#FAFAFA] rounded-none flex flex-col items-center justify-center text-center px-4">
+          <div className="w-12 h-12 rounded-none bg-white border border-gray-200 flex items-center justify-center text-gray-400 mb-3 shadow-xs">
             <MessageSquare size={20} />
           </div>
           <h3 className="text-gray-900 font-bold text-sm uppercase tracking-wider mb-1">No reviews yet</h3>
@@ -271,15 +271,15 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
               Sign in to Review
             </button>
           ) : eligibility?.alreadyReviewed ? (
-            <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1.5 bg-emerald-50 px-3 py-1.5 rounded-xs border border-emerald-200">
+            <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1.5 bg-emerald-50 px-3 py-1.5 rounded-none border border-emerald-200">
               <CheckCircle2 size={14} /> You have reviewed this product
             </span>
           ) : eligibility?.reason === 'NOT_DELIVERED' ? (
-            <span className="text-xs text-amber-700 font-medium flex items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-xs border border-amber-200">
+            <span className="text-xs text-amber-700 font-medium flex items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-none border border-amber-200">
               Order in transit • Review available upon delivery
             </span>
           ) : (
-            <span className="text-xs text-gray-500 font-medium flex items-center gap-1.5 bg-gray-100/70 px-3 py-1.5 rounded-xs border border-gray-200">
+            <span className="text-xs text-gray-500 font-medium flex items-center gap-1.5 bg-gray-100/70 px-3 py-1.5 rounded-none border border-gray-200">
               <ShieldCheck size={14} className="text-[#B58546]" />
               Reviews are exclusive to verified purchasers
             </span>
@@ -295,7 +295,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
             if (e.target === e.currentTarget) setIsOpen(false);
           }}
         >
-          <div className="relative w-full max-w-lg bg-white border border-gray-900/10 shadow-2xl p-6 sm:p-8 animate-in zoom-in-95 duration-200 rounded-none sm:rounded-xs">
+          <div className="relative w-full max-w-lg bg-white border border-gray-900/10 shadow-2xl p-6 sm:p-8 animate-in zoom-in-95 duration-200 rounded-none">
             
             {/* Modal Header */}
             <div className="flex items-start justify-between pb-4 border-b border-gray-100">
@@ -314,7 +314,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded-none transition-colors cursor-pointer"
                 aria-label="Close modal"
               >
                 <X size={20} />
@@ -323,7 +323,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
 
             {/* Form */}
             {!eligibility?.canReview && (
-              <div className="mt-4 p-3.5 bg-amber-50/90 border border-amber-200 text-amber-900 text-xs rounded-xs flex items-center gap-2.5">
+              <div className="mt-4 p-3.5 bg-amber-50/90 border border-amber-200 text-amber-900 text-xs rounded-none flex items-center gap-2.5">
                 <ShieldCheck size={16} className="text-[#B58546] shrink-0" />
                 <span>
                   {eligibility?.reason === 'NOT_PURCHASED'
@@ -369,7 +369,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
                     ))}
                   </div>
 
-                  <span className="text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-xs">
+                  <span className="text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-none">
                     {RATING_LABELS[activeRating]}
                   </span>
                 </div>

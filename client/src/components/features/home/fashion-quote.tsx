@@ -84,7 +84,7 @@ export function FashionQuote() {
           <button
             onClick={handlePrev}
             aria-label="Previous quote"
-            className="absolute left-0 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-[#1A2E4C] transition-colors rounded-full hover:bg-white/80 hover:shadow-2xs cursor-pointer"
+            className="absolute left-0 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-[#1A2E4C] transition-colors rounded-none hover:bg-white/80 hover:shadow-2xs cursor-pointer"
           >
             <ChevronLeft size={18} strokeWidth={1.75} />
           </button>
@@ -108,7 +108,7 @@ export function FashionQuote() {
           <button
             onClick={handleNext}
             aria-label="Next quote"
-            className="absolute right-0 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-[#1A2E4C] transition-colors rounded-full hover:bg-white/80 hover:shadow-2xs cursor-pointer"
+            className="absolute right-0 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-[#1A2E4C] transition-colors rounded-none hover:bg-white/80 hover:shadow-2xs cursor-pointer"
           >
             <ChevronRight size={18} strokeWidth={1.75} />
           </button>
@@ -129,7 +129,7 @@ export function FashionQuote() {
                 }
               }}
               aria-label={`Go to quote ${idx + 1}`}
-              className={`h-1 rounded-full transition-all duration-300 cursor-pointer ${
+              className={`h-1 rounded-none transition-all duration-300 cursor-pointer ${
                 idx === currentIndex
                   ? 'w-5 bg-[#1A2E4C]'
                   : 'w-1.5 bg-[#D8D2C7] hover:bg-gray-400'

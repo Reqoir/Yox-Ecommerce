@@ -39,8 +39,8 @@ export function CategoryStrip() {
         <div className="w-full lg:w-[98%] lg:max-w-[1500px] px-4 lg:px-0 mx-auto flex overflow-x-auto lg:flex-wrap items-center justify-start lg:justify-center gap-8 lg:gap-12 py-6 lg:py-8 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {Array.from({ length: 8 }).map((_, idx) => (
             <div key={idx} className="flex flex-col items-center gap-2 flex-shrink-0 snap-center">
-              <Skeleton className="w-20 h-20 rounded-full border border-gray-100 shadow-sm" />
-              <Skeleton className="h-3 w-16 rounded mt-1" />
+              <Skeleton className="w-20 h-20 rounded-none border border-gray-100 shadow-sm" />
+              <Skeleton className="h-3 w-16 rounded-none mt-1" />
             </div>
           ))}
         </div>
@@ -62,7 +62,7 @@ export function CategoryStrip() {
             key={category.slug}
             className="flex flex-col items-center gap-2 group flex-shrink-0 snap-center"
           >
-            <div className="w-20 h-20 overflow-hidden rounded-full border border-gray-100 shadow-sm group-hover:border-[#1A2E4C] transition-colors">
+            <div className="w-20 h-20 overflow-hidden rounded-none border border-gray-100 shadow-sm group-hover:border-[#1A2E4C] transition-colors">
               <img 
                 src={category.img} 
                 alt={category.name} 

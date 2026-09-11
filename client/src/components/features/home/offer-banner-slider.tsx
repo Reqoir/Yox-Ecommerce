@@ -344,15 +344,14 @@ export function OfferBannerSlider() {
               <button
                 type="button"
                 onClick={handlePrev}
-                className="sm:hidden absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center border border-white/20 cursor-pointer"
-                aria-label="Previous Slide"
+                className="sm:hidden absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-none bg-black/60 text-white flex items-center justify-center border border-white/20 cursor-pointer"
+                aria-label="Previous Offer Slide"
               >
-                <ChevronLeft size={16} />
+                <ChevronLeft size={18} />
               </button>
               <button
-                type="button"
                 onClick={handleNext}
-                className="sm:hidden absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center border border-white/20 cursor-pointer"
+                className="sm:hidden absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-none bg-black/60 text-white flex items-center justify-center border border-white/20 cursor-pointer"
                 aria-label="Next Slide"
               >
                 <ChevronRight size={16} />

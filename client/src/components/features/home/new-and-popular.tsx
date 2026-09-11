@@ -195,18 +195,18 @@ export function NewAndPopular() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex flex-col gap-2.5 animate-pulse">
-                <div className="aspect-[3/4] w-full bg-gray-100 rounded-xs" />
-                <div className="h-3.5 bg-gray-100 rounded-xs w-3/4" />
-                <div className="h-3 bg-gray-100 rounded-xs w-1/3" />
+                <div className="aspect-[3/4] w-full bg-gray-100 rounded-none" />
+                <div className="h-3.5 bg-gray-100 rounded-none w-3/4" />
+                <div className="h-3 bg-gray-100 rounded-none w-1/3" />
               </div>
             ))}
           </div>
         ) : isProductsError ? (
-          <div className="py-12 flex flex-col items-center justify-center text-center bg-gray-50/50 rounded border border-dashed border-gray-200">
+          <div className="py-12 flex flex-col items-center justify-center text-center bg-gray-50/50 rounded-none border border-dashed border-gray-200">
             <p className="text-xs text-gray-500 mb-3">Unable to connect to live collection.</p>
             <button
               onClick={() => refetchProducts()}
-              className="px-4 py-1.5 bg-black text-white text-xs font-semibold rounded-xs hover:bg-gray-800 transition-colors cursor-pointer"
+              className="px-4 py-1.5 bg-black text-white text-xs font-semibold rounded-none hover:bg-gray-800 transition-colors cursor-pointer"
             >
               Retry
             </button>
@@ -218,17 +218,17 @@ export function NewAndPopular() {
 
             return (
               <Link href={product.href} key={product.id} className="group block">
-                <div className="relative aspect-[3/4] w-full bg-[#f6f6f6] mb-3 overflow-hidden rounded-[2px]">
+                <div className="relative aspect-[3/4] w-full bg-[#f6f6f6] mb-3 overflow-hidden rounded-none">
                   {/* Sold Out or Offer Badge */}
                   {product.isOutOfStock ? (
                     <div className="absolute top-2 left-2 z-10">
-                      <span className="bg-black/90 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-xs tracking-widest shadow-xs">
+                      <span className="bg-black/90 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-none tracking-widest shadow-xs">
                         SOLD OUT
                       </span>
                     </div>
                   ) : product.offerBadge ? (
                     <div className="absolute top-2 left-2 z-10">
-                      <span className="bg-rose-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-xs tracking-wider">
+                      <span className="bg-rose-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-none shadow-xs tracking-wider">
                         {product.offerBadge}
                       </span>
                     </div>
@@ -258,7 +258,7 @@ export function NewAndPopular() {
                   )}
                   <button 
                     type="button"
-                    className="absolute top-2 right-2 p-1.5 text-gray-600 hover:text-red-500 transition-colors z-10 cursor-pointer bg-white/60 hover:bg-white rounded-full backdrop-blur-xs"
+                    className="absolute top-2 right-2 p-1.5 text-gray-600 hover:text-red-500 transition-colors z-10 cursor-pointer bg-white/60 hover:bg-white rounded-none backdrop-blur-xs"
                     aria-label="Add to favorites"
                     onClick={(e) => {
                       e.preventDefault();

@@ -9,19 +9,19 @@ export function ShopSkeleton() {
         {/* Sidebar Skeleton (Desktop Only) */}
         <div className="w-56 hidden lg:flex flex-col gap-8 flex-shrink-0">
           <div className="flex flex-col gap-4">
-            <Skeleton className="w-24 h-5 rounded" />
+            <Skeleton className="w-24 h-5 rounded-none" />
             <div className="flex flex-col gap-3">
               {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="w-3/4 h-4 rounded" />
+                <Skeleton key={i} className="w-3/4 h-4 rounded-none" />
               ))}
             </div>
           </div>
           
           <div className="flex flex-col gap-4">
-            <Skeleton className="w-24 h-5 rounded" />
+            <Skeleton className="w-24 h-5 rounded-none" />
             <div className="flex flex-wrap gap-2">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="w-10 h-10 rounded-full" />
+                <Skeleton key={i} className="w-10 h-10 rounded-none" />
               ))}
             </div>
           </div>
@@ -31,14 +31,14 @@ export function ShopSkeleton() {
         <div className="w-full flex-1">
           {/* Top Meta Area */}
           <div className="hidden lg:flex items-center justify-between mb-8">
-            <Skeleton className="w-48 h-8 rounded" />
-            <Skeleton className="w-48 h-10 rounded" />
+            <Skeleton className="w-48 h-8 rounded-none" />
+            <Skeleton className="w-48 h-10 rounded-none" />
           </div>
           
           {/* Tabs */}
           <div className="hidden lg:flex flex-wrap gap-2 mb-8">
              {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="w-20 h-8 rounded" />
+                <Skeleton key={i} className="w-20 h-8 rounded-none" />
              ))}
           </div>
 

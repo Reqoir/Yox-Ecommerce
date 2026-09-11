@@ -137,7 +137,7 @@ export function FeaturedSection() {
             <button
               type="button"
               onClick={scrollLeft}
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#EFECE8] hover:bg-gray-300 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-none bg-[#EFECE8] hover:bg-gray-300 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
               aria-label="Scroll left"
             >
               <ChevronLeft size={16} />
@@ -145,7 +145,7 @@ export function FeaturedSection() {
             <button
               type="button"
               onClick={scrollRight}
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#EFECE8] hover:bg-gray-300 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-none bg-[#EFECE8] hover:bg-gray-300 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
               aria-label="Scroll right"
             >
               <ChevronRight size={16} />
@@ -168,7 +168,7 @@ export function FeaturedSection() {
             <div key={product.id} className="flex-shrink-0 w-[160px] sm:w-[220px] md:w-[280px] lg:w-[calc(25%-18px)] snap-start group">
               <Link href={product.href} className="block">
                 {/* Image Container */}
-                <div className="relative aspect-[3/4] bg-[#F2F2F2] mb-3 overflow-hidden rounded-[2px]">
+                <div className="relative aspect-[3/4] bg-[#F2F2F2] mb-3 overflow-hidden rounded-none">
                   <Image
                     src={product.image || 'https://placehold.co/400x600'}
                     alt={product.name}
@@ -194,17 +194,17 @@ export function FeaturedSection() {
                   
                   {/* Badge / Sold Out Badge */}
                   {product.isOutOfStock ? (
-                    <div className="absolute top-3 left-3 bg-black text-white px-2 py-1 text-[9px] font-black uppercase tracking-widest rounded-xs shadow-xs z-10">
+                    <div className="absolute top-3 left-3 bg-black text-white px-2 py-1 text-[9px] font-black uppercase tracking-widest rounded-none shadow-xs z-10">
                       SOLD OUT
                     </div>
                   ) : product.badge ? (
-                    <div className="absolute top-3 left-3 bg-white px-2 py-1 text-[10px] font-bold rounded-xs shadow-xs z-10">
+                    <div className="absolute top-3 left-3 bg-white px-2 py-1 text-[10px] font-bold rounded-none shadow-xs z-10">
                       <span className={product.badgeColor || "text-gray-800"}>{product.badge}</span>
                     </div>
                   ) : null}
 
                   {/* Eye Icon */}
-                  <div className="absolute bottom-3 right-3 w-7 h-7 bg-white/80 rounded-full flex items-center justify-center text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-xs">
+                  <div className="absolute bottom-3 right-3 w-7 h-7 bg-white/80 rounded-none flex items-center justify-center text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-xs">
                     <Eye size={14} />
                   </div>
                 </div>

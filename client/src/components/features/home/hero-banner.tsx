@@ -171,7 +171,7 @@ export function HeroBanner() {
                           {slide.badgeText && (
                             <div className="flex items-center gap-1.5 mb-2 sm:mb-3">
                               <span
-                                className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-xs ${
+                                className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1 rounded-none shadow-xs ${
                                   slideIsLight
                                     ? 'bg-gray-900 text-white'
                                     : 'bg-white/20 backdrop-blur-md text-white border border-white/30'
@@ -205,12 +205,12 @@ export function HeroBanner() {
                   <div className="absolute bottom-8 sm:bottom-12 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
                     <Link
                       href="/shop"
-                      className="inline-flex items-center gap-2.5 sm:gap-3 pl-5 pr-1.5 sm:pl-7 sm:pr-2.5 py-1.5 sm:py-2.5 rounded-full bg-white/95 hover:bg-white text-gray-950 shadow-[0_10px_35px_rgba(0,0,0,0.28)] backdrop-blur-md border border-white/80 transition-all duration-300 hover:scale-105 active:scale-95 group cursor-pointer"
+                      className="inline-flex items-center gap-2.5 sm:gap-3 pl-5 pr-1.5 sm:pl-7 sm:pr-2.5 py-1.5 sm:py-2.5 rounded-none bg-white/95 hover:bg-white text-gray-950 shadow-[0_10px_35px_rgba(0,0,0,0.28)] backdrop-blur-md border border-white/80 transition-all duration-300 hover:scale-105 active:scale-95 group cursor-pointer"
                     >
                       <span className="text-[11px] sm:text-xs md:text-[13px] font-extrabold tracking-[0.2em] uppercase text-gray-950">
                         Shop Now
                       </span>
-                      <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-black text-white flex items-center justify-center transition-all duration-300 group-hover:bg-neutral-800 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 shadow-xs shrink-0">
+                      <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-none bg-black text-white flex items-center justify-center transition-all duration-300 group-hover:bg-neutral-800 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 shadow-xs shrink-0">
                         <ArrowUpRight size={13} strokeWidth={2.5} />
                       </span>
                     </Link>
@@ -225,14 +225,14 @@ export function HeroBanner() {
             <>
               <button
                 onClick={handlePrev}
-                className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-black/40 hover:bg-black/75 backdrop-blur-xs text-white items-center justify-center transition-all cursor-pointer hover:scale-105"
+                className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-none bg-black/40 hover:bg-black/75 backdrop-blur-xs text-white items-center justify-center transition-all cursor-pointer hover:scale-105"
                 aria-label="Previous Slide"
               >
                 <ChevronLeft size={20} />
               </button>
               <button
                 onClick={handleNext}
-                className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-black/40 hover:bg-black/75 backdrop-blur-xs text-white items-center justify-center transition-all cursor-pointer hover:scale-105"
+                className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-none bg-black/40 hover:bg-black/75 backdrop-blur-xs text-white items-center justify-center transition-all cursor-pointer hover:scale-105"
                 aria-label="Next Slide"
               >
                 <ChevronRight size={20} />
@@ -247,7 +247,7 @@ export function HeroBanner() {
                       setIsTransitioning(true);
                       setCurrentIndex(idx);
                     }}
-                    className={`h-2 rounded-full transition-all cursor-pointer ${
+                    className={`h-2 rounded-none transition-all cursor-pointer ${
                       activeIndex === idx ? 'w-7 bg-white shadow-md' : 'w-2 bg-white/40 hover:bg-white/70'
                     }`}
                     aria-label={`Slide ${idx + 1}`}

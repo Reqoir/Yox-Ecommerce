@@ -93,7 +93,7 @@ export function Footer() {
         <div className="w-[95%] max-w-7xl mx-auto py-8 sm:py-10 grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
 
           <div className="flex items-center gap-4">
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/60 shadow-xs border border-[#C4BA9D] flex items-center justify-center text-black shrink-0">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none bg-white/60 shadow-xs border border-[#C4BA9D] flex items-center justify-center text-black shrink-0">
               <Truck size={20} strokeWidth={1.8} />
             </div>
             <div>
@@ -105,7 +105,7 @@ export function Footer() {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/60 shadow-xs border border-[#C4BA9D] flex items-center justify-center text-black shrink-0">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none bg-white/60 shadow-xs border border-[#C4BA9D] flex items-center justify-center text-black shrink-0">
               <RefreshCw size={20} strokeWidth={1.8} />
             </div>
             <div>
@@ -117,7 +117,7 @@ export function Footer() {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/60 shadow-xs border border-[#C4BA9D] flex items-center justify-center text-black shrink-0">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none bg-white/60 shadow-xs border border-[#C4BA9D] flex items-center justify-center text-black shrink-0">
               <ShieldCheck size={20} strokeWidth={1.8} />
             </div>
             <div>
@@ -129,7 +129,7 @@ export function Footer() {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/60 shadow-xs border border-[#C4BA9D] flex items-center justify-center text-black shrink-0">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none bg-white/60 shadow-xs border border-[#C4BA9D] flex items-center justify-center text-black shrink-0">
               <Award size={20} strokeWidth={1.8} />
             </div>
             <div>
@@ -186,16 +186,16 @@ export function Footer() {
 
             {/* Social Icons */}
             <div className="flex items-center gap-2.5 mt-2">
-              <a href="https://facebook.com" target="_blank" rel="noreferrer" aria-label="Facebook" className="w-8 h-8 rounded-full border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-700 hover:border-black hover:bg-black hover:text-white transition-all shadow-xs">
+              <a href="https://facebook.com" target="_blank" rel="noreferrer" aria-label="Facebook" className="w-8 h-8 rounded-none border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-700 hover:border-black hover:bg-black hover:text-white transition-all shadow-xs">
                 <FaFacebookF size={12} />
               </a>
-              <a href="https://twitter.com" target="_blank" rel="noreferrer" aria-label="X (Twitter)" className="w-8 h-8 rounded-full border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-700 hover:border-black hover:bg-black hover:text-white transition-all shadow-xs">
+              <a href="https://twitter.com" target="_blank" rel="noreferrer" aria-label="X (Twitter)" className="w-8 h-8 rounded-none border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-700 hover:border-black hover:bg-black hover:text-white transition-all shadow-xs">
                 <FaXTwitter size={12} />
               </a>
-              <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label="Instagram" className="w-8 h-8 rounded-full border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-700 hover:border-black hover:bg-black hover:text-white transition-all shadow-xs">
+              <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label="Instagram" className="w-8 h-8 rounded-none border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-700 hover:border-black hover:bg-black hover:text-white transition-all shadow-xs">
                 <FaInstagram size={13} />
               </a>
-              <a href="https://youtube.com" target="_blank" rel="noreferrer" aria-label="YouTube" className="w-8 h-8 rounded-full border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-700 hover:border-black hover:bg-black hover:text-white transition-all shadow-xs">
+              <a href="https://youtube.com" target="_blank" rel="noreferrer" aria-label="YouTube" className="w-8 h-8 rounded-none border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-700 hover:border-black hover:bg-black hover:text-white transition-all shadow-xs">
                 <FaYoutube size={13} />
               </a>
             </div>
@@ -375,7 +375,7 @@ export function Footer() {
 
             {/* Talk to us */}
             <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-800 shrink-0">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-800 shrink-0">
                 <Phone size={19} strokeWidth={1.75} />
               </div>
               <div className="flex flex-col">
@@ -391,7 +391,7 @@ export function Footer() {
 
             {/* Helpcentre */}
             <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-800 shrink-0">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-800 shrink-0">
                 <HelpCircle size={19} strokeWidth={1.75} />
               </div>
               <div className="flex flex-col">
@@ -407,7 +407,7 @@ export function Footer() {
 
             {/* Write to us */}
             <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-800 shrink-0">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-800 shrink-0">
                 <Mail size={19} strokeWidth={1.75} />
               </div>
               <div className="flex flex-col">
@@ -498,7 +498,7 @@ export function Footer() {
       {/* Store Locator Modal */}
       {isStoreLocatorOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-none max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
 
             {/* Modal Header */}
             <div className="p-5 border-b border-gray-100 flex items-center justify-between">
@@ -512,7 +512,7 @@ export function Footer() {
               <button
                 type="button"
                 onClick={() => setIsStoreLocatorOpen(false)}
-                className="p-1.5 text-gray-400 hover:text-black rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+                className="p-1.5 text-gray-400 hover:text-black rounded-none hover:bg-gray-100 transition-colors cursor-pointer"
                 aria-label="Close modal"
               >
                 <X size={20} />
@@ -525,7 +525,7 @@ export function Footer() {
                 <div key={idx} className={idx > 0 ? "pt-4" : ""}>
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-black bg-gray-100 px-2 py-0.5 rounded-xs">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-black bg-gray-100 px-2 py-0.5 rounded-none">
                         {store.city}
                       </span>
                       <h4 className="font-bold text-sm text-gray-900 mt-1">{store.mall}</h4>
@@ -546,7 +546,7 @@ export function Footer() {
                       href={`https://maps.google.com/?q=${encodeURIComponent(`${store.mall} ${store.address}`)}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="px-3 py-1.5 bg-black text-white text-xs font-semibold rounded-sm hover:bg-gray-800 transition-colors flex items-center gap-1 shrink-0"
+                      className="px-3 py-1.5 bg-black text-white text-xs font-semibold rounded-none hover:bg-gray-800 transition-colors flex items-center gap-1 shrink-0"
                     >
                       <Navigation size={12} />
                       Directions

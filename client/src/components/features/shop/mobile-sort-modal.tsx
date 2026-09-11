@@ -47,9 +47,9 @@ export function MobileSortModal({ isOpen, onClose }: MobileSortModalProps) {
                 {option}
               </span>
               
-              <div className="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center">
+              <div className="w-5 h-5 rounded-none border border-gray-300 flex items-center justify-center">
                 {isSelected && (
-                  <div className="w-3 h-3 rounded-full bg-[#1A2E4C]" />
+                  <div className="w-3 h-3 rounded-none bg-[#1A2E4C]" />
                 )}
               </div>
             </button>

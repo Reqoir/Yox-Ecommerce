@@ -100,11 +100,11 @@ function SuggestionCard({ product, categoryDisplayName }: SuggestionCardProps) {
 
         {/* Sold Out or Discount badge */}
         {isOutOfStock ? (
-          <span className="absolute top-2 left-2 z-10 bg-black text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-xs shadow-xs">
+          <span className="absolute top-2 left-2 z-10 bg-black text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-none shadow-xs">
             SOLD OUT
           </span>
         ) : discountPct > 0 ? (
-          <span className="absolute top-2 left-2 z-10 bg-rose-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-xs shadow-xs">
+          <span className="absolute top-2 left-2 z-10 bg-rose-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-none shadow-xs">
             {discountPct}% OFF
           </span>
         ) : null}
@@ -114,7 +114,7 @@ function SuggestionCard({ product, categoryDisplayName }: SuggestionCardProps) {
           type="button"
           aria-label={isFav ? 'Remove from wishlist' : 'Add to wishlist'}
           onClick={handleWishlist}
-          className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-white/85 hover:bg-white flex items-center justify-center transition-all shadow-xs opacity-0 group-hover:opacity-100"
+          className="absolute top-2 right-2 z-10 w-7 h-7 rounded-none bg-white/85 hover:bg-white flex items-center justify-center transition-all shadow-xs opacity-0 group-hover:opacity-100"
         >
           <Heart
             size={13}

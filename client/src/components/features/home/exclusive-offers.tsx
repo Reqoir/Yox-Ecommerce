@@ -300,7 +300,7 @@ export function ExclusiveOffers() {
                       key={offer.id}
                       type="button"
                       onClick={() => setSelectedOfferIndex(idx)}
-                      className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-sm text-xs font-semibold tracking-wide whitespace-nowrap transition-all duration-200 cursor-pointer ${isSelected
+                      className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-none text-xs font-semibold tracking-wide whitespace-nowrap transition-all duration-200 cursor-pointer ${isSelected
                         ? 'bg-[#40362C] text-white shadow-sm ring-1 ring-[#40362C]'
                         : 'bg-white/70 hover:bg-white text-[#574B3E] hover:text-[#40362C] border border-gray-300'
                         }`}
@@ -312,7 +312,7 @@ export function ExclusiveOffers() {
                       )}
                       <span>{offer.title}</span>
                       <span
-                        className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${isSelected ? 'bg-white/20 text-white' : 'bg-[#40362C]/10 text-[#40362C]'
+                        className={`text-[10px] font-bold px-1.5 py-0.2 rounded-none ${isSelected ? 'bg-white/20 text-white' : 'bg-[#40362C]/10 text-[#40362C]'
                           }`}
                       >
                         {offerDiscount}
@@ -330,7 +330,7 @@ export function ExclusiveOffers() {
                 <button
                   type="button"
                   onClick={handlePrevOffer}
-                  className="w-7 h-7 rounded-sm bg-white/80 hover:bg-white border border-gray-300 text-gray-700 hover:text-black flex items-center justify-center transition-colors cursor-pointer"
+                  className="w-7 h-7 rounded-none bg-white/80 hover:bg-white border border-gray-300 text-gray-700 hover:text-black flex items-center justify-center transition-colors cursor-pointer"
                   aria-label="Previous Offer"
                 >
                   <ChevronLeft size={15} />
@@ -338,7 +338,7 @@ export function ExclusiveOffers() {
                 <button
                   type="button"
                   onClick={handleNextOffer}
-                  className="w-7 h-7 rounded-sm bg-white/80 hover:bg-white border border-gray-300 text-gray-700 hover:text-black flex items-center justify-center transition-colors cursor-pointer"
+                  className="w-7 h-7 rounded-none bg-white/80 hover:bg-white border border-gray-300 text-gray-700 hover:text-black flex items-center justify-center transition-colors cursor-pointer"
                   aria-label="Next Offer"
                 >
                   <ChevronRight size={15} />
@@ -395,7 +395,7 @@ export function ExclusiveOffers() {
                     <button
                       type="button"
                       onClick={handlePrevOffer}
-                      className="pointer-events-auto w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center border border-white/20 cursor-pointer"
+                      className="pointer-events-auto w-8 h-8 rounded-none bg-black/60 text-white flex items-center justify-center border border-white/20 cursor-pointer"
                       aria-label="Previous Offer"
                     >
                       <ChevronLeft size={16} />
@@ -403,7 +403,7 @@ export function ExclusiveOffers() {
                     <button
                       type="button"
                       onClick={handleNextOffer}
-                      className="pointer-events-auto w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center border border-white/20 cursor-pointer"
+                      className="pointer-events-auto w-8 h-8 rounded-none bg-black/60 text-white flex items-center justify-center border border-white/20 cursor-pointer"
                       aria-label="Next Offer"
                     >
                       <ChevronRight size={16} />
@@ -457,7 +457,7 @@ export function ExclusiveOffers() {
                 {currentOffer?.title || 'Featured Deal Selections'}
               </h3>
               {discountLabel && (
-                <span className="text-xs font-bold text-white bg-[#40362C] px-2 py-0.5 rounded-xs">
+                <span className="text-xs font-bold text-white bg-[#40362C] px-2 py-0.5 rounded-none">
                   {discountLabel}
                 </span>
               )}
@@ -477,22 +477,22 @@ export function ExclusiveOffers() {
           {/* Countdown Timer Block (If offer has an active endDate) */}
           {mounted && timeLeft && (
             <div className="flex items-center gap-2 md:gap-3 text-[18px] md:text-[22px] font-bold text-[#4B4239]">
-              <div className="flex flex-col items-center justify-center bg-[#4B4239] text-white w-12 h-12 md:w-16 md:h-16 rounded-[2px] shadow-xs">
+              <div className="flex flex-col items-center justify-center bg-[#4B4239] text-white w-12 h-12 md:w-16 md:h-16 rounded-none shadow-xs">
                 <span className="text-[16px] md:text-[20px] leading-none">{timeLeft.days}</span>
                 <span className="text-[9px] md:text-[11px] font-medium mt-1 tracking-wide">Days</span>
               </div>
               <span className="mb-2">:</span>
-              <div className="flex flex-col items-center justify-center bg-[#4B4239] text-white w-12 h-12 md:w-16 md:h-16 rounded-[2px] shadow-xs">
+              <div className="flex flex-col items-center justify-center bg-[#4B4239] text-white w-12 h-12 md:w-16 md:h-16 rounded-none shadow-xs">
                 <span className="text-[16px] md:text-[20px] leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
                 <span className="text-[9px] md:text-[11px] font-medium mt-1 tracking-wide">Hours</span>
               </div>
               <span className="mb-2">:</span>
-              <div className="flex flex-col items-center justify-center bg-[#4B4239] text-white w-12 h-12 md:w-16 md:h-16 rounded-[2px] shadow-xs">
+              <div className="flex flex-col items-center justify-center bg-[#4B4239] text-white w-12 h-12 md:w-16 md:h-16 rounded-none shadow-xs">
                 <span className="text-[16px] md:text-[20px] leading-none">{String(timeLeft.mins).padStart(2, '0')}</span>
                 <span className="text-[9px] md:text-[11px] font-medium mt-1 tracking-wide">Mins</span>
               </div>
               <span className="mb-2">:</span>
-              <div className="flex flex-col items-center justify-center bg-[#4B4239] text-white w-12 h-12 md:w-16 md:h-16 rounded-[2px] shadow-xs">
+              <div className="flex flex-col items-center justify-center bg-[#4B4239] text-white w-12 h-12 md:w-16 md:h-16 rounded-none shadow-xs">
                 <span className="text-[16px] md:text-[20px] leading-none">{String(timeLeft.secs).padStart(2, '0')}</span>
                 <span className="text-[9px] md:text-[11px] font-medium mt-1 tracking-wide">Sec</span>
               </div>
@@ -582,7 +582,7 @@ export function ExclusiveOffers() {
             ))}
           </div>
         ) : (
-          <div className="py-8 text-center bg-white/50 border border-dashed border-gray-300 rounded-sm mx-4 sm:mx-0">
+          <div className="py-8 text-center bg-white/50 border border-dashed border-gray-300 rounded-none mx-4 sm:mx-0">
             <p className="text-xs text-gray-500">
               Explore eligible items for this offer by viewing the complete collection.
             </p>

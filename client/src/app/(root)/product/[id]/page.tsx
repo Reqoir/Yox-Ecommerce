@@ -136,107 +136,107 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           {/* Right Column: 35% Details & Actions Skeleton */}
           <div className="w-full lg:w-[35%] lg:pl-10 lg:pr-14 pt-6 lg:pt-8 px-4 sm:px-6">
             {/* Tag Skeleton */}
-            <Skeleton className="w-16 h-4 rounded-xs mb-3 bg-gray-100" />
+            <Skeleton className="w-16 h-4 rounded-none mb-3 bg-gray-100" />
 
             {/* Title Skeleton */}
-            <Skeleton className="w-4/5 h-8 sm:h-9 rounded-sm mb-3 bg-gray-100" />
+            <Skeleton className="w-4/5 h-8 sm:h-9 rounded-none mb-3 bg-gray-100" />
 
             {/* Price Skeleton */}
             <div className="flex items-baseline gap-2 mb-4">
-              <Skeleton className="w-40 h-7 rounded-sm bg-gray-100" />
-              <Skeleton className="w-20 h-5 rounded-sm bg-gray-100" />
+              <Skeleton className="w-40 h-7 rounded-none bg-gray-100" />
+              <Skeleton className="w-20 h-5 rounded-none bg-gray-100" />
             </div>
 
             {/* Shipping Info Skeleton */}
-            <Skeleton className="w-3/4 h-4 rounded-xs mb-5 bg-gray-100" />
+            <Skeleton className="w-3/4 h-4 rounded-none mb-5 bg-gray-100" />
             <div className="border-b border-gray-100 pb-2 mb-5" />
 
             {/* Color Selector Skeleton */}
             <div className="mb-5">
-              <Skeleton className="w-24 h-4 mb-2.5 rounded-xs bg-gray-100" />
+              <Skeleton className="w-24 h-4 mb-2.5 rounded-none bg-gray-100" />
               <div className="flex gap-2.5">
-                <Skeleton className="w-14 aspect-[3/4] rounded-xs bg-gray-100" />
-                <Skeleton className="w-14 aspect-[3/4] rounded-xs bg-gray-100" />
-                <Skeleton className="w-14 aspect-[3/4] rounded-xs bg-gray-100" />
+                <Skeleton className="w-14 aspect-[3/4] rounded-none bg-gray-100" />
+                <Skeleton className="w-14 aspect-[3/4] rounded-none bg-gray-100" />
+                <Skeleton className="w-14 aspect-[3/4] rounded-none bg-gray-100" />
               </div>
             </div>
 
             {/* Size Selector Skeleton */}
             <div className="mb-5">
-              <Skeleton className="w-20 h-4 mb-2.5 rounded-xs bg-gray-100" />
+              <Skeleton className="w-20 h-4 mb-2.5 rounded-none bg-gray-100" />
               <div className="flex gap-2">
-                <Skeleton className="w-12 h-9 rounded-xs bg-gray-100" />
-                <Skeleton className="w-12 h-9 rounded-xs bg-gray-100" />
-                <Skeleton className="w-12 h-9 rounded-xs bg-gray-100" />
-                <Skeleton className="w-12 h-9 rounded-xs bg-gray-100" />
+                <Skeleton className="w-12 h-9 rounded-none bg-gray-100" />
+                <Skeleton className="w-12 h-9 rounded-none bg-gray-100" />
+                <Skeleton className="w-12 h-9 rounded-none bg-gray-100" />
+                <Skeleton className="w-12 h-9 rounded-none bg-gray-100" />
               </div>
             </div>
 
             {/* Quantity Selector Skeleton */}
             <div className="mb-6">
-              <Skeleton className="w-16 h-4 mb-2.5 rounded-xs bg-gray-100" />
-              <Skeleton className="w-[114px] h-[36px] rounded-full bg-gray-100" />
+              <Skeleton className="w-16 h-4 mb-2.5 rounded-none bg-gray-100" />
+              <Skeleton className="w-[114px] h-[36px] rounded-none bg-gray-100" />
             </div>
 
             {/* Action Buttons Skeleton */}
             <div className="flex flex-col gap-3 mb-8">
               <div className="flex items-center gap-3">
-                <Skeleton className="flex-1 h-[48px] rounded-xs bg-gray-100" />
-                <Skeleton className="flex-1 h-[48px] rounded-xs bg-gray-100" />
-                <Skeleton className="w-12 h-[48px] rounded-xs bg-gray-100 shrink-0" />
+                <Skeleton className="flex-1 h-[48px] rounded-none bg-gray-100" />
+                <Skeleton className="flex-1 h-[48px] rounded-none bg-gray-100" />
+                <Skeleton className="w-12 h-[48px] rounded-none bg-gray-100 shrink-0" />
               </div>
             </div>
 
             {/* Offer Card Skeleton */}
-            <Skeleton className="w-full h-24 rounded-xl mb-6 bg-gray-100" />
+            <Skeleton className="w-full h-24 rounded-none mb-6 bg-gray-100" />
 
             {/* Feature Highlights Skeleton */}
             <div className="grid grid-cols-3 gap-2 py-6 border-t border-b border-gray-100 my-6">
               <div className="flex flex-col items-center gap-2">
-                <Skeleton className="w-9 h-9 rounded-full bg-gray-100" />
-                <Skeleton className="w-16 h-3 rounded-xs bg-gray-100" />
+                <Skeleton className="w-9 h-9 rounded-none bg-gray-100" />
+                <Skeleton className="w-16 h-3 rounded-none bg-gray-100" />
               </div>
               <div className="flex flex-col items-center gap-2">
-                <Skeleton className="w-9 h-9 rounded-full bg-gray-100" />
-                <Skeleton className="w-16 h-3 rounded-xs bg-gray-100" />
+                <Skeleton className="w-9 h-9 rounded-none bg-gray-100" />
+                <Skeleton className="w-16 h-3 rounded-none bg-gray-100" />
               </div>
               <div className="flex flex-col items-center gap-2">
-                <Skeleton className="w-9 h-9 rounded-full bg-gray-100" />
-                <Skeleton className="w-16 h-3 rounded-xs bg-gray-100" />
+                <Skeleton className="w-9 h-9 rounded-none bg-gray-100" />
+                <Skeleton className="w-16 h-3 rounded-none bg-gray-100" />
               </div>
             </div>
 
             {/* Accordion Skeletons */}
             <div className="mb-6 flex flex-col divide-y divide-gray-100">
               <div className="py-3.5 flex justify-between items-center">
-                <Skeleton className="w-32 h-4 rounded-xs bg-gray-100" />
-                <Skeleton className="w-4 h-4 rounded-xs bg-gray-100" />
+                <Skeleton className="w-32 h-4 rounded-none bg-gray-100" />
+                <Skeleton className="w-4 h-4 rounded-none bg-gray-100" />
               </div>
               <div className="py-3.5 flex justify-between items-center">
-                <Skeleton className="w-28 h-4 rounded-xs bg-gray-100" />
-                <Skeleton className="w-4 h-4 rounded-xs bg-gray-100" />
+                <Skeleton className="w-28 h-4 rounded-none bg-gray-100" />
+                <Skeleton className="w-4 h-4 rounded-none bg-gray-100" />
               </div>
               <div className="py-3.5 flex justify-between items-center">
-                <Skeleton className="w-40 h-4 rounded-xs bg-gray-100" />
-                <Skeleton className="w-4 h-4 rounded-xs bg-gray-100" />
+                <Skeleton className="w-40 h-4 rounded-none bg-gray-100" />
+                <Skeleton className="w-4 h-4 rounded-none bg-gray-100" />
               </div>
             </div>
 
             {/* Description Skeleton */}
             <div className="space-y-2 pb-6">
-              <Skeleton className="w-full h-3 rounded-xs bg-gray-100" />
-              <Skeleton className="w-5/6 h-3 rounded-xs bg-gray-100" />
-              <Skeleton className="w-2/3 h-3 rounded-xs bg-gray-100" />
+              <Skeleton className="w-full h-3 rounded-none bg-gray-100" />
+              <Skeleton className="w-5/6 h-3 rounded-none bg-gray-100" />
+              <Skeleton className="w-2/3 h-3 rounded-none bg-gray-100" />
             </div>
           </div>
         </div>
 
         {/* Bottom Reviews Skeleton */}
         <div className="w-full max-w-7xl mx-auto px-4 mt-12 sm:mt-16">
-          <Skeleton className="w-44 h-7 mb-6 rounded-md bg-gray-100" />
+          <Skeleton className="w-44 h-7 mb-6 rounded-none bg-gray-100" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Skeleton className="w-full h-36 rounded-xl bg-gray-100" />
-            <Skeleton className="w-full h-36 rounded-xl bg-gray-100" />
+            <Skeleton className="w-full h-36 rounded-none bg-gray-100" />
+            <Skeleton className="w-full h-36 rounded-none bg-gray-100" />
           </div>
         </div>
       </main>
@@ -248,7 +248,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       <div className="w-full min-h-screen flex flex-col items-center justify-center bg-white">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Product Not Found</h2>
         <p className="text-gray-500 mb-6 text-sm">We couldn't find the product you're looking for.</p>
-        <Link href="/shop" className="bg-[#1A2E4C] text-white text-sm px-6 py-2.5 rounded font-bold hover:bg-[#132238] transition-colors">
+        <Link href="/shop" className="bg-[#1A2E4C] text-white text-sm px-6 py-2.5 rounded-none font-bold hover:bg-[#132238] transition-colors">
           Back to Shop
         </Link>
       </div>
@@ -427,7 +427,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     if (isOutOfStock || !bestOffer || offerSavings <= 0) return null;
 
     return (
-      <div className="border border-gray-200 bg-[#FAFAFA] rounded-xs p-4 my-5 transition-all">
+      <div className="border border-gray-200 bg-[#FAFAFA] rounded-none p-4 my-5 transition-all">
         {/* Header row: Minimal tag & discount badge */}
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
@@ -436,7 +436,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               Special Offer Applied
             </span>
           </div>
-          <span className="text-[10px] font-bold text-[#D84141] bg-[#FDF0F0] border border-[#f0caca] px-2 py-0.5 rounded-xs uppercase tracking-wider">
+          <span className="text-[10px] font-bold text-[#D84141] bg-[#FDF0F0] border border-[#f0caca] px-2 py-0.5 rounded-none uppercase tracking-wider">
             {finalDiscountPct}% OFF
           </span>
         </div>
@@ -500,7 +500,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   {/* Sold Out badge on primary image */}
                   {idx === 0 && isOutOfStock && (
                     <div className="absolute top-3 left-3 z-10">
-                      <span className="bg-black/90 text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-xs shadow-md backdrop-blur-xs">
+                      <span className="bg-black/90 text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-none shadow-md backdrop-blur-xs">
                         SOLD OUT
                       </span>
                     </div>
@@ -516,7 +516,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   
                   {/* Subtle click to preview overlay hint */}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <span className="bg-black/75 text-white text-[10px] sm:text-xs px-2.5 py-1 rounded-full flex items-center gap-1 backdrop-blur-xs">
+                    <span className="bg-black/75 text-white text-[10px] sm:text-xs px-2.5 py-1 rounded-none flex items-center gap-1 backdrop-blur-xs">
                       <Maximize2 size={12} /> Preview
                     </span>
                   </div>
@@ -546,11 +546,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             {/* Tag Badge / Sold Out Badge */}
             <div className="flex flex-wrap items-center gap-2 mb-2">
               {isOutOfStock ? (
-                <span className="inline-block text-[10px] font-black uppercase tracking-widest text-white bg-zinc-900 px-2.5 py-1 rounded-xs">
+                <span className="inline-block text-[10px] font-black uppercase tracking-widest text-white bg-zinc-900 px-2.5 py-1 rounded-none">
                   SOLD OUT
                 </span>
               ) : product.tag ? (
-                <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-black bg-gray-100 px-2 py-0.5 rounded-xs">
+                <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-black bg-gray-100 px-2 py-0.5 rounded-none">
                   {product.tag}
                 </span>
               ) : null}
@@ -570,7 +570,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   <span className="text-[13px] sm:text-sm text-[#D84141] line-through font-medium">
                     Rs. {baseStrikePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })} INR
                   </span>
-                  <span className="text-[10px] text-[#D84141] bg-[#FDF0F0] border border-[#f0caca] px-1.5 py-0.5 rounded font-bold uppercase">
+                  <span className="text-[10px] text-[#D84141] bg-[#FDF0F0] border border-[#f0caca] px-1.5 py-0.5 rounded-none font-bold uppercase">
                     {finalDiscountPct}% OFF
                   </span>
                 </>
@@ -579,8 +579,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
             {/* Stock status indicator */}
             {isOutOfStock ? (
-              <div className="mb-4 p-3 bg-neutral-50 border border-neutral-200 rounded-xs flex items-center gap-2.5 text-xs text-neutral-700">
-                <span className="w-2 h-2 rounded-full bg-neutral-400 shrink-0" />
+              <div className="mb-4 p-3 bg-neutral-50 border border-neutral-200 rounded-none flex items-center gap-2.5 text-xs text-neutral-700">
+                <span className="w-2 h-2 rounded-none bg-neutral-400 shrink-0" />
                 <span>
                   {isAllOutOfStock
                     ? 'This product is currently sold out in all sizes and colors.'
@@ -589,7 +589,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               </div>
             ) : isLowStock ? (
               <div className="mb-4">
-                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2.5 py-1 rounded animate-pulse">
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2.5 py-1 rounded-none animate-pulse">
                   <Flame size={14} className="text-amber-600 shrink-0" />
                   <span>Hurry, only {variantStock} left in stock!</span>
                 </div>
@@ -629,7 +629,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                         }}
                         title={color}
                         aria-label={`Select color ${color}`}
-                        className={`w-14 aspect-[3/4] relative rounded-xs overflow-hidden transition-all cursor-pointer bg-[#f7f7f7] ${
+                        className={`w-14 aspect-[3/4] relative rounded-none overflow-hidden transition-all cursor-pointer bg-[#f7f7f7] ${
                           isSelected 
                             ? 'border border-black shadow-xs' 
                             : 'border border-gray-200 hover:border-gray-500 opacity-75 hover:opacity-100'
@@ -663,7 +663,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                         key={size}
                         type="button"
                         onClick={() => setSelectedSize(size)}
-                        className={`min-w-[48px] h-[34px] px-3 flex items-center justify-center text-[11px] font-bold tracking-wider transition-all border rounded-xs cursor-pointer ${
+                        className={`min-w-[48px] h-[34px] px-3 flex items-center justify-center text-[11px] font-bold tracking-wider transition-all border rounded-none cursor-pointer ${
                           isSelected 
                             ? 'bg-black text-white border-black shadow-xs' 
                             : isSizeSoldOut
@@ -683,7 +683,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             {/* Quantity Selector */}
             <div className="mb-6">
               <div className="text-[12px] font-bold text-gray-800 mb-2.5">Quantity</div>
-              <div className="flex items-center border border-gray-300 rounded-full overflow-hidden w-[114px] h-[36px] bg-white">
+              <div className="flex items-center border border-gray-300 rounded-none overflow-hidden w-[114px] h-[36px] bg-white">
                 <button 
                   type="button"
                   onClick={() => handleQuantity('dec')} 
@@ -716,14 +716,14 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   type="button"
                   onClick={handleAddToBasket}
                   disabled={isOutOfStock}
-                  className="flex-1 flex items-center justify-center h-[48px] bg-black text-white text-[12px] font-bold hover:bg-gray-800 active:scale-[0.99] transition-all tracking-widest uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-xs rounded-xs"
+                  className="flex-1 flex items-center justify-center h-[48px] bg-black text-white text-[12px] font-bold hover:bg-gray-800 active:scale-[0.99] transition-all tracking-widest uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-xs rounded-none"
                 >
                   {isOutOfStock ? 'Out Of Stock' : 'Add To Bag'}
                 </button>
                 <button
                   type="button"
                   onClick={handleToggleWishlist}
-                  className="w-12 h-[48px] flex items-center justify-center border border-gray-300 hover:border-black hover:bg-gray-50 active:scale-[0.96] transition-all cursor-pointer shrink-0 rounded-xs"
+                  className="w-12 h-[48px] flex items-center justify-center border border-gray-300 hover:border-black hover:bg-gray-50 active:scale-[0.96] transition-all cursor-pointer shrink-0 rounded-none"
                   title={isFav ? "Remove from Wishlist" : "Add to Wishlist"}
                   aria-label={isFav ? "Remove from Wishlist" : "Add to Wishlist"}
                 >
@@ -736,7 +736,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 type="button"
                 onClick={handleBuyNow}
                 disabled={isOutOfStock}
-                className="sm:hidden w-full flex items-center justify-center h-[48px] bg-[#E5DCC5] text-[12px] font-bold text-gray-900 hover:bg-[#d8cbb0] active:scale-[0.99] transition-all tracking-widest uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-xs rounded-xs"
+                className="sm:hidden w-full flex items-center justify-center h-[48px] bg-[#E5DCC5] text-[12px] font-bold text-gray-900 hover:bg-[#d8cbb0] active:scale-[0.99] transition-all tracking-widest uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-xs rounded-none"
               >
                 {isOutOfStock ? 'Sold Out' : config.maintenanceMode ? 'Paused (Maintenance)' : 'Buy It Now'}
               </button>
@@ -747,7 +747,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   type="button"
                   onClick={handleAddToBasket}
                   disabled={isOutOfStock}
-                  className="flex-1 flex items-center justify-center h-[48px] bg-black text-white text-[12px] font-bold hover:bg-gray-800 active:scale-[0.99] transition-all tracking-widest uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-xs rounded-xs"
+                  className="flex-1 flex items-center justify-center h-[48px] bg-black text-white text-[12px] font-bold hover:bg-gray-800 active:scale-[0.99] transition-all tracking-widest uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-xs rounded-none"
                 >
                   {isOutOfStock ? 'Out Of Stock' : 'Add To Bag'}
                 </button>
@@ -755,14 +755,14 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   type="button"
                   onClick={handleBuyNow}
                   disabled={isOutOfStock}
-                  className="flex-1 flex items-center justify-center h-[48px] bg-[#E5DCC5] text-[12px] font-bold text-gray-900 hover:bg-[#d8cbb0] active:scale-[0.99] transition-all tracking-widest uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-xs rounded-xs"
+                  className="flex-1 flex items-center justify-center h-[48px] bg-[#E5DCC5] text-[12px] font-bold text-gray-900 hover:bg-[#d8cbb0] active:scale-[0.99] transition-all tracking-widest uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-xs rounded-none"
                 >
                   {isOutOfStock ? 'Sold Out' : config.maintenanceMode ? 'Paused (Maintenance)' : 'Buy It Now'}
                 </button>
                 <button
                   type="button"
                   onClick={handleToggleWishlist}
-                  className="w-12 h-[48px] flex items-center justify-center border border-gray-300 hover:border-black hover:bg-gray-50 active:scale-[0.96] transition-all cursor-pointer shrink-0 rounded-xs"
+                  className="w-12 h-[48px] flex items-center justify-center border border-gray-300 hover:border-black hover:bg-gray-50 active:scale-[0.96] transition-all cursor-pointer shrink-0 rounded-none"
                   title={isFav ? "Remove from Wishlist" : "Add to Wishlist"}
                   aria-label={isFav ? "Remove from Wishlist" : "Add to Wishlist"}
                 >
@@ -777,7 +777,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             {/* Feature Highlights */}
             <div className="grid grid-cols-3 gap-2 py-6 border-t border-b border-gray-100 my-6">
               <div className="flex flex-col items-center text-center gap-2">
-                <div className="w-9 h-9 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-700">
+                <div className="w-9 h-9 rounded-none bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-700">
                   <Droplets size={16} strokeWidth={1.5} />
                 </div>
                 <span className="text-[11px] font-semibold text-gray-800 leading-tight">
@@ -785,7 +785,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 </span>
               </div>
               <div className="flex flex-col items-center text-center gap-2">
-                <div className="w-9 h-9 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-700">
+                <div className="w-9 h-9 rounded-none bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-700">
                   <Ruler size={16} strokeWidth={1.5} />
                 </div>
                 <span className="text-[11px] font-semibold text-gray-800 leading-tight">
@@ -793,7 +793,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 </span>
               </div>
               <div className="flex flex-col items-center text-center gap-2">
-                <div className="w-9 h-9 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-700">
+                <div className="w-9 h-9 rounded-none bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-700">
                   <Scissors size={16} strokeWidth={1.5} />
                 </div>
                 <span className="text-[11px] font-semibold text-gray-800 leading-tight">

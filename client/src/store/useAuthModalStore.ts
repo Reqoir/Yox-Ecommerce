@@ -15,7 +15,7 @@ export const useAuthModalStore = create<AuthModalState>((set) => ({
   isOpen: false,
   mode: 'login',
   redirectUrl: null,
-  openModal: (mode = 'login', redirectUrl = null) =>
+  openModal: (mode = 'login', redirectUrl: string | null = null) =>
     set({ isOpen: true, mode, redirectUrl }),
   closeModal: () => set({ isOpen: false, redirectUrl: null }),
   setMode: (mode) => set({ mode }),

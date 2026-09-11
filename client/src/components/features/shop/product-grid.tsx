@@ -205,7 +205,7 @@ export function ProductGrid({ onOpenFilter, onOpenSort }: ProductGridProps = {})
           <button
             type="button"
             onClick={onOpenFilter}
-            className="flex items-center justify-center gap-2 border border-gray-300 bg-white py-2 px-3 text-xs font-semibold text-gray-800 active:bg-gray-100 transition-colors shadow-2xs cursor-pointer rounded-xs"
+            className="flex items-center justify-center gap-2 border border-gray-300 bg-white py-2 px-3 text-xs font-semibold text-gray-800 active:bg-gray-100 transition-colors shadow-2xs cursor-pointer rounded-none"
           >
             <SlidersHorizontal size={14} className="text-gray-700" />
             <span>Filter By</span>
@@ -216,14 +216,14 @@ export function ProductGrid({ onOpenFilter, onOpenSort }: ProductGridProps = {})
             <button
               type="button"
               onClick={() => setIsSortDropdownOpen((prev) => !prev)}
-              className="w-full flex items-center justify-between border border-gray-300 bg-white py-2 px-3 text-xs font-semibold text-gray-800 active:bg-gray-100 transition-colors shadow-2xs cursor-pointer rounded-xs"
+              className="w-full flex items-center justify-between border border-gray-300 bg-white py-2 px-3 text-xs font-semibold text-gray-800 active:bg-gray-100 transition-colors shadow-2xs cursor-pointer rounded-none"
             >
               <span className="truncate">{sortDisplayLabel}</span>
               <ChevronDown size={14} className={`shrink-0 text-gray-500 transition-transform duration-200 ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isSortDropdownOpen && (
-              <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-200 shadow-xl z-50 py-1.5 animate-in fade-in-50 zoom-in-95 duration-100 rounded-xs">
+              <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-200 shadow-xl z-50 py-1.5 animate-in fade-in-50 zoom-in-95 duration-100 rounded-none">
                 {SORT_OPTIONS_LIST.map((option) => {
                   const isSelected = sortBy === option || 
                     (option === 'Date, new to old' && sortBy === 'Newest Arrivals') || 
@@ -329,7 +329,7 @@ export function ProductGrid({ onOpenFilter, onOpenSort }: ProductGridProps = {})
             <button
               type="button"
               onClick={() => setCategory(currentParentCategory.slug || currentParentCategory.name.toLowerCase())}
-              className={`px-3 py-1 text-[11px] font-semibold rounded-full transition-all cursor-pointer ${(!subCategory && (category?.toLowerCase() === currentParentCategory.slug?.toLowerCase() || category?.toLowerCase() === currentParentCategory.name.toLowerCase()))
+              className={`px-3 py-1 text-[11px] font-semibold rounded-none transition-all cursor-pointer ${(!subCategory && (category?.toLowerCase() === currentParentCategory.slug?.toLowerCase() || category?.toLowerCase() === currentParentCategory.name.toLowerCase()))
                   ? 'bg-black text-white shadow-xs'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
@@ -356,7 +356,7 @@ export function ProductGrid({ onOpenFilter, onOpenSort }: ProductGridProps = {})
                       setCategory(sub.slug || sub.name.toLowerCase());
                     }
                   }}
-                  className={`px-3 py-1 text-[11px] font-semibold rounded-full transition-all cursor-pointer ${isSubActive
+                  className={`px-3 py-1 text-[11px] font-semibold rounded-none transition-all cursor-pointer ${isSubActive
                       ? 'bg-black text-white shadow-xs'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
@@ -375,17 +375,17 @@ export function ProductGrid({ onOpenFilter, onOpenSort }: ProductGridProps = {})
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-2.5 sm:gap-x-4 lg:gap-x-5 gap-y-6 sm:gap-y-8 lg:gap-y-10 px-0.5 sm:px-1 lg:px-0">
           {Array.from({ length: 10 }).map((_, i) => (
             <div key={i} className="flex flex-col gap-2.5 animate-pulse">
-              <div className="w-full aspect-[1/1.42] sm:aspect-[3/4] bg-gray-100 rounded-sm" />
-              <div className="h-3.5 bg-gray-100 rounded-xs w-3/4" />
-              <div className="h-2.5 bg-gray-100 rounded-xs w-1/3" />
-              <div className="h-3.5 bg-gray-100 rounded-xs w-1/2" />
+              <div className="w-full aspect-[1/1.42] sm:aspect-[3/4] bg-gray-100 rounded-none" />
+              <div className="h-3.5 bg-gray-100 rounded-none w-3/4" />
+              <div className="h-2.5 bg-gray-100 rounded-none w-1/3" />
+              <div className="h-3.5 bg-gray-100 rounded-none w-1/2" />
             </div>
           ))}
         </div>
       ) : isError ? (
         /* Amazon / Flipkart Style Connection Offline State */
-        <div className="w-full py-16 px-4 flex flex-col items-center justify-center text-center bg-gray-50/70 rounded-xl border border-gray-200 max-w-md mx-auto my-8">
-          <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4 shadow-xs">
+        <div className="w-full py-16 px-4 flex flex-col items-center justify-center text-center bg-gray-50/70 rounded-none border border-gray-200 max-w-md mx-auto my-8">
+          <div className="w-14 h-14 bg-red-50 text-red-500 rounded-none flex items-center justify-center mb-4 shadow-xs">
             <WifiOff size={28} />
           </div>
           <h3 className="text-base font-bold text-gray-900 mb-1.5">Connection Problem</h3>
@@ -394,7 +394,7 @@ export function ProductGrid({ onOpenFilter, onOpenSort }: ProductGridProps = {})
           </p>
           <button
             onClick={() => refetch()}
-            className="inline-flex items-center gap-2 bg-black text-white text-xs font-bold py-2.5 px-6 rounded-xs hover:bg-gray-800 transition-colors shadow-xs cursor-pointer"
+            className="inline-flex items-center gap-2 bg-black text-white text-xs font-bold py-2.5 px-6 rounded-none hover:bg-gray-800 transition-colors shadow-xs cursor-pointer"
           >
             <RefreshCw size={14} />
             Try Again
@@ -414,7 +414,7 @@ export function ProductGrid({ onOpenFilter, onOpenSort }: ProductGridProps = {})
                 className="flex flex-col group cursor-pointer"
               >
                 {/* Image Box */}
-                <div className="relative w-full aspect-[1/1.42] sm:aspect-[3/4] bg-[#f2f2f2] overflow-hidden mb-2.5 sm:mb-3">
+                <div className="relative w-full aspect-[1/1.42] sm:aspect-[3/4] bg-[#f2f2f2] overflow-hidden mb-2.5 sm:mb-3 rounded-none">
                   <img
                     src={product.image}
                     alt={`${product.name}${cardColor ? ` - ${cardColor}` : ''}`}
@@ -434,13 +434,13 @@ export function ProductGrid({ onOpenFilter, onOpenSort }: ProductGridProps = {})
                   {/* Sold Out or Offer Badge */}
                   {product.inStock === false ? (
                     <div className="absolute top-2 left-2 z-10">
-                      <span className="bg-black/90 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-xs tracking-widest shadow-xs">
+                      <span className="bg-black/90 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-none tracking-widest shadow-xs">
                         SOLD OUT
                       </span>
                     </div>
                   ) : (product.offerBadge || product.offerTitle) ? (
                     <div className="absolute top-2 left-2 z-10">
-                      <span className="bg-rose-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-xs tracking-wider max-w-[140px] truncate block">
+                      <span className="bg-rose-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-none shadow-xs tracking-wider max-w-[140px] truncate block">
                         {product.offerBadge || product.offerTitle}
                       </span>
                     </div>
@@ -535,8 +535,8 @@ export function ProductGrid({ onOpenFilter, onOpenSort }: ProductGridProps = {})
         </div>
       ) : (
         /* Empty State */
-        <div className="w-full py-16 px-4 flex flex-col items-center justify-center text-center bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
-          <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
+        <div className="w-full py-16 px-4 flex flex-col items-center justify-center text-center bg-gray-50/50 rounded-none border border-dashed border-gray-200">
+          <div className="w-14 h-14 bg-gray-100 rounded-none flex items-center justify-center text-gray-400 mb-4">
             <ShoppingBag size={28} />
           </div>
           <h3 className="text-base font-bold text-gray-900 mb-1">No Apparel Found</h3>

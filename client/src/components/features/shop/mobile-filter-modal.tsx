@@ -84,7 +84,7 @@ export function MobileFilterModal({ isOpen, onClose }: MobileFilterModalProps) {
         <button
           type="button"
           onClick={onClose}
-          className="p-2 -ml-2 bg-gray-100 rounded-full text-gray-700 hover:bg-gray-200 cursor-pointer"
+          className="p-2 -ml-2 bg-gray-100 rounded-none text-gray-700 hover:bg-gray-200 cursor-pointer"
         >
           <X size={18} />
         </button>
@@ -122,7 +122,7 @@ export function MobileFilterModal({ isOpen, onClose }: MobileFilterModalProps) {
               >
                 <span>{tab.label}</span>
                 {tab.badge && (
-                  <span className="w-4 h-4 rounded-full bg-black text-white text-[9px] flex items-center justify-center font-bold">
+                  <span className="w-4 h-4 rounded-none bg-black text-white text-[9px] flex items-center justify-center font-bold">
                     {tab.badge}
                   </span>
                 )}
@@ -139,7 +139,7 @@ export function MobileFilterModal({ isOpen, onClose }: MobileFilterModalProps) {
               <button
                 type="button"
                 onClick={() => setCategory(null)}
-                className={`w-full flex items-center justify-between p-3 rounded text-xs transition-colors cursor-pointer ${!category
+                className={`w-full flex items-center justify-between p-3 rounded-none text-xs transition-colors cursor-pointer ${!category
                     ? 'bg-black text-white font-bold'
                     : 'text-gray-800 hover:bg-gray-50 border border-gray-200'
                   }`}
@@ -168,7 +168,7 @@ export function MobileFilterModal({ isOpen, onClose }: MobileFilterModalProps) {
                     <button
                       type="button"
                       onClick={() => setCategory(isSelected && !subCategory ? null : cat.slug || cat.name)}
-                      className={`w-full flex items-center justify-between p-3 rounded text-xs transition-colors cursor-pointer border ${isSelected
+                      className={`w-full flex items-center justify-between p-3 rounded-none text-xs transition-colors cursor-pointer border ${isSelected
                           ? 'bg-black text-white font-bold border-black'
                           : 'border-gray-200 text-gray-800 hover:bg-gray-50'
                         }`}
@@ -183,7 +183,7 @@ export function MobileFilterModal({ isOpen, onClose }: MobileFilterModalProps) {
                         <button
                           type="button"
                           onClick={() => setCategory(cat.slug || cat.name)}
-                          className={`w-full flex items-center justify-between p-2 rounded text-xs transition-colors cursor-pointer ${!subCategory && (category?.toLowerCase() === cat.slug.toLowerCase() || category?.toLowerCase() === cat.name.toLowerCase())
+                          className={`w-full flex items-center justify-between p-2 rounded-none text-xs transition-colors cursor-pointer ${!subCategory && (category?.toLowerCase() === cat.slug.toLowerCase() || category?.toLowerCase() === cat.name.toLowerCase())
                               ? 'bg-gray-100 font-bold text-black'
                               : 'text-gray-600 hover:bg-gray-50'
                             }`}
@@ -212,7 +212,7 @@ export function MobileFilterModal({ isOpen, onClose }: MobileFilterModalProps) {
                                   setCategory(sub.slug || sub.name);
                                 }
                               }}
-                              className={`w-full flex items-center justify-between p-2 rounded text-xs transition-colors cursor-pointer ${isSubSelected
+                              className={`w-full flex items-center justify-between p-2 rounded-none text-xs transition-colors cursor-pointer ${isSubSelected
                                   ? 'bg-black text-white font-bold'
                                   : 'text-gray-600 hover:bg-gray-50 border border-gray-100'
                                 }`}
@@ -243,7 +243,7 @@ export function MobileFilterModal({ isOpen, onClose }: MobileFilterModalProps) {
                     placeholder="Min"
                     value={localMin}
                     onChange={(e) => setLocalMin(e.target.value)}
-                    className="w-full px-3 py-2 text-xs text-gray-900 bg-white placeholder:text-gray-400 border border-gray-300 rounded focus:outline-none focus:border-black focus:ring-1 focus:ring-black font-medium"
+                    className="w-full px-3 py-2 text-xs text-gray-900 bg-white placeholder:text-gray-400 border border-gray-300 rounded-none focus:outline-none focus:border-black focus:ring-1 focus:ring-black font-medium"
                   />
                   <span className="text-gray-400">-</span>
                   <input
@@ -251,13 +251,13 @@ export function MobileFilterModal({ isOpen, onClose }: MobileFilterModalProps) {
                     placeholder="Max"
                     value={localMax}
                     onChange={(e) => setLocalMax(e.target.value)}
-                    className="w-full px-3 py-2 text-xs text-gray-900 bg-white placeholder:text-gray-400 border border-gray-300 rounded focus:outline-none focus:border-black focus:ring-1 focus:ring-black font-medium"
+                    className="w-full px-3 py-2 text-xs text-gray-900 bg-white placeholder:text-gray-400 border border-gray-300 rounded-none focus:outline-none focus:border-black focus:ring-1 focus:ring-black font-medium"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={handleApplyPrice}
-                  className="w-full py-2 bg-black text-white text-xs font-bold uppercase tracking-wider rounded"
+                  className="w-full py-2 bg-black text-white text-xs font-bold uppercase tracking-wider rounded-none"
                 >
                   Set Price Range
                 </button>
@@ -283,7 +283,7 @@ export function MobileFilterModal({ isOpen, onClose }: MobileFilterModalProps) {
                           ? setPriceRange([0, 10000])
                           : setPriceRange(preset.range)
                       }
-                      className={`w-full text-left text-xs py-2 px-3 rounded border transition-colors ${isCurrent
+                      className={`w-full text-left text-xs py-2 px-3 rounded-none border transition-colors ${isCurrent
                           ? 'bg-black text-white font-bold border-black'
                           : 'border-gray-200 text-gray-800'
                         }`}
@@ -308,7 +308,7 @@ export function MobileFilterModal({ isOpen, onClose }: MobileFilterModalProps) {
                       key={sizeVal}
                       type="button"
                       onClick={() => toggleSize(sizeVal)}
-                      className={`py-2.5 px-2 text-xs font-bold rounded border transition-all cursor-pointer flex items-center justify-between ${isSelected
+                      className={`py-2.5 px-2 text-xs font-bold rounded-none border transition-all cursor-pointer flex items-center justify-between ${isSelected
                           ? 'bg-black text-white border-black'
                           : 'border-gray-200 text-gray-800 hover:border-black'
                         }`}
@@ -341,7 +341,7 @@ export function MobileFilterModal({ isOpen, onClose }: MobileFilterModalProps) {
                       key={fitVal}
                       type="button"
                       onClick={() => toggleFit(fitVal)}
-                      className={`w-full flex items-center justify-between p-3 rounded text-xs border transition-colors ${isSelected
+                      className={`w-full flex items-center justify-between p-3 rounded-none text-xs border transition-colors ${isSelected
                           ? 'bg-black text-white border-black font-bold'
                           : 'border-gray-200 text-gray-800 hover:bg-gray-50'
                         }`}
@@ -372,7 +372,7 @@ export function MobileFilterModal({ isOpen, onClose }: MobileFilterModalProps) {
                       key={colorName}
                       type="button"
                       onClick={() => toggleColor(colorName)}
-                      className={`w-full flex items-center justify-between p-3 rounded text-xs border transition-colors ${isSelected
+                      className={`w-full flex items-center justify-between p-3 rounded-none text-xs border transition-colors ${isSelected
                           ? 'bg-black text-white border-black font-bold'
                           : 'border-gray-200 text-gray-800 hover:bg-gray-50'
                         }`}
@@ -403,7 +403,7 @@ export function MobileFilterModal({ isOpen, onClose }: MobileFilterModalProps) {
                       key={tagVal}
                       type="button"
                       onClick={() => toggleTag(tagVal)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold border transition-colors ${isSelected
+                      className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-none text-xs font-bold border transition-colors ${isSelected
                           ? 'bg-amber-400 text-black border-amber-400 font-extrabold shadow-xs'
                           : 'border-gray-200 text-gray-800'
                         }`}
@@ -426,7 +426,7 @@ export function MobileFilterModal({ isOpen, onClose }: MobileFilterModalProps) {
               <button
                 type="button"
                 onClick={toggleInStock}
-                className={`w-full flex items-center justify-between p-3 rounded text-xs border transition-colors ${inStockOnly
+                className={`w-full flex items-center justify-between p-3 rounded-none text-xs border transition-colors ${inStockOnly
                     ? 'bg-black text-white border-black font-bold'
                     : 'border-gray-200 text-gray-800 hover:bg-gray-50'
                   }`}
@@ -438,7 +438,7 @@ export function MobileFilterModal({ isOpen, onClose }: MobileFilterModalProps) {
               <button
                 type="button"
                 onClick={toggleOnSale}
-                className={`w-full flex items-center justify-between p-3 rounded text-xs border transition-colors ${onSaleOnly
+                className={`w-full flex items-center justify-between p-3 rounded-none text-xs border transition-colors ${onSaleOnly
                     ? 'bg-rose-600 text-white border-rose-600 font-bold'
                     : 'border-gray-200 text-gray-800 hover:bg-gray-50'
                   }`}
@@ -459,14 +459,14 @@ export function MobileFilterModal({ isOpen, onClose }: MobileFilterModalProps) {
         <button
           type="button"
           onClick={clearAllFilters}
-          className="flex-1 py-3 border border-gray-300 text-xs font-bold uppercase tracking-wider text-gray-700 rounded hover:bg-gray-50 cursor-pointer"
+          className="flex-1 py-3 border border-gray-300 text-xs font-bold uppercase tracking-wider text-gray-700 rounded-none hover:bg-gray-50 cursor-pointer"
         >
           Reset All
         </button>
         <button
           type="button"
           onClick={onClose}
-          className="flex-1 py-3 bg-black text-white text-xs font-bold uppercase tracking-wider rounded hover:bg-gray-900 cursor-pointer shadow-md"
+          className="flex-1 py-3 bg-black text-white text-xs font-bold uppercase tracking-wider rounded-none hover:bg-gray-900 cursor-pointer shadow-md"
         >
           View {filteredProducts.length} Items
         </button>

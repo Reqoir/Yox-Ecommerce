@@ -102,7 +102,7 @@ export function FilterSidebar() {
             Filters
           </h2>
           {activeFilterCount > 0 && (
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-black text-white text-[11px] font-extrabold">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-none bg-black text-white text-[11px] font-extrabold">
               {activeFilterCount}
             </span>
           )}
@@ -114,7 +114,7 @@ export function FilterSidebar() {
         <div className="py-2.5 border-b border-gray-100 flex items-center justify-between gap-2 shrink-0">
           <div className="flex flex-wrap gap-1.5 items-center flex-1 max-h-24 overflow-y-auto [scrollbar-width:none]">
             {category && (
-              <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-900 text-[11px] font-medium px-2 py-0.5 rounded-full border border-gray-200">
+              <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-900 text-[11px] font-medium px-2 py-0.5 rounded-none border border-gray-200">
                 <span className="capitalize">{category}</span>
                 <button
                   type="button"
@@ -127,7 +127,7 @@ export function FilterSidebar() {
             )}
 
             {subCategory && (
-              <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-900 text-[11px] font-medium px-2 py-0.5 rounded-full border border-gray-200">
+              <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-900 text-[11px] font-medium px-2 py-0.5 rounded-none border border-gray-200">
                 <span className="capitalize">{subCategory}</span>
                 <button
                   type="button"
@@ -140,7 +140,7 @@ export function FilterSidebar() {
             )}
 
             {(minPrice > 0 || maxPrice < 10000) && (
-              <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-900 text-[11px] font-medium px-2 py-0.5 rounded-full border border-gray-200">
+              <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-900 text-[11px] font-medium px-2 py-0.5 rounded-none border border-gray-200">
                 <span>₹{minPrice} - ₹{maxPrice >= 10000 ? '10,000+' : maxPrice}</span>
                 <button
                   type="button"
@@ -155,7 +155,7 @@ export function FilterSidebar() {
             {selectedSizes.map((s) => (
               <span
                 key={s}
-                className="inline-flex items-center gap-1 bg-black text-white text-[11px] font-medium px-2 py-0.5 rounded-full"
+                className="inline-flex items-center gap-1 bg-black text-white text-[11px] font-medium px-2 py-0.5 rounded-none"
               >
                 <span>Size: {s}</span>
                 <button
@@ -171,7 +171,7 @@ export function FilterSidebar() {
             {selectedFits.map((f) => (
               <span
                 key={f}
-                className="inline-flex items-center gap-1 bg-gray-100 text-gray-900 text-[11px] font-medium px-2 py-0.5 rounded-full border border-gray-200"
+                className="inline-flex items-center gap-1 bg-gray-100 text-gray-900 text-[11px] font-medium px-2 py-0.5 rounded-none border border-gray-200"
               >
                 <span>{f}</span>
                 <button
@@ -187,7 +187,7 @@ export function FilterSidebar() {
             {selectedColors.map((c) => (
               <span
                 key={c}
-                className="inline-flex items-center gap-1 bg-gray-100 text-gray-900 text-[11px] font-medium px-2 py-0.5 rounded-full border border-gray-200"
+                className="inline-flex items-center gap-1 bg-gray-100 text-gray-900 text-[11px] font-medium px-2 py-0.5 rounded-none border border-gray-200"
               >
                 <span>{c}</span>
                 <button
@@ -203,7 +203,7 @@ export function FilterSidebar() {
             {selectedTags.map((t) => (
               <span
                 key={t}
-                className="inline-flex items-center gap-1 bg-amber-100 text-amber-950 text-[11px] font-medium px-2 py-0.5 rounded-full border border-amber-200"
+                className="inline-flex items-center gap-1 bg-amber-100 text-amber-950 text-[11px] font-medium px-2 py-0.5 rounded-none border border-amber-200"
               >
                 <span>{t}</span>
                 <button
@@ -217,7 +217,7 @@ export function FilterSidebar() {
             ))}
 
             {inStockOnly && (
-              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 text-[11px] font-medium px-2 py-0.5 rounded-full border border-emerald-200">
+              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 text-[11px] font-medium px-2 py-0.5 rounded-none border border-emerald-200">
                 <span>In Stock</span>
                 <button
                   type="button"
@@ -230,7 +230,7 @@ export function FilterSidebar() {
             )}
 
             {onSaleOnly && (
-              <span className="inline-flex items-center gap-1 bg-rose-50 text-rose-800 text-[11px] font-medium px-2 py-0.5 rounded-full border border-rose-200">
+              <span className="inline-flex items-center gap-1 bg-rose-50 text-rose-800 text-[11px] font-medium px-2 py-0.5 rounded-none border border-rose-200">
                 <span>On Sale</span>
                 <button
                   type="button"
@@ -246,7 +246,7 @@ export function FilterSidebar() {
           <button
             type="button"
             onClick={clearAllFilters}
-            className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-black hover:bg-gray-100 px-2 py-1 rounded transition-colors shrink-0 cursor-pointer"
+            className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-black hover:bg-gray-100 px-2 py-1 rounded-none transition-colors shrink-0 cursor-pointer"
             title="Clear All Filters"
           >
             <RotateCcw size={11} />
@@ -568,11 +568,11 @@ export function FilterSidebar() {
                     <label
                       key={fitVal}
                       onClick={() => toggleFit(fitVal)}
-                      className="flex items-center justify-between py-1 px-1 rounded hover:bg-gray-50 transition-colors cursor-pointer group"
+                      className="flex items-center justify-between py-1 px-1 rounded-none hover:bg-gray-50 transition-colors cursor-pointer group"
                     >
                       <div className="flex items-center gap-2">
                         <div
-                          className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center transition-colors ${isSelected
+                          className={`w-3.5 h-3.5 rounded-none border flex items-center justify-center transition-colors ${isSelected
                               ? 'bg-black border-black text-white'
                               : 'border-gray-300 group-hover:border-black'
                             }`}
@@ -630,7 +630,7 @@ export function FilterSidebar() {
                     <label
                       key={colorName}
                       onClick={() => toggleColor(colorName)}
-                      className={`flex items-center gap-2 py-1.5 px-2.5 border rounded-sm transition-colors cursor-pointer bg-white ${
+                      className={`flex items-center gap-2 py-1.5 px-2.5 border rounded-none transition-colors cursor-pointer bg-white ${
                         isSelected ? 'border-gray-500 shadow-sm' : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
@@ -684,7 +684,7 @@ export function FilterSidebar() {
                       key={tagVal}
                       type="button"
                       onClick={() => toggleTag(tagVal)}
-                      className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full uppercase tracking-wider transition-colors cursor-pointer border ${isSelected
+                      className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-none uppercase tracking-wider transition-colors cursor-pointer border ${isSelected
                           ? 'bg-amber-400 text-black border-amber-400 shadow-xs'
                           : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
                         }`}
@@ -724,11 +724,11 @@ export function FilterSidebar() {
               {/* In Stock Toggle */}
               <label
                 onClick={toggleInStock}
-                className="flex items-center justify-between py-1 px-1 rounded hover:bg-gray-50 transition-colors cursor-pointer group"
+                className="flex items-center justify-between py-1 px-1 rounded-none hover:bg-gray-50 transition-colors cursor-pointer group"
               >
                 <div className="flex items-center gap-2">
                   <div
-                    className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center transition-colors ${inStockOnly
+                    className={`w-3.5 h-3.5 rounded-none border flex items-center justify-center transition-colors ${inStockOnly
                         ? 'bg-black border-black text-white'
                         : 'border-gray-300 group-hover:border-black'
                       }`}
@@ -742,11 +742,11 @@ export function FilterSidebar() {
               {/* On Sale Toggle */}
               <label
                 onClick={toggleOnSale}
-                className="flex items-center justify-between py-1 px-1 rounded hover:bg-gray-50 transition-colors cursor-pointer group"
+                className="flex items-center justify-between py-1 px-1 rounded-none hover:bg-gray-50 transition-colors cursor-pointer group"
               >
                 <div className="flex items-center gap-2">
                   <div
-                    className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center transition-colors ${onSaleOnly
+                    className={`w-3.5 h-3.5 rounded-none border flex items-center justify-center transition-colors ${onSaleOnly
                         ? 'bg-rose-600 border-rose-600 text-white'
                         : 'border-gray-300 group-hover:border-black'
                       }`}

@@ -86,7 +86,7 @@ export function StyleSeekers() {
               key={i}
               className={`flex-shrink-0 w-[160px] sm:w-[240px] md:w-[280px] lg:w-[320px] ${
                 i % 2 === 0 ? 'h-[225px] sm:h-[450px]' : 'h-[150px] sm:h-[300px]'
-              } bg-gray-200 rounded-[2px]`}
+              } bg-gray-200 rounded-none`}
             />
           ))}
         </div>
@@ -107,7 +107,7 @@ export function StyleSeekers() {
           <button
             type="button"
             onClick={() => handleScroll('left')}
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EFECE8] hover:bg-gray-300 flex items-center justify-center text-gray-800 transition-colors cursor-pointer"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-none bg-[#EFECE8] hover:bg-gray-300 flex items-center justify-center text-gray-800 transition-colors cursor-pointer"
             aria-label="Scroll left"
           >
             <ChevronLeft size={18} strokeWidth={2} />
@@ -115,7 +115,7 @@ export function StyleSeekers() {
           <button
             type="button"
             onClick={() => handleScroll('right')}
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EFECE8] hover:bg-gray-300 flex items-center justify-center text-gray-800 transition-colors cursor-pointer"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-none bg-[#EFECE8] hover:bg-gray-300 flex items-center justify-center text-gray-800 transition-colors cursor-pointer"
             aria-label="Scroll right"
           >
             <ChevronRight size={18} strokeWidth={2} />
@@ -134,7 +134,7 @@ export function StyleSeekers() {
           <Link
             key={`${category.id}-${index}`}
             href={`/shop?category=${category.slug}`}
-            className={`relative flex-shrink-0 w-[160px] sm:w-[240px] md:w-[280px] lg:w-[320px] ${category.height} group overflow-hidden bg-gray-100 cursor-pointer rounded-[2px] block`}
+            className={`relative flex-shrink-0 w-[160px] sm:w-[240px] md:w-[280px] lg:w-[320px] ${category.height} group overflow-hidden bg-gray-100 cursor-pointer rounded-none block`}
           >
             {/* Image */}
             <Image
@@ -153,7 +153,7 @@ export function StyleSeekers() {
               <span className="text-white font-bold tracking-wide text-[11px] sm:text-base truncate pr-1">
                 {category.label}
               </span>
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded-full flex items-center justify-center text-gray-900 hover:scale-110 transition-transform shadow-sm shrink-0">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded-none flex items-center justify-center text-gray-900 hover:scale-110 transition-transform shadow-sm shrink-0">
                 <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={2.5} />
               </div>
             </div>

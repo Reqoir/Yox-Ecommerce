@@ -179,12 +179,12 @@ export function ProductImagePreviewModal({
 
         {/* Manual Zoom Level Adjustment Bar */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex items-center gap-1.5 sm:gap-2 bg-white/10 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-full border border-white/15 shadow-md">
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-white/10 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-none border border-white/15 shadow-md">
             <button
               onClick={() => setTargetZoom((prev) => Math.max(1.5, Math.round((prev - 0.5) * 10) / 10))}
               disabled={targetZoom <= 1.5}
               aria-label="Decrease zoom"
-              className="p-1 rounded-full hover:bg-white/20 disabled:opacity-25 disabled:hover:bg-transparent text-white transition-colors cursor-pointer"
+              className="p-1 rounded-none hover:bg-white/20 disabled:opacity-25 disabled:hover:bg-transparent text-white transition-colors cursor-pointer"
               title="Zoom out"
             >
               <Minus size={14} />
@@ -197,7 +197,7 @@ export function ProductImagePreviewModal({
               step="0.25"
               value={targetZoom}
               onChange={(e) => setTargetZoom(parseFloat(e.target.value))}
-              className="w-16 sm:w-28 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer accent-white"
+              className="w-16 sm:w-28 h-1 bg-white/30 rounded-none appearance-none cursor-pointer accent-white"
               title="Adjust hover zoom level"
             />
 
@@ -205,7 +205,7 @@ export function ProductImagePreviewModal({
               onClick={() => setTargetZoom((prev) => Math.min(4.5, Math.round((prev + 0.5) * 10) / 10))}
               disabled={targetZoom >= 4.5}
               aria-label="Increase zoom"
-              className="p-1 rounded-full hover:bg-white/20 disabled:opacity-25 disabled:hover:bg-transparent text-white transition-colors cursor-pointer"
+              className="p-1 rounded-none hover:bg-white/20 disabled:opacity-25 disabled:hover:bg-transparent text-white transition-colors cursor-pointer"
               title="Zoom in"
             >
               <Plus size={14} />
@@ -218,7 +218,7 @@ export function ProductImagePreviewModal({
             {targetZoom !== 2.5 && (
               <button
                 onClick={() => setTargetZoom(2.5)}
-                className="p-1 rounded-full hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer ml-0.5"
+                className="p-1 rounded-none hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer ml-0.5"
                 title="Reset zoom to 2.5x default"
               >
                 <RotateCcw size={12} />
@@ -230,7 +230,7 @@ export function ProductImagePreviewModal({
           <button
             onClick={onClose}
             aria-label="Close preview"
-            className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+            className="p-2 rounded-none bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
             title="Close (Esc)"
           >
             <X size={20} />
@@ -259,7 +259,7 @@ export function ProductImagePreviewModal({
               handlePrev();
             }}
             aria-label="Previous image"
-            className="absolute left-2 sm:left-6 z-20 p-2.5 sm:p-3 rounded-full bg-black/50 hover:bg-black/80 text-white border border-white/20 transition-all transform hover:scale-105 active:scale-95 cursor-pointer shadow-lg backdrop-blur-sm"
+            className="absolute left-2 sm:left-6 z-20 p-2.5 sm:p-3 rounded-none bg-black/50 hover:bg-black/80 text-white border border-white/20 transition-all transform hover:scale-105 active:scale-95 cursor-pointer shadow-lg backdrop-blur-sm"
           >
             <ChevronLeft size={22} />
           </button>
@@ -285,7 +285,7 @@ export function ProductImagePreviewModal({
           <img
             src={images[currentIndex]}
             alt={`${productName} - Preview ${currentIndex + 1}`}
-            className="max-h-[70vh] sm:max-h-[75vh] w-auto max-w-full object-contain drop-shadow-2xl rounded-sm pointer-events-none select-none"
+            className="max-h-[70vh] sm:max-h-[75vh] w-auto max-w-full object-contain drop-shadow-2xl rounded-none pointer-events-none select-none"
             style={{
               transformOrigin: `${mousePos.x}% ${mousePos.y}%`,
               transform: `scale(${currentScale})`,
@@ -297,7 +297,7 @@ export function ProductImagePreviewModal({
           />
 
           {/* Floating Instruction Hint at bottom of image */}
-          <div className="hidden lg:flex absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/70 text-white/90 backdrop-blur-xs px-3 py-1 rounded-full text-[11px] items-center gap-1.5 pointer-events-none shadow-md border border-white/10">
+          <div className="hidden lg:flex absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/70 text-white/90 backdrop-blur-xs px-3 py-1 rounded-none text-[11px] items-center gap-1.5 pointer-events-none shadow-md border border-white/10">
             <ZoomIn size={12} className="text-amber-300" />
             <span>
               {isLocked ? 'Zoom locked • Click to unlock' : `Hover to zoom (${targetZoom.toFixed(1)}x) • Scroll wheel to adjust`}
@@ -313,7 +313,7 @@ export function ProductImagePreviewModal({
               handleNext();
             }}
             aria-label="Next image"
-            className="absolute right-2 sm:right-6 z-20 p-2.5 sm:p-3 rounded-full bg-black/50 hover:bg-black/80 text-white border border-white/20 transition-all transform hover:scale-105 active:scale-95 cursor-pointer shadow-lg backdrop-blur-sm"
+            className="absolute right-2 sm:right-6 z-20 p-2.5 sm:p-3 rounded-none bg-black/50 hover:bg-black/80 text-white border border-white/20 transition-all transform hover:scale-105 active:scale-95 cursor-pointer shadow-lg backdrop-blur-sm"
           >
             <ChevronRight size={22} />
           </button>
@@ -336,7 +336,7 @@ export function ProductImagePreviewModal({
                     setIsLocked(false);
                     setCurrentIndex(idx);
                   }}
-                  className={`relative w-12 h-14 sm:w-14 sm:h-16 rounded overflow-hidden flex-shrink-0 transition-all cursor-pointer border-2 ${
+                  className={`relative w-12 h-14 sm:w-14 sm:h-16 rounded-none overflow-hidden flex-shrink-0 transition-all cursor-pointer border-2 ${
                     isActive
                       ? 'border-white scale-105 shadow-md shadow-white/20 opacity-100'
                       : 'border-transparent opacity-50 hover:opacity-80'
