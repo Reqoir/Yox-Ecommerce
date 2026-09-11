@@ -69,7 +69,7 @@ function CategoryNavContent() {
 
   return (
     <div 
-      className="hidden lg:flex w-full border-b border-gray-100 bg-white sticky top-20 z-30 shadow-[0_2px_4px_rgba(0,0,0,0.02)] relative"
+      className="hidden lg:flex w-full border-b border-gray-100 bg-white sticky top-18 z-30 shadow-[0_2px_4px_rgba(0,0,0,0.02)] relative"
       onMouseLeave={() => setHoveredCat(null)}
     >
       <div className="w-[95%] max-w-7xl mx-auto flex items-center justify-center gap-7 lg:gap-9 text-[12px] font-medium text-gray-700 uppercase tracking-wider">
@@ -82,7 +82,7 @@ function CategoryNavContent() {
             <button
               suppressHydrationWarning
               onClick={() => handleCategoryClick(cat.slug)}
-              className="flex items-center gap-1 cursor-pointer hover:text-black transition-colors whitespace-nowrap py-3.5 font-medium uppercase tracking-wider text-[12px]"
+              className="flex items-center gap-1 cursor-pointer hover:text-black transition-colors whitespace-nowrap py-2.5 font-medium uppercase tracking-wider text-[12px]"
             >
               {cat.name.toUpperCase()}
               <ChevronDown size={13} className={`transition-transform duration-200 ${hoveredCat === cat.slug ? 'rotate-180 text-black' : 'text-gray-400'}`} />
@@ -111,7 +111,7 @@ function CategoryNavContent() {
 
 export function CategoryNav() {
   return (
-    <Suspense fallback={<div className="hidden lg:block w-full h-[45px] border-b border-gray-100 bg-white sticky top-20 z-30 shadow-[0_2px_4px_rgba(0,0,0,0.02)]" />}>
+    <Suspense fallback={<div className="hidden lg:block w-full h-[36px] border-b border-gray-100 bg-white sticky top-18 z-30 shadow-[0_2px_4px_rgba(0,0,0,0.02)]" />}>
       <CategoryNavContent />
     </Suspense>
   );

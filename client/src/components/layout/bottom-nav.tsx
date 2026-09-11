@@ -7,6 +7,7 @@ import { LayoutGrid, Search, User } from 'lucide-react';
 import { BsHandbag } from 'react-icons/bs';
 import { useCartStore } from '@/store/useCartStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useAuthModalStore } from '@/store/useAuthModalStore';
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -105,15 +106,28 @@ export function BottomNav() {
         </button>
 
         {/* 4. Account */}
-        <Link
-          href={mounted && user ? '/profile/personal-info' : '/login'}
-          className={`flex flex-col items-center justify-center py-1 transition-colors ${
-            isAccountActive ? 'text-black font-semibold' : 'text-gray-600 hover:text-black'
-          }`}
-        >
-          <User size={19} strokeWidth={isAccountActive ? 2.3 : 1.8} />
-          <span className="text-[10px] tracking-tight mt-1">Account</span>
-        </Link>
+        {mounted && user ? (
+          <Link
+            href="/profile/personal-info"
+            className={`flex flex-col items-center justify-center py-1 transition-colors ${
+              isAccountActive ? 'text-black font-semibold' : 'text-gray-600 hover:text-black'
+            }`}
+          >
+            <User size={19} strokeWidth={isAccountActive ? 2.3 : 1.8} />
+            <span className="text-[10px] tracking-tight mt-1">Account</span>
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={() => useAuthModalStore.getState().openModal('login')}
+            className={`flex flex-col items-center justify-center py-1 transition-colors cursor-pointer ${
+              isAccountActive ? 'text-black font-semibold' : 'text-gray-600 hover:text-black'
+            }`}
+          >
+            <User size={19} strokeWidth={isAccountActive ? 2.3 : 1.8} />
+            <span className="text-[10px] tracking-tight mt-1">Account</span>
+          </button>
+        )}
       </div>
     </nav>
   );

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useAuthModalStore } from '@/store/useAuthModalStore';
 import { X, ArrowRight, Check, User, ShieldCheck } from 'lucide-react';
 
 const DISMISS_KEY = 'yox_guest_login_prompt_dismissed';
@@ -83,14 +84,12 @@ export function GuestLoginModal() {
 
   const handleGoToLogin = () => {
     handleDismiss();
-    const redirectUrl = pathname && pathname !== '/' ? `/login?redirect=${encodeURIComponent(pathname)}` : '/login';
-    router.push(redirectUrl);
+    useAuthModalStore.getState().openModal('login');
   };
 
   const handleGoToRegister = () => {
     handleDismiss();
-    const redirectUrl = pathname && pathname !== '/' ? `/register?redirect=${encodeURIComponent(pathname)}` : '/register';
-    router.push(redirectUrl);
+    useAuthModalStore.getState().openModal('register');
   };
 
   if (!mounted || !isOpen || user || isAuthenticated) {

@@ -176,19 +176,6 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             ))}
           </div>
-
-          {/* Brand Luxury Guarantees Skeleton */}
-          <div className="mt-20 pt-10 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 4 }).map((_, idx) => (
-              <div key={idx} className="flex items-center sm:items-start gap-3.5">
-                <Skeleton className="w-10 h-10 rounded-full bg-gray-200 shrink-0" />
-                <div className="flex flex-col gap-1.5 flex-1">
-                  <Skeleton className="w-32 h-4 rounded-xs bg-gray-200" />
-                  <Skeleton className="w-44 h-3 rounded-xs bg-gray-200" />
-                </div>
-              </div>
-            ))}
-          </div>
         </section>
       </main>
     );
@@ -445,51 +432,6 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
             />
           </div>
         )}
-      </section>
-
-      {/* Brand Luxury Guarantees Banner */}
-      <section className="w-[92%] sm:w-[94%] max-w-[1720px] mx-auto mt-20 pt-10 border-t border-gray-200">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center sm:text-left">
-          <div className="flex items-center sm:items-start gap-3.5">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-800 shrink-0">
-              <ShieldCheck size={20} />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">100% Authentic Quality</h4>
-              <p className="text-[11px] text-gray-500 mt-0.5">Handcrafted premium garments crafted from luxury natural fabrics.</p>
-            </div>
-          </div>
-
-          <div className="flex items-center sm:items-start gap-3.5">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-800 shrink-0">
-              <Sparkles size={20} />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">Automatic Savings</h4>
-              <p className="text-[11px] text-gray-500 mt-0.5">Discounts are automatically deducted at checkout.</p>
-            </div>
-          </div>
-
-          <div className="flex items-center sm:items-start gap-3.5">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-800 shrink-0">
-              <Truck size={20} />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">Priority Express Dispatch</h4>
-              <p className="text-[11px] text-gray-500 mt-0.5">Fast doorstep delivery with real-time tracking across India.</p>
-            </div>
-          </div>
-
-          <div className="flex items-center sm:items-start gap-3.5">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-800 shrink-0">
-              <RotateCcw size={20} />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">7-Day Effortless Returns</h4>
-              <p className="text-[11px] text-gray-500 mt-0.5">Easy returns and doorstep exchanges if sizing isn't perfect.</p>
-            </div>
-          </div>
-        </div>
       </section>
     </main>
   );

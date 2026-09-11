@@ -127,7 +127,7 @@ export function FeaturedSection() {
 
   return (
     <section className="w-full py-8 sm:py-16 bg-white overflow-hidden">
-      <div className="w-[98%] mx-auto max-w-[1500px] px-4 md:px-8">
+      <div className="w-[98%] max-w-[1500px] mx-auto px-4 sm:px-0">
         {/* Header: Title on Left, Arrows on Right Side */}
         <div className="flex items-center justify-between mb-5 sm:mb-8">
           <h2 className="text-lg md:text-2xl lg:text-3xl font-bold text-gray-900 tracking-wide uppercase">

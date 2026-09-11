@@ -11,6 +11,7 @@ import { CategoryNav } from '@/components/layout/category-nav';
 import { Footer } from '@/components/layout/footer';
 import { BottomNav } from '@/components/layout/bottom-nav';
 import { GuestLoginModal } from '@/components/features/auth/guest-login-modal';
+import { AuthModal } from '@/components/features/auth/auth-modal';
 
 interface RootLayoutProps {
   children: ReactNode;
@@ -21,7 +22,7 @@ export default function CommonLayout({ children }: RootLayoutProps) {
     <div className="flex min-h-screen flex-col">
       <TopBar />
       <Suspense fallback={
-        <div className="w-full h-20 bg-[#F7F8F7] border-b border-gray-200 flex items-center justify-between px-4 lg:w-[95%] mx-auto" />
+        <div className="w-full h-18 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:w-[95%] mx-auto" />
       }>
         <Navbar />
       </Suspense>
@@ -30,6 +31,7 @@ export default function CommonLayout({ children }: RootLayoutProps) {
       <Footer />
       <BottomNav />
       <GuestLoginModal />
+      <AuthModal />
     </div>
   );
 }

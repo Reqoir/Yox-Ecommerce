@@ -66,7 +66,7 @@ export function TopBar() {
 
       {/* Main Announcement & Store Features Bar */}
       <div 
-        className="w-full text-white min-h-[34px] sm:h-10 py-1.5 sm:py-0 flex items-center justify-center transition-colors duration-300 border-b border-white/10"
+        className="w-full text-white min-h-[28px] sm:h-8 py-1 sm:py-0 flex items-center justify-center transition-colors duration-300 border-b border-white/10"
         style={{ backgroundColor: resolvedBg }}
       >
         <div className="w-[98%] max-w-[1500px] px-3 sm:px-4 md:px-0 mx-auto flex items-center justify-between text-[11px] sm:text-xs">

@@ -11,6 +11,7 @@ import { IoPersonOutline } from "react-icons/io5";
 import { BsHandbag } from "react-icons/bs";
 import { useProductFilters } from '@/hooks/useProductFilters';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useAuthModalStore } from '@/store/useAuthModalStore';
 import { useCartStore } from '@/store/useCartStore';
 import { authApi } from '@/api/auth';
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -151,8 +152,8 @@ export function Navbar() {
   };
 
   return (
-    <nav suppressHydrationWarning className={`w-full bg-[#F7F8F7] sticky top-0 z-40 ${pathname !== '/' ? 'shadow-sm border-b border-gray-200' : 'border-b border-gray-200'}`}>
-      <div className="w-full px-4 lg:px-0 lg:w-[95%] mx-auto h-20 flex items-center justify-between">
+    <nav suppressHydrationWarning className={`w-full bg-white sticky top-0 z-40 ${pathname !== '/' ? 'shadow-sm border-b border-gray-200' : 'border-b border-gray-200'}`}>
+      <div className="w-full px-4 lg:px-0 lg:w-[95%] mx-auto h-18 flex items-center justify-between">
 
         {/* Left Side: Hamburger Menu on Mobile, Empty Flex-1 on Desktop */}
         <div className="flex-1 flex items-center justify-start">
@@ -245,7 +246,7 @@ export function Navbar() {
 
         {/* Center: Logo (Centered on Mobile & Desktop) */}
         <div className="flex justify-center items-center flex-1">
-          <Link href="/" className="flex-shrink-0 h-16 md:h-18 lg:h-20 relative overflow-hidden flex items-center justify-center">
+          <Link href="/" className="flex-shrink-0 h-14 md:h-16 lg:h-18 relative overflow-hidden flex items-center justify-center">
             <img
               src="/images/logo.png"
               alt="YOX Men's Fashion"
@@ -259,7 +260,7 @@ export function Navbar() {
 
           {/* Desktop Search Bar */}
           <div className="hidden md:block relative w-full max-w-[280px]" ref={containerRef}>
-            <form suppressHydrationWarning onSubmit={handleSearchSubmit} className="flex items-center bg-white border border-gray-300 rounded-sm px-3 h-10 shadow-xs transition-all">
+            <form suppressHydrationWarning onSubmit={handleSearchSubmit} className="flex items-center bg-white border border-gray-300 rounded-none px-3 h-10 shadow-xs transition-all">
               <input
                 suppressHydrationWarning
                 type="text"
@@ -381,8 +382,8 @@ export function Navbar() {
             ) : (
               <button
                 suppressHydrationWarning
-                onClick={() => router.push('/login')}
-                className="flex items-center justify-center bg-black text-white px-3 sm:px-4 py-1.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors whitespace-nowrap rounded-sm cursor-pointer shadow-xs"
+                onClick={() => useAuthModalStore.getState().openModal('login')}
+                className="flex items-center justify-center bg-black text-white px-3 sm:px-4 py-1.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors whitespace-nowrap rounded-none cursor-pointer shadow-xs"
               >
                 LOGIN
               </button>
