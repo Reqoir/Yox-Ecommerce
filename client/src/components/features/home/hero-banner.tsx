@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import {
@@ -9,6 +9,7 @@ import {
   HeroBannerSlide,
   DEFAULT_HERO_CONFIG,
 } from '@/api/admin/content';
+import { optimizeCloudinaryUrl } from '@/lib/utils';
 
 const HERO_CACHE_KEY = 'yox_hero_banners_cache_v2';
 
@@ -30,6 +31,20 @@ export function HeroBanner() {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(true);
   const [isHovered, setIsHovered] = useState<boolean>(false);
+  const [isInitialImageLoaded, setIsInitialImageLoaded] = useState<boolean>(false);
+  const firstImgRef = useRef<HTMLImageElement | null>(null);
+
+  // Check if first image is already cached / completed on mount
+  useEffect(() => {
+    if (firstImgRef.current?.complete && firstImgRef.current?.naturalWidth > 0) {
+      setIsInitialImageLoaded(true);
+    }
+    // Safety fallback: if network is slow, don't keep skeleton indefinitely
+    const timer = setTimeout(() => {
+      setIsInitialImageLoaded(true);
+    }, 3500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -114,7 +129,32 @@ export function HeroBanner() {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="w-full sm:w-[98%] max-w-[1500px] mx-auto px-0">
-        <div className="relative overflow-hidden rounded-none bg-gray-950 w-full h-[calc(100svh-114px)] min-h-[calc(100svh-114px)] sm:h-auto sm:aspect-[1440/680] sm:min-h-[400px] md:min-h-[500px]">
+        <div className="relative overflow-hidden rounded-none bg-neutral-900 w-full h-[calc(100svh-114px)] min-h-[calc(100svh-114px)] sm:h-auto sm:aspect-[1440/680] sm:min-h-[400px] md:min-h-[500px]">
+          {/* Luxury Hero Skeleton Overlay (smoothly dissolves as soon as the first image is ready) */}
+          <div
+            className={`absolute inset-0 z-30 flex flex-col items-center justify-between p-6 sm:p-12 transition-opacity duration-700 ease-out pointer-events-none ${
+              isInitialImageLoaded ? 'opacity-0' : 'opacity-100'
+            }`}
+            aria-hidden={isInitialImageLoaded}
+          >
+            {/* Shimmer backdrop with subtle luxury pulse */}
+            <div className="absolute inset-0 bg-neutral-900 bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-900 animate-pulse" />
+
+            {/* Top badge placeholder on desktop */}
+            <div className="relative z-10 self-start hidden sm:block w-32 h-6 bg-white/10 backdrop-blur-xs animate-pulse" />
+
+            {/* Center brand loader & label */}
+            <div className="relative z-10 flex flex-col items-center my-auto">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-white/15 border-t-white animate-spin mb-3.5" />
+              <span className="font-mono text-[10px] sm:text-xs tracking-[0.28em] uppercase text-white/60 font-semibold">
+                Loading Collection
+              </span>
+            </div>
+
+            {/* Bottom CTA placeholder */}
+            <div className="relative z-10 w-32 sm:w-36 h-9 sm:h-10 bg-white/10 backdrop-blur-xs border border-white/15 animate-pulse" />
+          </div>
+
           {/* Sliding Track Container */}
           <div
             className={`flex w-full h-full ${
@@ -127,21 +167,38 @@ export function HeroBanner() {
               const linkHref = slide.buttonLink || (slide.categorySlug ? `/shop?category=${slide.categorySlug}` : '/shop');
               const slideIsLight = slide.theme === 'light';
               const slideOverlayOpacity = (slide.overlayOpacity ?? 45) / 100;
+              const desktopImageUrl = optimizeCloudinaryUrl(slide.imageUrl || DEFAULT_HERO_CONFIG.slides[0]?.imageUrl, 1920);
+              const mobileImageUrl = slide.mobileImageUrl ? optimizeCloudinaryUrl(slide.mobileImageUrl, 900) : undefined;
+              const isFirstSlide = idx === 0;
 
               return (
                 <div key={`${slide.id}-${idx}`} className="relative w-full h-full shrink-0 overflow-hidden">
                   <Link href={linkHref} className="block w-full h-full cursor-pointer relative">
                     <picture className="w-full h-full block">
-                      {slide.mobileImageUrl && (
-                        <source media="(max-width: 640px)" srcSet={slide.mobileImageUrl} />
+                      {mobileImageUrl && (
+                        <source media="(max-width: 640px)" srcSet={mobileImageUrl} />
                       )}
                       <img
-                        src={slide.imageUrl || DEFAULT_HERO_CONFIG.slides[0]?.imageUrl}
+                        ref={isFirstSlide ? firstImgRef : undefined}
+                        src={desktopImageUrl}
                         alt={slide.title || 'YOX Collection'}
-                        className="w-full h-full object-cover object-top sm:object-center"
+                        loading={isFirstSlide ? 'eager' : 'lazy'}
+                        fetchPriority={isFirstSlide ? 'high' : 'low'}
+                        decoding="async"
+                        onLoad={() => {
+                          if (isFirstSlide) {
+                            setIsInitialImageLoaded(true);
+                          }
+                        }}
+                        className={`w-full h-full object-cover object-top sm:object-center transition-opacity duration-700 ease-out ${
+                          isFirstSlide && !isInitialImageLoaded ? 'opacity-0' : 'opacity-100'
+                        }`}
                         onError={(e) => {
+                          if (isFirstSlide) {
+                            setIsInitialImageLoaded(true);
+                          }
                           if (DEFAULT_HERO_CONFIG.slides[0]?.imageUrl) {
-                            (e.target as HTMLImageElement).src = DEFAULT_HERO_CONFIG.slides[0].imageUrl;
+                            (e.target as HTMLImageElement).src = optimizeCloudinaryUrl(DEFAULT_HERO_CONFIG.slides[0].imageUrl, 1920);
                           }
                         }}
                       />
@@ -151,7 +208,9 @@ export function HeroBanner() {
                     {slide.showTextOverlay && (
                       <>
                         <div
-                          className={`absolute inset-0 z-10 pointer-events-none ${
+                          className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-700 ease-out ${
+                            isFirstSlide && !isInitialImageLoaded ? 'opacity-0' : 'opacity-100'
+                          } ${
                             slideIsLight
                               ? 'bg-gradient-to-t sm:bg-gradient-to-r from-white via-white/80 to-transparent'
                               : 'bg-gradient-to-t sm:bg-gradient-to-r from-black/90 via-black/60 to-transparent'
@@ -160,7 +219,9 @@ export function HeroBanner() {
                         />
 
                         <div
-                          className={`absolute inset-0 z-20 flex flex-col justify-center px-5 py-6 sm:px-12 md:px-16 pointer-events-none ${
+                          className={`absolute inset-0 z-20 flex flex-col justify-center px-5 py-6 sm:px-12 md:px-16 pointer-events-none transition-opacity duration-700 ease-out ${
+                            isFirstSlide && !isInitialImageLoaded ? 'opacity-0' : 'opacity-100'
+                          } ${
                             slide.textAlign === 'center'
                               ? 'items-center text-center'
                               : slide.textAlign === 'right'
@@ -202,7 +263,11 @@ export function HeroBanner() {
                   </Link>
 
                   {/* Centered "Shop Now" Button: links directly to /shop (separate from slide image link) */}
-                  <div className="absolute bottom-8 sm:bottom-12 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
+                  <div
+                    className={`absolute bottom-8 sm:bottom-12 left-1/2 -translate-x-1/2 z-20 pointer-events-auto transition-opacity duration-700 ease-out ${
+                      isFirstSlide && !isInitialImageLoaded ? 'opacity-0' : 'opacity-100'
+                    }`}
+                  >
                     <Link
                       href="/shop"
                       className="inline-flex items-center gap-2.5 sm:gap-3 pl-5 pr-1.5 sm:pl-7 sm:pr-2.5 py-1.5 sm:py-2.5 rounded-none bg-white/95 hover:bg-white text-gray-950 shadow-[0_10px_35px_rgba(0,0,0,0.28)] backdrop-blur-md border border-white/80 transition-all duration-300 hover:scale-105 active:scale-95 group cursor-pointer"
