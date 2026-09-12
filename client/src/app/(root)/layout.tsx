@@ -4,7 +4,6 @@
  */
 
 import type { ReactNode } from 'react';
-import { Suspense } from 'react';
 import { TopBar } from '@/components/layout/top-bar';
 import { Navbar } from '@/components/layout/navbar';
 import { CategoryNav } from '@/components/layout/category-nav';
@@ -20,11 +19,7 @@ export default function CommonLayout({ children }: RootLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col">
       <TopBar />
-      <Suspense fallback={
-        <div className="w-full h-18 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:w-[95%] mx-auto" />
-      }>
-        <Navbar />
-      </Suspense>
+      <Navbar />
       <CategoryNav />
       <main className="flex-1 pb-16 lg:pb-0">{children}</main>
       <Footer />

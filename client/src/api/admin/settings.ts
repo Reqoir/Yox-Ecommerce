@@ -49,8 +49,8 @@ export const DEFAULT_STORE_CONFIG: StoreConfig = {
   currency: "INR",
   currencySymbol: "₹",
 
-  freeShippingThreshold: 199,
-  standardShippingFee: 99,
+  freeShippingThreshold: 999,
+  standardShippingFee: 10,
   estimatedDeliveryDaysMin: 3,
   estimatedDeliveryDaysMax: 5,
   deliveryPartner: "Delhivery / BlueDart Express",
@@ -66,9 +66,9 @@ export const DEFAULT_STORE_CONFIG: StoreConfig = {
   returnPolicyNotice: "Hassle-free 7-day returns on unworn items with original tags.",
 
   announcementEnabled: true,
-  announcementText: "Onam Season Exclusive: Get Extra 15% Off!",
-  announcementLink: "/offers/6a9f04f3de097e23e83541f4",
-  announcementBgColor: "bg-[#1A2E4C]",
+  announcementText: "Diwali Season Exclusive: Get Extra 15% Off!",
+  announcementLink: "/offers/6a9fcd306630fa77698e06df",
+  announcementBgColor: "#000000",
 
   maintenanceMode: false,
   maintenanceNotice: "Store maintenance in progress. We will be back online shortly."

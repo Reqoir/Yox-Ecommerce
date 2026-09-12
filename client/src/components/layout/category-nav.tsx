@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useProductFilters } from '@/hooks/useProductFilters';
 import { ChevronDown } from 'lucide-react';
@@ -110,9 +110,5 @@ function CategoryNavContent() {
 }
 
 export function CategoryNav() {
-  return (
-    <Suspense fallback={<div className="hidden lg:block w-full h-[36px] border-b border-gray-100 bg-white sticky top-18 z-30 shadow-[0_2px_4px_rgba(0,0,0,0.02)]" />}>
-      <CategoryNavContent />
-    </Suspense>
-  );
+  return <CategoryNavContent />;
 }
