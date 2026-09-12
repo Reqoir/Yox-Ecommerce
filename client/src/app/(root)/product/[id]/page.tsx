@@ -833,17 +833,17 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
       
-      {/* Customer Reviews Section */}
-      <div className="w-full max-w-7xl mx-auto px-4 mt-12 sm:mt-16">
-        <ProductReviews productId={product.id} />
-      </div>
-
       {/* Product Suggestions: Similar Styles + More from Brand */}
       <ProductSuggestions
         currentProductId={product.id}
         categoryId={product.categoryId}
         brandId={product.brandId}
       />
+
+      {/* Customer Reviews Section */}
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 sm:mt-12 mb-16 sm:mb-20">
+        <ProductReviews productId={product.id} />
+      </div>
 
       {/* Image Preview Lightbox Modal */}
       <ProductImagePreviewModal

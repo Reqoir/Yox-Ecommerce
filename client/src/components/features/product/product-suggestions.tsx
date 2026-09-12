@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Heart, ChevronRight, ArrowRight } from 'lucide-react';
+import { Heart, ChevronRight, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { productsApi, BackendProduct } from '@/lib/api/products';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { useCategories } from '@/hooks/admin/useCategories';
@@ -188,6 +188,10 @@ export function ProductSuggestions({
   const resolvedBrandName = brandName || matchedBrand?.name;
   const resolvedBrandSlug = matchedBrand?.slug || matchedBrand?.name?.toLowerCase() || brandId;
 
+  const INITIAL_DISPLAY_COUNT = 4;
+  const [isSimilarExpanded, setIsSimilarExpanded] = useState(false);
+  const [isBrandExpanded, setIsBrandExpanded] = useState(false);
+
   // Similar styles (same category, exclude current)
   const { data: similarData, isLoading: loadingSimilar } = useQuery({
     queryKey: ['similar-products', categoryId, currentProductId],
@@ -195,7 +199,7 @@ export function ProductSuggestions({
       productsApi.getSimilarProducts({
         categoryId,
         excludeId: currentProductId,
-        limit: 10,
+        limit: 24,
       }),
     enabled: Boolean(categoryId),
     staleTime: 1000 * 60 * 5,
@@ -208,21 +212,26 @@ export function ProductSuggestions({
       productsApi.getSimilarProducts({
         brandId: brandId!,
         excludeId: currentProductId,
-        limit: 10,
+        limit: 24,
       }),
     enabled: Boolean(brandId),
     staleTime: 1000 * 60 * 5,
   });
 
-  const similarProducts = (similarData?.data || []).slice(0, 6);
-  // Brand products — exclude those already shown in similar
-  const similarIds = new Set(similarProducts.map((p) => p.id));
-  const brandProducts = (brandData?.data || [])
-    .filter((p) => !similarIds.has(p.id))
-    .slice(0, 6);
+  const allSimilarProducts = similarData?.data || [];
+  const displayedSimilarProducts = isSimilarExpanded
+    ? allSimilarProducts
+    : allSimilarProducts.slice(0, INITIAL_DISPLAY_COUNT);
 
-  const hasSimilar = loadingSimilar || similarProducts.length > 0;
-  const hasBrand = brandId && (loadingBrand || brandProducts.length > 0);
+  // Brand products — exclude those already shown in similar
+  const similarIds = new Set(allSimilarProducts.map((p) => p.id));
+  const allBrandProducts = (brandData?.data || []).filter((p) => !similarIds.has(p.id));
+  const displayedBrandProducts = isBrandExpanded
+    ? allBrandProducts
+    : allBrandProducts.slice(0, INITIAL_DISPLAY_COUNT);
+
+  const hasSimilar = loadingSimilar || allSimilarProducts.length > 0;
+  const hasBrand = brandId && (loadingBrand || allBrandProducts.length > 0);
 
   if (!hasSimilar && !hasBrand) return null;
 
@@ -262,10 +271,10 @@ export function ProductSuggestions({
             href={resolvedCategorySlug ? `/shop?category=${encodeURIComponent(resolvedCategorySlug)}` : '/shop'}
           />
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-x-4 gap-y-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 animate-in fade-in duration-300">
             {loadingSimilar
-              ? Array.from({ length: 6 }).map((_, i) => <SuggestionSkeleton key={i} />)
-              : similarProducts.map((product) => (
+              ? Array.from({ length: 4 }).map((_, i) => <SuggestionSkeleton key={i} />)
+              : displayedSimilarProducts.map((product) => (
                   <SuggestionCard
                     key={product.id}
                     product={product}
@@ -273,6 +282,31 @@ export function ProductSuggestions({
                   />
                 ))}
           </div>
+
+          {/* View More Button for Similar Products */}
+          {allSimilarProducts.length > INITIAL_DISPLAY_COUNT && (
+            <div className="flex justify-center mt-10 sm:mt-12">
+              {!isSimilarExpanded ? (
+                <button
+                  type="button"
+                  onClick={() => setIsSimilarExpanded(true)}
+                  className="inline-flex items-center justify-center gap-2 px-8 py-3 border border-black text-black bg-white hover:bg-black hover:text-white text-[11px] font-bold uppercase tracking-widest transition-all rounded-none cursor-pointer shadow-xs active:scale-[0.99]"
+                >
+                  <span>View More ({allSimilarProducts.length - INITIAL_DISPLAY_COUNT} More)</span>
+                  <ChevronDown size={14} />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsSimilarExpanded(false)}
+                  className="inline-flex items-center justify-center gap-2 px-8 py-2.5 border border-gray-300 text-gray-700 bg-white hover:border-black hover:text-black text-[11px] font-bold uppercase tracking-widest transition-all rounded-none cursor-pointer active:scale-[0.99]"
+                >
+                  <span>Show Less</span>
+                  <ChevronUp size={14} />
+                </button>
+              )}
+            </div>
+          )}
         </section>
       )}
 
@@ -286,10 +320,10 @@ export function ProductSuggestions({
               href={resolvedBrandSlug ? `/shop?brand=${encodeURIComponent(resolvedBrandSlug)}` : '/shop'}
             />
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-x-4 gap-y-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 animate-in fade-in duration-300">
               {loadingBrand
-                ? Array.from({ length: 6 }).map((_, i) => <SuggestionSkeleton key={i} />)
-                : brandProducts.map((product) => (
+                ? Array.from({ length: 4 }).map((_, i) => <SuggestionSkeleton key={i} />)
+                : displayedBrandProducts.map((product) => (
                     <SuggestionCard
                       key={product.id}
                       product={product}
@@ -297,6 +331,31 @@ export function ProductSuggestions({
                     />
                   ))}
             </div>
+
+            {/* View More Button for Brand Products */}
+            {allBrandProducts.length > INITIAL_DISPLAY_COUNT && (
+              <div className="flex justify-center mt-10 sm:mt-12">
+                {!isBrandExpanded ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsBrandExpanded(true)}
+                    className="inline-flex items-center justify-center gap-2 px-8 py-3 border border-black text-black bg-white hover:bg-black hover:text-white text-[11px] font-bold uppercase tracking-widest transition-all rounded-none cursor-pointer shadow-xs active:scale-[0.99]"
+                  >
+                    <span>View More ({allBrandProducts.length - INITIAL_DISPLAY_COUNT} More)</span>
+                    <ChevronDown size={14} />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsBrandExpanded(false)}
+                    className="inline-flex items-center justify-center gap-2 px-8 py-2.5 border border-gray-300 text-gray-700 bg-white hover:border-black hover:text-black text-[11px] font-bold uppercase tracking-widest transition-all rounded-none cursor-pointer active:scale-[0.99]"
+                  >
+                    <span>Show Less</span>
+                    <ChevronUp size={14} />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </section>
       )}
