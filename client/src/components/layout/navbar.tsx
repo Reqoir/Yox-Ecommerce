@@ -361,8 +361,10 @@ export function Navbar() {
           </div>
 
           {/* User Icon & Account Dropdown (Desktop Only) */}
-          <div className="hidden md:block relative" ref={userDropdownRef}>
-            {mounted && user ? (
+          <div className="hidden md:block relative min-w-[32px] min-h-[32px] flex items-center justify-center" ref={userDropdownRef}>
+            {!mounted ? (
+              <div className="w-8 h-8" />
+            ) : user ? (
               <button
                 suppressHydrationWarning
                 onClick={() => {
