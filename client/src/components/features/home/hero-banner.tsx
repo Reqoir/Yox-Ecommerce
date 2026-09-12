@@ -129,30 +129,15 @@ export function HeroBanner() {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="w-full sm:w-[98%] max-w-[1500px] mx-auto px-0">
-        <div className="relative overflow-hidden rounded-none bg-neutral-900 w-full h-[calc(100svh-114px)] min-h-[calc(100svh-114px)] sm:h-auto sm:aspect-[1440/680] sm:min-h-[400px] md:min-h-[500px]">
-          {/* Luxury Hero Skeleton Overlay (smoothly dissolves as soon as the first image is ready) */}
+        <div className="relative overflow-hidden rounded-none bg-gray-100 w-full h-[calc(100svh-114px)] min-h-[calc(100svh-114px)] sm:h-auto sm:aspect-[1440/680] sm:min-h-[400px] md:min-h-[500px]">
+          {/* Subtle Hero Skeleton & Centered Loading Spinner */}
           <div
-            className={`absolute inset-0 z-30 flex flex-col items-center justify-between p-6 sm:p-12 transition-opacity duration-700 ease-out pointer-events-none ${
+            className={`absolute inset-0 z-30 flex items-center justify-center bg-gray-100 transition-opacity duration-500 ease-out pointer-events-none ${
               isInitialImageLoaded ? 'opacity-0' : 'opacity-100'
             }`}
             aria-hidden={isInitialImageLoaded}
           >
-            {/* Shimmer backdrop with subtle luxury pulse */}
-            <div className="absolute inset-0 bg-neutral-900 bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-900 animate-pulse" />
-
-            {/* Top badge placeholder on desktop */}
-            <div className="relative z-10 self-start hidden sm:block w-32 h-6 bg-white/10 backdrop-blur-xs animate-pulse" />
-
-            {/* Center brand loader & label */}
-            <div className="relative z-10 flex flex-col items-center my-auto">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-white/15 border-t-white animate-spin mb-3.5" />
-              <span className="font-mono text-[10px] sm:text-xs tracking-[0.28em] uppercase text-white/60 font-semibold">
-                Loading Collection
-              </span>
-            </div>
-
-            {/* Bottom CTA placeholder */}
-            <div className="relative z-10 w-32 sm:w-36 h-9 sm:h-10 bg-white/10 backdrop-blur-xs border border-white/15 animate-pulse" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-gray-300 border-t-gray-800 animate-spin" />
           </div>
 
           {/* Sliding Track Container */}
@@ -190,7 +175,7 @@ export function HeroBanner() {
                             setIsInitialImageLoaded(true);
                           }
                         }}
-                        className={`w-full h-full object-cover object-top sm:object-center transition-opacity duration-700 ease-out ${
+                        className={`w-full h-full object-cover object-top sm:object-center transition-opacity duration-500 ease-out ${
                           isFirstSlide && !isInitialImageLoaded ? 'opacity-0' : 'opacity-100'
                         }`}
                         onError={(e) => {
@@ -208,9 +193,7 @@ export function HeroBanner() {
                     {slide.showTextOverlay && (
                       <>
                         <div
-                          className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-700 ease-out ${
-                            isFirstSlide && !isInitialImageLoaded ? 'opacity-0' : 'opacity-100'
-                          } ${
+                          className={`absolute inset-0 z-10 pointer-events-none ${
                             slideIsLight
                               ? 'bg-gradient-to-t sm:bg-gradient-to-r from-white via-white/80 to-transparent'
                               : 'bg-gradient-to-t sm:bg-gradient-to-r from-black/90 via-black/60 to-transparent'
@@ -219,9 +202,7 @@ export function HeroBanner() {
                         />
 
                         <div
-                          className={`absolute inset-0 z-20 flex flex-col justify-center px-5 py-6 sm:px-12 md:px-16 pointer-events-none transition-opacity duration-700 ease-out ${
-                            isFirstSlide && !isInitialImageLoaded ? 'opacity-0' : 'opacity-100'
-                          } ${
+                          className={`absolute inset-0 z-20 flex flex-col justify-center px-5 py-6 sm:px-12 md:px-16 pointer-events-none ${
                             slide.textAlign === 'center'
                               ? 'items-center text-center'
                               : slide.textAlign === 'right'
@@ -263,11 +244,7 @@ export function HeroBanner() {
                   </Link>
 
                   {/* Centered "Shop Now" Button: links directly to /shop (separate from slide image link) */}
-                  <div
-                    className={`absolute bottom-8 sm:bottom-12 left-1/2 -translate-x-1/2 z-20 pointer-events-auto transition-opacity duration-700 ease-out ${
-                      isFirstSlide && !isInitialImageLoaded ? 'opacity-0' : 'opacity-100'
-                    }`}
-                  >
+                  <div className="absolute bottom-8 sm:bottom-12 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
                     <Link
                       href="/shop"
                       className="inline-flex items-center gap-2.5 sm:gap-3 pl-5 pr-1.5 sm:pl-7 sm:pr-2.5 py-1.5 sm:py-2.5 rounded-none bg-white/95 hover:bg-white text-gray-950 shadow-[0_10px_35px_rgba(0,0,0,0.28)] backdrop-blur-md border border-white/80 transition-all duration-300 hover:scale-105 active:scale-95 group cursor-pointer"
