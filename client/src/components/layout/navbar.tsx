@@ -360,8 +360,46 @@ export function Navbar() {
             </Link>
           </div>
 
+          {/* Wishlist Icon (Desktop Only - Hidden on Mobile) */}
+          <Link
+            href="/profile/favourites"
+            className="hidden lg:flex items-center justify-center p-1.5 text-black hover:opacity-70 transition-opacity relative cursor-pointer"
+            title="Wishlist"
+          >
+            <div className="relative flex items-center justify-center">
+              <Heart size={21} strokeWidth={1.8} />
+              {mounted && favouritesCount > 0 && (
+                <span
+                  suppressHydrationWarning
+                  className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[9px] font-bold h-4 px-1 min-w-[16px] rounded-full flex items-center justify-center shadow-xs"
+                >
+                  {favouritesCount}
+                </span>
+              )}
+            </div>
+          </Link>
+
+          {/* Cart Icon (Desktop Only - Hidden on Mobile) */}
+          <Link
+            href="/cart"
+            className="hidden lg:flex items-center justify-center p-1.5 text-black hover:opacity-70 transition-opacity relative cursor-pointer"
+            title="Shopping Cart"
+          >
+            <div className="relative flex items-center justify-center">
+              <BsHandbag size={21} />
+              {mounted && cartCount > 0 && (
+                <span
+                  suppressHydrationWarning
+                  className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[9px] font-bold h-4 px-1 min-w-[16px] rounded-full flex items-center justify-center shadow-xs"
+                >
+                  {cartCount}
+                </span>
+              )}
+            </div>
+          </Link>
+
           {/* User Icon & Account Dropdown (Desktop Only) */}
-          <div className="hidden md:block relative min-w-[32px] min-h-[32px] flex items-center justify-center" ref={userDropdownRef}>
+          <div className="hidden md:flex items-center relative" ref={userDropdownRef}>
             {!mounted ? (
               <div className="w-8 h-8" />
             ) : user ? (
@@ -385,9 +423,10 @@ export function Navbar() {
               <button
                 suppressHydrationWarning
                 onClick={() => useAuthModalStore.getState().openModal('login')}
-                className="flex items-center justify-center bg-black text-white px-3 sm:px-4 py-1.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors whitespace-nowrap rounded-none cursor-pointer shadow-xs"
+                className="flex items-center justify-center gap-1.5 bg-black hover:bg-neutral-800 text-white px-3.5 sm:px-4 py-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-xs transition-all duration-150 cursor-pointer shadow-xs active:scale-[0.98]"
               >
-                LOGIN
+                <IoPersonOutline size={15} strokeWidth={2.2} className="shrink-0" />
+                <span>LOGIN</span>
               </button>
             )}
 
@@ -450,30 +489,6 @@ export function Navbar() {
               </div>
             )}
           </div>
-
-          {/* Wishlist Icon (Desktop Only - Hidden on Mobile) */}
-          <Link href="/profile/favourites" className="hidden lg:flex items-center relative text-black hover:opacity-70 transition-opacity" title="Wishlist">
-            <div className="relative">
-              <Heart size={21} />
-              {mounted && favouritesCount > 0 && (
-                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold h-4 px-1 min-w-[16px] rounded-full flex items-center justify-center">
-                  {favouritesCount}
-                </span>
-              )}
-            </div>
-          </Link>
-
-          {/* Cart Icon (Desktop Only - Hidden on Mobile) */}
-          <Link href="/cart" className="hidden lg:flex items-center relative text-black hover:opacity-70 transition-opacity">
-            <div className="relative">
-              <BsHandbag size={22} />
-              {mounted && cartCount > 0 && (
-                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold h-4 px-1 min-w-[16px] rounded-full flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </div>
-          </Link>
 
         </div>
       </div>

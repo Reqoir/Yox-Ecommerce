@@ -9,6 +9,7 @@ import { Navbar } from '@/components/layout/navbar';
 import { CategoryNav } from '@/components/layout/category-nav';
 import { Footer } from '@/components/layout/footer';
 import { BottomNav } from '@/components/layout/bottom-nav';
+import { GuestLoginModal } from '@/components/features/auth/guest-login-modal';
 import { AuthModal } from '@/components/features/auth/auth-modal';
 
 interface RootLayoutProps {
@@ -24,6 +25,7 @@ export default function CommonLayout({ children }: RootLayoutProps) {
       <main className="flex-1 pb-16 lg:pb-0">{children}</main>
       <Footer />
       <BottomNav />
+      <GuestLoginModal />
       <AuthModal />
     </div>
   );

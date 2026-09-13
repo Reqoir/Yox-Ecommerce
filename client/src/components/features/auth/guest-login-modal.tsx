@@ -7,8 +7,8 @@ import { useAuthModalStore } from '@/store/useAuthModalStore';
 import { X, ArrowRight, Check, User, ShieldCheck } from 'lucide-react';
 
 const DISMISS_KEY = 'yox_guest_login_prompt_dismissed';
-// Standard ecommerce timing: 10-12 seconds
-const PROMPT_DELAY_MS = 10000;
+// Standard ecommerce timing: 4 seconds for guest prompt
+const PROMPT_DELAY_MS = 4000;
 
 export function GuestLoginModal() {
   const router = useRouter();
@@ -56,7 +56,10 @@ export function GuestLoginModal() {
     }
 
     const timer = setTimeout(() => {
-      setIsOpen(true);
+      const state = useAuthStore.getState();
+      if (!state.user && !state.isAuthenticated) {
+        setIsOpen(true);
+      }
     }, PROMPT_DELAY_MS);
 
     return () => clearTimeout(timer);
