@@ -7,6 +7,7 @@
  */
 
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import { toast } from 'sonner';
 
 export const getApiBaseUrl = (): string => {
   const envUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5001/api/v1';
@@ -86,18 +87,38 @@ apiClient.interceptors.response.use(
 
     const statusCode = error.response?.status;
 
-    // Suppress logging for:
-    // 1. Normal 401s that will be handled by token refresh
-    // 2. 400/422 validation errors (the caller handles these)
-    // 3. Empty response bodies
+    // Suppress console.error overlay for expected client errors:
+    // 1. 429 Rate Limit errors (handled cleanly by toast)
+    // 2. Normal 401/403 authentication & authorization errors
+    // 3. 400/422 validation errors (handled by forms/UI)
+    // 4. 404 resource not found
+    const isClientError = statusCode && statusCode >= 400 && statusCode < 500;
+    const isRateLimit = statusCode === 429;
+
     const shouldLog =
       error.response?.data &&
       Object.keys(error.response.data as object).length > 0 &&
-      !(is401 && !originalRequest?._retry && !isAuthEndpoint) &&
-      !(statusCode === 400 || statusCode === 422);
+      !isClientError &&
+      !(is401 && !originalRequest?._retry);
 
     if (shouldLog) {
       console.error(`[API Error] ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url} (${statusCode}):`, error.response?.data);
+    } else if (process.env.NODE_ENV === 'development' && !isRateLimit && !is401 && statusCode !== 400 && statusCode !== 422) {
+      console.warn(`[API Notice] ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url} (${statusCode}):`, error.response?.data);
+    }
+
+    // ── 429 Rate Limit Handling ──────────────────────────────────────────────
+    if (isRateLimit) {
+      const responseData = error.response?.data as any;
+      const message =
+        responseData?.message ||
+        responseData?.errors?.[0]?.message ||
+        'Too many requests. Please slow down and try again shortly.';
+
+      if (typeof window !== 'undefined') {
+        // Use fixed toast id to avoid stacked duplicate toasts
+        toast.error(message, { id: 'rate-limit-toast' });
+      }
     }
 
     if (is401 && originalRequest && !isAuthEndpoint) {

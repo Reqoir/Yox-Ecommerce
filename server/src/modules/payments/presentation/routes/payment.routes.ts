@@ -18,6 +18,7 @@ import { ProcessRefundUseCase, GetRefundsByOrderUseCase } from '../../applicatio
 import { CreateRazorpayOrderUseCase, VerifyRazorpayPaymentUseCase } from '../../application/use-cases/payment.use-cases';
 import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
 import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
+import { paymentLimiter } from '../../../../presentation/http/middleware/rate-limiter.middleware';
 
 const router = Router();
 
@@ -64,15 +65,15 @@ const paymentController = new PaymentController(
 // All payment routes require customer authentication
 router.use(requireAuth);
 
-// Customer Razorpay Routes
-router.post('/create-order', paymentController.createRazorpayOrder);
-router.post('/verify', paymentController.verifyRazorpayPayment);
+// Customer Razorpay Routes (Protected with paymentLimiter)
+router.post('/create-order', paymentLimiter, paymentController.createRazorpayOrder);
+router.post('/verify', paymentLimiter, paymentController.verifyRazorpayPayment);
 
 // Order Refunds Retrieval
 router.get('/order/:orderId', paymentController.getRefundsByOrder);
 
-// Admin-Only Refund Processing
+// Admin-Only Refund Processing (Protected with paymentLimiter)
 const adminPermission = requirePermission('manage_orders');
-router.post('/refund', adminPermission, paymentController.processRefund);
+router.post('/refund', adminPermission, paymentLimiter, paymentController.processRefund);
 
 export { router as paymentRouter };

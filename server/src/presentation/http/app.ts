@@ -11,9 +11,9 @@ import express, { type Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
-import rateLimit from 'express-rate-limit';
 import pinoHttp from 'pino-http';
 import cookieParser from 'cookie-parser';
+import { globalLimiter } from './middleware/rate-limiter.middleware';
 
 import { env } from '../../core/infrastructure/config/env';
 import { rootRouter } from './routes/index';
@@ -52,17 +52,8 @@ export const createApp = (): Application => {
     }),
   );
 
-  // ── Rate Limiting ─────────────────────────────────────────────────────────
-  app.use(
-    rateLimit({
-      windowMs: env.RATE_LIMIT_WINDOW_MS,
-      max: env.NODE_ENV === 'development' ? 5000 : env.RATE_LIMIT_MAX_REQUESTS,
-      standardHeaders: true,
-      legacyHeaders: false,
-      message: 'Too many requests from this IP. Please try again later.',
-      skip: () => env.NODE_ENV === 'development', // Skip rate limiting during local dev testing
-    }),
-  );
+  // ── Global Rate Limiting ──────────────────────────────────────────────────
+  app.use(globalLimiter);
 
   // ── Body Parsing & Cookies ────────────────────────────────────────────────
   app.use(express.json({ limit: '10mb' }));

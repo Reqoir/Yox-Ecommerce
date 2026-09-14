@@ -73,6 +73,10 @@ export function AuthModal() {
         router.push(redirectUrl);
       }
     } catch (error: any) {
+      if (error.response?.status === 429) {
+        // Handled globally with the rate limit notification
+        return;
+      }
       if (error.response?.data?.errors && error.response.data.errors.length > 0) {
         toast.error(error.response.data.errors[0].message);
       } else {
@@ -106,6 +110,7 @@ export function AuthModal() {
         router.push(redirectUrl);
       }
     } catch (error: any) {
+      if (error.response?.status === 429) return;
       if (error.response?.data?.errors && error.response.data.errors.length > 0) {
         toast.error(error.response.data.errors[0].message);
       } else {
@@ -125,6 +130,7 @@ export function AuthModal() {
       setForgotSuccess(true);
       toast.success(response.message || 'Reset link sent!');
     } catch (error: any) {
+      if (error.response?.status === 429) return;
       toast.error(error.response?.data?.message || 'Something went wrong');
     } finally {
       setIsLoading(false);

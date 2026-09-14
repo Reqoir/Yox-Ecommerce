@@ -49,8 +49,20 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('debug'),
 
   // ── Rate Limiting ─────────────────────────────────────────────────────────
-  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900_000),
-  RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(100),
+  RATE_LIMIT_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((val) => val === 'true'),
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900_000), // 15 mins
+  RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(300),
+  AUTH_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900_000), // 15 mins
+  AUTH_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(15),
+  PAYMENT_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000), // 1 min
+  PAYMENT_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(30),
+  UPLOAD_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900_000), // 15 mins
+  UPLOAD_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(30),
+  REPORTS_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000), // 1 min
+  REPORTS_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(20),
 
   // ── Bcrypt ────────────────────────────────────────────────────────────────
   BCRYPT_SALT_ROUNDS: z.coerce.number().int().min(10).max(15).default(12),

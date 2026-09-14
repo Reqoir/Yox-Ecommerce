@@ -26,6 +26,7 @@ import {
 } from '../../application/use-cases/order.use-cases';
 import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
 import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
+import { paymentLimiter } from '../../../../presentation/http/middleware/rate-limiter.middleware';
 
 const router = Router();
 
@@ -68,7 +69,7 @@ const orderController = new OrderController(
 // ── User & General Protected Routes ──────────────────────────────────────────
 router.use(requireAuth);
 
-router.post('/', orderController.placeOrder);
+router.post('/', paymentLimiter, orderController.placeOrder);
 router.get('/', orderController.getAllOrders);
 router.get('/:id', orderController.getOrderById);
 router.patch('/:id/cancel', orderController.cancelOrder);

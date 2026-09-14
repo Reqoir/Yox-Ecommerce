@@ -18,6 +18,7 @@ import { ForgotPasswordUseCase } from '../../application/use-cases/forgot-passwo
 import { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
 import { RoleRepository } from '../../../roles/infrastructure/repositories/role.repository';
 import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
+import { authLimiter } from '../../../../presentation/http/middleware/rate-limiter.middleware';
 
 const router = Router();
 
@@ -46,11 +47,12 @@ const authController = new AuthController(
 // ----------------------------------
 
 // --- Routes Definition ---
-router.post('/register', authController.register);
-router.post('/login', authController.login);
+// Apply authLimiter to guard against brute-force and credential stuffing
+router.post('/register', authLimiter, authController.register);
+router.post('/login', authLimiter, authController.login);
 router.post('/refresh', authController.refreshToken);
-router.post('/forgot-password', authController.forgotPassword);
-router.post('/reset-password', authController.resetPassword);
+router.post('/forgot-password', authLimiter, authController.forgotPassword);
+router.post('/reset-password', authLimiter, authController.resetPassword);
 router.post('/logout', authController.logout);
 router.get('/me', requireAuth, authController.getMe);
 

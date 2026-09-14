@@ -1,5 +1,4 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import rateLimit from 'express-rate-limit';
 import { ReportsController } from '../controllers/reports.controller';
 import { GetSalesReportUseCase } from '../../application/use-cases/get-sales-report.use-case';
 import { GetProductPerformanceReportUseCase } from '../../application/use-cases/get-product-performance-report.use-case';
@@ -9,17 +8,9 @@ import { ExportReportUseCase } from '../../application/use-cases/export-report.u
 import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
 import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
 import { reportQuerySchema } from '../validators/reports.validator';
+import { reportsLimiter } from '../../../../presentation/http/middleware/rate-limiter.middleware';
 
 const reportsRouter = Router();
-
-// Rate limiter for report calculations (15 requests per 1 minute window)
-const reportsLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 15,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: 'Too many report requests. Please wait a minute before trying again.',
-});
 
 // DI Setup
 const salesReportUseCase = new GetSalesReportUseCase();
