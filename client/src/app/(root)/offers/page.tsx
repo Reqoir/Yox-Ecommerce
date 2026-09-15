@@ -12,6 +12,8 @@ import {
   ChevronRight,
   ArrowUpRight,
 } from 'lucide-react';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { InfiniteScrollStatus } from '@/components/ui/infinite-scroll-status';
 
 type OfferFilterType = 'ALL' | 'LIMITED_TIME' | 'CELEBRATION' | 'CATEGORY' | 'PRODUCT';
 
@@ -56,6 +58,38 @@ export default function OffersPage() {
       return true;
     });
   }, [activeOffers, selectedFilter, searchQuery]);
+
+  // Progressive infinite scroll state for offers
+  const INITIAL_OFFERS_COUNT = 8;
+  const OFFERS_BATCH_SIZE = 6;
+  const [visibleCount, setVisibleCount] = useState(INITIAL_OFFERS_COUNT);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  useEffect(() => {
+    setVisibleCount(INITIAL_OFFERS_COUNT);
+  }, [selectedFilter, searchQuery, activeOffers.length]);
+
+  const hasMore = visibleCount < filteredOffers.length;
+
+  const handleLoadMore = () => {
+    if (!hasMore || isLoadingMore) return;
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((prev) => Math.min(prev + OFFERS_BATCH_SIZE, filteredOffers.length));
+      setIsLoadingMore(false);
+    }, 200);
+  };
+
+  const { sentinelRef } = useInfiniteScroll({
+    hasMore,
+    isLoading: isLoadingMore,
+    onLoadMore: handleLoadMore,
+    rootMargin: '300px',
+  });
+
+  const displayedOffers = useMemo(() => {
+    return filteredOffers.slice(0, visibleCount);
+  }, [filteredOffers, visibleCount]);
 
   // Spotlight carousel offers (offers with banners or top active offers)
   const spotlightOffers = useMemo(() => {
@@ -287,8 +321,9 @@ export default function OffersPage() {
 
         {/* Offers Grid - Optimized for Mobile, Tablet, Laptop, and TV */}
         {!isLoading && filteredOffers.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-            {filteredOffers.map((offer) => {
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+              {displayedOffers.map((offer) => {
               const discountText =
                 offer.discountType === 'PERCENTAGE'
                   ? `${offer.discountValue}% OFF`
@@ -380,7 +415,18 @@ export default function OffersPage() {
               );
             })}
           </div>
-        )}
+
+          {/* Infinite Scroll Sentinel */}
+          {hasMore && <div ref={sentinelRef} className="h-8 w-full" />}
+
+          <InfiniteScrollStatus
+            currentCount={displayedOffers.length}
+            totalCount={filteredOffers.length}
+            isLoadingMore={isLoadingMore}
+            itemLabel="offers"
+          />
+        </>
+      )}
 
         {/* Empty State */}
         {!isLoading && filteredOffers.length === 0 && (

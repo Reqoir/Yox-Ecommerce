@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Star, MessageSquare, X, CheckCircle2, Loader2, Sparkles, ShieldCheck, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { reviewsApi } from '@/lib/api/reviews';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { InfiniteScrollStatus } from '@/components/ui/infinite-scroll-status';
 
 interface ProductReviewsProps {
   productId: string;
@@ -30,9 +32,27 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
   const [title, setTitle] = useState('');
   const [comment, setComment] = useState('');
 
-  const { data: reviewsData, isLoading } = useQuery({
+  const {
+    data: infiniteReviewsData,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
     queryKey: ['reviews', productId],
-    queryFn: () => reviewsApi.getProductReviews(productId, { limit: 10 }),
+    queryFn: async ({ pageParam = 1 }) => {
+      const res = await reviewsApi.getProductReviews(productId, { page: pageParam as number, limit: 6 });
+      return res?.data;
+    },
+    getNextPageParam: (lastPage: any) => {
+      const meta = lastPage?.meta;
+      if (meta && meta.page < meta.totalPages) {
+        return meta.page + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
+    enabled: !!productId,
   });
 
   const { data: eligibility, isLoading: isCheckingEligibility } = useQuery({
@@ -86,8 +106,22 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
   };
 
   const activeRating = hoverRating || rating;
-  const reviews = reviewsData?.data?.data || [];
-  const totalReviews = reviews.length;
+  const reviews = useMemo(() => {
+    return infiniteReviewsData?.pages?.flatMap((page: any) => page?.data || []) || [];
+  }, [infiniteReviewsData]);
+
+  const totalReviews = infiniteReviewsData?.pages?.[0]?.meta?.total ?? reviews.length;
+
+  const { sentinelRef } = useInfiniteScroll({
+    hasMore: Boolean(hasNextPage),
+    isLoading: isFetchingNextPage,
+    onLoadMore: () => {
+      if (hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+    rootMargin: '250px',
+  });
   const avgRating = totalReviews > 0
     ? (reviews.reduce((acc: number, r: any) => acc + (r.rating || 5), 0) / totalReviews).toFixed(1)
     : '5.0';
@@ -200,7 +234,8 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
           <span className="text-xs tracking-wider uppercase font-medium">Loading reviews...</span>
         </div>
       ) : reviews.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {reviews.map((review: any, idx: number) => (
             <div key={review.id || review._id || `review-${idx}`} className="p-5 border border-gray-100 bg-[#FAFAFA] rounded-none flex flex-col justify-between">
               <div>
@@ -244,6 +279,19 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
             </div>
           ))}
         </div>
+
+        {/* Infinite Scroll Sentinel for Reviews */}
+        {hasNextPage && <div ref={sentinelRef} className="h-6 w-full" />}
+
+        <InfiniteScrollStatus
+          currentCount={reviews.length}
+          totalCount={totalReviews}
+          isLoadingMore={isFetchingNextPage}
+          itemLabel="reviews"
+          showProgressBar={false}
+          showBackToTop={false}
+        />
+      </>
       ) : (
         <div className="py-14 border border-dashed border-gray-200 bg-[#FAFAFA] rounded-none flex flex-col items-center justify-center text-center px-4">
           <div className="w-12 h-12 rounded-none bg-white border border-gray-200 flex items-center justify-center text-gray-400 mb-3 shadow-xs">

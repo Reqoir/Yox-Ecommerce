@@ -7,7 +7,7 @@ export const useProducts = () => {
 
   const productsQuery = useQuery({
     queryKey: ['products'],
-    queryFn: () => productApi.getAll(),
+    queryFn: () => productApi.getAll({ limit: 500, all: 'true' }),
   });
 
   const createProductMutation = useMutation({

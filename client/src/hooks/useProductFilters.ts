@@ -41,7 +41,25 @@ export function useProductFilters() {
   // Map category ID to Category Name for display
   const categoryMap = useMemo(() => {
     const map = new Map<string, string>();
-    apiCategories.forEach(c => map.set(c.id, c.name));
+    // Default known mappings as safe fallbacks to prevent flash of raw IDs
+    map.set('6a93cf5adede7faa4aa3a0d4', 'Shirts');
+    map.set('6a93d021dede7faa4aa3a104', 'T-Shirt');
+    map.set('6a93cf81dede7faa4aa3a0dd', 'Pants');
+    map.set('6a93cff6dede7faa4aa3a0fb', 'Jacket');
+    map.set('6a93cfdbdede7faa4aa3a0f2', 'Accessories');
+    map.set('6a93cfa6dede7faa4aa3a0e6', 'Casual Shirts');
+    map.set('6a97e323e1d2403e84e2b157', 'Oxford');
+    map.set('6a97e3852687f0021b4eeb0b', 'Linen');
+
+    apiCategories.forEach(c => {
+      if (c.id) {
+        map.set(c.id, c.name);
+        map.set(c.id.toLowerCase(), c.name);
+      }
+      if (c.slug) {
+        map.set(c.slug.toLowerCase(), c.name);
+      }
+    });
     return map;
   }, [apiCategories]);
 
@@ -107,6 +125,8 @@ export function useProductFilters() {
             description: p.description || p.shortDescription || undefined,
             inStock: p.isActive !== false && (variants.length === 0 || variants.some((v: any) => (v.stock || 0) > 0)),
             href: `/product/${p.id}`,
+            createdAt: p.createdAt,
+            salesCount: p.salesCount || 0,
           });
           return;
         }
@@ -186,6 +206,8 @@ export function useProductFilters() {
             description: p.description || p.shortDescription || undefined,
             inStock: p.isActive !== false && colorVariants.length > 0 && colorVariants.some((v: any) => (v.stock || 0) > 0),
             href: href,
+            createdAt: p.createdAt,
+            salesCount: p.salesCount || 0,
           });
         });
       });

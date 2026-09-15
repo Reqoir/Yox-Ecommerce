@@ -345,7 +345,10 @@ export class ProductRepository implements IProductRepository {
     }
 
     // 11. Pagination & Limits
-    const limit = Math.min(Math.max(parseInt(query.limit) || 12, 1), 100);
+    const isAll = query.all === 'true' || query.all === true || query.limit === 'all';
+    const limit = isAll 
+      ? Math.min(parseInt(query.limit) || 500, 1000)
+      : Math.min(Math.max(parseInt(query.limit) || 100, 1), 1000);
     const page = Math.max(parseInt(query.page) || 1, 1);
     const skip = (page - 1) * limit;
 

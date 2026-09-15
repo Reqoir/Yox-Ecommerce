@@ -237,8 +237,11 @@ export class GetAllProductsUseCase implements IUseCase<any, {
     hasNextPage: boolean;
     hasPrevPage: boolean;
   }> {
+    const isAll = query?.all === 'true' || query?.all === true || query?.limit === 'all';
     const page = Math.max(parseInt(query?.page) || 1, 1);
-    const limit = Math.min(Math.max(parseInt(query?.limit) || 12, 1), 100);
+    const limit = isAll
+      ? Math.min(parseInt(query?.limit) || 500, 1000)
+      : Math.min(Math.max(parseInt(query?.limit) || 100, 1), 1000);
 
     const result = await this.productRepo.findAll({ ...query, page, limit });
     const productIds = result.data.map(p => p.id);

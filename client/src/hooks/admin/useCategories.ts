@@ -7,7 +7,7 @@ export const useCategories = () => {
 
   const categoriesQuery = useQuery({
     queryKey: ['categories'],
-    queryFn: categoryApi.getAll,
+    queryFn: () => categoryApi.getAll({ limit: 500, all: 'true' }),
   });
 
   const createCategoryMutation = useMutation({

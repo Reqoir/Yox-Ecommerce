@@ -6,20 +6,29 @@ import { ordersApi, BackendOrder } from '@/lib/api/orders';
 import { returnsApi, BackendReturn } from '@/lib/api/returns';
 import { Loader2, ShoppingBag, ArrowRight, ChevronRight, PackageCheck, Star } from 'lucide-react';
 import { toast } from 'sonner';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { InfiniteScrollStatus } from '@/components/ui/infinite-scroll-status';
 
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState<BackendOrder[]>([]);
   const [userReturns, setUserReturns] = useState<BackendReturn[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
 
   const fetchOrdersAndReturns = async () => {
     try {
       setIsLoading(true);
       const [orderRes, returnRes] = await Promise.all([
-        ordersApi.getMyOrders(1, 50),
+        ordersApi.getMyOrders(1, 10),
         returnsApi.getMyReturns().catch(() => []),
       ]);
       setOrders(orderRes.orders);
+      setTotalPages(orderRes.totalPages || 1);
+      setTotalOrders(orderRes.total || orderRes.orders.length);
+      setPage(1);
       setUserReturns(returnRes);
     } catch (error: any) {
       console.error('Failed to load orders:', error);
@@ -32,6 +41,31 @@ export default function MyOrdersPage() {
   useEffect(() => {
     fetchOrdersAndReturns();
   }, []);
+
+  const hasMore = page < totalPages;
+
+  const handleLoadMore = async () => {
+    if (!hasMore || isLoadingMore || isLoading) return;
+    try {
+      setIsLoadingMore(true);
+      const nextPage = page + 1;
+      const orderRes = await ordersApi.getMyOrders(nextPage, 10);
+      setOrders((prev) => [...prev, ...orderRes.orders]);
+      setPage(nextPage);
+      setTotalPages(orderRes.totalPages || 1);
+    } catch (err) {
+      console.error('Failed to load more orders:', err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  const { sentinelRef } = useInfiniteScroll({
+    hasMore,
+    isLoading: isLoadingMore,
+    onLoadMore: handleLoadMore,
+    rootMargin: '250px',
+  });
 
   // Helper for computing order receiving details & color coding
   const getOrderReceivingInfo = (order: BackendOrder) => {
@@ -150,7 +184,8 @@ export default function MyOrdersPage() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-4">
+        <>
+          <div className="space-y-4">
           {orders.map((order) => {
             const receivingInfo = getOrderReceivingInfo(order);
             const firstItem = order.items && order.items.length > 0 ? order.items[0] : null;
@@ -231,6 +266,18 @@ export default function MyOrdersPage() {
             );
           })}
         </div>
+
+        {/* Infinite Scroll Sentinel for Orders */}
+        {hasMore && <div ref={sentinelRef} className="h-6 w-full" />}
+
+        <InfiniteScrollStatus
+          currentCount={orders.length}
+          totalCount={totalOrders || orders.length}
+          isLoadingMore={isLoadingMore}
+          itemLabel="orders"
+          showProgressBar={false}
+        />
+      </>
       )}
     </div>
   );

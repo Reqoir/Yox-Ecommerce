@@ -38,7 +38,7 @@ export function FeaturedSection() {
         }
       });
 
-      return combined.slice(0, 10).map((p: any) => {
+      return combined.slice(0, 24).map((p: any) => {
         const variants = p.variants || [];
         const firstVariant = variants.find((v: any) => v.isDefault) || variants[0];
         const validPrices = variants

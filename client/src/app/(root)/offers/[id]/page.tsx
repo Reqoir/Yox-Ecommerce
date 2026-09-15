@@ -29,7 +29,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { offersApi, OfferProductItem } from '@/api/admin/offers';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
-import { Pagination } from '@/components/ui/pagination';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { InfiniteScrollStatus } from '@/components/ui/infinite-scroll-status';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { optimizeCloudinaryUrl } from '@/lib/utils';
@@ -59,9 +60,11 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
   const [sortBy, setSortBy] = useState<SortOption>('featured');
   const [copiedLink, setCopiedLink] = useState(false);
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(12);
+  // Progressive infinite scroll state
+  const INITIAL_OFFER_PRODUCTS = 12;
+  const OFFER_PRODUCTS_BATCH = 12;
+  const [visibleCount, setVisibleCount] = useState(INITIAL_OFFER_PRODUCTS);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Live countdown timer state
   const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; mins: number; secs: number } | null>(null);
@@ -123,16 +126,32 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
     return result;
   }, [rawProducts, searchQuery, sortBy]);
 
-  // Reset to page 1 on search or sort change
+  // Reset to initial count on search or sort change
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, sortBy]);
+    setVisibleCount(INITIAL_OFFER_PRODUCTS);
+  }, [searchQuery, sortBy, rawProducts.length]);
 
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-  const paginatedProducts = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredProducts.slice(start, start + itemsPerPage);
-  }, [filteredProducts, currentPage, itemsPerPage]);
+  const hasMore = visibleCount < filteredProducts.length;
+
+  const handleLoadMore = () => {
+    if (!hasMore || isLoadingMore) return;
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((prev) => Math.min(prev + OFFER_PRODUCTS_BATCH, filteredProducts.length));
+      setIsLoadingMore(false);
+    }, 200);
+  };
+
+  const { sentinelRef } = useInfiniteScroll({
+    hasMore,
+    isLoading: isLoadingMore,
+    onLoadMore: handleLoadMore,
+    rootMargin: '350px',
+  });
+
+  const displayedProducts = useMemo(() => {
+    return filteredProducts.slice(0, visibleCount);
+  }, [filteredProducts, visibleCount]);
 
   const handleShare = () => {
     if (typeof window !== 'undefined') {
@@ -319,7 +338,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
         ) : (
           <div className="space-y-8">
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-3.5 sm:gap-6 lg:gap-7">
-            {paginatedProducts.map((product) => {
+            {displayedProducts.map((product) => {
               const isFav = isFavourite(product.id);
 
               return (
@@ -421,14 +440,14 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
             })}
             </div>
 
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={filteredProducts.length}
-              itemsPerPage={itemsPerPage}
-              onPageChange={setCurrentPage}
-              onItemsPerPageChange={setItemsPerPage}
-              itemsPerPageOptions={[12, 24, 48]}
+            {/* Infinite Scroll Sentinel */}
+            {hasMore && <div ref={sentinelRef} className="h-8 w-full" />}
+
+            <InfiniteScrollStatus
+              currentCount={displayedProducts.length}
+              totalCount={filteredProducts.length}
+              isLoadingMore={isLoadingMore}
+              itemLabel="products on offer"
             />
           </div>
         )}

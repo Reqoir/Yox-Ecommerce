@@ -14,6 +14,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { FilterSidebar } from '@/components/features/shop/filter-sidebar';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { InfiniteScrollStatus } from '@/components/ui/infinite-scroll-status';
+
+const INITIAL_PRODUCTS_COUNT = 20;
+const PRODUCTS_BATCH_SIZE = 15;
 
 interface ProductGridProps {
   onOpenFilter?: () => void;
@@ -41,6 +46,37 @@ export function ProductGrid({ onOpenFilter, onOpenSort }: ProductGridProps = {})
   const { categories: apiCategories } = useCategories();
   const { brands: apiBrands } = useBrands();
   const { isFavourite, toggleFavourite } = useFavouritesStore();
+
+  // Infinite scroll progressive pagination state
+  const [visibleCount, setVisibleCount] = React.useState(INITIAL_PRODUCTS_COUNT);
+  const [isLoadingMore, setIsLoadingMore] = React.useState(false);
+
+  // Reset pagination count on any filter / category / search / sort change
+  React.useEffect(() => {
+    setVisibleCount(INITIAL_PRODUCTS_COUNT);
+  }, [searchQuery, category, subCategory, brand, sortBy, filteredProducts.length]);
+
+  const hasMore = visibleCount < filteredProducts.length;
+
+  const handleLoadMore = React.useCallback(() => {
+    if (!hasMore || isLoadingMore) return;
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((prev) => Math.min(prev + PRODUCTS_BATCH_SIZE, filteredProducts.length));
+      setIsLoadingMore(false);
+    }, 200);
+  }, [hasMore, isLoadingMore, filteredProducts.length]);
+
+  const { sentinelRef } = useInfiniteScroll({
+    hasMore,
+    isLoading: isLoadingMore,
+    onLoadMore: handleLoadMore,
+    rootMargin: '350px',
+  });
+
+  const displayedProducts = React.useMemo(() => {
+    return filteredProducts.slice(0, visibleCount);
+  }, [filteredProducts, visibleCount]);
 
   const [isSortDropdownOpen, setIsSortDropdownOpen] = React.useState(false);
   const sortDropdownRef = React.useRef<HTMLDivElement>(null);
@@ -401,8 +437,9 @@ export function ProductGrid({ onOpenFilter, onOpenSort }: ProductGridProps = {})
           </button>
         </div>
       ) : filteredProducts.length > 0 ? (
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-2.5 sm:gap-x-4 lg:gap-x-5 gap-y-6 sm:gap-y-8 lg:gap-y-10 px-0.5 sm:px-1 lg:px-0">
-          {filteredProducts.map((product) => {
+        <>
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-2.5 sm:gap-x-4 lg:gap-x-5 gap-y-6 sm:gap-y-8 lg:gap-y-10 px-0.5 sm:px-1 lg:px-0">
+            {displayedProducts.map((product) => {
             const prodIdStr = String(product.productId || product.id);
             const cardColor = product.currentColor || null;
             const isFav = isFavourite(prodIdStr, cardColor);
@@ -533,7 +570,19 @@ export function ProductGrid({ onOpenFilter, onOpenSort }: ProductGridProps = {})
             );
           })}
         </div>
-      ) : (
+
+        {/* Infinite Scroll Sentinel for Next Batch */}
+        {hasMore && <div ref={sentinelRef} className="h-8 w-full" />}
+
+        {/* Scroll Progress & Status */}
+        <InfiniteScrollStatus
+          currentCount={displayedProducts.length}
+          totalCount={filteredProducts.length}
+          isLoadingMore={isLoadingMore}
+          itemLabel="products"
+        />
+      </>
+    ) : (
         /* Empty State */
         <div className="w-full py-16 px-4 flex flex-col items-center justify-center text-center bg-gray-50/50 rounded-none border border-dashed border-gray-200">
           <div className="w-14 h-14 bg-gray-100 rounded-none flex items-center justify-center text-gray-400 mb-4">

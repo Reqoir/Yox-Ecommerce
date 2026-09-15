@@ -5,19 +5,25 @@ import Link from 'next/link';
 import { reviewsApi } from '@/lib/api/reviews';
 import { Loader2, MessageSquare, Star, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { InfiniteScrollStatus } from '@/components/ui/infinite-scroll-status';
 
 export default function MyReviewsPage() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const fetchReviews = async () => {
+  const fetchInitialReviews = async () => {
     try {
       setIsLoading(true);
-      const data = await reviewsApi.getMyReviews({ page, limit: 10 });
+      const data = await reviewsApi.getMyReviews({ page: 1, limit: 8 });
       setReviews(data.reviews || []);
       setTotalPages(data.totalPages || 1);
+      setTotalCount(data.total || data.reviews?.length || 0);
+      setPage(1);
     } catch (error: any) {
       console.error('Failed to load your reviews:', error);
       toast.error(error?.response?.data?.message || 'Failed to fetch your reviews.');
@@ -27,8 +33,34 @@ export default function MyReviewsPage() {
   };
 
   useEffect(() => {
-    fetchReviews();
-  }, [page]);
+    fetchInitialReviews();
+  }, []);
+
+  const hasMore = page < totalPages;
+
+  const handleLoadMore = async () => {
+    if (!hasMore || isLoadingMore || isLoading) return;
+    try {
+      setIsLoadingMore(true);
+      const nextPage = page + 1;
+      const data = await reviewsApi.getMyReviews({ page: nextPage, limit: 8 });
+      const nextReviews = data.reviews || [];
+      setReviews((prev) => [...prev, ...nextReviews]);
+      setPage(nextPage);
+      setTotalPages(data.totalPages || 1);
+    } catch (err) {
+      console.error('Failed to load more reviews:', err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  const { sentinelRef } = useInfiniteScroll({
+    hasMore,
+    isLoading: isLoadingMore,
+    onLoadMore: handleLoadMore,
+    rootMargin: '250px',
+  });
 
   const renderStars = (rating: number) => {
     return (
@@ -128,24 +160,15 @@ export default function MyReviewsPage() {
             </div>
           ))}
           
-          {totalPages > 1 && (
-            <div className="flex justify-center gap-2 pt-4">
-              <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-4 py-2 text-xs font-bold bg-white border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="px-4 py-2 text-xs font-bold bg-white border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          )}
+          {hasMore && <div ref={sentinelRef} className="h-6 w-full" />}
+
+          <InfiniteScrollStatus
+            currentCount={reviews.length}
+            totalCount={totalCount || reviews.length}
+            isLoadingMore={isLoadingMore}
+            itemLabel="reviews"
+            showProgressBar={false}
+          />
         </div>
       )}
     </div>

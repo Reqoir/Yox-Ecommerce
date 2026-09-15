@@ -65,12 +65,13 @@ export class CategoryRepository implements ICategoryRepository {
       filter.$text = { $search: query.search };
     }
 
-    const limit = parseInt(query.limit) || 10;
+    const isAll = query.all === 'true' || query.all === true;
+    const limit = isAll || !query.limit ? 1000 : Math.min(parseInt(query.limit) || 1000, 1000);
     const page = parseInt(query.page) || 1;
     const skip = (page - 1) * limit;
 
     const [docs, total] = await Promise.all([
-      CategoryModel.find(filter).sort({ sortOrder: 1, createdAt: -1 }).skip(skip).limit(limit).exec(),
+      CategoryModel.find(filter).sort({ sortOrder: 1, name: 1 }).skip(skip).limit(limit).exec(),
       CategoryModel.countDocuments(filter).exec(),
     ]);
 

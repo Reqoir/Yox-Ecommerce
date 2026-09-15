@@ -9,6 +9,8 @@ import { EmptyFavourites } from '@/components/features/favourites/empty-favourit
 import { Trash2, ArrowUpDown } from 'lucide-react';
 import { BsHandbag } from 'react-icons/bs';
 import { toast } from 'sonner';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { InfiniteScrollStatus } from '@/components/ui/infinite-scroll-status';
 
 type SortOption = 'default' | 'price-low' | 'price-high';
 
@@ -32,6 +34,38 @@ export default function FavouritesPage() {
     }
     return list;
   }, [items, sortBy]);
+
+  // Progressive infinite scroll state
+  const INITIAL_FAVOURITES_COUNT = 12;
+  const FAVOURITES_BATCH_SIZE = 8;
+  const [visibleCount, setVisibleCount] = useState(INITIAL_FAVOURITES_COUNT);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  useEffect(() => {
+    setVisibleCount(INITIAL_FAVOURITES_COUNT);
+  }, [sortBy, items?.length]);
+
+  const hasMore = visibleCount < sortedItems.length;
+
+  const handleLoadMore = () => {
+    if (!hasMore || isLoadingMore) return;
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((prev) => Math.min(prev + FAVOURITES_BATCH_SIZE, sortedItems.length));
+      setIsLoadingMore(false);
+    }, 200);
+  };
+
+  const { sentinelRef } = useInfiniteScroll({
+    hasMore,
+    isLoading: isLoadingMore,
+    onLoadMore: handleLoadMore,
+    rootMargin: '250px',
+  });
+
+  const displayedItems = useMemo(() => {
+    return sortedItems.slice(0, visibleCount);
+  }, [sortedItems, visibleCount]);
 
   const inStockCount = useMemo(() => {
     return items?.filter((i) => i.inStock !== false).length || 0;
@@ -163,10 +197,21 @@ export default function FavouritesPage() {
 
       {/* Favourites Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
-        {sortedItems.map((item) => (
+        {displayedItems.map((item) => (
           <FavouriteCard key={item.id} item={item} />
         ))}
       </div>
+
+      {/* Infinite Scroll Sentinel */}
+      {hasMore && <div ref={sentinelRef} className="h-6 w-full" />}
+
+      <InfiniteScrollStatus
+        currentCount={displayedItems.length}
+        totalCount={sortedItems.length}
+        isLoadingMore={isLoadingMore}
+        itemLabel="favourite items"
+        showProgressBar={false}
+      />
     </div>
   );
 }

@@ -45,6 +45,7 @@ export interface Product {
   offerSavings?: number;
   offerDiscountPct?: number;
   createdAt?: string | Date;
+  salesCount?: number;
 }
 
 export type SortOption = 

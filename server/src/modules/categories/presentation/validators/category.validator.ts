@@ -28,4 +28,6 @@ export const categoryListQuerySchema = z.object({
   search: z.string().optional(),
   isActive: z.string().transform(val => val === 'true').optional(),
   parentCategoryId: z.string().optional(),
+  all: z.union([z.string(), z.boolean()]).optional(),
 });
+
