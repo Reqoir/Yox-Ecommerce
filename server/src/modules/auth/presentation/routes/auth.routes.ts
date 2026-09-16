@@ -16,6 +16,7 @@ import { RefreshTokenUseCase } from '../../application/use-cases/refresh-token.u
 import { GetMeUseCase } from '../../application/use-cases/get-me.use-case';
 import { ForgotPasswordUseCase } from '../../application/use-cases/forgot-password.use-case';
 import { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
+import { ChangePasswordUseCase } from '../../application/use-cases/change-password.use-case';
 import { RoleRepository } from '../../../roles/infrastructure/repositories/role.repository';
 import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
 import { authLimiter } from '../../../../presentation/http/middleware/rate-limiter.middleware';
@@ -34,6 +35,7 @@ const refreshTokenUseCase = new RefreshTokenUseCase(userRepository);
 const getMeUseCase = new GetMeUseCase(userRepository, roleRepository);
 const forgotPasswordUseCase = new ForgotPasswordUseCase(userRepository);
 const resetPasswordUseCase = new ResetPasswordUseCase(userRepository);
+const changePasswordUseCase = new ChangePasswordUseCase(userRepository);
 
 // 3. Controllers (Presentation)
 const authController = new AuthController(
@@ -42,7 +44,8 @@ const authController = new AuthController(
   refreshTokenUseCase,
   getMeUseCase,
   forgotPasswordUseCase,
-  resetPasswordUseCase
+  resetPasswordUseCase,
+  changePasswordUseCase
 );
 // ----------------------------------
 
@@ -53,6 +56,7 @@ router.post('/login', authLimiter, authController.login);
 router.post('/refresh', authController.refreshToken);
 router.post('/forgot-password', authLimiter, authController.forgotPassword);
 router.post('/reset-password', authLimiter, authController.resetPassword);
+router.post('/change-password', requireAuth, authLimiter, authController.changePassword);
 router.post('/logout', authController.logout);
 router.get('/me', requireAuth, authController.getMe);
 

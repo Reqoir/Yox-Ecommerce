@@ -17,7 +17,8 @@ import { RefreshTokenUseCase } from '../../application/use-cases/refresh-token.u
 import { GetMeUseCase } from '../../application/use-cases/get-me.use-case';
 import { ForgotPasswordUseCase } from '../../application/use-cases/forgot-password.use-case';
 import { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
-import { loginSchema, forgotPasswordSchema, resetPasswordSchema } from '../validators/auth.validator';
+import { ChangePasswordUseCase } from '../../application/use-cases/change-password.use-case';
+import { loginSchema, forgotPasswordSchema, resetPasswordSchema, changePasswordSchema } from '../validators/auth.validator';
 import { setAuthCookies, clearAuthCookies } from '@shared/utils/cookie.helper';
 import { ApiError } from '@shared/utils/api-error.util';
 
@@ -28,7 +29,8 @@ export class AuthController {
     private readonly refreshTokenUseCase: RefreshTokenUseCase,
     private readonly getMeUseCase: GetMeUseCase,
     private readonly forgotPasswordUseCase: ForgotPasswordUseCase,
-    private readonly resetPasswordUseCase: ResetPasswordUseCase
+    private readonly resetPasswordUseCase: ResetPasswordUseCase,
+    private readonly changePasswordUseCase: ChangePasswordUseCase
   ) {}
 
   /**
@@ -158,6 +160,26 @@ export class AuthController {
       await this.resetPasswordUseCase.execute(data);
 
       ApiResponse.success(res, null, 'Password reset successfully', HttpStatus.OK);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * POST /api/v1/auth/change-password
+   * Authenticated user changes their own password.
+   */
+  public changePassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        throw ApiError.unauthorized('User not authenticated');
+      }
+
+      const validBody = validateRequest(req, changePasswordSchema, 'body');
+      const result = await this.changePasswordUseCase.execute(userId, validBody);
+
+      ApiResponse.success(res, null, result.message, HttpStatus.OK);
     } catch (error) {
       next(error);
     }
