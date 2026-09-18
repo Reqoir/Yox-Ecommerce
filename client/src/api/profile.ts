@@ -3,7 +3,9 @@ import { User } from '@/store/useAuthStore';
 
 export interface UpdateProfileDto {
   fullName?: string;
+  email?: string;
   phone?: string;
+  verificationToken?: string;
 }
 
 export const profileApi = {

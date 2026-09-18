@@ -19,17 +19,36 @@ export class LoginUseCase {
   ) {}
 
   public async execute(data: LoginRequestDTO): Promise<LoginResponseDTO> {
-    // 1. Find user by email
-    const email = data.email.toLowerCase().trim();
-    const user = await this.userRepository.findByEmail(email);
-    if (!user) {
-      throw ApiError.unauthorized('Invalid email or password');
+    // 1. Find user by email or phone number
+    const identifier = data.email.trim();
+    let user = null;
+
+    if (identifier.includes('@')) {
+      const emailUser = await this.userRepository.findByEmail(identifier.toLowerCase());
+      if (emailUser && (await comparePassword(data.password, emailUser.password))) {
+        user = emailUser;
+      }
+    } else {
+      // Find all candidates with this phone number and match password
+      const candidateUsers = await this.userRepository.findAllByPhone(identifier);
+      for (const candidate of candidateUsers) {
+        if (await comparePassword(data.password, candidate.password)) {
+          user = candidate;
+          break;
+        }
+      }
+
+      // Fallback: check as email in case of non-standard email
+      if (!user) {
+        const emailUser = await this.userRepository.findByEmail(identifier.toLowerCase());
+        if (emailUser && (await comparePassword(data.password, emailUser.password))) {
+          user = emailUser;
+        }
+      }
     }
 
-    // 2. Verify password
-    const isPasswordValid = await comparePassword(data.password, user.password);
-    if (!isPasswordValid) {
-      throw ApiError.unauthorized('Invalid email or password');
+    if (!user) {
+      throw ApiError.unauthorized('Invalid email/mobile or password');
     }
 
     if (!user.canLogin()) {
@@ -39,7 +58,7 @@ export class LoginUseCase {
     // 3. Generate tokens
     const tokenPayload = {
       sub: user.id,
-      email: user.email,
+      email: user.email || '',
       role: user.roleId,
     };
 

@@ -155,7 +155,55 @@ export class UserRepository
   }
 
   public async existsByPhone(phone: string): Promise<boolean> {
-    const count = await this.model.countDocuments({ phone } as FilterQuery<IUserDocument>).exec();
+    const trimmed = phone.trim();
+    const digitsOnly = trimmed.replace(/\D/g, '');
+    const last10 = digitsOnly.slice(-10);
+
+    const orConditions: any[] = [{ phone: trimmed }];
+    if (digitsOnly) orConditions.push({ phone: digitsOnly });
+    if (last10.length === 10) {
+      orConditions.push({ phone: { $regex: new RegExp(`${last10}$`) } });
+    }
+
+    const count = await this.model.countDocuments({
+      $or: orConditions,
+    } as FilterQuery<IUserDocument>).exec();
     return count > 0;
+  }
+
+  public async findByPhone(phone: string): Promise<User | null> {
+    const trimmed = phone.trim();
+    const digitsOnly = trimmed.replace(/\D/g, '');
+    const last10 = digitsOnly.slice(-10);
+
+    const orConditions: any[] = [{ phone: trimmed }];
+    if (digitsOnly) orConditions.push({ phone: digitsOnly });
+    if (last10.length === 10) {
+      orConditions.push({ phone: { $regex: new RegExp(`${last10}$`) } });
+    }
+
+    const doc = await this.model.findOne({
+      $or: orConditions,
+    } as FilterQuery<IUserDocument>).exec();
+
+    return doc ? this.toDomain(doc) : null;
+  }
+
+  public async findAllByPhone(phone: string): Promise<User[]> {
+    const trimmed = phone.trim();
+    const digitsOnly = trimmed.replace(/\D/g, '');
+    const last10 = digitsOnly.slice(-10);
+
+    const orConditions: any[] = [{ phone: trimmed }];
+    if (digitsOnly) orConditions.push({ phone: digitsOnly });
+    if (last10.length === 10) {
+      orConditions.push({ phone: { $regex: new RegExp(`${last10}$`) } });
+    }
+
+    const docs = await this.model.find({
+      $or: orConditions,
+    } as FilterQuery<IUserDocument>).exec();
+
+    return docs.map((doc) => this.toDomain(doc));
   }
 }

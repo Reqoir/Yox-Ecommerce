@@ -30,4 +30,18 @@ export interface IUserRepository extends IBaseRepository<User> {
    * @returns boolean true if exists
    */
   existsByPhone(phone: string): Promise<boolean>;
+
+  /**
+   * Finds a user by their phone number.
+   * @param phone The phone number to search for
+   * @returns The User entity if found, null otherwise
+   */
+  findByPhone(phone: string): Promise<User | null>;
+
+  /**
+   * Finds all users sharing a phone number.
+   * @param phone The phone number to search for
+   * @returns Array of User entities
+   */
+  findAllByPhone(phone: string): Promise<User[]>;
 }

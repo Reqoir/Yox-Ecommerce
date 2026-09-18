@@ -7,17 +7,17 @@
 
 export interface RegisterUserRequestDTO {
   fullName: string;
-  email: string;
+  email?: string;
   password: string;
-  phone: string;
-  verificationToken: string;
+  phone?: string;
+  verificationToken?: string;
 }
 
 export interface RegisterUserResponseDTO {
   user: {
     id: string;
     fullName: string;
-    email: string;
+    email: string | null;
     roleId: string;
     permissions: string[];
     phone?: string;

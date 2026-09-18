@@ -13,12 +13,25 @@ import { ApiResponse } from '@shared/utils/api-response.util';
 import { HttpStatus } from '@shared/constants/http-status.constants';
 
 import { LoginUseCase } from '../../application/use-cases/login.use-case';
+import { LoginPhoneUseCase } from '../../application/use-cases/login-phone.use-case';
+import { LoginPhoneSelectUseCase } from '../../application/use-cases/login-phone-select.use-case';
 import { RefreshTokenUseCase } from '../../application/use-cases/refresh-token.use-case';
 import { GetMeUseCase } from '../../application/use-cases/get-me.use-case';
 import { ForgotPasswordUseCase } from '../../application/use-cases/forgot-password.use-case';
 import { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
+import { ResetPasswordPhoneVerifyUseCase } from '../../application/use-cases/reset-password-phone-verify.use-case';
+import { ResetPasswordPhoneConfirmUseCase } from '../../application/use-cases/reset-password-phone-confirm.use-case';
 import { ChangePasswordUseCase } from '../../application/use-cases/change-password.use-case';
-import { loginSchema, forgotPasswordSchema, resetPasswordSchema, changePasswordSchema } from '../validators/auth.validator';
+import {
+  loginSchema,
+  loginPhoneSchema,
+  loginPhoneSelectSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  resetPasswordPhoneVerifySchema,
+  resetPasswordPhoneConfirmSchema,
+  changePasswordSchema,
+} from '../validators/auth.validator';
 import { setAuthCookies, clearAuthCookies } from '@shared/utils/cookie.helper';
 import { ApiError } from '@shared/utils/api-error.util';
 
@@ -26,10 +39,14 @@ export class AuthController {
   constructor(
     private readonly registerUseCase: RegisterUserUseCase,
     private readonly loginUseCase: LoginUseCase,
+    private readonly loginPhoneUseCase: LoginPhoneUseCase,
+    private readonly loginPhoneSelectUseCase: LoginPhoneSelectUseCase,
     private readonly refreshTokenUseCase: RefreshTokenUseCase,
     private readonly getMeUseCase: GetMeUseCase,
     private readonly forgotPasswordUseCase: ForgotPasswordUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
+    private readonly resetPasswordPhoneVerifyUseCase: ResetPasswordPhoneVerifyUseCase,
+    private readonly resetPasswordPhoneConfirmUseCase: ResetPasswordPhoneConfirmUseCase,
     private readonly changePasswordUseCase: ChangePasswordUseCase
   ) {}
 
@@ -69,6 +86,65 @@ export class AuthController {
       const validBody = validateRequest(req, loginSchema, 'body');
 
       const result = await this.loginUseCase.execute(validBody);
+
+      // Set cookies securely
+      setAuthCookies(res, result.accessToken, result.refreshToken);
+
+      ApiResponse.success(
+        res,
+        { user: result.user },
+        'Logged in successfully',
+        HttpStatus.OK
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * POST /api/v1/auth/login-phone
+   * Authenticates a user via mobile number + MSG91 OTP.
+   * If multiple accounts share the phone number, returns candidate accounts for selection.
+   */
+  public loginWithPhone = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const validBody = validateRequest(req, loginPhoneSchema, 'body');
+
+      const result = await this.loginPhoneUseCase.execute(validBody);
+
+      if (result.multipleAccounts) {
+        ApiResponse.success(
+          res,
+          result,
+          'Multiple accounts found for this mobile number',
+          HttpStatus.OK
+        );
+        return;
+      }
+
+      // Single account: set cookies securely
+      setAuthCookies(res, result.accessToken, result.refreshToken);
+
+      ApiResponse.success(
+        res,
+        { user: result.user },
+        'Logged in successfully',
+        HttpStatus.OK
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * POST /api/v1/auth/login-phone-select
+   * Completes login when a user chooses an account from multiple accounts sharing a phone number.
+   */
+  public selectPhoneAccount = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const validBody = validateRequest(req, loginPhoneSelectSchema, 'body');
+
+      const result = await this.loginPhoneSelectUseCase.execute(validBody);
 
       // Set cookies securely
       setAuthCookies(res, result.accessToken, result.refreshToken);
@@ -160,6 +236,36 @@ export class AuthController {
       await this.resetPasswordUseCase.execute(data);
 
       ApiResponse.success(res, null, 'Password reset successfully', HttpStatus.OK);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * POST /api/v1/auth/reset-password-phone-verify
+   * Verifies mobile OTP for password reset and returns candidate accounts if multiple exist.
+   */
+  public resetPasswordPhoneVerify = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const validBody = validateRequest(req, resetPasswordPhoneVerifySchema, 'body');
+      const result = await this.resetPasswordPhoneVerifyUseCase.execute(validBody);
+
+      ApiResponse.success(res, result, 'Mobile OTP verified successfully', HttpStatus.OK);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * POST /api/v1/auth/reset-password-phone-confirm
+   * Resets password strictly for the specified userId using verified resetToken.
+   */
+  public resetPasswordPhoneConfirm = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const validBody = validateRequest(req, resetPasswordPhoneConfirmSchema, 'body');
+      const result = await this.resetPasswordPhoneConfirmUseCase.execute(validBody);
+
+      ApiResponse.success(res, null, result.message, HttpStatus.OK);
     } catch (error) {
       next(error);
     }

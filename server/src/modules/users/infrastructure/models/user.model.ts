@@ -34,8 +34,10 @@ const userSchema = new Schema<IUserDocument>(
     },
     email: {
       type: String,
-      required: true,
+      required: false,
       unique: true,
+      sparse: true,
+      default: null,
       lowercase: true,
       trim: true,
     },

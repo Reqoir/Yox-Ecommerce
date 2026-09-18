@@ -35,7 +35,7 @@ export class User extends BaseEntity<UserProps> {
 
   // Getters for properties that other layers might need to read
   get fullName(): string { return this._props.fullName; }
-  get email(): string { return this._props.email; }
+  get email(): string { return this._props.email || ''; }
   get password(): string { return this._props.password; }
   get roleId(): string { return this._props.roleId; }
   get status(): UserStatus { return this._props.status; }
@@ -51,16 +51,19 @@ export class User extends BaseEntity<UserProps> {
    * Factory method to create a NEW user (from registration).
    * Enforces business rules (e.g. setting defaults).
    */
-  public static async create(props: Omit<UserProps, 'id' | 'createdAt' | 'updatedAt' | 'isEmailVerified' | 'isPhoneVerified' | 'status'> & { isPhoneVerified?: boolean }): Promise<User> {
+  public static async create(props: Omit<UserProps, 'id' | 'createdAt' | 'updatedAt' | 'isEmailVerified' | 'isPhoneVerified' | 'status' | 'email'> & { email?: string | null; isPhoneVerified?: boolean }): Promise<User> {
     // Hash password immediately upon creation
     const hashedPassword = await hashPassword(props.password);
+    const resolvedEmail = props.email && props.email.trim()
+      ? props.email.toLowerCase().trim()
+      : (props.phone ? `${props.phone.replace(/\D/g, '')}@user.yox.internal` : '');
 
     return new User({
       id: '', // Empty because it will be set by DB upon save
       createdAt: new Date(),
       updatedAt: new Date(),
       fullName: props.fullName,
-      email: props.email.toLowerCase().trim(),
+      email: resolvedEmail,
       password: hashedPassword,
       phone: props.phone || null,
       profileImage: props.profileImage || null,
@@ -91,10 +94,18 @@ export class User extends BaseEntity<UserProps> {
   /**
    * Updates user profile fields safely.
    */
-  public updateProfile(data: { fullName?: string; phone?: string; profileImage?: string }): void {
+  public updateProfile(data: {
+    fullName?: string;
+    email?: string;
+    phone?: string | null;
+    profileImage?: string | null;
+    isPhoneVerified?: boolean;
+  }): void {
     if (data.fullName) this._props.fullName = data.fullName;
+    if (data.email !== undefined && data.email !== null) this._props.email = data.email;
     if (data.phone !== undefined) this._props.phone = data.phone;
     if (data.profileImage !== undefined) this._props.profileImage = data.profileImage;
+    if (data.isPhoneVerified !== undefined) this._props.isPhoneVerified = data.isPhoneVerified;
     
     this._props.updatedAt = new Date();
   }

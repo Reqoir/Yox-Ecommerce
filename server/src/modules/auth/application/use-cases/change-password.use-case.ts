@@ -25,6 +25,9 @@ export class ChangePasswordUseCase {
     }
 
     // 3. Verify current password
+    if (!user.password) {
+      throw ApiError.badRequest('No password is set on this account. Please use Mobile OTP verification to set a password.');
+    }
     const isCurrentValid = await comparePassword(data.currentPassword, user.password);
     if (!isCurrentValid) {
       throw ApiError.badRequest('Current password is incorrect');

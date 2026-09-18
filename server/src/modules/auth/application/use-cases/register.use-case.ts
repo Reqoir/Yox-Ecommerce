@@ -22,20 +22,34 @@ export class RegisterUserUseCase implements IUseCase<RegisterUserRequestDTO, Reg
   ) {}
 
   async execute(input: RegisterUserRequestDTO): Promise<RegisterUserResponseDTO> {
-    // 1. Check if email is already taken
-    const exists = await this.userRepository.existsByEmail(input.email);
-    if (exists) {
-      throw new ConflictError(`User with email ${input.email} already exists`);
+    const rawEmail = input.email ? input.email.trim().toLowerCase() : null;
+    const rawPhone = input.phone ? input.phone.trim() : null;
+
+    // 1. Check if email is provided and already taken
+    if (rawEmail) {
+      const exists = await this.userRepository.existsByEmail(rawEmail);
+      if (exists) {
+        throw new ConflictError(`User with email ${rawEmail} already exists`);
+      }
     }
 
-    // 1.1 Check if mobile number is already taken
-    const phoneExists = await this.userRepository.existsByPhone(input.phone);
-    if (phoneExists) {
-      throw new ConflictError(`User with mobile number ${input.phone} already exists`);
+    // 1.1 If verificationToken is provided, verify with MSG91
+    let isPhoneVerified = false;
+    if (input.verificationToken && rawPhone) {
+      await msg91OtpService.verifyToken(input.verificationToken, rawPhone);
+      isPhoneVerified = true;
     }
 
-    // 1.2 Verify MSG91 mobile verification access-token
-    await msg91OtpService.verifyToken(input.verificationToken, input.phone);
+    // 1.2 Resolve unique email handle if not provided
+    let resolvedEmail = rawEmail;
+    if (!resolvedEmail && rawPhone) {
+      const cleanDigits = rawPhone.replace(/\D/g, '');
+      const existing = await this.userRepository.findAllByPhone(rawPhone);
+      resolvedEmail =
+        existing.length > 0
+          ? `${cleanDigits}_${existing.length + 1}@user.yox.internal`
+          : `${cleanDigits}@user.yox.internal`;
+    }
 
     // 1.5 Get default Customer role
     const customerRole = await this.roleRepository.findByName('CUSTOMER');
@@ -43,17 +57,17 @@ export class RegisterUserUseCase implements IUseCase<RegisterUserRequestDTO, Reg
       throw new NotFoundError('Default customer role not found in the system');
     }
 
-    // 2. Create the Domain Entity (applies business rules & hashes password)
+    // 2. Create Domain Entity
     const userEntity = await User.create({
-      fullName: input.fullName,
-      email: input.email,
+      fullName: input.fullName.trim(),
+      email: resolvedEmail,
       password: input.password,
-      phone: input.phone,
-      isPhoneVerified: true,
+      phone: rawPhone,
+      isPhoneVerified,
       roleId: customerRole.id,
     });
 
-    // 3. Persist to Infrastructure (Database)
+    // 3. Persist to Database
     const savedUser = await this.userRepository.create(userEntity);
 
     // 🔔 Real-time staff notification for new user registration
@@ -62,11 +76,12 @@ export class RegisterUserUseCase implements IUseCase<RegisterUserRequestDTO, Reg
         userId: null,
         type: 'NEW_USER',
         title: '👤 New Customer Registered!',
-        message: `${savedUser.fullName} (${savedUser.email}) just created an account.`,
+        message: `${savedUser.fullName} (${savedUser.email || savedUser.phone || 'New Customer'}) just created an account.`,
         metadata: {
           userId: savedUser.id,
           fullName: savedUser.fullName,
-          email: savedUser.email,
+          email: savedUser.email || undefined,
+          phone: savedUser.phone || undefined,
         },
       });
     } catch {
@@ -76,7 +91,7 @@ export class RegisterUserUseCase implements IUseCase<RegisterUserRequestDTO, Reg
     // 4. Generate auth tokens
     const tokenPayload = {
       sub: savedUser.id,
-      email: savedUser.email,
+      email: savedUser.email || '',
       role: savedUser.roleId,
     };
 
@@ -88,7 +103,7 @@ export class RegisterUserUseCase implements IUseCase<RegisterUserRequestDTO, Reg
       user: {
         id: savedUser.id,
         fullName: savedUser.fullName,
-        email: savedUser.email,
+        email: savedUser.email ?? null,
         roleId: savedUser.roleId,
         permissions: customerRole.permissions || [],
         phone: savedUser.phone ?? undefined,
