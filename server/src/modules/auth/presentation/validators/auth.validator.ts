@@ -28,7 +28,8 @@ export const registerSchema = z.object({
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).*$/,
       'Password must contain an uppercase letter, a lowercase letter, a number, and a special character'
     ),
-  phone: z.string().min(5, 'Phone must be at least 5 characters').max(20).optional(),
+  phone: z.string().min(10, 'Valid mobile number is required').max(20),
+  verificationToken: z.string().min(1, 'Mobile verification token is required'),
 });
 
 export const loginSchema = z.object({

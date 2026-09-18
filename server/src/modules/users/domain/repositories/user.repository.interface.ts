@@ -23,4 +23,11 @@ export interface IUserRepository extends IBaseRepository<User> {
    * @returns boolean true if exists
    */
   existsByEmail(email: string): Promise<boolean>;
+
+  /**
+   * Check if a phone number exists without loading the full entity
+   * @param phone The phone to check
+   * @returns boolean true if exists
+   */
+  existsByPhone(phone: string): Promise<boolean>;
 }

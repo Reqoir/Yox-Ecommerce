@@ -153,4 +153,9 @@ export class UserRepository
     const count = await this.model.countDocuments({ email } as FilterQuery<IUserDocument>).exec();
     return count > 0;
   }
+
+  public async existsByPhone(phone: string): Promise<boolean> {
+    const count = await this.model.countDocuments({ phone } as FilterQuery<IUserDocument>).exec();
+    return count > 0;
+  }
 }

@@ -13,6 +13,7 @@ import { User } from '../../../users/domain/entities/user.entity';
 import { RegisterUserRequestDTO, RegisterUserResponseDTO } from '../dtos/register.dto';
 import { signAccessToken, signRefreshToken } from '@shared/utils/jwt.helper';
 import { NotificationService } from '../../../notifications/application/services/notification.service';
+import { msg91OtpService } from '../../infrastructure/services/msg91-otp.service';
 
 export class RegisterUserUseCase implements IUseCase<RegisterUserRequestDTO, RegisterUserResponseDTO> {
   constructor(
@@ -27,6 +28,15 @@ export class RegisterUserUseCase implements IUseCase<RegisterUserRequestDTO, Reg
       throw new ConflictError(`User with email ${input.email} already exists`);
     }
 
+    // 1.1 Check if mobile number is already taken
+    const phoneExists = await this.userRepository.existsByPhone(input.phone);
+    if (phoneExists) {
+      throw new ConflictError(`User with mobile number ${input.phone} already exists`);
+    }
+
+    // 1.2 Verify MSG91 mobile verification access-token
+    await msg91OtpService.verifyToken(input.verificationToken, input.phone);
+
     // 1.5 Get default Customer role
     const customerRole = await this.roleRepository.findByName('CUSTOMER');
     if (!customerRole) {
@@ -38,7 +48,8 @@ export class RegisterUserUseCase implements IUseCase<RegisterUserRequestDTO, Reg
       fullName: input.fullName,
       email: input.email,
       password: input.password,
-      phone: input.phone, // Optional
+      phone: input.phone,
+      isPhoneVerified: true,
       roleId: customerRole.id,
     });
 

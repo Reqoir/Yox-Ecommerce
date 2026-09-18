@@ -9,7 +9,8 @@ export interface RegisterUserRequestDTO {
   fullName: string;
   email: string;
   password: string;
-  phone?: string;
+  phone: string;
+  verificationToken: string;
 }
 
 export interface RegisterUserResponseDTO {

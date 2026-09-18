@@ -51,7 +51,7 @@ export class User extends BaseEntity<UserProps> {
    * Factory method to create a NEW user (from registration).
    * Enforces business rules (e.g. setting defaults).
    */
-  public static async create(props: Omit<UserProps, 'id' | 'createdAt' | 'updatedAt' | 'isEmailVerified' | 'isPhoneVerified' | 'status'>): Promise<User> {
+  public static async create(props: Omit<UserProps, 'id' | 'createdAt' | 'updatedAt' | 'isEmailVerified' | 'isPhoneVerified' | 'status'> & { isPhoneVerified?: boolean }): Promise<User> {
     // Hash password immediately upon creation
     const hashedPassword = await hashPassword(props.password);
 
@@ -66,7 +66,7 @@ export class User extends BaseEntity<UserProps> {
       profileImage: props.profileImage || null,
       roleId: props.roleId,
       isEmailVerified: false,
-      isPhoneVerified: false,
+      isPhoneVerified: props.isPhoneVerified ?? false,
       status: UserStatus.ACTIVE,
       lastLogin: null,
       deletedAt: null,

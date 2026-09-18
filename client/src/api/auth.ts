@@ -26,7 +26,8 @@ export interface RegisterCredentials {
   fullName: string;
   email: string;
   password: string;
-  phone?: string;
+  phone: string;
+  verificationToken: string;
 }
 
 export const authApi = {

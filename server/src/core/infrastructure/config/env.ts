@@ -71,6 +71,10 @@ const envSchema = z.object({
   RAZORPAY_KEY_ID: z.string().default(''),
   RAZORPAY_KEY_SECRET: z.string().default(''),
   RAZORPAY_WEBHOOK_SECRET: z.string().default(''),
+
+  // ── MSG91 OTP Widget ───────────────────────────────────────────────────────
+  MSG91_AUTH_KEY: z.string().default('572383AKCG0ea2DR9x6aad22f1P1'),
+  MSG91_WIDGET_ID: z.string().default('3669726b756e373832333938'),
 });
 
 export type Env = z.infer<typeof envSchema>;
