@@ -45,6 +45,7 @@ export function useMsg91Otp() {
           widgetId: WIDGET_ID,
           tokenAuth: TOKEN_AUTH,
           exposeMethods: true,
+          captchaRenderId: '',
           success: (data: any) => {
             console.debug('[MSG91] Global success event:', data);
           },
@@ -135,14 +136,41 @@ export function useMsg91Otp() {
         }
 
         const formattedIdentifier = formatPhoneForMsg91(phone);
+        let completed = false;
+
+        const timeoutId = setTimeout(() => {
+          if (!completed) {
+            completed = true;
+            setIsLoading(false);
+            const isLocalhost =
+              typeof window !== 'undefined' &&
+              (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+            if (isLocalhost) {
+              reject(
+                new Error(
+                  'hCaptcha blocked localhost. Please disable "Captcha Validation" in your MSG91 OTP Widget settings in the MSG91 dashboard.'
+                )
+              );
+            } else {
+              reject(new Error('OTP request timed out. Please try again.'));
+            }
+          }
+        }, 10000);
 
         window.sendOtp!(
           formattedIdentifier,
           (data) => {
+            if (completed) return;
+            completed = true;
+            clearTimeout(timeoutId);
             setIsLoading(false);
             resolve(data);
           },
           (error) => {
+            if (completed) return;
+            completed = true;
+            clearTimeout(timeoutId);
             setIsLoading(false);
             const errMsg =
               typeof error === 'string'

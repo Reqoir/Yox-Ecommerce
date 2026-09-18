@@ -33,9 +33,9 @@ export function AuthModal() {
   const [isLoading, setIsLoading] = useState(false);
   const [forgotSuccess, setForgotSuccess] = useState(false);
 
-  // OTP Verification States for Registration
+  // OTP Verification States for Registration (4-digit OTP)
   const [registerStep, setRegisterStep] = useState<'form' | 'otp'>('form');
-  const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
+  const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '']);
   const [resendCountdown, setResendCountdown] = useState(0);
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -59,7 +59,7 @@ export function AuthModal() {
   // Reset OTP state when switching mode or closing modal
   useEffect(() => {
     setRegisterStep('form');
-    setOtpDigits(['', '', '', '', '', '']);
+    setOtpDigits(['', '', '', '']);
     setResendCountdown(0);
   }, [mode, isOpen]);
 
@@ -183,7 +183,7 @@ export function AuthModal() {
     newDigits[index] = digit;
     setOtpDigits(newDigits);
 
-    if (digit && index < 5) {
+    if (digit && index < 3) {
       otpInputRefs.current[index + 1]?.focus();
     }
   };
@@ -196,16 +196,16 @@ export function AuthModal() {
 
   const handleOtpPaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
     if (!pasted) return;
 
     const newDigits = [...otpDigits];
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 4; i++) {
       newDigits[i] = pasted[i] || '';
     }
     setOtpDigits(newDigits);
 
-    const focusIdx = Math.min(pasted.length, 5);
+    const focusIdx = Math.min(pasted.length, 3);
     otpInputRefs.current[focusIdx]?.focus();
   };
 
@@ -215,8 +215,8 @@ export function AuthModal() {
   const handleVerifyAndRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     const fullOtp = otpDigits.join('');
-    if (fullOtp.length !== 6) {
-      toast.error('Please enter the complete 6-digit verification code');
+    if (fullOtp.length !== 4) {
+      toast.error('Please enter the complete 4-digit verification code');
       return;
     }
 
@@ -315,7 +315,7 @@ export function AuthModal() {
                 </h2>
               </div>
               <p className="text-xs sm:text-[13px] text-gray-500 font-normal pt-0.5">
-                We sent a 6-digit verification code to <span className="font-semibold text-gray-900">+91 {phone}</span>
+                We sent a 4-digit verification code to <span className="font-semibold text-gray-900">+91 {phone}</span>
                 <button
                   type="button"
                   onClick={() => setRegisterStep('form')}
@@ -585,16 +585,16 @@ export function AuthModal() {
             <div className="bg-amber-50/70 border border-amber-200/60 p-3.5 rounded-sm flex items-start gap-3">
               <ShieldCheck className="text-[#C09B7A] shrink-0 mt-0.5" size={18} />
               <div className="text-xs text-amber-900 leading-relaxed">
-                Please enter the 6-digit OTP sent to <span className="font-bold">+91 {phone}</span> to verify your identity and activate your account.
+                Please enter the 4-digit OTP sent to <span className="font-bold">+91 {phone}</span> to verify your identity and activate your account.
               </div>
             </div>
 
-            {/* 6-Digit Segmented OTP Input */}
+            {/* 4-Digit Segmented OTP Input */}
             <div className="space-y-2">
               <label className="block text-xs font-bold text-gray-900 uppercase tracking-wider text-center">
                 Enter Verification Code
               </label>
-              <div className="flex items-center justify-center gap-2 sm:gap-3" onPaste={handleOtpPaste}>
+              <div className="flex items-center justify-center gap-3 sm:gap-4" onPaste={handleOtpPaste}>
                 {otpDigits.map((digit, idx) => (
                   <input
                     key={idx}
@@ -608,7 +608,7 @@ export function AuthModal() {
                     value={digit}
                     onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                    className="w-10 sm:w-12 h-12 sm:h-14 text-center text-lg sm:text-xl font-bold text-gray-900 bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] transition-all shadow-xs"
+                    className="w-14 sm:w-16 h-14 sm:h-16 text-center text-xl sm:text-2xl font-bold text-gray-900 bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] transition-all shadow-xs"
                     autoFocus={idx === 0}
                   />
                 ))}
@@ -657,7 +657,7 @@ export function AuthModal() {
 
               <button
                 type="submit"
-                disabled={isLoading || otpDigits.join('').length !== 6}
+                disabled={isLoading || otpDigits.join('').length !== 4}
                 className="order-1 sm:order-2 w-full sm:w-auto bg-black hover:bg-neutral-800 text-white font-bold text-xs sm:text-sm uppercase tracking-wider py-3.5 px-8 sm:px-12 rounded-sm transition-all cursor-pointer disabled:opacity-50 shadow-xs active:scale-[0.99]"
               >
                 {isLoading ? (
