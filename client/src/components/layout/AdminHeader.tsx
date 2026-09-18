@@ -16,6 +16,10 @@ import {
   MessageSquare,
   Users,
   Menu,
+  Key,
+  Shield,
+  LogOut,
+  ChevronDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +28,9 @@ import { AdminNavContent } from '@/components/layout/AdminSidebar';
 import { useNotifications } from '@/hooks/admin/useNotifications';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Notification } from '@/api/admin/notifications';
+import { authApi } from '@/api/auth';
+import { toast } from 'sonner';
+import { AdminChangePasswordModal } from '@/components/admin/AdminChangePasswordModal';
 
 const PAGE_TITLES: Record<string, string> = {
   '/admin': 'Dashboard',
@@ -73,12 +80,15 @@ function formatTimeAgo(dateString: string): string {
 export function AdminHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, logoutUser } = useAuthStore();
   const { notifications, unreadCount, markRead, markAllRead, isMarkingAllRead } = useNotifications();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -86,14 +96,28 @@ export function AdminHeader() {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
     }
-    if (isOpen) {
+    if (isOpen || isProfileOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, isProfileOpen]);
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+      logoutUser();
+      toast.success('Logged out successfully');
+      router.push('/admin-login');
+    } catch {
+      toast.error('Failed to logout');
+    }
+  };
 
   // Page title
   const currentTitle = PAGE_TITLES[pathname] || 'Administration';
@@ -281,19 +305,101 @@ export function AdminHeader() {
           )}
         </div>
 
-        {/* User initials / email snippet */}
+        {/* User Profile Menu with Password Change & Quick Actions */}
         {user && (
-          <div className="flex items-center gap-2 pl-2 border-l">
-            <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs uppercase border border-primary/20">
-              {user.fullName ? user.fullName.charAt(0) : user.email?.charAt(0) || 'A'}
-            </div>
-            <div className="hidden xl:block text-left text-xs leading-tight">
-              <p className="font-semibold truncate max-w-[120px]">{user.fullName || user.email}</p>
-              <p className="text-[10px] text-muted-foreground capitalize">{user.role ? user.role.toLowerCase() : 'Staff'}</p>
-            </div>
+          <div className="relative pl-2 border-l" ref={profileRef}>
+            <button
+              onClick={() => setIsProfileOpen((prev) => !prev)}
+              className="flex items-center gap-2 p-1 rounded-xl hover:bg-muted/80 transition-colors text-left cursor-pointer outline-none group"
+              aria-label="Admin account menu"
+            >
+              <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs uppercase border border-primary/20 group-hover:border-primary/40 transition-colors">
+                {user.fullName ? user.fullName.charAt(0) : user.email?.charAt(0) || 'A'}
+              </div>
+              <div className="hidden xl:block text-left text-xs leading-tight">
+                <p className="font-semibold truncate max-w-[120px] text-foreground">{user.fullName || user.email}</p>
+                <p className="text-[10px] text-muted-foreground capitalize">{user.role ? user.role.toLowerCase() : 'Staff'}</p>
+              </div>
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-transform" />
+            </button>
+
+            {/* Profile Dropdown Menu */}
+            {isProfileOpen && (
+              <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-card border shadow-xl z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
+                {/* Account info snippet */}
+                <div className="p-3.5 border-b bg-muted/40">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm uppercase border border-primary/20 shrink-0">
+                      {user.fullName ? user.fullName.charAt(0) : user.email?.charAt(0) || 'A'}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-xs text-foreground truncate">{user.fullName || 'Administrator'}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
+                      <span className="inline-block mt-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
+                        {user.role || 'Staff'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="p-1.5 space-y-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      setIsPasswordModalOpen(true);
+                    }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+                  >
+                    <Key className="h-4 w-4 text-primary" />
+                    <div className="flex-1">
+                      <span>Change Password</span>
+                      <p className="text-[10px] font-normal text-muted-foreground">Update your login security</p>
+                    </div>
+                  </button>
+
+                  <Link
+                    href="/admin/settings?tab=security"
+                    onClick={() => setIsProfileOpen(false)}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+                  >
+                    <Shield className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex-1">
+                      <span>Security & Settings</span>
+                      <p className="text-[10px] font-normal text-muted-foreground">Store & account policies</p>
+                    </div>
+                  </Link>
+                </div>
+
+                {/* Footer / Logout */}
+                <div className="p-1.5 border-t bg-muted/20">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      handleLogout();
+                    }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-500/10 transition-colors cursor-pointer text-left"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Log Out</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {/* Admin Change Password Modal */}
+      <AdminChangePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        userEmail={user?.email}
+        userName={user?.fullName}
+      />
     </header>
   );
 }
+

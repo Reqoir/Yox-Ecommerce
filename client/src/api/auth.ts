@@ -30,6 +30,12 @@ export interface RegisterCredentials {
   verificationToken: string;
 }
 
+export interface ChangePasswordData {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword?: string;
+}
+
 export const authApi = {
   register: async (credentials: RegisterCredentials): Promise<User> => {
     const response = await apiClient.post<{ data: AuthResponse }>('/auth/register', credentials);
@@ -59,4 +65,10 @@ export const authApi = {
     const response = await apiClient.post<{ message: string }>('/auth/reset-password', { password, token });
     return response.data;
   },
+
+  changePassword: async (data: ChangePasswordData): Promise<{ message: string }> => {
+    const response = await apiClient.post<{ message: string }>('/auth/change-password', data);
+    return response.data;
+  },
 };
+

@@ -30,25 +30,43 @@ import {
   Sliders,
   Check,
   Loader2,
+  Key,
+  Lock,
+  Shield,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
+import { useAuthStore } from '@/store/useAuthStore';
+import { AdminChangePasswordCard } from '@/components/admin/AdminChangePasswordCard';
 import { StoreConfig, DEFAULT_STORE_CONFIG } from '@/api/admin/settings';
 import { offersApi, Offer } from '@/api/admin/offers';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { resolveTopBarColor, TOPBAR_COLOR_OPTIONS } from '@/components/layout/top-bar';
 
-type SettingsTab = 'general' | 'shipping' | 'payments' | 'returns' | 'announcement';
+type SettingsTab = 'general' | 'shipping' | 'payments' | 'returns' | 'announcement' | 'security';
 
 export default function AdminSettingsPage() {
   const { config, isLoading, isSaving, fetchSettings, updateSettings, resetToDefaults } = useStoreSettingsStore();
+  const { user } = useAuthStore();
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
   const [formData, setFormData] = useState<StoreConfig>(config);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [activeOffers, setActiveOffers] = useState<Offer[]>([]);
   const [isCustomLink, setIsCustomLink] = useState(false);
+
+  // Check URL query param for direct tab navigation (e.g. /admin/settings?tab=security)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab') as SettingsTab;
+      if (tabParam && ['general', 'shipping', 'payments', 'returns', 'announcement', 'security'].includes(tabParam)) {
+        setActiveTab(tabParam);
+      }
+    }
+  }, []);
+
 
   // Load active offers for banner action destination selector
   useEffect(() => {
@@ -358,7 +376,21 @@ export default function AdminSettingsPage() {
               <Megaphone size={15} className={activeTab === 'announcement' ? 'text-primary' : ''} />
               <span>Announcement Bar</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('security')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                activeTab === 'security'
+                  ? 'bg-card text-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-card/50'
+              }`}
+            >
+              <Key size={15} className={activeTab === 'security' ? 'text-primary' : ''} />
+              <span>Security & Password</span>
+            </button>
           </div>
+
 
           {/* TAB 1: General Store Identity & Contact */}
           {activeTab === 'general' && (
@@ -1113,108 +1145,260 @@ export default function AdminSettingsPage() {
               </Card>
             </div>
           )}
-          {/* Permanent Form Actions Card - Stable, non-floating, elegant */}
-          <div className="rounded-2xl border bg-card/90 backdrop-blur-sm p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs mt-6">
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <div className={`p-2.5 rounded-xl shrink-0 ${isDirty ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>
-                {isDirty ? <Sliders size={18} /> : <CheckCircle2 size={18} />}
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-foreground">
-                    {isDirty ? 'Unsaved Configuration Changes' : 'Store Settings are Active'}
-                  </span>
-                  {isDirty ? (
-                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                      PENDING SAVE
-                    </span>
-                  ) : (
-                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                      SYNCED
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {isDirty 
-                    ? 'Click Save Settings to apply changes to the live storefront immediately.' 
-                    : 'All operational thresholds, policies, and announcement banners are live.'}
-                </p>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end shrink-0">
-              {isDirty && (
+          {/* TAB 6: Admin Security & Password Management */}
+          {activeTab === 'security' && (
+            <div className="space-y-6 animate-in fade-in-50 duration-200">
+              {/* Account Security Header Card */}
+              <Card className="rounded-2xl border shadow-xs">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                      <ShieldCheck size={18} />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base font-bold">Admin Account & Security</CardTitle>
+                      <CardDescription className="text-xs">
+                        Manage your administrator credentials, password security, and active session protection.
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Current Admin Account Snapshot */}
+                  {user && (
+                    <div className="p-4 rounded-xl border bg-muted/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-11 w-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-base uppercase border border-primary/20 shrink-0">
+                          {user.fullName ? user.fullName.charAt(0) : user.email?.charAt(0) || 'A'}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm text-foreground">{user.fullName || 'Admin User'}</span>
+                            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] font-bold">
+                              ACTIVE
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{user.email}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 text-xs">
+                        <div className="text-left sm:text-right">
+                          <span className="text-[10px] uppercase font-bold text-muted-foreground block tracking-wider">Access Role</span>
+                          <span className="font-bold text-foreground capitalize">{user.role ? user.role.toLowerCase() : 'Administrator'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Change Password Inline Form */}
+                  <div className="border-t pt-5">
+                    <div className="mb-4">
+                      <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                        <Key size={16} className="text-primary" />
+                        <span>Update Security Password</span>
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Choose a strong, unique password to safeguard your store data and management permissions.
+                      </p>
+                    </div>
+
+                    <div className="p-4 sm:p-5 rounded-2xl border bg-card">
+                      <AdminChangePasswordCard />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Security Recommendations Card */}
+              <Card className="rounded-2xl border shadow-xs bg-muted/10">
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
+                      <AlertTriangle size={16} />
+                    </div>
+                    <div className="text-xs space-y-1">
+                      <span className="font-bold text-foreground block">Admin Security Guidelines</span>
+                      <p className="text-muted-foreground leading-relaxed">
+                        To maintain compliance and protect your store data, never share your administrator password with third parties. We recommend updating your credentials every 90 days and generating passwords with a mix of symbols, digits, and mixed-case letters.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Permanent Form Actions Card - Stable, non-floating, elegant */}
+          {activeTab !== 'security' && (
+            <div className="rounded-2xl border bg-card/90 backdrop-blur-sm p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs mt-6">
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <div className={`p-2.5 rounded-xl shrink-0 ${isDirty ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>
+                  {isDirty ? <Sliders size={18} /> : <CheckCircle2 size={18} />}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-foreground">
+                      {isDirty ? 'Unsaved Configuration Changes' : 'Store Settings are Active'}
+                    </span>
+                    {isDirty ? (
+                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                        PENDING SAVE
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                        SYNCED
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {isDirty 
+                      ? 'Click Save Settings to apply changes to the live storefront immediately.' 
+                      : 'All operational thresholds, policies, and announcement banners are live.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end shrink-0">
+                {isDirty && (
+                  <button
+                    type="button"
+                    onClick={handleDiscard}
+                    disabled={saveState === 'saving'}
+                    className="px-3.5 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 border border-rose-200 dark:border-rose-900 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                  >
+                    Discard
+                  </button>
+                )}
+
                 <button
                   type="button"
-                  onClick={handleDiscard}
+                  onClick={handleResetDefaults}
                   disabled={saveState === 'saving'}
-                  className="px-3.5 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 border border-rose-200 dark:border-rose-900 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                  className="px-3.5 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground border rounded-xl hover:bg-muted transition-colors disabled:opacity-50 cursor-pointer"
                 >
-                  Discard
+                  Reset Defaults
                 </button>
-              )}
 
-              <button
-                type="button"
-                onClick={handleResetDefaults}
-                disabled={saveState === 'saving'}
-                className="px-3.5 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground border rounded-xl hover:bg-muted transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                Reset Defaults
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleSave()}
-                disabled={saveState === 'saving' || (!isDirty && saveState !== 'saved')}
-                className={`flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs ${
-                  saveState === 'saved'
-                    ? 'bg-emerald-600 text-white shadow-emerald-500/20'
-                    : isDirty
-                    ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20 cursor-pointer'
-                    : 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
-                }`}
-              >
-                {saveState === 'saving' ? (
-                  <>
-                    <Loader2 size={14} className="animate-spin" />
-                    <span>Saving...</span>
-                  </>
-                ) : saveState === 'saved' ? (
-                  <>
-                    <Check size={14} />
-                    <span>Saved!</span>
-                  </>
-                ) : (
-                  <>
-                    <Save size={14} />
-                    <span>Save Settings</span>
-                  </>
-                )}
-              </button>
+                <button
+                  type="button"
+                  onClick={() => handleSave()}
+                  disabled={saveState === 'saving' || (!isDirty && saveState !== 'saved')}
+                  className={`flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs ${
+                    saveState === 'saved'
+                      ? 'bg-emerald-600 text-white shadow-emerald-500/20'
+                      : isDirty
+                      ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20 cursor-pointer'
+                      : 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
+                  }`}
+                >
+                  {saveState === 'saving' ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : saveState === 'saved' ? (
+                    <>
+                      <Check size={14} />
+                      <span>Saved!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save size={14} />
+                      <span>Save Settings</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Right Column: Interactive Live Storefront Preview */}
-        <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-20">
-          <Card className="rounded-2xl border shadow-md bg-card overflow-hidden">
-            <div className="p-4 border-b bg-muted/40 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Eye size={16} className="text-primary" />
-                <span className="font-bold text-sm tracking-tight text-foreground">Live Storefront Preview</span>
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-card border px-2 py-0.5 rounded-md">
-                Simulated View
-              </span>
-            </div>
 
-            <CardContent className="p-5 space-y-6">
-              {/* Preview 1: Top Announcement Bar */}
-              <div className="space-y-2">
-                <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
-                  1. Top Announcement Header
+        {/* Right Column: Interactive Live Storefront Preview or Security Center */}
+        <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-20">
+          {activeTab === 'security' ? (
+            <Card className="rounded-2xl border shadow-md bg-card overflow-hidden">
+              <div className="p-4 border-b bg-muted/40 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Shield size={16} className="text-primary" />
+                  <span className="font-bold text-sm tracking-tight text-foreground">Security Center</span>
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
+                  Active
                 </span>
+              </div>
+
+              <CardContent className="p-5 space-y-5">
+                <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-400 flex items-start gap-2.5">
+                  <ShieldCheck size={18} className="shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
+                  <div>
+                    <span className="font-bold block">Hardened Admin Session</span>
+                    <p className="text-[11px] mt-0.5 text-muted-foreground">
+                      Session protected by secure HttpOnly JWT cookies and rate-limited authentication endpoints.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2.5 text-xs">
+                  <span className="font-bold text-foreground block text-[11px] uppercase tracking-wider text-muted-foreground">
+                    Credential Standards
+                  </span>
+                  <ul className="space-y-2 text-muted-foreground text-[11px]">
+                    <li className="flex items-center gap-2">
+                      <Check size={13} className="text-emerald-500 shrink-0" />
+                      <span>Minimum 8 characters (12+ recommended)</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check size={13} className="text-emerald-500 shrink-0" />
+                      <span>Uppercase & lowercase Latin letters</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check size={13} className="text-emerald-500 shrink-0" />
+                      <span>At least one decimal digit (0-9)</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check size={13} className="text-emerald-500 shrink-0" />
+                      <span>At least one special character (!@#$%^&*)</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="p-3.5 rounded-xl border bg-muted/20 text-xs space-y-2">
+                  <span className="font-bold text-foreground block text-[11px]">Compliance & Audit Logging</span>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    All password change actions are securely audited. Each event logs the administrator ID and timestamp.
+                  </p>
+                  <Link
+                    href="/admin/audit-logs"
+                    className="text-[11px] font-bold text-primary hover:underline inline-flex items-center gap-1 pt-1"
+                  >
+                    <span>View audit logs</span>
+                    <ArrowRight size={11} />
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="rounded-2xl border shadow-md bg-card overflow-hidden">
+              <div className="p-4 border-b bg-muted/40 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Eye size={16} className="text-primary" />
+                  <span className="font-bold text-sm tracking-tight text-foreground">Live Storefront Preview</span>
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-card border px-2 py-0.5 rounded-md">
+                  Simulated View
+                </span>
+              </div>
+
+              <CardContent className="p-5 space-y-6">
+                {/* Preview 1: Top Announcement Bar */}
+                <div className="space-y-2">
+                  <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
+                    1. Top Announcement Header
+                  </span>
+
                 <div 
                   className="w-full text-white rounded-xl p-3 text-xs shadow-xs space-y-1 transition-colors duration-300 border border-white/10"
                   style={{ backgroundColor: resolveTopBarColor(formData.announcementBgColor) }}
@@ -1317,8 +1501,10 @@ export default function AdminSettingsPage() {
               </div>
             </CardContent>
           </Card>
+          )}
         </div>
       </div>
+
 
     </div>
   );
