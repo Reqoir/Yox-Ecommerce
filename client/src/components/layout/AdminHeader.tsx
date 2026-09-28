@@ -20,6 +20,8 @@ import {
   Shield,
   LogOut,
   ChevronDown,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +29,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import { AdminNavContent } from '@/components/layout/AdminSidebar';
 import { useNotifications } from '@/hooks/admin/useNotifications';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useAdminSidebarStore } from '@/store/useAdminSidebarStore';
 import { Notification } from '@/api/admin/notifications';
 import { authApi } from '@/api/auth';
 import { toast } from 'sonner';
@@ -82,6 +85,14 @@ export function AdminHeader() {
   const router = useRouter();
   const { user, logoutUser } = useAuthStore();
   const { notifications, unreadCount, markRead, markAllRead, isMarkingAllRead } = useNotifications();
+  const { isCollapsed, toggleSidebar } = useAdminSidebarStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const collapsed = mounted ? isCollapsed : false;
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -166,25 +177,52 @@ export function AdminHeader() {
 
   return (
     <header className="h-16 border-b bg-card/80 backdrop-blur-sm px-6 flex items-center justify-between shrink-0 z-20 sticky top-0">
-      {/* Left: Breadcrumbs / Title */}
-      <div className="flex items-center gap-2 text-sm">
+      {/* Left: Sidebar Toggle & Breadcrumb Navigation */}
+      <div className="flex items-center gap-3">
         {/* Mobile Sidebar Toggle */}
         <div className="xl:hidden">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger render={<Button variant="ghost" size="icon" className="-ml-2 mr-2 md:h-12 md:w-12 p-0" />}>
-              <Menu className="h-5 w-5 md:h-7 md:w-7" />
+            <SheetTrigger render={<Button variant="ghost" size="icon" className="-ml-2 mr-1 h-9 w-9 rounded-xl p-0 hover:bg-muted" />}>
+              <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle Menu</span>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 flex flex-col w-64 border-r">
               <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-              <AdminNavContent onLinkClick={() => setIsMobileMenuOpen(false)} />
+              <AdminNavContent onLinkClick={() => setIsMobileMenuOpen(false)} isCollapsed={false} />
             </SheetContent>
           </Sheet>
         </div>
 
-        <span className="hidden sm:inline text-muted-foreground font-medium">Admin</span>
-        <ChevronRight className="hidden sm:inline h-4 w-4 text-muted-foreground/60" />
-        <span className="font-semibold text-foreground text-base tracking-tight truncate max-w-[150px] sm:max-w-none">{currentTitle}</span>
+        {/* Single Desktop Sidebar Toggle Button */}
+        <button
+          onClick={toggleSidebar}
+          className="hidden xl:inline-flex items-center justify-center h-9 w-9 rounded-xl border border-border/70 bg-background/60 hover:bg-muted hover:border-border text-muted-foreground hover:text-foreground transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {collapsed ? (
+            <PanelLeftOpen className="h-4.5 w-4.5 transition-transform duration-200 group-hover:scale-110" />
+          ) : (
+            <PanelLeftClose className="h-4.5 w-4.5 transition-transform duration-200 group-hover:scale-110" />
+          )}
+        </button>
+
+        {/* Subtle Separator */}
+        <div className="hidden xl:block h-4 w-px bg-border/70" />
+
+        {/* Breadcrumb Trail */}
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs">
+          <Link
+            href="/admin"
+            className="text-muted-foreground hover:text-foreground font-medium transition-colors px-1 py-0.5 rounded-md hover:bg-muted/50"
+          >
+            Admin
+          </Link>
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+          <span className="font-semibold text-foreground text-sm tracking-tight px-1 py-0.5 truncate max-w-[160px] sm:max-w-none">
+            {currentTitle}
+          </span>
+        </nav>
       </div>
 
       {/* Right: Notification Indicator & Profile */}
