@@ -52,6 +52,10 @@ export class OrderRepository implements IOrderRepository {
       cancellationBankDetails: data.cancellationBankDetails,
       trackingNumber: data.trackingNumber,
       deliveryPartnerId: data.deliveryPartnerId,
+      shiprocketOrderId: data.shiprocketOrderId,
+      shiprocketShipmentId: data.shiprocketShipmentId,
+      labelUrl: data.labelUrl,
+      invoiceUrl: data.invoiceUrl,
       createdAt: data.createdAt || new Date(),
       updatedAt: data.updatedAt || new Date(),
     });
@@ -92,6 +96,10 @@ export class OrderRepository implements IOrderRepository {
       filter.orderStatus = query.status.toUpperCase();
     }
 
+    // Exclude incomplete online checkout sessions that were never paid
+    filter.$nor = filter.$nor || [];
+    filter.$nor.push({ paymentMethod: 'RAZORPAY', paymentStatus: 'PENDING' });
+
     const limit = parseInt(query.limit) || 10;
     const page = parseInt(query.page) || 1;
     const skip = (page - 1) * limit;
@@ -114,6 +122,12 @@ export class OrderRepository implements IOrderRepository {
     }
     if (query.userId) {
       filter.userId = query.userId;
+    }
+    // E-Commerce Rule: Incomplete/abandoned online payment sessions that were never paid
+    // should not appear in the active order list as placed orders
+    if (!query.paymentStatus && !query.includePendingPayment) {
+      filter.$nor = filter.$nor || [];
+      filter.$nor.push({ paymentMethod: 'RAZORPAY', paymentStatus: 'PENDING' });
     }
     if (query.search) {
       filter.$or = [

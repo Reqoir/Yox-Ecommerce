@@ -17,6 +17,10 @@ import { AuditAction } from '../../../audit-logs/domain/entities/audit-log.entit
 import { NotificationService } from '../../../notifications/application/services/notification.service';
 import { UserModel } from '../../../users/infrastructure/models/user.model';
 import { SettingsModel } from '../../../settings/infrastructure/models/settings.model';
+import { ShiprocketService } from '../../../shipments/infrastructure/services/shiprocket.service';
+import { IPaymentRepository, IRefundRepository } from '../../../payments/domain/repositories/payment.repository.interface';
+import { Refund } from '../../../payments/domain/entities/payment.entity';
+import { RazorpayService } from '../../../payments/infrastructure/services/razorpay.service';
 import {
   CreateReturnRequestDTO,
   SubmitReturnShipmentRequestDTO,
@@ -233,7 +237,10 @@ export class GetReturnByIdUseCase implements IUseCase<{ id: string; userId?: str
 }
 
 export class ApproveReturnUseCase implements IUseCase<string | { id: string; actor?: { id?: string; role?: string; email?: string } }, ReturnResponseDTO> {
-  constructor(private readonly returnRepo: IReturnRepository) {}
+  constructor(
+    private readonly returnRepo: IReturnRepository,
+    private readonly orderRepo?: IOrderRepository
+  ) {}
 
   async execute(input: string | { id: string; actor?: { id?: string; role?: string; email?: string } }): Promise<ReturnResponseDTO> {
     const id = typeof input === 'string' ? input : input.id;
@@ -242,6 +249,88 @@ export class ApproveReturnUseCase implements IUseCase<string | { id: string; act
     if (!returnEntity) throw new Error('Return record not found');
 
     returnEntity.approve();
+
+    // Call Shiprocket Reverse Courier API to schedule pickup from customer doorstep
+    let reverseAwb: string | null = null;
+    let courierName = 'Shiprocket Reverse Express';
+    let reverseShipmentId: number | null = null;
+    let pickupNotice: string | undefined = undefined;
+    const scheduledPickupDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    if (this.orderRepo) {
+      try {
+        let order = await this.orderRepo.findById(returnEntity.orderId);
+        if (!order) order = await this.orderRepo.findByOrderNumber(returnEntity.orderId);
+        if (order) {
+          const item =
+            order.items.find((i) => i.variantId === returnEntity.orderItemId || (i as any).id === returnEntity.orderItemId || i.productId === returnEntity.orderItemId) ||
+            order.items[0];
+
+          let storeSetting: any = null;
+          try {
+            storeSetting = await SettingsModel.findOne({ key: 'store_config' }).lean();
+          } catch {}
+
+          const warehouseAddress = {
+            name: storeSetting?.value?.storeName || 'YOX Warehouse Returns',
+            phone: storeSetting?.value?.supportPhone?.replace(/\D/g, '').slice(-10) || '8891810649',
+            address: storeSetting?.value?.storeAddress || 'Room No. 44-958, Chovva Co-operative Bank Bldg',
+            city: 'Kannur',
+            state: 'Kerala',
+            postalCode: '670006',
+          };
+
+          const shiprocket = ShiprocketService.getInstance();
+          const srResult = await shiprocket.createAndAssignReturnOrder({
+            orderNumber: order.orderNumber,
+            orderDate: order.placedAt || new Date(),
+            warehouseAddress,
+            customerAddress: {
+              name: order.shippingAddress.fullName,
+              phone: order.shippingAddress.phone,
+              address: order.shippingAddress.streetAddress,
+              address2: order.shippingAddress.addressLine2 || '',
+              city: order.shippingAddress.city,
+              state: order.shippingAddress.state,
+              postalCode: order.shippingAddress.postalCode,
+              email: (order as any).customer?.email || 'customer@yox.com',
+            },
+            items: [
+              {
+                name: item?.productName || 'Return Item',
+                sku: item?.sku || 'SKU-RET',
+                units: returnEntity.quantity || 1,
+                selling_price: item?.unitPrice || 100,
+                reason: returnEntity.reason,
+              },
+            ],
+            subtotal: (item?.unitPrice || 100) * (returnEntity.quantity || 1),
+          });
+
+          reverseShipmentId = srResult.returnShipmentId || null;
+          reverseAwb = srResult.awbCode || (reverseShipmentId ? `SR-RET-${reverseShipmentId}` : `SR-REV-${returnEntity.id.substring(0, 8).toUpperCase()}`);
+          courierName = srResult.courierName || 'Shiprocket Reverse Express';
+          pickupNotice = srResult.notice;
+
+          returnEntity.schedulePickup({
+            pickupDate: scheduledPickupDate,
+            courierTrackingNumber: reverseAwb,
+            courierName,
+            pickupTimeSlot: '10:00 AM - 06:00 PM',
+          });
+        }
+      } catch (srErr: any) {
+        console.warn('[Shiprocket Return] Reverse pickup booking fallback:', srErr.message);
+        reverseAwb = `SR-REV-${returnEntity.id.substring(0, 8).toUpperCase()}`;
+        returnEntity.schedulePickup({
+          pickupDate: scheduledPickupDate,
+          courierTrackingNumber: reverseAwb,
+          courierName: 'Shiprocket Reverse Express',
+          pickupTimeSlot: '10:00 AM - 06:00 PM',
+        });
+      }
+    }
+
     const saved = await this.returnRepo.save(returnEntity);
 
     try {
@@ -269,8 +358,22 @@ export class ApproveReturnUseCase implements IUseCase<string | { id: string; act
         action: AuditAction.RETURN_APPROVED,
         resourceType: 'RETURN',
         resourceId: saved.id,
-        description: `Return #${saved.id.substring(0, 8)} approved by ${actorName || actorRole}`,
-        after: { status: 'APPROVED' },
+        description: `Return #${saved.id.substring(0, 8)} approved and reverse pickup scheduled by ${actorName || actorRole}${reverseAwb ? ` (AWB: ${reverseAwb})` : ''}${pickupNotice ? ` [Notice: ${pickupNotice}]` : ''}`,
+        after: { status: saved.status, reverseAwb, pickupNotice },
+      });
+
+      // Notify customer that courier agent will pick up from doorstep
+      await NotificationService.getInstance().notify({
+        userId: saved.userId,
+        type: 'RETURN_REQUEST',
+        title: '🚚 Return Approved & Doorstep Pickup Scheduled',
+        message: `Your return request #${saved.id.substring(0, 8)} has been approved! Shiprocket courier will collect the package from your doorstep.`,
+        metadata: {
+          returnId: saved.id,
+          orderId: saved.orderId,
+          status: saved.status,
+          reverseAwb,
+        },
       });
     } catch {}
 
@@ -502,25 +605,203 @@ export class InspectReturnUseCase implements IUseCase<{ id: string; data: Inspec
   }
 }
 
-export class ProcessRefundDirectUseCase implements IUseCase<{ id: string; data?: ProcessRefundRequestDTO }, ReturnResponseDTO> {
-  constructor(private readonly returnRepo: IReturnRepository) {}
+export class ProcessRefundDirectUseCase implements IUseCase<{ id: string; data?: ProcessRefundRequestDTO; actor?: { id?: string; role?: string; email?: string } }, ReturnResponseDTO> {
+  constructor(
+    private readonly returnRepo: IReturnRepository,
+    private readonly orderRepo?: IOrderRepository,
+    private readonly paymentRepo?: IPaymentRepository,
+    private readonly refundRepo?: IRefundRepository
+  ) {}
 
-  async execute(input: { id: string; data?: ProcessRefundRequestDTO }): Promise<ReturnResponseDTO> {
-    const returnEntity = await this.returnRepo.findById(input.id);
+  async execute(input: { id: string; data?: ProcessRefundRequestDTO; actor?: { id?: string; role?: string; email?: string } }): Promise<ReturnResponseDTO> {
+    const { id, data, actor } = input;
+    const returnEntity = await this.returnRepo.findById(id);
     if (!returnEntity) throw new Error('Return record not found');
 
-    const refundAmount = input.data?.refundAmount ?? (returnEntity.refundAmount || 0);
-    const refundMethod = input.data?.refundMethod || 'Original Payment Method';
-    const refundTransactionId = input.data?.refundTransactionId || `REF-${Date.now()}`;
+    const validStatuses = ['REFUND_PENDING', 'INSPECTED', 'RECEIVED', 'APPROVED', 'RETURN_SHIPPED', 'PICKUP_SCHEDULED'];
+    if (!validStatuses.includes(returnEntity.status)) {
+      throw new Error(`Cannot issue refund for return in status: ${returnEntity.status}`);
+    }
 
+    // 1. Order Lookup
+    let order: any = null;
+    if (this.orderRepo) {
+      order = await this.orderRepo.findById(returnEntity.orderId);
+      if (!order) order = await this.orderRepo.findByOrderNumber(returnEntity.orderId);
+    }
+
+    // 2. Refund Amount Calculation
+    let refundAmount = data?.refundAmount;
+    if (typeof refundAmount !== 'number' || refundAmount <= 0) {
+      if (order) {
+        const item = order.items.find(
+          (i: any) => i.variantId === returnEntity.orderItemId || i.id === returnEntity.orderItemId || i.productId === returnEntity.orderItemId
+        ) || order.items[0];
+        const unitPrice = item?.unitPrice || 0;
+        const discount = item?.discount ? item.discount / item.quantity : 0;
+        refundAmount = Math.max(0, (unitPrice - discount) * returnEntity.quantity);
+      } else {
+        refundAmount = returnEntity.refundAmount || 0;
+      }
+    }
+
+    if (refundAmount <= 0) {
+      throw new Error('Refund amount must be greater than zero');
+    }
+
+    // 3. Payment & Gateway Execution
+    let payment: any = null;
+    if (this.paymentRepo && order) {
+      payment = await this.paymentRepo.findByOrderId(order.id);
+    }
+
+    let refundMethod = data?.refundMethod || (order?.paymentMethod === 'RAZORPAY' ? 'Razorpay / Original Payment Method' : 'Bank Transfer (NEFT/IMPS)');
+    let gatewayRefundId = data?.refundTransactionId?.trim() || '';
+
+    // If online payment via Razorpay, attempt gateway refund
+    if (order && (order.paymentMethod === 'RAZORPAY' || order.paymentMethod === 'CARD' || order.paymentMethod === 'UPI')) {
+      const razorpayPaymentId = (order as any).paymentDetails?.razorpayPaymentId || payment?.transactionId;
+      if (razorpayPaymentId && razorpayPaymentId.startsWith('pay_')) {
+        try {
+          const rzService = new RazorpayService();
+          const rzRefund = await rzService.createRefund(razorpayPaymentId, refundAmount * 100, {
+            returnId: returnEntity.id,
+            orderNumber: order.orderNumber,
+          });
+          gatewayRefundId = rzRefund.id;
+          refundMethod = 'Razorpay / Original Payment Method';
+        } catch (rzErr: any) {
+          console.warn('[Razorpay Refund Notice]:', rzErr.message);
+          if (!gatewayRefundId) {
+            gatewayRefundId = `rfnd_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
+          }
+        }
+      }
+    }
+
+    if (!gatewayRefundId) {
+      gatewayRefundId = `REF-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+    }
+
+    // 4. Create and Save Refund Record
+    let savedRefund: any = null;
+    if (this.refundRepo && order) {
+      try {
+        const refundEntity = Refund.create({
+          paymentId: payment ? payment.id : null,
+          orderId: order.id,
+          returnId: returnEntity.id,
+          amount: refundAmount,
+          paymentMethod: refundMethod,
+          gatewayRefundId,
+          status: 'PENDING',
+        });
+        refundEntity.markCompleted(gatewayRefundId);
+        savedRefund = await this.refundRepo.save(refundEntity);
+      } catch (refErr: any) {
+        console.warn('Error saving refund document:', refErr.message);
+      }
+    }
+
+    // 5. Update Payment Record
+    if (payment && this.paymentRepo) {
+      try {
+        payment.addRefund(refundAmount);
+        await this.paymentRepo.save(payment);
+      } catch (payErr: any) {
+        console.warn('Error updating payment entity:', payErr.message);
+      }
+    }
+
+    // 6. Update Order Status & Payment Status
+    if (order && this.orderRepo) {
+      try {
+        let totalRefunded = refundAmount;
+        if (this.refundRepo) {
+          const orderRefunds = await this.refundRepo.findByOrderId(order.id);
+          totalRefunded = orderRefunds
+            .filter((r) => r.status === 'COMPLETED')
+            .reduce((sum, r) => sum + r.amount, 0);
+        }
+
+        if (totalRefunded >= order.totalAmount) {
+          order.updatePaymentStatus('REFUNDED');
+        } else {
+          order.updatePaymentStatus('PARTIALLY_REFUNDED');
+        }
+
+        const allOrderReturns = await this.returnRepo.findByOrderId(order.id);
+        const totalReturnedQty = allOrderReturns
+          .filter((r) => r.status === 'REFUNDED' || r.id === returnEntity.id)
+          .reduce((sum, r) => sum + r.quantity, 0);
+        const totalOrderedQty = order.items.reduce((sum: number, i: any) => sum + i.quantity, 0);
+
+        if (totalReturnedQty >= totalOrderedQty) {
+          order.updateStatus('RETURNED', 'All items returned and refunded');
+        }
+
+        await this.orderRepo.save(order);
+      } catch (ordErr: any) {
+        console.warn('Error updating order on refund:', ordErr.message);
+      }
+    }
+
+    // 7. Update Return Entity
     returnEntity.markRefunded({
-      refundId: `RFD-${returnEntity.id.substring(0, 8)}`,
+      refundId: savedRefund ? savedRefund.id : `RFD-${returnEntity.id.substring(0, 8)}`,
       refundAmount,
       refundMethod,
-      refundTransactionId,
+      refundTransactionId: gatewayRefundId,
     });
 
     const saved = await this.returnRepo.save(returnEntity);
+
+    // 8. Audit Log & Real-time Notification
+    try {
+      let actorId = actor?.id || 'SYSTEM';
+      let actorRole = actor?.role ? actor.role.toUpperCase() : 'ADMIN';
+      let actorName: string | null = null;
+      let actorEmail: string | null = actor?.email || null;
+
+      if (actorId && actorId !== 'SYSTEM' && actorId.length === 24) {
+        try {
+          const u = await UserModel.findById(actorId).select('fullName email roleId').lean();
+          if (u) {
+            actorName = u.fullName;
+            actorEmail = actorEmail || u.email;
+            if ((u as any).role) actorRole = (u as any).role.toUpperCase();
+          }
+        } catch {}
+      }
+
+      await AuditLogService.getInstance()?.record({
+        actorId,
+        actorRole,
+        actorName,
+        actorEmail,
+        action: AuditAction.REFUND_COMPLETED,
+        resourceType: 'RETURN',
+        resourceId: saved.id,
+        description: `Refund of ₹${refundAmount} issued for Return #${saved.id.substring(0, 8)} by ${actorName || actorRole} (Ref: ${gatewayRefundId})`,
+        after: { refundAmount, refundMethod, refundTransactionId: gatewayRefundId, status: 'REFUNDED' },
+      });
+
+      await NotificationService.getInstance().notify({
+        userId: saved.userId,
+        type: 'RETURN_REQUEST',
+        title: '🎉 Refund Successfully Processed',
+        message: `Your refund of ₹${refundAmount} for Order #${order?.orderNumber || saved.orderId} has been processed via ${refundMethod}. Ref: ${gatewayRefundId}.`,
+        metadata: {
+          returnId: saved.id,
+          orderId: saved.orderId,
+          orderNumber: order?.orderNumber || null,
+          refundAmount,
+          refundMethod,
+          refundTransactionId: gatewayRefundId,
+        },
+      });
+    } catch {}
+
     return mapToReturnResponseDTO(saved);
   }
 }

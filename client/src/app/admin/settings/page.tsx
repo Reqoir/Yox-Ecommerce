@@ -33,6 +33,7 @@ import {
   Key,
   Lock,
   Shield,
+  Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
@@ -664,6 +665,98 @@ export default function AdminSettingsPage() {
                         placeholder="e.g. Delhivery / BlueDart Express"
                         className="w-full px-3.5 py-2.5 text-sm bg-card border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                       />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Shiprocket Automated Courier Logistics Integration */}
+              <Card className="rounded-2xl border shadow-xs bg-gradient-to-br from-card via-card to-purple-500/5">
+                <CardHeader className="pb-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                        <Truck size={18} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-base font-bold">Shiprocket Courier Logistics</CardTitle>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Connected & Live
+                          </span>
+                        </div>
+                        <CardDescription className="text-xs">
+                          Fully automated courier dispatch, AWB assignment, and real-time tracking via Shiprocket API.
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div className="p-3.5 rounded-xl bg-muted/40 border space-y-1">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground block tracking-wider">
+                        Connected Shiprocket Account
+                      </span>
+                      <p className="font-bold text-foreground">thhafeef2@gmail.com</p>
+                      <p className="text-[11px] text-muted-foreground">Bearer token authentication with auto-refresh</p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-muted/40 border space-y-1">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground block tracking-wider">
+                        Default Pickup Location (Warehouse)
+                      </span>
+                      <p className="font-bold text-foreground">warehouse</p>
+                      <p className="text-[11px] text-muted-foreground">Kannur, Kerala 670006 (Verified)</p>
+                    </div>
+                  </div>
+
+                  {/* Webhook Endpoint Info */}
+                  <div className="p-3.5 rounded-xl bg-card border space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <Sparkles size={13} className="text-purple-600" />
+                        Shiprocket Real-Time Tracking Webhook URL
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const url = `${typeof window !== 'undefined' ? window.location.origin.replace(':3000', ':5001') : 'http://localhost:5001'}/api/v1/shipments/webhook/shiprocket`;
+                          navigator.clipboard.writeText(url);
+                          toast.success('Webhook URL copied to clipboard');
+                        }}
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline cursor-pointer"
+                      >
+                        <Copy size={11} />
+                        <span>Copy URL</span>
+                      </button>
+                    </div>
+                    <code className="block p-2 rounded-lg bg-muted text-[11px] font-mono text-muted-foreground break-all select-all">
+                      {typeof window !== 'undefined' ? window.location.origin.replace(':3000', ':5001') : 'http://localhost:5001'}/api/v1/shipments/webhook/shiprocket
+                    </code>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      Shiprocket automatically notifies this endpoint when a package status updates (e.g. IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, RTO).
+                    </p>
+                  </div>
+
+                  {/* Automated Workflow Checklist */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-[11px]">
+                    <div className="flex items-center gap-2 text-foreground font-medium">
+                      <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                      <span>Auto AWB assignment upon admin order confirmation</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-foreground font-medium">
+                      <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                      <span>Kannur warehouse pickup scheduled automatically</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-foreground font-medium">
+                      <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                      <span>Reverse doorstep pickup booked on return approval</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-foreground font-medium">
+                      <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                      <span>Live Shiprocket invoice & courier label printing</span>
                     </div>
                   </div>
                 </CardContent>

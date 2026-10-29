@@ -20,6 +20,15 @@ export class ShipmentRepository implements IShipmentRepository {
       deliveredAt: doc.deliveredAt,
       failedAt: doc.failedAt,
       notes: doc.notes,
+      shiprocketOrderId: doc.shiprocketOrderId,
+      shiprocketShipmentId: doc.shiprocketShipmentId,
+      awbCode: doc.awbCode,
+      courierName: doc.courierName,
+      pickupTokenNumber: doc.pickupTokenNumber,
+      pickupScheduledDate: doc.pickupScheduledDate,
+      labelUrl: doc.labelUrl,
+      invoiceUrl: doc.invoiceUrl,
+      trackingActivities: doc.trackingActivities,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     });
@@ -61,37 +70,38 @@ export class ShipmentRepository implements IShipmentRepository {
   }
 
   async save(shipment: Shipment): Promise<Shipment> {
+    const payload = {
+      orderId: shipment.orderId,
+      deliveryPartnerId: shipment.deliveryPartnerId,
+      trackingNumber: shipment.trackingNumber,
+      status: shipment.status,
+      estimatedDeliveryDate: shipment.estimatedDeliveryDate,
+      shippedAt: shipment.shippedAt,
+      deliveredAt: shipment.deliveredAt,
+      failedAt: shipment.failedAt,
+      notes: shipment.notes,
+      shiprocketOrderId: shipment.shiprocketOrderId,
+      shiprocketShipmentId: shipment.shiprocketShipmentId,
+      awbCode: shipment.awbCode,
+      courierName: shipment.courierName,
+      pickupTokenNumber: shipment.pickupTokenNumber,
+      pickupScheduledDate: shipment.pickupScheduledDate,
+      labelUrl: shipment.labelUrl,
+      invoiceUrl: shipment.invoiceUrl,
+      trackingActivities: shipment.trackingActivities,
+      updatedAt: new Date(),
+    };
+
     if (shipment.id) {
       const doc = await ShipmentModel.findByIdAndUpdate(
         shipment.id,
-        {
-          orderId: shipment.orderId,
-          deliveryPartnerId: shipment.deliveryPartnerId,
-          trackingNumber: shipment.trackingNumber,
-          status: shipment.status,
-          estimatedDeliveryDate: shipment.estimatedDeliveryDate,
-          shippedAt: shipment.shippedAt,
-          deliveredAt: shipment.deliveredAt,
-          failedAt: shipment.failedAt,
-          notes: shipment.notes,
-          updatedAt: new Date(),
-        },
+        payload,
         { new: true }
       ).exec();
       if (!doc) throw new Error('Shipment not found for update');
       return this.toDomain(doc);
     } else {
-      const created = await ShipmentModel.create({
-        orderId: shipment.orderId,
-        deliveryPartnerId: shipment.deliveryPartnerId,
-        trackingNumber: shipment.trackingNumber,
-        status: shipment.status,
-        estimatedDeliveryDate: shipment.estimatedDeliveryDate,
-        shippedAt: shipment.shippedAt,
-        deliveredAt: shipment.deliveredAt,
-        failedAt: shipment.failedAt,
-        notes: shipment.notes,
-      });
+      const created = await ShipmentModel.create(payload);
       return this.toDomain(created);
     }
   }

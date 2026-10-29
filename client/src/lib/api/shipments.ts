@@ -10,6 +10,13 @@ export type ShipmentStatus =
   | 'DELIVERY_FAILED'
   | 'RETURNED_TO_SELLER';
 
+export interface ShipmentScanActivity {
+  date: string;
+  status: string;
+  activity: string;
+  location: string;
+}
+
 export interface BackendShipment {
   id: string;
   orderId: string;
@@ -21,6 +28,15 @@ export interface BackendShipment {
   deliveredAt?: string | null;
   failedAt?: string | null;
   notes?: string | null;
+  shiprocketOrderId?: number | string | null;
+  shiprocketShipmentId?: number | string | null;
+  awbCode?: string | null;
+  courierName?: string | null;
+  pickupTokenNumber?: string | null;
+  pickupScheduledDate?: string | null;
+  labelUrl?: string | null;
+  invoiceUrl?: string | null;
+  trackingActivities?: ShipmentScanActivity[];
   createdAt: string;
   updatedAt: string;
 }
@@ -34,6 +50,21 @@ export const shipmentsApi = {
   trackShipment: async (trackingNumber: string): Promise<BackendShipment> => {
     const response = await apiClient.get<{ data: BackendShipment }>(`/shipments/track/${trackingNumber}`);
     return response.data?.data;
+  },
+
+  syncCourierStatus: async (orderId: string): Promise<BackendShipment> => {
+    const response = await apiClient.post<{ data: BackendShipment }>(`/shipments/${orderId}/sync-courier`);
+    return response.data?.data;
+  },
+
+  getLabelUrl: async (orderId: string): Promise<{ labelUrl: string | null }> => {
+    const response = await apiClient.post<{ data: { labelUrl: string | null } }>(`/shipments/${orderId}/label`);
+    return response.data?.data || { labelUrl: null };
+  },
+
+  getInvoiceUrl: async (orderId: string): Promise<{ invoiceUrl: string | null }> => {
+    const response = await apiClient.post<{ data: { invoiceUrl: string | null } }>(`/shipments/${orderId}/invoice`);
+    return response.data?.data || { invoiceUrl: null };
   },
 
   updateShipmentStatus: async (id: string, status: string, notes?: string): Promise<BackendShipment> => {

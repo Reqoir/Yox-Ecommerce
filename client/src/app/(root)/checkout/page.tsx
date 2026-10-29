@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const isBuyNow = searchParams?.get('buyNow') === '1' || searchParams?.get('buyNow') === 'true';
+  const isFromCart = searchParams?.get('fromCart') === '1' || searchParams?.get('cart') === '1';
 
   const { items } = useCartStore();
   const { directBuyItem, setDirectBuyItem } = useCheckoutStore();
@@ -32,12 +32,14 @@ function CheckoutContent() {
     });
   }, [fetchSettings]);
 
-  // Clean up directBuyItem if user navigated to standard cart checkout without buyNow query
+  // Clean up directBuyItem ONLY if user explicitly navigated from cart to cart checkout
   useEffect(() => {
-    if (!isBuyNow && directBuyItem) {
+    if (isFromCart && directBuyItem) {
       setDirectBuyItem(null);
     }
-  }, [isBuyNow, directBuyItem, setDirectBuyItem]);
+  }, [isFromCart, directBuyItem, setDirectBuyItem]);
+
+  const isDirectCheckout = Boolean(directBuyItem && !isFromCart);
 
   const userRole = (user as any)?.role || user?.roleId || '';
   const userRoleUpper = typeof userRole === 'string' ? userRole.toUpperCase() : '';
@@ -120,7 +122,6 @@ function CheckoutContent() {
   }
 
   // Check if items are present
-  const isDirectCheckout = isBuyNow && !!directBuyItem;
   const hasItems = isDirectCheckout || items.length > 0;
 
   if (!hasItems) {
@@ -132,7 +133,7 @@ function CheckoutContent() {
           </div>
           <h2 className="text-xl font-bold text-gray-900">Your Checkout is Empty</h2>
           <p className="text-xs text-gray-500 max-w-sm mx-auto">
-            {isBuyNow
+            {isDirectCheckout
               ? 'No direct purchase item was selected. Please choose a product to buy.'
               : 'You have no items in your shopping bag to checkout.'}
           </p>
@@ -162,7 +163,7 @@ function CheckoutContent() {
       <div className="w-[98%] max-w-[1500px] mx-auto">
 
         {/* Buy Now Informational Banner */}
-        {isDirectCheckout && (
+        {isDirectCheckout && directBuyItem && (
           <div className="mb-6 p-3 bg-amber-50/90 border border-amber-200 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs">
             <div className="flex items-center gap-2">
               <p className="text-xs font-medium text-amber-900">

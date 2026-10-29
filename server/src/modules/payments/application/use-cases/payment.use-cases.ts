@@ -17,6 +17,7 @@ import { StockLog } from '../../../inventory/domain/entities/stock-log.entity';
 import { AuditLogService } from '../../../audit-logs/application/services/audit-log.service';
 import { AuditAction } from '../../../audit-logs/domain/entities/audit-log.entity';
 import { NotificationService } from '../../../notifications/application/services/notification.service';
+import { OrderModel } from '../../../orders/infrastructure/models/order.model';
 import { PaymentModel } from '../../infrastructure/models/payment.model';
 import { SettingsModel } from '../../../settings/infrastructure/models/settings.model';
 import { UserModel } from '../../../users/infrastructure/models/user.model';
@@ -55,6 +56,13 @@ export interface VerifyRazorpayPaymentInputDTO {
   razorpaySignature: string;
 }
 
+export interface RecordPaymentFailureInputDTO {
+  userId: string;
+  orderId: string;
+  razorpayPaymentId?: string;
+  reason?: string;
+}
+
 export class CreateRazorpayOrderUseCase implements IUseCase<CreateRazorpayOrderInputDTO, CreateRazorpayOrderResponseDTO> {
   constructor(
     private readonly orderRepo: IOrderRepository,
@@ -77,6 +85,53 @@ export class CreateRazorpayOrderUseCase implements IUseCase<CreateRazorpayOrderI
       }
     } catch (err: any) {
       if (err.message && err.message.includes('maintenance')) throw err;
+    }
+
+    // 0.1 Clean up any stale unpaid Razorpay checkout sessions from previous attempts by this user
+    try {
+      const stalePendingOrders = await OrderModel.find({
+        userId: userId,
+        paymentMethod: 'RAZORPAY',
+        paymentStatus: 'PENDING',
+        orderStatus: 'PLACED',
+      }).exec();
+
+      for (const staleDoc of stalePendingOrders) {
+        for (const item of staleDoc.items || []) {
+          try {
+            const variant = await this.variantRepo.findById(item.variantId);
+            if (variant) {
+              variant.increaseStock(item.quantity);
+              await this.variantRepo.save(variant);
+            }
+            const inventory = await this.inventoryRepo.findByVariantId(item.variantId);
+            if (inventory) {
+              const prevAvail = inventory.availableStock;
+              const newAvail = prevAvail + item.quantity;
+              const newReserved = Math.max(0, inventory.reservedStock - item.quantity);
+              const updatedInv = Inventory.reconstitute({
+                ...inventory.toJSON(),
+                availableStock: newAvail,
+                reservedStock: newReserved,
+                updatedAt: new Date(),
+              });
+              await this.inventoryRepo.save(updatedInv);
+            }
+          } catch {}
+        }
+        staleDoc.orderStatus = 'CANCELLED';
+        staleDoc.paymentStatus = 'FAILED';
+        staleDoc.cancelledReason = 'Superseded by new checkout attempt';
+        staleDoc.cancelledAt = new Date();
+        await staleDoc.save();
+
+        await PaymentModel.findOneAndUpdate(
+          { orderId: staleDoc._id },
+          { paymentStatus: 'FAILED', updatedAt: new Date() }
+        );
+      }
+    } catch (cleanupErr) {
+      console.warn('Notice cleaning up stale pending orders:', cleanupErr);
     }
 
     // 1. Resolve items
@@ -384,3 +439,93 @@ export class VerifyRazorpayPaymentUseCase implements IUseCase<VerifyRazorpayPaym
     return mapToOrderResponseDTO(savedOrder);
   }
 }
+
+export class RecordPaymentFailureUseCase implements IUseCase<RecordPaymentFailureInputDTO, { success: boolean; message: string }> {
+  constructor(
+    private readonly orderRepo: IOrderRepository,
+    private readonly variantRepo: IProductVariantRepository,
+    private readonly inventoryRepo: IInventoryRepository,
+    private readonly stockLogRepo: IStockLogRepository
+  ) {}
+
+  async execute(input: RecordPaymentFailureInputDTO): Promise<{ success: boolean; message: string }> {
+    const { userId, orderId, razorpayPaymentId, reason } = input;
+    let order = await this.orderRepo.findById(orderId);
+    if (!order) order = await this.orderRepo.findByOrderNumber(orderId);
+    if (!order) {
+      return { success: false, message: 'Order not found' };
+    }
+
+    if (order.userId !== userId) {
+      return { success: false, message: 'Unauthorized' };
+    }
+
+    // Only cancel/fail if order is in PENDING payment state
+    if (order.paymentStatus === 'PAID') {
+      return { success: false, message: 'Order has already been paid' };
+    }
+
+    // 1. Release reserved stock back to variants and inventory
+    for (const item of order.items) {
+      try {
+        const variant = await this.variantRepo.findById(item.variantId);
+        if (variant) {
+          variant.increaseStock(item.quantity);
+          await this.variantRepo.save(variant);
+        }
+        const inventory = await this.inventoryRepo.findByVariantId(item.variantId);
+        if (inventory) {
+          const prevAvail = inventory.availableStock;
+          const newAvail = prevAvail + item.quantity;
+          const newReserved = Math.max(0, inventory.reservedStock - item.quantity);
+          const updatedInv = Inventory.reconstitute({
+            ...inventory.toJSON(),
+            availableStock: newAvail,
+            reservedStock: newReserved,
+            updatedAt: new Date(),
+          });
+          await this.inventoryRepo.save(updatedInv);
+
+          const log = StockLog.create({
+            inventoryId: inventory.id,
+            type: 'RELEASE',
+            amount: item.quantity,
+            previousStock: prevAvail,
+            newStock: newAvail,
+            reason: `Stock released from failed Razorpay checkout for Order #${order.orderNumber}`,
+            reference: order.id,
+          });
+          await this.stockLogRepo.save(log);
+        }
+      } catch (err) {
+        console.warn('Error releasing stock for failed order:', err);
+      }
+    }
+
+    // 2. Mark order as CANCELLED with paymentStatus FAILED
+    const failureReason = reason || 'Payment was declined or cancelled by customer';
+    const updatedOrder = Order.reconstitute({
+      ...order.toJSON(),
+      paymentStatus: 'FAILED',
+      orderStatus: 'CANCELLED',
+      cancelledReason: failureReason,
+      cancelledAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await this.orderRepo.save(updatedOrder);
+
+    // 3. Update Payment record in DB
+    await PaymentModel.findOneAndUpdate(
+      { orderId: order.id },
+      {
+        paymentStatus: 'FAILED',
+        transactionId: razorpayPaymentId || undefined,
+        updatedAt: new Date(),
+      }
+    );
+
+    return { success: true, message: 'Order marked as failed and stock released' };
+  }
+}
+

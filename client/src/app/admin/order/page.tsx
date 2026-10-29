@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { ordersApi, BackendOrder, OrderStatus, PaymentStatus } from '@/lib/api/orders';
 import { returnsApi, BackendReturn, InspectionResult } from '@/lib/api/returns';
 import { shipmentsApi } from '@/lib/api/shipments';
+import { printTaxInvoice, printShippingLabel } from '@/lib/order-documents';
+import apiClient from '@/lib/axios';
 import {
   ShoppingBag,
   Search,
@@ -41,6 +43,8 @@ import {
   Navigation,
   LayoutGrid,
   List,
+  FileText,
+  Printer,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -691,8 +695,14 @@ function AdminOrdersContent() {
       let msg = '';
 
       if (currentStatus === 'PLACED') {
+        const target = orders.find((o) => o.id === id) || (selectedOrder?.id === id ? selectedOrder : null);
+        if (target && target.paymentMethod !== 'COD' && target.paymentStatus !== 'PAID') {
+          toast.error(`Cannot accept order #${target.orderNumber}: Online payment status is ${target.paymentStatus}. Payment must be completed first.`);
+          setIsUpdating(false);
+          return;
+        }
         updated = await ordersApi.confirmOrder(id);
-        msg = 'Order confirmed and ready for packaging';
+        msg = 'Order accepted! Shiprocket courier pickup scheduled & registered.';
       } else if (currentStatus === 'CONFIRMED') {
         updated = await ordersApi.packOrder(id);
         msg = 'Order packed and ready for carrier dispatch';
@@ -700,7 +710,7 @@ function AdminOrdersContent() {
         const target = orders.find((o) => o.id === id);
         if (target) {
           setShippingOrder(target);
-          setTrackingNumber(`TRK-${Date.now().toString().slice(-7)}`);
+          setTrackingNumber(target.trackingNumber || `TRK-${Date.now().toString().slice(-7)}`);
         }
         setIsUpdating(false);
         return;
@@ -715,11 +725,119 @@ function AdminOrdersContent() {
       if (updated) {
         toast.success(msg);
         setOrders((prev) => prev.map((o) => (o.id === id ? updated! : o)));
+        if (selectedOrder?.id === id) {
+          setSelectedOrder(updated);
+        }
       }
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to progress order status.');
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleSyncCourierStatus = async (orderId: string) => {
+    try {
+      setIsUpdating(true);
+      const res = await shipmentsApi.syncCourierStatus(orderId);
+      toast.success(`Shiprocket courier status synced: ${res.status}`);
+      const fresh = await ordersApi.getOrderById(orderId);
+      if (fresh) {
+        setOrders((prev) => prev.map((o) => (o.id === orderId ? fresh : o)));
+        if (selectedOrder?.id === orderId) setSelectedOrder(fresh);
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to sync courier tracking');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Direct 1-Click Courier Webhook Simulation for Dev Testing
+  const handleSimulateWebhook = async (status: 'IN TRANSIT' | 'OUT FOR DELIVERY' | 'DELIVERED' | 'RTO') => {
+    if (!selectedOrder) return;
+    if (selectedOrder.orderStatus === 'PLACED') {
+      toast.warning("Please click 'Accept & Book Shiprocket' first before simulating courier status updates.");
+      return;
+    }
+    try {
+      setIsUpdating(true);
+      const res = await apiClient.post<{ success: boolean; message: string }>('/shipments/webhook/shiprocket', {
+        order_id: selectedOrder.id,
+        current_status: status,
+        awb: selectedOrder.trackingNumber || `AWB-SR-${selectedOrder.shiprocketShipmentId || selectedOrder.orderNumber.replace(/[^0-9]/g, '')}`,
+        courier_name: selectedOrder.deliveryPartnerId || 'Delhivery Express',
+        scans: [
+          {
+            date: new Date().toISOString(),
+            status: status,
+            activity: `Simulated courier checkpoint: ${status}`,
+            location: status === 'DELIVERED' ? `${selectedOrder.shippingAddress?.city || 'Destination Hub'}` : 'Kannur Central Hub',
+          },
+        ],
+      });
+      toast.success(res.data?.message || `Simulated courier status update: ${status}`);
+      const fresh = await ordersApi.getOrderById(selectedOrder.id);
+      if (fresh) {
+        setOrders((prev) => prev.map((o) => (o.id === fresh.id ? fresh : o)));
+        setSelectedOrder(fresh);
+      }
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Failed to simulate courier update');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handlePrintLabel = async (orderId: string, directUrl?: string | null) => {
+    const targetOrder = orders.find((o) => o.id === orderId) || (selectedOrder?.id === orderId ? selectedOrder : null);
+    if (!targetOrder) {
+      toast.error('Order details not found to print label');
+      return;
+    }
+    if (targetOrder.orderStatus === 'PLACED') {
+      toast.warning("Order has not been accepted yet. Please click 'Accept & Book Shiprocket' first to generate courier booking and official AWB.");
+      return;
+    }
+    if (targetOrder.orderStatus === 'CANCELLED') {
+      toast.error('Cannot print shipping label for a cancelled order.');
+      return;
+    }
+    if (directUrl && directUrl.startsWith('http')) {
+      window.open(directUrl, '_blank');
+      return;
+    }
+    try {
+      const res = await shipmentsApi.getLabelUrl(orderId).catch(() => null);
+      if (res?.labelUrl && res.labelUrl.startsWith('http')) {
+        window.open(res.labelUrl, '_blank');
+        return;
+      }
+    } catch {}
+    if (!targetOrder.trackingNumber) {
+      toast.warning("No courier AWB tracking code assigned yet. Please click 'Accept & Book Shiprocket' first.");
+      return;
+    }
+    printShippingLabel(targetOrder);
+  };
+
+  const handlePrintInvoice = async (orderId: string, directUrl?: string | null) => {
+    const targetOrder = orders.find((o) => o.id === orderId) || (selectedOrder?.id === orderId ? selectedOrder : null);
+    if (directUrl && directUrl.startsWith('http')) {
+      window.open(directUrl, '_blank');
+      return;
+    }
+    try {
+      const res = await shipmentsApi.getInvoiceUrl(orderId).catch(() => null);
+      if (res?.invoiceUrl && res.invoiceUrl.startsWith('http')) {
+        window.open(res.invoiceUrl, '_blank');
+        return;
+      }
+    } catch {}
+    if (targetOrder) {
+      printTaxInvoice(targetOrder);
+    } else {
+      toast.error('Order details not found to print invoice');
     }
   };
 
@@ -806,12 +924,19 @@ function AdminOrdersContent() {
   // Returns Handlers
   const handleApproveReturn = async (id: string) => {
     try {
+      setIsUpdating(true);
       const updated = await returnsApi.approveReturn(id);
-      toast.success('Return request approved');
+      const trackingMsg = updated.courierTrackingNumber
+        ? ` Reverse pickup scheduled with ${updated.courierName || 'Shiprocket'} (AWB: ${updated.courierTrackingNumber}).`
+        : '';
+      toast.success(`Return request approved!${trackingMsg}`);
       setReturns((prev) => prev.map((r) => (r.id === id ? updated : r)));
       setSelectedReturn((prev) => (prev?.id === id ? updated : prev));
+      fetchAllOrders(true);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to approve return request.');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -903,6 +1028,7 @@ function AdminOrdersContent() {
       setReturns((prev) => prev.map((r) => (r.id === refundingReturn.id ? updated : r)));
       setSelectedReturn((prev) => (prev?.id === refundingReturn.id ? updated : prev));
       setRefundingReturn(null);
+      fetchAllOrders(true);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to process refund.');
     } finally {
@@ -938,19 +1064,16 @@ function AdminOrdersContent() {
     }
   };
 
-  // Helper for next stage label
+  // Helper for next stage label:
+  // 1. PLACED -> 'Accept & Book Shiprocket' (Admin accepts order & registers in Shiprocket)
+  // 2. CONFIRMED -> 'Mark as Packed' (Admin company / warehouse staff picks & packs the parcel)
+  // Subsequent stages (Shipped, Out for Delivery, Delivered) are driven automatically by courier scans & Shiprocket webhooks.
   const getNextStageInfo = (status: OrderStatus) => {
     switch (status) {
       case 'PLACED':
-        return { label: 'Confirm Order', nextStatus: 'CONFIRMED' as OrderStatus, color: 'bg-indigo-600 hover:bg-indigo-700' };
+        return { label: 'Accept & Book Shiprocket', nextStatus: 'CONFIRMED' as OrderStatus, color: 'bg-emerald-600 hover:bg-emerald-700' };
       case 'CONFIRMED':
-        return { label: 'Pack Items', nextStatus: 'PACKED' as OrderStatus, color: 'bg-purple-600 hover:bg-purple-700' };
-      case 'PACKED':
-        return { label: 'Ship Package', nextStatus: 'SHIPPED' as OrderStatus, color: 'bg-amber-600 hover:bg-amber-700' };
-      case 'SHIPPED':
-        return { label: 'Out For Delivery', nextStatus: 'OUT_FOR_DELIVERY' as OrderStatus, color: 'bg-orange-600 hover:bg-orange-700' };
-      case 'OUT_FOR_DELIVERY':
-        return { label: 'Mark Delivered', nextStatus: 'DELIVERED' as OrderStatus, color: 'bg-emerald-600 hover:bg-emerald-700' };
+        return { label: 'Mark as Packed', nextStatus: 'PACKED' as OrderStatus, color: 'bg-indigo-600 hover:bg-indigo-700' };
       default:
         return null;
     }
@@ -1401,6 +1524,10 @@ function AdminOrdersContent() {
                             <span className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 rounded-xl">
                               <RotateCcw size={14} /> Returned
                             </span>
+                          ) : order.orderStatus === 'PACKED' ? (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 px-2.5 py-1 rounded-xl">
+                              <Package size={13} /> Packed
+                            </span>
                           ) : nextStage ? (
                             <Button
                               size="sm"
@@ -1412,6 +1539,57 @@ function AdminOrdersContent() {
                               <ArrowRight size={13} className="ml-1" />
                             </Button>
                           ) : null}
+
+                          {order.trackingNumber ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={isUpdating}
+                              onClick={() => handleSyncCourierStatus(order.id)}
+                              className="h-8 px-2.5 text-[11px] font-semibold rounded-xl text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                              title="Sync live status from Shiprocket"
+                            >
+                              <RefreshCw size={12} className={isUpdating ? "animate-spin mr-1" : "mr-1"} />
+                              <span className="hidden sm:inline">Sync</span>
+                            </Button>
+                          ) : order.shiprocketShipmentId && order.orderStatus !== 'CANCELLED' ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={isUpdating}
+                              onClick={() => handleSyncCourierStatus(order.id)}
+                              className="h-8 px-2.5 text-[11px] font-semibold rounded-xl text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                              title="Assign courier and generate AWB in Shiprocket"
+                            >
+                              <RefreshCw size={12} className={isUpdating ? "animate-spin mr-1" : "mr-1"} />
+                              <span>Assign AWB</span>
+                            </Button>
+                          ) : null}
+
+                          {/* Shipping Label is only printable once courier is booked (not PLACED or CANCELLED) */}
+                          {order.orderStatus !== 'PLACED' && order.orderStatus !== 'CANCELLED' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handlePrintLabel(order.id, order.labelUrl)}
+                              className="h-8 px-2.5 text-[11px] font-semibold rounded-xl text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40"
+                              title="Print Courier Shipping Label"
+                            >
+                              <Printer size={12} className="mr-1" />
+                              <span className="hidden sm:inline">Label</span>
+                            </Button>
+                          )}
+
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handlePrintInvoice(order.id, order.invoiceUrl)}
+                            className="h-8 px-2.5 text-[11px] font-semibold rounded-xl text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                            title="Print / Download Tax Invoice"
+                          >
+                            <FileText size={12} className="mr-1" />
+                            <span className="hidden sm:inline">Invoice</span>
+                          </Button>
 
                           <Button
                             size="sm"
@@ -1954,9 +2132,15 @@ function AdminOrdersContent() {
                           )}
 
                           {ret.status === 'APPROVED' && (
-                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-xl">
-                              <Clock size={13} /> Awaiting Shipment
-                            </span>
+                            <Button
+                              size="sm"
+                              disabled={isUpdating}
+                              onClick={() => handleOpenSchedulePickup(ret)}
+                              className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-8 px-3 text-xs rounded-xl shadow-2xs"
+                            >
+                              <Truck size={13} className="mr-1.5" />
+                              Schedule Pickup
+                            </Button>
                           )}
 
                           {(ret.status === 'RETURN_SHIPPED' ||
@@ -2308,6 +2492,17 @@ function AdminOrdersContent() {
                                   </>
                                 )}
 
+                                {ret.status === 'APPROVED' && (
+                                  <Button
+                                    size="sm"
+                                    disabled={isUpdating}
+                                    onClick={() => handleOpenSchedulePickup(ret)}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white h-7 text-xs font-semibold rounded-lg"
+                                  >
+                                    Pickup
+                                  </Button>
+                                )}
+
                                 {(ret.status === 'RETURN_SHIPPED' ||
                                   ret.status === 'PICKUP_SCHEDULED' ||
                                   ret.status === 'PICKED_UP') && (
@@ -2440,23 +2635,20 @@ function AdminOrdersContent() {
                       <RotateCcw size={16} className="text-zinc-500 shrink-0" />
                       <span>Order Returned (Locked)</span>
                     </div>
+                  ) : selectedOrder.orderStatus === 'PLACED' ? (
+                    <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-xs font-bold shadow-2xs">
+                      <Clock size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                      <span>Awaiting Acceptance & Shiprocket Booking</span>
+                    </div>
                   ) : (
-                    <div className="flex items-center gap-2 bg-muted/60 p-1.5 rounded-xl border">
-                      <span className="text-[11px] font-bold text-muted-foreground px-2">Change Status:</span>
-                      <select
-                        value={selectedOrder.orderStatus}
-                        onChange={(e) => handleDirectStatusChange(selectedOrder.id, e.target.value as OrderStatus)}
-                        disabled={isUpdating}
-                        className="text-xs font-bold bg-background border rounded-lg px-2.5 py-1.5 text-foreground cursor-pointer focus:ring-2 focus:ring-primary focus:outline-none"
-                      >
-                        <option value="PLACED">Placed</option>
-                        <option value="CONFIRMED">Confirmed</option>
-                        <option value="PACKED">Packed</option>
-                        <option value="SHIPPED">Shipped</option>
-                        <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
-                        <option value="DELIVERED">Delivered</option>
-                        <option value="CANCELLED">Cancelled</option>
-                      </select>
+                    <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 text-xs font-bold shadow-2xs">
+                      <Truck size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                      <span>Shiprocket Automated Tracking</span>
+                      {selectedOrder.trackingNumber && (
+                        <span className="font-mono text-[11px] opacity-80 bg-blue-100 dark:bg-blue-900/60 px-1.5 py-0.5 rounded">
+                          AWB: {selectedOrder.trackingNumber}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -2611,54 +2803,164 @@ function AdminOrdersContent() {
                       </div>
                     </div>
 
-                    {/* Logistics & Tracking Card */}
-                    {(selectedOrder.trackingNumber ||
-                      selectedOrder.orderStatus === 'SHIPPED' ||
-                      selectedOrder.orderStatus === 'DELIVERED') && (
-                      <div className="border rounded-2xl bg-card p-4 shadow-xs space-y-3">
-                        <div className="flex items-center justify-between border-b pb-3">
-                          <div className="flex items-center gap-2">
-                            <Truck size={16} className="text-amber-600" />
-                            <h3 className="font-bold text-sm">Logistics & Tracking</h3>
-                          </div>
-                          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200 dark:border-amber-900">
-                            {selectedOrder.deliveryPartnerId || 'Delhivery / BlueDart'}
-                          </span>
+                    {/* Complete Logistics & Shiprocket Tracking Card */}
+                    <div className="border rounded-2xl bg-card p-4 shadow-xs space-y-3">
+                      <div className="flex items-center justify-between border-b pb-3">
+                        <div className="flex items-center gap-2">
+                          <Truck size={16} className="text-primary" />
+                          <h3 className="font-bold text-sm">Shiprocket Courier & Logistics</h3>
                         </div>
+                        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-200 dark:border-blue-900">
+                          {selectedOrder.deliveryPartnerId || (selectedOrder.trackingNumber ? 'Shiprocket Partner' : 'Awaiting Booking')}
+                        </span>
+                      </div>
 
-                        <div className="grid grid-cols-2 gap-4 text-xs">
-                          <div>
-                            <span className="text-muted-foreground block text-[11px]">Tracking Number</span>
-                            <div className="flex items-center gap-1.5 mt-0.5 font-mono font-bold text-foreground">
-                              <span>{selectedOrder.trackingNumber || 'Pending Courier Scan'}</span>
-                              {selectedOrder.trackingNumber && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <div>
+                          <span className="text-muted-foreground block text-[11px]">Airway Bill (AWB) / Tracking</span>
+                          <div className="flex items-center gap-1.5 mt-0.5 font-mono font-bold text-foreground">
+                            <span>{selectedOrder.trackingNumber || 'Pending Courier Assignment'}</span>
+                            {selectedOrder.trackingNumber ? (
+                              <>
                                 <button
                                   onClick={() => {
                                     navigator.clipboard.writeText(selectedOrder.trackingNumber!);
                                     toast.success('Tracking number copied to clipboard');
                                   }}
-                                  className="text-muted-foreground hover:text-foreground"
+                                  className="text-muted-foreground hover:text-foreground p-0.5"
+                                  title="Copy AWB"
                                 >
                                   <Copy size={12} />
                                 </button>
-                              )}
-                            </div>
+                                <a
+                                  href={`https://shiprocket.co/tracking/${selectedOrder.trackingNumber}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline p-0.5"
+                                  title="Track on Shiprocket Website"
+                                >
+                                  <ExternalLink size={12} />
+                                </a>
+                              </>
+                            ) : selectedOrder.shiprocketShipmentId ? (
+                              <button
+                                onClick={() => handleSyncCourierStatus(selectedOrder.id)}
+                                disabled={isUpdating}
+                                className="ml-2 text-[10px] font-sans font-semibold bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-0.5 rounded shadow-xs inline-flex items-center gap-1 cursor-pointer"
+                                title="Attempt AWB Generation with Shiprocket"
+                              >
+                                <RefreshCw size={10} className={isUpdating ? "animate-spin" : ""} />
+                                <span>Assign AWB</span>
+                              </button>
+                            ) : null}
                           </div>
+                          {!selectedOrder.trackingNumber && selectedOrder.shiprocketShipmentId && (
+                            <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1 font-sans font-normal">
+                              Order is booked in Shiprocket (#{selectedOrder.shiprocketOrderId}). Shiprocket requires minimum ₹100 wallet recharge to assign courier AWB. Once recharged, click <strong>Assign AWB</strong>.
+                            </p>
+                          )}
+                        </div>
 
-                          <div>
-                            <span className="text-muted-foreground block text-[11px]">Carrier Dispatch</span>
-                            <span className="font-semibold text-foreground mt-0.5 block">
-                              {selectedOrder.shippedAt
-                                ? new Date(selectedOrder.shippedAt).toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                  })
-                                : 'Express Dispatch'}
-                            </span>
+                        <div>
+                          <span className="text-muted-foreground block text-[11px]">Shiprocket Identifiers</span>
+                          <div className="text-foreground mt-0.5 font-mono text-[11px]">
+                            {selectedOrder.shiprocketOrderId ? (
+                              <span>Order: #{selectedOrder.shiprocketOrderId}</span>
+                            ) : (
+                              <span className="text-muted-foreground">Order Ref: #{selectedOrder.orderNumber}</span>
+                            )}
+                            {selectedOrder.shiprocketShipmentId && (
+                              <span className="text-muted-foreground block text-[10px]">Shipment ID: #{selectedOrder.shiprocketShipmentId}</span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <span className="text-muted-foreground block text-[11px]">Dispatch Timeline</span>
+                          <span className="font-semibold text-foreground mt-0.5 block">
+                            {selectedOrder.shippedAt
+                              ? `Shipped on ${new Date(selectedOrder.shippedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`
+                              : selectedOrder.confirmedAt
+                              ? `Booked on ${new Date(selectedOrder.confirmedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`
+                              : 'Pending Courier Handover'}
+                          </span>
+                        </div>
+
+                        <div>
+                          <span className="text-muted-foreground block text-[11px]">Logistics Documents</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            {selectedOrder.orderStatus !== 'PLACED' && selectedOrder.orderStatus !== 'CANCELLED' && (
+                              <button
+                                onClick={() => handlePrintLabel(selectedOrder.id, selectedOrder.labelUrl)}
+                                className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-600 hover:text-purple-700 bg-purple-50 dark:bg-purple-950/40 px-2 py-0.5 rounded border border-purple-200 dark:border-purple-800"
+                              >
+                                <Printer size={11} /> Label
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handlePrintInvoice(selectedOrder.id, selectedOrder.invoiceUrl)}
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 hover:text-amber-700 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800"
+                            >
+                              <FileText size={11} /> Invoice
+                            </button>
+                            {selectedOrder.trackingNumber && (
+                              <button
+                                onClick={() => handleSyncCourierStatus(selectedOrder.id)}
+                                disabled={isUpdating}
+                                className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800"
+                              >
+                                <RefreshCw size={11} className={isUpdating ? "animate-spin" : ""} /> Sync
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Interactive Dev Simulation Buttons */}
+                        <div className="col-span-1 sm:col-span-2 pt-2.5 border-t border-border/60 mt-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                            🧪 Test Shiprocket Webhook (Development Simulation):
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            <button
+                              type="button"
+                              disabled={isUpdating}
+                              onClick={() => handleSimulateWebhook('IN TRANSIT')}
+                              className="text-[10px] font-bold px-2 py-1 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800 cursor-pointer disabled:opacity-50"
+                              title="Simulate courier pickup & in-transit scan"
+                            >
+                              🚚 In Transit
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isUpdating}
+                              onClick={() => handleSimulateWebhook('OUT FOR DELIVERY')}
+                              className="text-[10px] font-bold px-2 py-1 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 cursor-pointer disabled:opacity-50"
+                              title="Simulate out for delivery scan"
+                            >
+                              📦 Out for Delivery
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isUpdating}
+                              onClick={() => handleSimulateWebhook('DELIVERED')}
+                              className="text-[10px] font-bold px-2 py-1 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 cursor-pointer disabled:opacity-50"
+                              title="Simulate successful delivery"
+                            >
+                              ✅ Delivered
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isUpdating}
+                              onClick={() => handleSimulateWebhook('RTO')}
+                              className="text-[10px] font-bold px-2 py-1 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800 cursor-pointer disabled:opacity-50"
+                              title="Simulate return to seller"
+                            >
+                              ↩️ RTO (Return)
+                            </button>
                           </div>
                         </div>
                       </div>
-                    )}
+                    </div>
                   </div>
 
                   {/* Right Column: Customer Details, Address, Financials (5 cols) */}
@@ -2853,7 +3155,45 @@ function AdminOrdersContent() {
                     )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {selectedOrder.trackingNumber && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isUpdating}
+                      onClick={() => handleSyncCourierStatus(selectedOrder.id)}
+                      className="text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-xs font-semibold"
+                      title="Sync latest live tracking scans from Shiprocket"
+                    >
+                      <RefreshCw size={13} className={isUpdating ? "animate-spin mr-1.5" : "mr-1.5"} />
+                      <span>Sync Courier Status</span>
+                    </Button>
+                  )}
+
+                  {selectedOrder.orderStatus !== 'PLACED' && selectedOrder.orderStatus !== 'CANCELLED' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handlePrintLabel(selectedOrder.id, selectedOrder.labelUrl)}
+                      className="text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-950/40 text-xs font-semibold"
+                      title="Print shipping label"
+                    >
+                      <Printer size={13} className="mr-1.5" />
+                      <span>Shipping Label</span>
+                    </Button>
+                  )}
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handlePrintInvoice(selectedOrder.id, selectedOrder.invoiceUrl)}
+                    className="text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-xs font-semibold"
+                    title="Print Tax Invoice"
+                  >
+                    <FileText size={13} className="mr-1.5" />
+                    <span>Tax Invoice</span>
+                  </Button>
+
                   {(selectedOrder.paymentStatus === 'REFUND_PROCESSING' || (selectedOrder.cancellationBankDetails && selectedOrder.paymentStatus !== 'REFUNDED')) && (
                     <Button
                       size="sm"

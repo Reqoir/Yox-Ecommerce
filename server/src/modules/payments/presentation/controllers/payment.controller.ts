@@ -7,15 +7,42 @@ import { Request, Response, NextFunction } from 'express';
 import { HttpStatus } from '../../../../shared/constants/http-status.constants';
 import { ApiResponse } from '../../../../shared/utils/api-response.util';
 import { ProcessRefundUseCase, GetRefundsByOrderUseCase } from '../../application/use-cases/refund.use-cases';
-import { CreateRazorpayOrderUseCase, VerifyRazorpayPaymentUseCase } from '../../application/use-cases/payment.use-cases';
+import { CreateRazorpayOrderUseCase, VerifyRazorpayPaymentUseCase, RecordPaymentFailureUseCase } from '../../application/use-cases/payment.use-cases';
 
 export class PaymentController {
   constructor(
     private readonly processRefundUseCase: ProcessRefundUseCase,
     private readonly getRefundsByOrderUseCase: GetRefundsByOrderUseCase,
     private readonly createRazorpayOrderUseCase?: CreateRazorpayOrderUseCase,
-    private readonly verifyRazorpayPaymentUseCase?: VerifyRazorpayPaymentUseCase
+    private readonly verifyRazorpayPaymentUseCase?: VerifyRazorpayPaymentUseCase,
+    private readonly recordPaymentFailureUseCase?: RecordPaymentFailureUseCase
   ) {}
+
+  recordPaymentFailure = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = (req as any).user?.id || (req as any).user?.userId;
+      if (!userId) {
+        res.status(HttpStatus.UNAUTHORIZED).json({ success: false, message: 'Authentication required' });
+        return;
+      }
+
+      if (!this.recordPaymentFailureUseCase) {
+        throw new Error('RecordPaymentFailureUseCase not injected');
+      }
+
+      const { orderId, razorpayPaymentId, reason } = req.body;
+      const result = await this.recordPaymentFailureUseCase.execute({
+        userId,
+        orderId,
+        razorpayPaymentId,
+        reason,
+      });
+
+      ApiResponse.success(res, result, 'Payment failure recorded and stock restored');
+    } catch (error) {
+      next(error);
+    }
+  };
 
   createRazorpayOrder = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

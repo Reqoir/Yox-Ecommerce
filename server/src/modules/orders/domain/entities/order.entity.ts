@@ -81,6 +81,10 @@ export interface OrderProps extends EntityProps {
   cancellationBankDetails?: RefundBankDetails | null;
   trackingNumber?: string | null;
   deliveryPartnerId?: string | null;
+  shiprocketOrderId?: number | string | null;
+  shiprocketShipmentId?: number | string | null;
+  labelUrl?: string | null;
+  invoiceUrl?: string | null;
 }
 
 export class Order extends BaseEntity<OrderProps> {
@@ -119,6 +123,27 @@ export class Order extends BaseEntity<OrderProps> {
   get cancellationBankDetails(): RefundBankDetails | null | undefined { return this._props.cancellationBankDetails; }
   get trackingNumber(): string | null | undefined { return this._props.trackingNumber; }
   get deliveryPartnerId(): string | null | undefined { return this._props.deliveryPartnerId; }
+  get shiprocketOrderId(): number | string | null | undefined { return this._props.shiprocketOrderId; }
+  get shiprocketShipmentId(): number | string | null | undefined { return this._props.shiprocketShipmentId; }
+  get labelUrl(): string | null | undefined { return this._props.labelUrl; }
+  get invoiceUrl(): string | null | undefined { return this._props.invoiceUrl; }
+
+  public attachShiprocket(details: {
+    shiprocketOrderId: number | string;
+    shiprocketShipmentId: number | string;
+    awbCode?: string | null;
+    courierName?: string | null;
+    labelUrl?: string | null;
+    invoiceUrl?: string | null;
+  }): void {
+    this._props.shiprocketOrderId = details.shiprocketOrderId;
+    this._props.shiprocketShipmentId = details.shiprocketShipmentId;
+    if (details.awbCode) this._props.trackingNumber = details.awbCode;
+    if (details.courierName) this._props.deliveryPartnerId = details.courierName;
+    if (details.labelUrl) this._props.labelUrl = details.labelUrl;
+    if (details.invoiceUrl) this._props.invoiceUrl = details.invoiceUrl;
+    this._props.updatedAt = new Date();
+  }
 
   public static create(props: Omit<OrderProps, 'id' | 'createdAt' | 'updatedAt' | 'placedAt' | 'orderStatus' | 'paymentStatus'> & { orderStatus?: string; paymentStatus?: string; placedAt?: Date }): Order {
     if (!props.items || props.items.length === 0) {

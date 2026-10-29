@@ -13,6 +13,10 @@ import {
   TrackShipmentUseCase,
   UpdateShipmentStatusUseCase,
   GetAllShipmentsUseCase,
+  SyncCourierStatusUseCase,
+  GenerateShipmentLabelUseCase,
+  GenerateShipmentInvoiceUseCase,
+  HandleShiprocketWebhookUseCase,
 } from '../../application/use-cases/shipment.use-cases';
 
 export class ShipmentController {
@@ -22,7 +26,11 @@ export class ShipmentController {
     private readonly getShipmentByOrderUseCase: GetShipmentByOrderUseCase,
     private readonly trackShipmentUseCase: TrackShipmentUseCase,
     private readonly updateShipmentStatusUseCase: UpdateShipmentStatusUseCase,
-    private readonly getAllShipmentsUseCase: GetAllShipmentsUseCase
+    private readonly getAllShipmentsUseCase: GetAllShipmentsUseCase,
+    private readonly syncCourierStatusUseCase?: SyncCourierStatusUseCase,
+    private readonly generateShipmentLabelUseCase?: GenerateShipmentLabelUseCase,
+    private readonly generateShipmentInvoiceUseCase?: GenerateShipmentInvoiceUseCase,
+    private readonly handleShiprocketWebhookUseCase?: HandleShiprocketWebhookUseCase
   ) {}
 
   createShipment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -60,6 +68,55 @@ export class ShipmentController {
     try {
       const shipment = await this.trackShipmentUseCase.execute(req.params.trackingNumber as string);
       ApiResponse.success(res, shipment, 'Shipment tracking info retrieved');
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  syncCourierStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!this.syncCourierStatusUseCase) {
+        throw new Error('Sync courier status service not configured');
+      }
+      const shipment = await this.syncCourierStatusUseCase.execute(req.params.orderId as string);
+      ApiResponse.success(res, shipment, 'Courier tracking status synced successfully');
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  generateLabel = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!this.generateShipmentLabelUseCase) {
+        throw new Error('Generate shipment label service not configured');
+      }
+      const result = await this.generateShipmentLabelUseCase.execute(req.params.orderId as string);
+      ApiResponse.success(res, result, 'Shipping label generated successfully');
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  generateInvoice = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!this.generateShipmentInvoiceUseCase) {
+        throw new Error('Generate shipment invoice service not configured');
+      }
+      const result = await this.generateShipmentInvoiceUseCase.execute(req.params.orderId as string);
+      ApiResponse.success(res, result, 'Shipping invoice generated successfully');
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  handleShiprocketWebhook = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!this.handleShiprocketWebhookUseCase) {
+        res.status(200).json({ success: true });
+        return;
+      }
+      const result = await this.handleShiprocketWebhookUseCase.execute(req.body);
+      res.status(200).json(result);
     } catch (error) {
       next(error);
     }

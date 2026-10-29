@@ -166,6 +166,8 @@ export class Return extends BaseEntity<ReturnProps> {
     pickupTimeSlot?: string;
     pickupAgentName?: string;
     pickupAgentPhone?: string;
+    courierTrackingNumber?: string;
+    courierName?: string;
   }): void {
     if (this._props.status !== 'APPROVED' && this._props.status !== 'REQUESTED') {
       throw new Error(`Cannot schedule pickup from status: ${this._props.status}`);
@@ -175,6 +177,8 @@ export class Return extends BaseEntity<ReturnProps> {
     if (params.pickupTimeSlot) this._props.pickupTimeSlot = params.pickupTimeSlot;
     if (params.pickupAgentName) this._props.pickupAgentName = params.pickupAgentName;
     if (params.pickupAgentPhone) this._props.pickupAgentPhone = params.pickupAgentPhone;
+    if (params.courierTrackingNumber) this._props.courierTrackingNumber = params.courierTrackingNumber;
+    if (params.courierName) this._props.courierName = params.courierName;
     this._props.updatedAt = new Date();
   }
 

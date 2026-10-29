@@ -38,18 +38,25 @@ export function ReturnStatusTracker({ returnRecord }: ReturnStatusTrackerProps) 
       label: isRejected ? 'Return Rejected' : 'Admin Approval',
       description: isRejected
         ? returnRecord.rejectionReason || 'Return request rejected by staff'
-        : 'Request verified and approved for manual shipment',
+        : 'Return request verified and approved',
       timestamp: isRejected ? returnRecord.updatedAt : returnRecord.approvedAt,
       icon: isRejected ? XCircle : CheckCircle2,
       isDanger: isRejected,
     },
     {
       key: 'RETURN_SHIPPED',
-      label: 'Return Shipped',
+      label:
+        returnRecord.status === 'PICKUP_SCHEDULED'
+          ? 'Doorstep Pickup Scheduled'
+          : returnRecord.status === 'PICKED_UP'
+          ? 'Item Picked Up & In Transit'
+          : 'Return Shipped',
       description: returnRecord.courierTrackingNumber
-        ? `Shipped via ${returnRecord.courierName || 'Courier / India Post'} (Consignment #${returnRecord.courierTrackingNumber})`
-        : 'Package sent by customer to YOX return address',
-      timestamp: returnRecord.customerShippedAt,
+        ? `${returnRecord.status === 'PICKUP_SCHEDULED' ? 'Pickup assigned to' : 'In transit with'} ${
+            returnRecord.courierName || 'Shiprocket Courier Partner'
+          } (AWB #${returnRecord.courierTrackingNumber})`
+        : 'Doorstep pickup arranged with courier partner',
+      timestamp: returnRecord.pickupDate || returnRecord.customerShippedAt,
       icon: Truck,
       extraInfo: returnRecord.courierTrackingNumber ? (
         <div className="mt-2.5 p-3 bg-blue-50/80 border border-blue-200 rounded-lg text-xs space-y-1.5 text-blue-950">

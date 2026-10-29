@@ -45,4 +45,11 @@ export const paymentsApi = {
     const response = await apiClient.post<{ data: BackendOrder }>('/payments/verify', payload);
     return response.data?.data || (response.data as unknown as BackendOrder);
   },
+
+  /**
+   * Record payment failure or cancellation to cleanly cancel the order and release locked stock
+   */
+  recordPaymentFailure: async (payload: { orderId: string; razorpayPaymentId?: string; reason?: string }): Promise<void> => {
+    await apiClient.post('/payments/fail-order', payload).catch(() => {});
+  },
 };

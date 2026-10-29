@@ -29,6 +29,20 @@ export interface ShipmentResponseDTO {
   deliveredAt?: Date | null;
   failedAt?: Date | null;
   notes?: string | null;
+  shiprocketOrderId?: number | string | null;
+  shiprocketShipmentId?: number | string | null;
+  awbCode?: string | null;
+  courierName?: string | null;
+  pickupTokenNumber?: string | null;
+  pickupScheduledDate?: Date | null;
+  labelUrl?: string | null;
+  invoiceUrl?: string | null;
+  trackingActivities?: Array<{
+    date: string;
+    status: string;
+    activity: string;
+    location: string;
+  }>;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -64,6 +64,10 @@ export interface BackendOrder {
   cancellationBankDetails?: CancellationBankDetails | null;
   trackingNumber?: string | null;
   deliveryPartnerId?: string | null;
+  shiprocketOrderId?: number | string | null;
+  shiprocketShipmentId?: number | string | null;
+  labelUrl?: string | null;
+  invoiceUrl?: string | null;
   customer?: {
     id?: string;
     fullName?: string;
@@ -137,6 +141,11 @@ export const ordersApi = {
 
   // Admin State Machine Operations
   confirmOrder: async (id: string): Promise<BackendOrder> => {
+    const response = await apiClient.patch<{ data: BackendOrder }>(`/orders/${id}/confirm`);
+    return response.data?.data;
+  },
+
+  acceptAndShipOrder: async (id: string): Promise<BackendOrder> => {
     const response = await apiClient.patch<{ data: BackendOrder }>(`/orders/${id}/confirm`);
     return response.data?.data;
   },

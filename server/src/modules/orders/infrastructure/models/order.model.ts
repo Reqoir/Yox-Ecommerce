@@ -41,6 +41,10 @@ export interface IOrderDocument extends Document {
   cancellationBankDetails?: IOrderCancellationBankDetails | null;
   trackingNumber?: string | null;
   deliveryPartnerId?: string | null;
+  shiprocketOrderId?: number | string | null;
+  shiprocketShipmentId?: number | string | null;
+  labelUrl?: string | null;
+  invoiceUrl?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -116,6 +120,10 @@ const orderSchema = new Schema<IOrderDocument>(
     cancellationBankDetails: { type: cancellationBankDetailsSchema, default: null },
     trackingNumber: { type: String, default: null },
     deliveryPartnerId: { type: String, default: null },
+    shiprocketOrderId: { type: Schema.Types.Mixed, default: null },
+    shiprocketShipmentId: { type: Schema.Types.Mixed, default: null },
+    labelUrl: { type: String, default: null },
+    invoiceUrl: { type: String, default: null },
   },
   {
     ...(baseSchemaOptions as any),

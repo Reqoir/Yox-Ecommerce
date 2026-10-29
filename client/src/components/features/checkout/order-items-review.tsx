@@ -10,10 +10,10 @@ export function OrderItemsReview() {
   const { items: cartItems } = useCartStore();
   const { directBuyItem } = useCheckoutStore();
   const searchParams = useSearchParams();
-  const isBuyNow = searchParams?.get('buyNow') === '1' || searchParams?.get('buyNow') === 'true';
+  const isFromCart = searchParams?.get('fromCart') === '1' || searchParams?.get('cart') === '1';
 
-  const isDirectCheckout = isBuyNow && !!directBuyItem;
-  const items = isDirectCheckout ? [directBuyItem] : cartItems;
+  const isDirectCheckout = Boolean(directBuyItem && !isFromCart);
+  const items = (isDirectCheckout && directBuyItem) ? [directBuyItem] : cartItems;
   const [isOpen, setIsOpen] = useState(true);
 
   return (

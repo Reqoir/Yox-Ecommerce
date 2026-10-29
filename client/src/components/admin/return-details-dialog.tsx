@@ -1041,6 +1041,18 @@ Amount: ₹${calculatedRefundValue}`;
               </Button>
             )}
 
+            {returnItem.status === 'APPROVED' && onOpenSchedulePickup && (
+              <Button
+                size="sm"
+                disabled={isUpdating}
+                onClick={() => onOpenSchedulePickup(returnItem)}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-2xs"
+              >
+                <Truck size={13} className="mr-1.5" />
+                <span>Schedule Pickup</span>
+              </Button>
+            )}
+
             {(returnItem.status === 'RETURN_SHIPPED' ||
               returnItem.status === 'PICKUP_SCHEDULED' ||
               returnItem.status === 'PICKED_UP') && (

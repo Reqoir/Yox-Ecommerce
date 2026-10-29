@@ -43,8 +43,11 @@ import {
   Building2,
   Info,
   Star,
+  Copy,
+  ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { printTaxInvoice } from '@/lib/order-documents';
 
 const STATUS_STEPS = [
   { key: 'PLACED', label: 'Ordered', icon: IoBagCheckOutline },
@@ -66,6 +69,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [userReturns, setUserReturns] = useState<BackendReturn[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isSyncingShipment, setIsSyncingShipment] = useState(false);
 
   // Cancellation Modal State
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -245,9 +249,26 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     });
   };
 
-  // Printable Invoice handler
-  const handleDownloadInvoice = () => {
-    window.print();
+  // Printable & Shiprocket Official Invoice handler
+  const handleDownloadInvoice = async () => {
+    if (!order) return;
+    if (shipment?.invoiceUrl && shipment.invoiceUrl.startsWith('http')) {
+      window.open(shipment.invoiceUrl, '_blank');
+      return;
+    }
+    if (order.invoiceUrl && order.invoiceUrl.startsWith('http')) {
+      window.open(order.invoiceUrl, '_blank');
+      return;
+    }
+    try {
+      const res = await shipmentsApi.getInvoiceUrl(order.id).catch(() => null);
+      if (res?.invoiceUrl && res.invoiceUrl.startsWith('http')) {
+        window.open(res.invoiceUrl, '_blank');
+        return;
+      }
+    } catch {}
+    // Render clean, professional GST Tax Invoice isolated document
+    printTaxInvoice(order, shipment);
   };
 
   // Return Modal Handlers
@@ -369,6 +390,30 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+
+  const handleSyncLiveShipment = async () => {
+    if (!order) return;
+    const awb = shipment?.awbCode || shipment?.trackingNumber || order.trackingNumber;
+    if (!awb) {
+      toast.info('Courier tracking number is pending. Once the order is accepted and booked with Shiprocket, live tracking will be available.');
+      return;
+    }
+    try {
+      setIsSyncingShipment(true);
+      const updated = await shipmentsApi.syncCourierStatus(order.id);
+      if (updated) {
+        setShipment(updated);
+        const updatedOrder = await ordersApi.getOrderById(order.id);
+        if (updatedOrder) setOrder(updatedOrder);
+        toast.success('Live courier tracking synced with Shiprocket');
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to sync courier tracking');
+    } finally {
+      setIsSyncingShipment(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[450px] bg-white rounded-2xl border border-gray-200 p-8 text-center">
@@ -462,13 +507,63 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               <h2 className="text-lg lg:text-xl font-bold text-emerald-600 leading-tight">
                 {getEstimatedArrivalText()}
               </h2>
-              {shipment?.trackingNumber && (
-                <p className="text-xs text-gray-500 mt-1 flex items-center gap-2 font-mono">
-                  <span>Tracking: #{shipment.trackingNumber}</span>
-                  <span>•</span>
-                  <span>Carrier: {shipment.deliveryPartnerId || 'YOX Express Courier'}</span>
-                </p>
-              )}
+              {(() => {
+                const activeCourier = shipment?.courierName || order.deliveryPartnerId || (order.trackingNumber ? 'Shiprocket Partner' : null);
+                const activeAwb = shipment?.awbCode || shipment?.trackingNumber || order.trackingNumber;
+
+                return activeAwb ? (
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 mt-2 font-mono">
+                    <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-[2px] font-bold text-[11px] font-sans">
+                      {activeCourier || 'Shiprocket Express'}
+                    </span>
+                    <span>•</span>
+                    <span>
+                      AWB: <strong className="text-gray-900">{activeAwb}</strong>
+                    </span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(activeAwb);
+                        toast.success('AWB tracking number copied to clipboard!');
+                      }}
+                      title="Copy AWB number"
+                      className="p-1 text-gray-400 hover:text-emerald-700 transition-colors"
+                    >
+                      <Copy size={13} />
+                    </button>
+                    <a
+                      href={`https://shiprocket.co/tracking/${activeAwb}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Track on Courier Portal"
+                      className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 hover:underline font-sans font-bold text-[11px] ml-1"
+                    >
+                      <span>Track Live</span>
+                      <ExternalLink size={12} />
+                    </a>
+                    {shipment?.pickupScheduledDate && (
+                      <>
+                        <span>•</span>
+                        <span className="text-gray-500 font-sans">Pickup: {shipment.pickupScheduledDate}</span>
+                      </>
+                    )}
+                    <button
+                      onClick={handleSyncLiveShipment}
+                      disabled={isSyncingShipment}
+                      title="Refresh live status from Shiprocket"
+                      className="inline-flex items-center gap-1 text-[11px] font-sans font-bold text-emerald-700 hover:text-emerald-900 ml-1 cursor-pointer disabled:opacity-50"
+                    >
+                      <RefreshCw size={11} className={isSyncingShipment ? 'animate-spin' : ''} />
+                      <span>{isSyncingShipment ? 'Syncing...' : 'Sync Live'}</span>
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1 flex items-center gap-2 font-sans">
+                    <span>Logistics: Automated Courier Dispatch</span>
+                    <span>•</span>
+                    <span>AWB will be assigned upon warehouse booking</span>
+                  </p>
+                );
+              })()}
             </div>
           </div>
 
@@ -550,6 +645,88 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
                 );
               })}
+            </div>
+
+            {/* Real-time Shiprocket Tracking Scans & Courier Milestones */}
+            <div className="mt-5 p-4 bg-gray-50 border border-gray-200 rounded-[2px] space-y-3">
+              <div className="flex flex-wrap items-center justify-between border-b border-gray-200 pb-2.5 gap-2">
+                <span className="text-xs font-bold text-gray-900 flex items-center gap-2">
+                  <Truck size={14} className="text-emerald-600" />
+                  Live Logistics & Courier Tracking ({shipment?.courierName || order.deliveryPartnerId || 'Shiprocket Partner'})
+                </span>
+                <div className="flex items-center gap-2">
+                  {(shipment?.awbCode || shipment?.trackingNumber || order.trackingNumber) && (
+                    <span className="text-[10px] text-gray-600 font-mono font-medium bg-white px-2 py-0.5 border rounded-[2px]">
+                      AWB: {shipment?.awbCode || shipment?.trackingNumber || order.trackingNumber}
+                    </span>
+                  )}
+                  <button
+                    onClick={handleSyncLiveShipment}
+                    disabled={isSyncingShipment}
+                    title="Fetch latest scans from Shiprocket"
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-900 ml-1 cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw size={11} className={isSyncingShipment ? 'animate-spin' : ''} />
+                    <span>{isSyncingShipment ? 'Syncing...' : 'Sync'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-3 max-h-56 overflow-y-auto pr-1 pt-1">
+                {shipment?.trackingActivities && shipment.trackingActivities.length > 0 ? (
+                  shipment.trackingActivities.map((act, index) => (
+                    <div key={index} className="flex items-start gap-3 text-xs">
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1 shrink-0 ring-4 ring-emerald-100" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 leading-snug">{act.activity || act.status}</p>
+                        <p className="text-[11px] text-gray-500 mt-0.5">{act.location} • {act.date}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="flex items-start gap-3 text-xs">
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1 shrink-0 ring-4 ring-emerald-100" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 leading-snug">Order Confirmed & Placed in Fulfillment Queue</p>
+                        <p className="text-[11px] text-gray-500 mt-0.5">
+                          {new Date(order.placedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </div>
+
+                    {(shipment?.awbCode || shipment?.trackingNumber || order.trackingNumber) ? (
+                      <div className="flex items-start gap-3 text-xs">
+                        <div className="w-2.5 h-2.5 rounded-full bg-blue-500 mt-1 shrink-0 ring-4 ring-blue-100" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-gray-900 leading-snug">
+                            Courier Manifest Generated • Assigned to {shipment?.courierName || order.deliveryPartnerId || 'Shiprocket Partner'}
+                          </p>
+                          <p className="text-[11px] text-gray-500 mt-0.5 font-mono">
+                            AWB: {shipment?.awbCode || shipment?.trackingNumber || order.trackingNumber} • Kannur Central Hub
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-3 text-xs">
+                        <div className="w-2.5 h-2.5 rounded-full bg-amber-400 mt-1 shrink-0 ring-4 ring-amber-100" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-gray-900 leading-snug">Warehouse Packaging & Quality Inspection</p>
+                          <p className="text-[11px] text-gray-500 mt-0.5">Scheduled for carrier pickup at central distribution center</p>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-start gap-3 text-xs opacity-60">
+                      <div className="w-2.5 h-2.5 rounded-full bg-gray-300 mt-1 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-600 leading-snug">Out for Delivery & Doorstep Handover</p>
+                        <p className="text-[11px] text-gray-400 mt-0.5">Destination: {order.shippingAddress?.city}, {order.shippingAddress?.state}</p>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         ) : order.paymentStatus === 'REFUNDED' ? (
@@ -751,7 +928,39 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   {/* Render Manual Shipment Form or Live Stepper Tracker if return exists for item */}
                   {existingReturn && (
                     <div className="pt-3 border-t border-gray-200/80 space-y-4">
-                      {existingReturn.status === 'APPROVED' && (
+                      {/* Automated Doorstep Reverse Pickup Banner when Shiprocket reverse logistics is assigned */}
+                      {(existingReturn.status === 'PICKUP_SCHEDULED' || existingReturn.courierTrackingNumber) && (
+                        <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-[2px] text-xs space-y-2 text-emerald-950">
+                          <div className="flex items-center justify-between font-bold text-emerald-900">
+                            <span className="flex items-center gap-1.5">
+                              <Truck size={14} className="text-emerald-700" />
+                              Automated Doorstep Reverse Pickup Scheduled
+                            </span>
+                            <span className="text-[10px] bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded font-mono font-bold">
+                              Shiprocket Reverse Courier
+                            </span>
+                          </div>
+                          <p className="text-emerald-800 leading-relaxed">
+                            Our logistics partner <strong>{existingReturn.courierName || 'Shiprocket Partner'}</strong> has been assigned to pick up this item directly from your delivery address.
+                          </p>
+                          {existingReturn.courierTrackingNumber && (
+                            <p className="font-mono text-[11px] font-semibold text-emerald-900">
+                              Reverse AWB / Tracking #: {existingReturn.courierTrackingNumber}
+                            </p>
+                          )}
+                          {existingReturn.pickupDate && (
+                            <p className="text-[11px] text-emerald-700">
+                              Scheduled Pickup: <strong>{new Date(existingReturn.pickupDate).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</strong>
+                            </p>
+                          )}
+                          <p className="text-[10px] text-emerald-600 italic">
+                            Please ensure the product is packed in its original packaging with all tags attached for inspection upon courier handover.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Manual shipment card fallback only if return is approved without an automated reverse courier */}
+                      {existingReturn.status === 'APPROVED' && !existingReturn.courierTrackingNumber && (
                         <ManualShipmentCard
                           returnRecord={existingReturn}
                           onShipmentSubmitted={(updated) => {

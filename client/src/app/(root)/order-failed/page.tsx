@@ -16,14 +16,19 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
+import { useCheckoutStore } from '@/store/useCheckoutStore';
 
 function OrderFailedContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams?.get('orderId') || searchParams?.get('orderNumber') || '';
   const reason = searchParams?.get('reason') || 'The transaction was cancelled or could not be completed by your bank.';
   const paymentId = searchParams?.get('paymentId') || '';
+  const isBuyNow = searchParams?.get('buyNow') === '1' || searchParams?.get('buyNow') === 'true';
 
   const { config } = useStoreSettingsStore();
+  const { directBuyItem } = useCheckoutStore();
+  const isDirect = Boolean(isBuyNow || directBuyItem);
+  const retryUrl = isDirect ? '/checkout?buyNow=1' : '/checkout';
 
   return (
     <main className="w-full bg-[#f8fafc] min-h-screen py-10 lg:py-16 px-4 sm:px-6">
@@ -48,8 +53,33 @@ function OrderFailedContent() {
           </h1>
 
           <p className="text-xs sm:text-sm text-gray-600 max-w-md mx-auto leading-relaxed mb-6">
-            We couldn&apos;t complete your payment. Don&apos;t worry—your items are still saved in your shopping bag.
+            {isDirect
+              ? "We couldn't complete your direct payment. Your selected product is preserved—click Retry Payment to try again."
+              : "We couldn't complete your payment. Don't worry—your items are still saved in your shopping bag."}
           </p>
+
+          {/* Direct Buy Product Item Preview */}
+          {isDirect && directBuyItem && (
+            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 flex items-center gap-3.5 text-left mb-6">
+              {directBuyItem.image && (
+                <img
+                  src={directBuyItem.image}
+                  alt={directBuyItem.name}
+                  className="w-14 h-16 object-cover rounded-md bg-gray-200 shrink-0 border border-gray-200 shadow-2xs"
+                />
+              )}
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-full inline-block mb-1">
+                  Direct Buy Item
+                </span>
+                <p className="text-xs font-bold text-gray-900 truncate">{directBuyItem.name}</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">
+                  {directBuyItem.size ? `Size: ${directBuyItem.size} • ` : ''}Qty: {directBuyItem.quantity}
+                </p>
+                <p className="text-xs font-extrabold text-gray-900 mt-0.5">₹{directBuyItem.price?.toLocaleString('en-IN')}</p>
+              </div>
+            </div>
+          )}
 
           {/* Reason Box */}
           <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 text-left text-xs space-y-2 mb-6">
@@ -92,20 +122,30 @@ function OrderFailedContent() {
           {/* Primary Actions */}
           <div className="flex flex-col sm:flex-row gap-3">
             <Link
-              href="/checkout"
+              href={retryUrl}
               className="flex-1 py-3.5 px-6 bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-bold tracking-wider uppercase rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm"
             >
               <RefreshCw size={15} />
               <span>Retry Payment</span>
             </Link>
 
-            <Link
-              href="/cart"
-              className="flex-1 py-3.5 px-6 bg-white hover:bg-gray-50 border border-gray-300 text-gray-800 text-xs font-bold tracking-wider uppercase rounded-lg transition-colors flex items-center justify-center gap-2 shadow-2xs"
-            >
-              <ShoppingBag size={15} />
-              <span>Return to Cart</span>
-            </Link>
+            {isDirect && (directBuyItem as any)?.productId ? (
+              <Link
+                href={`/product/${(directBuyItem as any).productId}`}
+                className="flex-1 py-3.5 px-6 bg-white hover:bg-gray-50 border border-gray-300 text-gray-800 text-xs font-bold tracking-wider uppercase rounded-lg transition-colors flex items-center justify-center gap-2 shadow-2xs"
+              >
+                <ArrowRight size={15} />
+                <span>Return to Product</span>
+              </Link>
+            ) : (
+              <Link
+                href="/cart"
+                className="flex-1 py-3.5 px-6 bg-white hover:bg-gray-50 border border-gray-300 text-gray-800 text-xs font-bold tracking-wider uppercase rounded-lg transition-colors flex items-center justify-center gap-2 shadow-2xs"
+              >
+                <ShoppingBag size={15} />
+                <span>Return to Cart</span>
+              </Link>
+            )}
           </div>
         </div>
 

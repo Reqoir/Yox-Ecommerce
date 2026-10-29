@@ -15,7 +15,7 @@ import { StockLogRepository } from '../../../inventory/infrastructure/repositori
 import { AddressRepository } from '../../../addresses/infrastructure/repositories/address.repository';
 import { RazorpayService } from '../../infrastructure/services/razorpay.service';
 import { ProcessRefundUseCase, GetRefundsByOrderUseCase } from '../../application/use-cases/refund.use-cases';
-import { CreateRazorpayOrderUseCase, VerifyRazorpayPaymentUseCase } from '../../application/use-cases/payment.use-cases';
+import { CreateRazorpayOrderUseCase, VerifyRazorpayPaymentUseCase, RecordPaymentFailureUseCase } from '../../application/use-cases/payment.use-cases';
 import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
 import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
 import { paymentLimiter } from '../../../../presentation/http/middleware/rate-limiter.middleware';
@@ -53,13 +53,20 @@ const verifyRazorpayPaymentUseCase = new VerifyRazorpayPaymentUseCase(
   cartRepo,
   razorpayService
 );
+const recordPaymentFailureUseCase = new RecordPaymentFailureUseCase(
+  orderRepo,
+  variantRepo,
+  inventoryRepo,
+  stockLogRepo
+);
 
 // Controller
 const paymentController = new PaymentController(
   processRefundUseCase,
   getRefundsByOrderUseCase,
   createRazorpayOrderUseCase,
-  verifyRazorpayPaymentUseCase
+  verifyRazorpayPaymentUseCase,
+  recordPaymentFailureUseCase
 );
 
 // All payment routes require customer authentication
@@ -68,6 +75,7 @@ router.use(requireAuth);
 // Customer Razorpay Routes (Protected with paymentLimiter)
 router.post('/create-order', paymentLimiter, paymentController.createRazorpayOrder);
 router.post('/verify', paymentLimiter, paymentController.verifyRazorpayPayment);
+router.post('/fail-order', paymentLimiter, paymentController.recordPaymentFailure);
 
 // Order Refunds Retrieval
 router.get('/order/:orderId', paymentController.getRefundsByOrder);

@@ -23,6 +23,7 @@ import {
   ProcessRefundDirectUseCase,
   GetAllReturnsUseCase,
 } from '../../application/use-cases/return.use-cases';
+import { PaymentRepository, RefundRepository } from '../../../payments/infrastructure/repositories/payment.repository';
 import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
 import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
 
@@ -33,17 +34,19 @@ const orderRepo = new OrderRepository();
 const inventoryRepo = new InventoryRepository();
 const stockLogRepo = new StockLogRepository();
 const variantRepo = new ProductVariantRepository();
+const paymentRepo = new PaymentRepository();
+const refundRepo = new RefundRepository();
 
 const createReturnUseCase = new CreateReturnUseCase(returnRepo, orderRepo);
 const submitReturnShipmentUseCase = new SubmitReturnShipmentUseCase(returnRepo);
 const getUserReturnsUseCase = new GetUserReturnsUseCase(returnRepo);
 const getReturnByIdUseCase = new GetReturnByIdUseCase(returnRepo);
-const approveReturnUseCase = new ApproveReturnUseCase(returnRepo);
+const approveReturnUseCase = new ApproveReturnUseCase(returnRepo, orderRepo);
 const rejectReturnUseCase = new RejectReturnUseCase(returnRepo);
 const scheduleReturnPickupUseCase = new ScheduleReturnPickupUseCase(returnRepo);
 const receiveReturnUseCase = new ReceiveReturnUseCase(returnRepo);
 const inspectReturnUseCase = new InspectReturnUseCase(returnRepo, orderRepo, variantRepo, inventoryRepo, stockLogRepo);
-const processRefundDirectUseCase = new ProcessRefundDirectUseCase(returnRepo);
+const processRefundDirectUseCase = new ProcessRefundDirectUseCase(returnRepo, orderRepo, paymentRepo, refundRepo);
 const getAllReturnsUseCase = new GetAllReturnsUseCase(returnRepo);
 
 const returnController = new ReturnController(

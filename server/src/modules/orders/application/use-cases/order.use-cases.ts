@@ -27,6 +27,10 @@ import { UserModel } from '../../../users/infrastructure/models/user.model';
 import { ProductModel } from '../../../products/infrastructure/models/product.model';
 import { ProductVariantModel } from '../../../products/infrastructure/models/product-variant.model';
 import { SettingsModel } from '../../../settings/infrastructure/models/settings.model';
+import { ShiprocketService } from '../../../shipments/infrastructure/services/shiprocket.service';
+import { ShipmentRepository } from '../../../shipments/infrastructure/repositories/shipment.repository';
+import { IShipmentRepository } from '../../../shipments/domain/repositories/shipment.repository.interface';
+import { Shipment } from '../../../shipments/domain/entities/shipment.entity';
 
 export function mapToOrderResponseDTO(order: Order): OrderResponseDTO {
   return {
@@ -57,6 +61,10 @@ export function mapToOrderResponseDTO(order: Order): OrderResponseDTO {
     cancellationBankDetails: order.cancellationBankDetails,
     trackingNumber: order.trackingNumber,
     deliveryPartnerId: order.deliveryPartnerId,
+    shiprocketOrderId: order.shiprocketOrderId,
+    shiprocketShipmentId: order.shiprocketShipmentId,
+    labelUrl: order.labelUrl,
+    invoiceUrl: order.invoiceUrl,
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
   };
@@ -328,7 +336,9 @@ export class GetAllOrdersUseCase implements IUseCase<any, { data: OrderResponseD
         new Set(res.data.flatMap((o) => o.items.map((i) => i.variantId)).filter(Boolean))
       );
       const variants = await ProductVariantModel.find({ _id: { $in: variantIds } }).select('images').lean();
-      const variantMap = new Map(variants.map((v) => [v._id.toString(), v.images?.[0] || null]));
+      const variantMap = new Map<string, string | null>(
+        variants.map((v: any) => [v._id.toString(), (v.images?.[0] as string) || null])
+      );
 
       const enriched = res.data.map((o) => {
         const dto = mapToOrderResponseDTO(o);
@@ -336,7 +346,8 @@ export class GetAllOrdersUseCase implements IUseCase<any, { data: OrderResponseD
         if (dto.items) {
           dto.items.forEach((item) => {
             if (!item.imageUrl && item.variantId) {
-              item.imageUrl = variantMap.get(item.variantId) || null;
+              const img = variantMap.get(item.variantId);
+              if (img) item.imageUrl = img;
             }
           });
         }
@@ -437,7 +448,8 @@ export class CancelOrderUseCase implements IUseCase<{ id: string; userId?: strin
     private readonly orderRepo: IOrderRepository,
     private readonly variantRepo: IProductVariantRepository,
     private readonly inventoryRepo: IInventoryRepository,
-    private readonly stockLogRepo: IStockLogRepository
+    private readonly stockLogRepo: IStockLogRepository,
+    private readonly shipmentRepo: IShipmentRepository = new ShipmentRepository()
   ) {}
 
   async execute(input: { id: string; userId?: string; isAdmin?: boolean; data: CancelOrderRequestDTO; actor?: { id?: string; role?: string; email?: string } }): Promise<OrderResponseDTO> {
@@ -450,6 +462,20 @@ export class CancelOrderUseCase implements IUseCase<{ id: string; userId?: strin
     }
     if (!input.isAdmin && input.userId && order.userId !== input.userId) {
       throw new Error('Forbidden: You do not have permission to cancel this order');
+    }
+
+    // If order was pushed to Shiprocket, cancel the shipment with courier agency
+    if (order.shiprocketOrderId) {
+      try {
+        await ShiprocketService.getInstance().cancelOrder(order.shiprocketOrderId);
+        const shipment = await this.shipmentRepo.findByOrderId(order.id);
+        if (shipment) {
+          shipment.updateStatus('RETURNED_TO_SELLER', 'Shipment cancelled with courier agency via Shiprocket');
+          await this.shipmentRepo.save(shipment);
+        }
+      } catch (srErr: any) {
+        console.warn('Shiprocket courier cancellation warning:', srErr.message);
+      }
     }
 
     const prevStatus = order.orderStatus;
@@ -538,13 +564,163 @@ export class CancelOrderUseCase implements IUseCase<{ id: string; userId?: strin
 }
 
 export class ConfirmOrderUseCase implements IUseCase<{ id: string; actor?: { id?: string; role?: string; email?: string } }, OrderResponseDTO> {
-  constructor(private readonly orderRepo: IOrderRepository) {}
+  constructor(
+    private readonly orderRepo: IOrderRepository,
+    private readonly shipmentRepo: IShipmentRepository = new ShipmentRepository()
+  ) {}
+
   async execute(input: { id: string; actor?: { id?: string; role?: string; email?: string } }): Promise<OrderResponseDTO> {
     let order = await this.orderRepo.findById(input.id);
     if (!order) order = await this.orderRepo.findByOrderNumber(input.id);
     if (!order) throw new Error('Order not found');
     const prevStatus = order.orderStatus;
+    // Safety check: online orders must be paid before admin can confirm and book courier
+    if (order.paymentMethod !== 'COD' && order.paymentStatus !== 'PAID') {
+      throw new Error(`Cannot accept order #${order.orderNumber}: Online payment status is ${order.paymentStatus}. Payment must be completed before booking with Shiprocket.`);
+    }
     order.confirm();
+
+    // Call Shiprocket Courier API: Order creation, AWB assignment & pickup generation
+    let awbCode: string | null = null;
+    let courierName: string = 'Shiprocket Courier';
+    let pickupToken: string | null = null;
+    let pickupDate: Date | null = null;
+    let labelUrl: string | null = null;
+    let invoiceUrl: string | null = null;
+
+    try {
+      let customerEmail = 'customer@yox.com';
+      let customerPhone = order.shippingAddress.phone || '9876543210';
+      try {
+        const u = await UserModel.findById(order.userId).select('email phone').lean();
+        if (u?.email) customerEmail = u.email;
+        if (u?.phone && !customerPhone) customerPhone = u.phone;
+      } catch {}
+
+      const shiprocket = ShiprocketService.getInstance();
+
+      // 1. Create Order in Shiprocket
+      const srOrder = await shiprocket.createAdhocOrder({
+        orderNumber: order.orderNumber,
+        orderDate: order.placedAt || new Date(),
+        customerName: order.shippingAddress.fullName,
+        customerEmail,
+        customerPhone,
+        shippingAddress: {
+          address: order.shippingAddress.streetAddress,
+          address2: order.shippingAddress.addressLine2 || order.shippingAddress.landmark || '',
+          city: order.shippingAddress.city,
+          state: order.shippingAddress.state,
+          country: order.shippingAddress.country || 'India',
+          postalCode: order.shippingAddress.postalCode,
+        },
+        items: order.items.map((item) => ({
+          name: item.productName,
+          sku: item.sku || 'SKU-ITEM',
+          units: item.quantity,
+          selling_price: item.unitPrice,
+          discount: item.discount || 0,
+        })),
+        paymentMethod: order.paymentMethod === 'COD' ? 'COD' : 'Prepaid',
+        subtotal: order.totalAmount,
+      });
+
+      // 2. Assign Courier & Generate AWB Code
+      let awbNotice: string | null = null;
+      try {
+        const awbRes = await shiprocket.assignAwb(srOrder.shipmentId);
+        awbCode = awbRes.awbCode;
+        courierName = awbRes.courierName;
+      } catch (awbErr: any) {
+        awbNotice = awbErr.message;
+        console.warn('AWB generation notice:', awbErr.message);
+      }
+
+      // 3. Schedule Courier Pickup from Kannur Warehouse
+      try {
+        const pickupRes = await shiprocket.requestPickup(srOrder.shipmentId);
+        pickupToken = pickupRes.pickupTokenNumber || null;
+        if (pickupRes.pickupScheduledDate) {
+          pickupDate = new Date(pickupRes.pickupScheduledDate);
+        }
+      } catch (pickupErr: any) {
+        console.warn('Pickup scheduling notice:', pickupErr.message);
+      }
+
+      // 4. Generate Label & Invoice URLs
+      try {
+        labelUrl = await shiprocket.generateLabel(srOrder.shipmentId);
+      } catch {}
+      try {
+        invoiceUrl = await shiprocket.printInvoice(srOrder.orderId);
+      } catch {}
+
+      // Attach details to Order aggregate
+      order.attachShiprocket({
+        shiprocketOrderId: srOrder.orderId,
+        shiprocketShipmentId: srOrder.shipmentId,
+        awbCode,
+        courierName,
+        labelUrl,
+        invoiceUrl,
+      });
+
+      // 5. Create or Update Shipment Entity
+      let shipment = await this.shipmentRepo.findByOrderId(order.id);
+      if (!shipment) {
+        shipment = Shipment.create({
+          orderId: order.id,
+          deliveryPartnerId: courierName,
+          trackingNumber: awbCode,
+          status: 'READY_TO_SHIP',
+          estimatedDeliveryDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
+          notes: awbNotice
+            ? `Shiprocket Order #${srOrder.orderId} created. AWB Pending: ${awbNotice}`
+            : `Shiprocket Order #${srOrder.orderId} booked. Courier: ${courierName}.`,
+        });
+      }
+      shipment.attachShiprocketDetails({
+        shiprocketOrderId: srOrder.orderId,
+        shiprocketShipmentId: srOrder.shipmentId,
+        awbCode,
+        courierName,
+        pickupTokenNumber: pickupToken,
+        pickupScheduledDate: pickupDate,
+        labelUrl,
+        invoiceUrl,
+      });
+      shipment.updateStatus('READY_TO_SHIP', `Courier ${courierName} assigned. AWB: ${awbCode || 'Assigned'}`);
+      shipment.updateTrackingActivities([
+        {
+          date: new Date().toISOString(),
+          status: 'MANIFEST_GENERATED',
+          activity: `Order accepted and booked via Shiprocket. Assigned courier: ${courierName}. AWB: ${awbCode || 'Pending'}.`,
+          location: 'Kannur Warehouse',
+        },
+      ]);
+      await this.shipmentRepo.save(shipment);
+
+      // Real-time notification to customer
+      try {
+        await NotificationService.getInstance().notify({
+          userId: order.userId,
+          type: 'ORDER_STATUS',
+          title: '🚚 Order Confirmed & Courier Booked',
+          message: `Your order #${order.orderNumber} is confirmed! Assigned to ${courierName} (AWB: ${awbCode || 'Assigned'}). Pickup scheduled.`,
+          metadata: {
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            courierName,
+            awbCode,
+            trackingNumber: awbCode,
+          },
+        });
+      } catch {}
+    } catch (srErr: any) {
+      console.error('Shiprocket order creation error:', srErr.message);
+      order.updateStatus('CONFIRMED', `Shiprocket notice: ${srErr.message}`);
+    }
+
     const saved = await this.orderRepo.save(order);
 
     try {
@@ -557,9 +733,9 @@ export class ConfirmOrderUseCase implements IUseCase<{ id: string; actor?: { id?
         action: AuditAction.ORDER_STATUS_CHANGED,
         resourceType: 'ORDER',
         resourceId: saved.id,
-        description: `Order #${saved.orderNumber} confirmed by ${actorInfo.actorName || actorInfo.actorRole}`,
+        description: `Order #${saved.orderNumber} confirmed and booked with Shiprocket (${courierName}${awbCode ? ', AWB: ' + awbCode : ''}) by ${actorInfo.actorName || actorInfo.actorRole}`,
         before: { status: prevStatus },
-        after: { status: 'CONFIRMED' },
+        after: { status: 'CONFIRMED', courierName, awbCode },
       });
     } catch {}
 
@@ -590,6 +766,20 @@ export class PackOrderUseCase implements IUseCase<{ id: string; actor?: { id?: s
         description: `Order #${saved.orderNumber} packed by ${actorInfo.actorName || actorInfo.actorRole}`,
         before: { status: prevStatus },
         after: { status: 'PACKED' },
+      });
+    } catch {}
+
+    try {
+      await NotificationService.getInstance().notify({
+        userId: saved.userId,
+        type: 'ORDER_STATUS',
+        title: '📦 Order Packed & Ready',
+        message: `Your order #${saved.orderNumber} has been packed at our warehouse and is waiting for courier handover!`,
+        metadata: {
+          orderId: saved.id,
+          orderNumber: saved.orderNumber,
+          status: 'PACKED',
+        },
       });
     } catch {}
 

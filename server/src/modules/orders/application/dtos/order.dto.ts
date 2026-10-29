@@ -75,6 +75,10 @@ export interface OrderResponseDTO {
   } | null;
   trackingNumber?: string | null;
   deliveryPartnerId?: string | null;
+  shiprocketOrderId?: number | string | null;
+  shiprocketShipmentId?: number | string | null;
+  labelUrl?: string | null;
+  invoiceUrl?: string | null;
   customer?: {
     id: string;
     fullName: string;

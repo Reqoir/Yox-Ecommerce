@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 export function CheckoutSummaryPanel() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const isBuyNow = searchParams?.get('buyNow') === '1' || searchParams?.get('buyNow') === 'true';
+  const isFromCart = searchParams?.get('fromCart') === '1' || searchParams?.get('cart') === '1';
 
   const { getSubtotal, getSavingsTotal, getItemCount, clearCart } = useCartStore();
   const { config } = useStoreSettingsStore();
@@ -33,24 +33,24 @@ export function CheckoutSummaryPanel() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoadingOverlay, setIsLoadingOverlay] = useState(false);
 
-  const isDirectCheckout = isBuyNow && !!directBuyItem;
+  const isDirectCheckout = Boolean(directBuyItem && !isFromCart);
 
   const userRole = (user as any)?.role || user?.roleId || '';
   const userRoleUpper = typeof userRole === 'string' ? userRole.toUpperCase() : '';
   const isAdmin = userRoleUpper.includes('ADMIN') || (user?.permissions || []).includes('*');
   const isMaintenance = Boolean(config.maintenanceMode);
 
-  const subtotal = isDirectCheckout
+  const subtotal = (isDirectCheckout && directBuyItem)
     ? directBuyItem.price * directBuyItem.quantity
     : getSubtotal();
 
-  const savings = isDirectCheckout
+  const savings = (isDirectCheckout && directBuyItem)
     ? (directBuyItem.comparePrice && directBuyItem.comparePrice > directBuyItem.price
         ? (directBuyItem.comparePrice - directBuyItem.price) * directBuyItem.quantity
         : 0)
     : getSavingsTotal();
 
-  const itemCount = isDirectCheckout
+  const itemCount = (isDirectCheckout && directBuyItem)
     ? directBuyItem.quantity
     : getItemCount();
 
@@ -152,6 +152,11 @@ export function CheckoutSummaryPanel() {
             ondismiss: () => {
               setIsProcessing(false);
               setIsLoadingOverlay(false);
+              // Cleanly fail order & restore stock on backend so no duplicate/ghost order remains
+              paymentsApi.recordPaymentFailure({
+                orderId: rzpInitData.orderId,
+                reason: 'Customer cancelled or closed payment popup without completing payment',
+              });
               if (isDirectCheckout) {
                 toast.info('Payment was cancelled. You can retry checkout anytime.');
               } else {
@@ -212,8 +217,14 @@ export function CheckoutSummaryPanel() {
               console.error('Payment verification failed:', verifyError);
               const msg = verifyError?.response?.data?.message || 'Payment verification failed.';
 
+              paymentsApi.recordPaymentFailure({
+                orderId: rzpInitData.orderId,
+                razorpayPaymentId: response.razorpay_payment_id,
+                reason: msg,
+              });
+
               await new Promise((r) => setTimeout(r, 600));
-              router.push(`/order-failed?orderId=${rzpInitData.orderNumber}&paymentId=${response.razorpay_payment_id}&reason=${encodeURIComponent(msg)}`);
+              router.push(`/order-failed?orderId=${rzpInitData.orderNumber}&paymentId=${response.razorpay_payment_id}&reason=${encodeURIComponent(msg)}${isDirectCheckout ? '&buyNow=1' : ''}`);
             } finally {
               setIsProcessing(false);
             }
@@ -229,8 +240,14 @@ export function CheckoutSummaryPanel() {
           setIsLoadingOverlay(true);
 
           const reason = response?.error?.description || 'Payment was declined by your bank or UPI app.';
+          paymentsApi.recordPaymentFailure({
+            orderId: rzpInitData.orderId,
+            razorpayPaymentId: response?.error?.metadata?.payment_id || '',
+            reason: reason,
+          });
+
           await new Promise((r) => setTimeout(r, 600));
-          router.push(`/order-failed?orderId=${rzpInitData.orderNumber}&paymentId=${response?.error?.metadata?.payment_id || ''}&reason=${encodeURIComponent(reason)}`);
+          router.push(`/order-failed?orderId=${rzpInitData.orderNumber}&paymentId=${response?.error?.metadata?.payment_id || ''}&reason=${encodeURIComponent(reason)}${isDirectCheckout ? '&buyNow=1' : ''}`);
         });
 
         // Open Razorpay Popup

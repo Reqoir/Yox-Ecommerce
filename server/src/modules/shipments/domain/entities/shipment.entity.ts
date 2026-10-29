@@ -16,6 +16,13 @@ export type ShipmentStatus =
   | 'DELIVERY_FAILED'
   | 'RETURNED_TO_SELLER';
 
+export interface ShipmentTrackingActivity {
+  date: string;
+  status: string;
+  activity: string;
+  location: string;
+}
+
 export interface ShipmentProps extends EntityProps {
   orderId: string;
   deliveryPartnerId?: string | null;
@@ -26,6 +33,15 @@ export interface ShipmentProps extends EntityProps {
   deliveredAt?: Date | null;
   failedAt?: Date | null;
   notes?: string | null;
+  shiprocketOrderId?: number | string | null;
+  shiprocketShipmentId?: number | string | null;
+  awbCode?: string | null;
+  courierName?: string | null;
+  pickupTokenNumber?: string | null;
+  pickupScheduledDate?: Date | null;
+  labelUrl?: string | null;
+  invoiceUrl?: string | null;
+  trackingActivities?: ShipmentTrackingActivity[];
 }
 
 export class Shipment extends BaseEntity<ShipmentProps> {
@@ -42,6 +58,15 @@ export class Shipment extends BaseEntity<ShipmentProps> {
   get deliveredAt(): Date | null | undefined { return this._props.deliveredAt; }
   get failedAt(): Date | null | undefined { return this._props.failedAt; }
   get notes(): string | null | undefined { return this._props.notes; }
+  get shiprocketOrderId(): number | string | null | undefined { return this._props.shiprocketOrderId; }
+  get shiprocketShipmentId(): number | string | null | undefined { return this._props.shiprocketShipmentId; }
+  get awbCode(): string | null | undefined { return this._props.awbCode; }
+  get courierName(): string | null | undefined { return this._props.courierName; }
+  get pickupTokenNumber(): string | null | undefined { return this._props.pickupTokenNumber; }
+  get pickupScheduledDate(): Date | null | undefined { return this._props.pickupScheduledDate; }
+  get labelUrl(): string | null | undefined { return this._props.labelUrl; }
+  get invoiceUrl(): string | null | undefined { return this._props.invoiceUrl; }
+  get trackingActivities(): ShipmentTrackingActivity[] { return this._props.trackingActivities || []; }
 
   public static create(props: Omit<ShipmentProps, 'id' | 'createdAt' | 'updatedAt' | 'status'> & { status?: string }): Shipment {
     const now = new Date();
@@ -94,6 +119,38 @@ export class Shipment extends BaseEntity<ShipmentProps> {
     if (deliveryPartnerId) {
       this._props.deliveryPartnerId = deliveryPartnerId;
     }
+    this._props.updatedAt = new Date();
+  }
+
+  public attachShiprocketDetails(details: {
+    shiprocketOrderId: number | string;
+    shiprocketShipmentId: number | string;
+    awbCode?: string | null;
+    courierName?: string | null;
+    pickupTokenNumber?: string | null;
+    pickupScheduledDate?: Date | null;
+    labelUrl?: string | null;
+    invoiceUrl?: string | null;
+  }): void {
+    this._props.shiprocketOrderId = details.shiprocketOrderId;
+    this._props.shiprocketShipmentId = details.shiprocketShipmentId;
+    if (details.awbCode) {
+      this._props.awbCode = details.awbCode;
+      this._props.trackingNumber = details.awbCode;
+    }
+    if (details.courierName) {
+      this._props.courierName = details.courierName;
+      this._props.deliveryPartnerId = details.courierName;
+    }
+    if (details.pickupTokenNumber) this._props.pickupTokenNumber = details.pickupTokenNumber;
+    if (details.pickupScheduledDate) this._props.pickupScheduledDate = details.pickupScheduledDate;
+    if (details.labelUrl) this._props.labelUrl = details.labelUrl;
+    if (details.invoiceUrl) this._props.invoiceUrl = details.invoiceUrl;
+    this._props.updatedAt = new Date();
+  }
+
+  public updateTrackingActivities(activities: ShipmentTrackingActivity[]): void {
+    this._props.trackingActivities = activities;
     this._props.updatedAt = new Date();
   }
 }

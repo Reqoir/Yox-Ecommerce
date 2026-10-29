@@ -116,4 +116,31 @@ export class RazorpayService {
     const instance = this.getInstance();
     return await instance.payments.fetch(paymentId);
   }
+
+  /**
+   * Issue an official gateway refund on Razorpay
+   */
+  async createRefund(
+    paymentId: string,
+    amountInPaise: number,
+    notes?: Record<string, string>
+  ): Promise<{
+    id: string;
+    paymentId: string;
+    amount: number;
+    status: string;
+  }> {
+    const instance = this.getInstance();
+    const refund = await (instance.payments as any).refund(paymentId, {
+      amount: Math.round(amountInPaise),
+      notes: notes || {},
+    });
+    return {
+      id: refund.id,
+      paymentId: refund.payment_id,
+      amount: Number(refund.amount),
+      status: refund.status || 'processed',
+    };
+  }
 }
+
