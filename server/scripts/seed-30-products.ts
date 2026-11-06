@@ -905,12 +905,35 @@ async function seed() {
   const productsCol = mongoose.connection.db.collection('products');
   const variantsCol = mongoose.connection.db.collection('product_variants');
 
-  // Fetch parent categories
-  const pantsCategory = await categoriesCol.findOne({ slug: 'pants' });
-  const accessoriesCategory = await categoriesCol.findOne({ slug: 'accessories' });
+  // Fetch or create parent categories
+  let pantsCategory = await categoriesCol.findOne({ slug: 'pants' });
+  if (!pantsCategory) {
+    const ins = await categoriesCol.insertOne({
+      name: 'Pants',
+      slug: 'pants',
+      description: "Men's trousers, chinos, and jeans",
+      isActive: true,
+      sortOrder: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    pantsCategory = { _id: ins.insertedId };
+    console.log('Created parent category: Pants');
+  }
 
-  if (!pantsCategory || !accessoriesCategory) {
-    throw new Error('Pants or Accessories parent category not found in DB!');
+  let accessoriesCategory = await categoriesCol.findOne({ slug: 'accessories' });
+  if (!accessoriesCategory) {
+    const ins = await categoriesCol.insertOne({
+      name: 'Accessories',
+      slug: 'accessories',
+      description: "Men's belts, wallets, bags, and eyewear",
+      isActive: true,
+      sortOrder: 2,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    accessoriesCategory = { _id: ins.insertedId };
+    console.log('Created parent category: Accessories');
   }
 
   const pantsId = String(pantsCategory._id);
