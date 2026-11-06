@@ -3,7 +3,7 @@
  * @description Common layout shell for all public/authenticated pages.
  */
 
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { TopBar } from '@/components/layout/top-bar';
 import { Navbar } from '@/components/layout/navbar';
 import { CategoryNav } from '@/components/layout/category-nav';
@@ -22,11 +22,17 @@ export default function CommonLayout({ children }: RootLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col">
       <TopBar />
-      <Navbar />
-      <CategoryNav />
+      <Suspense fallback={<div className="h-18 bg-white w-full border-b border-gray-200" />}>
+        <Navbar />
+      </Suspense>
+      <Suspense fallback={null}>
+        <CategoryNav />
+      </Suspense>
       <main className="flex-1 pb-16 lg:pb-0">{children}</main>
       <Footer />
-      <BottomNav />
+      <Suspense fallback={null}>
+        <BottomNav />
+      </Suspense>
       <GuestLoginModal />
       <AuthModal />
     </div>
