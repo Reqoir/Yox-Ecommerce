@@ -16,6 +16,8 @@ interface RootLayoutProps {
   children: ReactNode;
 }
 
+export const dynamic = 'force-dynamic';
+
 export default function CommonLayout({ children }: RootLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col">

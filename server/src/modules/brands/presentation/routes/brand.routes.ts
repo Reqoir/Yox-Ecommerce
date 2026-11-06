@@ -34,34 +34,45 @@ const brandController = new BrandController(
   deleteBrandUseCase,
 );
 
-/**
- * Public Routes
- */
-router.get('/', brandController.getAll);
-router.get('/:id', brandController.getById);
+import { cacheMiddleware, invalidateCache } from '../../../../presentation/http/middleware/cache.middleware';
 
 /**
- * Protected Routes (Admin only)
+ * Public Routes (Cached in Redis for 10 minutes)
+ */
+router.get('/', cacheMiddleware(600, 'brands'), brandController.getAll);
+router.get('/:id', cacheMiddleware(600, 'brands'), brandController.getById);
+
+/**
+ * Protected Routes (Admin only, invalidates brands cache upon mutation)
  */
 router.post(
   '/',
   requireAuth,
   requirePermission('manage_brands'),
-  brandController.create,
+  async (req, res, next) => {
+    await invalidateCache('brands:*');
+    return brandController.create(req, res, next);
+  },
 );
 
 router.patch(
   '/:id',
   requireAuth,
   requirePermission('manage_brands'),
-  brandController.update,
+  async (req, res, next) => {
+    await invalidateCache('brands:*');
+    return brandController.update(req, res, next);
+  },
 );
 
 router.delete(
   '/:id',
   requireAuth,
   requirePermission('manage_brands'),
-  brandController.delete,
+  async (req, res, next) => {
+    await invalidateCache('brands:*');
+    return brandController.delete(req, res, next);
+  },
 );
 
 export const brandRoutes = router;

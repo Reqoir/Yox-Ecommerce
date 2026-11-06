@@ -37,14 +37,24 @@ const categoryController = new CategoryController(
 
 import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
 import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
+import { cacheMiddleware, invalidateCache } from '../../../../presentation/http/middleware/cache.middleware';
 
-// Routes
-router.get('/', categoryController.getAll);
-router.get('/:id', categoryController.getById);
+// Routes (Cached in Redis for 10 minutes)
+router.get('/', cacheMiddleware(600, 'categories'), categoryController.getAll);
+router.get('/:id', cacheMiddleware(600, 'categories'), categoryController.getById);
 
-// Protected Admin Routes
-router.post('/', requireAuth, requirePermission('manage_categories'), categoryController.create);
-router.patch('/:id', requireAuth, requirePermission('manage_categories'), categoryController.update);
-router.delete('/:id', requireAuth, requirePermission('manage_categories'), categoryController.delete);
+// Protected Admin Routes (Invalidates categories cache on change)
+router.post('/', requireAuth, requirePermission('manage_categories'), async (req, res, next) => {
+  await invalidateCache('categories:*');
+  return categoryController.create(req, res, next);
+});
+router.patch('/:id', requireAuth, requirePermission('manage_categories'), async (req, res, next) => {
+  await invalidateCache('categories:*');
+  return categoryController.update(req, res, next);
+});
+router.delete('/:id', requireAuth, requirePermission('manage_categories'), async (req, res, next) => {
+  await invalidateCache('categories:*');
+  return categoryController.delete(req, res, next);
+});
 
 export { router as categoryRoutes };
