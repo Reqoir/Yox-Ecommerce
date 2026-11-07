@@ -19,10 +19,13 @@ import {
   Phone,
   Loader2,
   ExternalLink,
+  FileText,
+  X,
 } from 'lucide-react';
 import { ordersApi, BackendOrder } from '@/lib/api/orders';
 import { useCheckoutStore } from '@/store/useCheckoutStore';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
+import { PrintableInvoice } from '@/components/features/orders/PrintableInvoice';
 
 function OrderSuccessContent() {
   const router = useRouter();
@@ -34,6 +37,7 @@ function OrderSuccessContent() {
 
   const [order, setOrder] = useState<BackendOrder | null>(null);
   const [loading, setLoading] = useState(Boolean(orderIdParam));
+  const [showInvoicePreview, setShowInvoicePreview] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -85,15 +89,22 @@ function OrderSuccessContent() {
   const items = order?.items || [];
   const address = order?.shippingAddress;
 
-  // Delivery estimation
+  // Delivery estimation (prioritizes live Shiprocket delivery date)
   const deliveryDays = config.estimatedDeliveryDaysMax || 4;
   const deliveryDate = new Date();
   deliveryDate.setDate(deliveryDate.getDate() + deliveryDays);
-  const formattedDeliveryDate = lastOrderDetails?.deliveryDate || deliveryDate.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
+  const formattedDeliveryDate = order?.estimatedDeliveryDate
+    ? new Date(order.estimatedDeliveryDate).toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      })
+    : lastOrderDetails?.deliveryDate ||
+      deliveryDate.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      });
 
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
@@ -102,8 +113,8 @@ function OrderSuccessContent() {
   };
 
   return (
-    <main className="w-full bg-[#f8fafc] min-h-screen py-8 lg:py-12 px-4 sm:px-6 print:bg-white print:py-0">
-      <div className="max-w-4xl mx-auto">
+    <main className="w-full bg-[#f8fafc] min-h-screen py-8 lg:py-12 px-4 sm:px-6 print:bg-white print:py-0 print:px-0">
+      <div className="max-w-4xl mx-auto print:hidden">
 
         {/* Top Header Card */}
         <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-6 sm:p-8 mb-6 text-center relative overflow-hidden">
@@ -297,16 +308,86 @@ function OrderSuccessContent() {
           </Link>
 
           <button
+            onClick={() => setShowInvoicePreview(true)}
+            className="w-full sm:w-auto py-3.5 px-4 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-2xs"
+            title="Preview Official Tax Invoice"
+          >
+            <FileText size={16} />
+            <span>Preview Invoice</span>
+          </button>
+
+          <button
             onClick={handlePrint}
-            className="w-full sm:w-auto py-3.5 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5"
-            title="Print Receipt"
+            className="w-full sm:w-auto py-3.5 px-5 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-xs"
+            title="Print Receipt & Tax Invoice"
           >
             <Printer size={16} />
-            <span className="hidden sm:inline">Print Receipt</span>
+            <span>Print Receipt</span>
           </button>
         </div>
 
       </div>
+
+      {/* ─── Printable Actual Tax Invoice (Visible in Print / Save-PDF Only) ─── */}
+      <div className="hidden print:block w-full">
+        <PrintableInvoice
+          order={order}
+          fallbackOrderNumber={orderNumber}
+          fallbackTotal={totalAmount}
+          fallbackPaymentMethod={paymentMethod}
+          fallbackPaymentStatus={paymentStatus}
+          fallbackDate={formattedDeliveryDate}
+          fallbackAddress={address}
+          fallbackItems={items}
+        />
+      </div>
+
+      {/* ─── Screen Preview Modal (Allows inspecting invoice before printing) ─── */}
+      {showInvoicePreview && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 print:hidden animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-gray-200">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-200 bg-slate-50">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-[#1A2E4C]" />
+                <h3 className="font-bold text-sm sm:text-base text-gray-900">Tax Invoice & Cash Memo</h3>
+                <span className="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-mono">
+                  #{orderNumber}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePrint}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-bold rounded-md transition-colors shadow-xs"
+                >
+                  <Printer size={14} />
+                  <span>Print / Save as PDF</span>
+                </button>
+                <button
+                  onClick={() => setShowInvoicePreview(false)}
+                  className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded-md transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100">
+              <div className="bg-white shadow-md rounded-sm">
+                <PrintableInvoice
+                  order={order}
+                  fallbackOrderNumber={orderNumber}
+                  fallbackTotal={totalAmount}
+                  fallbackPaymentMethod={paymentMethod}
+                  fallbackPaymentStatus={paymentStatus}
+                  fallbackDate={formattedDeliveryDate}
+                  fallbackAddress={address}
+                  fallbackItems={items}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

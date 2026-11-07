@@ -29,7 +29,7 @@ const orderRepo = new OrderRepository();
 
 const createShipmentUseCase = new CreateShipmentUseCase(shipmentRepo, orderRepo);
 const getShipmentByIdUseCase = new GetShipmentByIdUseCase(shipmentRepo);
-const getShipmentByOrderUseCase = new GetShipmentByOrderUseCase(shipmentRepo);
+const getShipmentByOrderUseCase = new GetShipmentByOrderUseCase(shipmentRepo, orderRepo);
 const trackShipmentUseCase = new TrackShipmentUseCase(shipmentRepo, orderRepo);
 const updateShipmentStatusUseCase = new UpdateShipmentStatusUseCase(shipmentRepo, orderRepo);
 const getAllShipmentsUseCase = new GetAllShipmentsUseCase(shipmentRepo);

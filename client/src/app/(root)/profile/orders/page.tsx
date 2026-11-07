@@ -129,13 +129,22 @@ export default function MyOrdersPage() {
       };
     }
 
-    // Default active / arriving orders
-    const baseDate = new Date(order.placedAt);
-    const estimatedDate = new Date(baseDate.getTime() + 4 * 24 * 60 * 60 * 1000);
-    const formattedDate = estimatedDate.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-    });
+    // Default active / arriving orders: prioritize live Shiprocket estimate if present
+    const estDateRaw = order.estimatedDeliveryDate;
+    let formattedDate: string;
+    if (estDateRaw) {
+      const estDate = new Date(estDateRaw);
+      formattedDate = !isNaN(estDate.getTime())
+        ? estDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+        : new Date(new Date(order.placedAt).getTime() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+    } else {
+      const baseDate = new Date(order.placedAt);
+      const estimatedDate = new Date(baseDate.getTime() + 4 * 24 * 60 * 60 * 1000);
+      formattedDate = estimatedDate.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+      });
+    }
 
     return {
       text: `Arriving ${formattedDate} between 7:00 AM - 10:00 PM`,

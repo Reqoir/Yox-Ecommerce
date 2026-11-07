@@ -85,10 +85,68 @@ export class GetShipmentByIdUseCase implements IUseCase<string, ShipmentResponse
 }
 
 export class GetShipmentByOrderUseCase implements IUseCase<string, ShipmentResponseDTO | null> {
-  constructor(private readonly shipmentRepo: IShipmentRepository) {}
+  constructor(
+    private readonly shipmentRepo: IShipmentRepository,
+    private readonly orderRepo?: IOrderRepository
+  ) {}
 
   async execute(orderId: string): Promise<ShipmentResponseDTO | null> {
-    const shipment = await this.shipmentRepo.findByOrderId(orderId);
+    let shipment = await this.shipmentRepo.findByOrderId(orderId);
+    const order = this.orderRepo ? await this.orderRepo.findById(orderId) : null;
+
+    // 1. If shipment exists with an AWB / tracking number, query Shiprocket live tracking
+    if (shipment?.trackingNumber) {
+      try {
+        const liveTracking = await ShiprocketService.getInstance().trackByAwb(shipment.trackingNumber);
+        if (liveTracking?.estimatedDeliveryDate) {
+          const estDate = new Date(liveTracking.estimatedDeliveryDate);
+          if (!isNaN(estDate.getTime())) {
+            (shipment as any)._props.estimatedDeliveryDate = estDate;
+            if (liveTracking.courierName) {
+              (shipment as any)._props.deliveryPartnerId = liveTracking.courierName;
+            }
+            await this.shipmentRepo.save(shipment);
+          }
+        }
+      } catch {}
+    }
+
+    // 2. If shipment does NOT exist or has no estimated delivery date, query Shiprocket serviceability
+    if (order && (!shipment || !shipment.estimatedDeliveryDate)) {
+      try {
+        const postalCode = order.shippingAddress?.postalCode;
+        if (postalCode) {
+          const serviceability = await ShiprocketService.getInstance().getEstimatedDelivery({
+            deliveryPincode: postalCode,
+            isCod: order.paymentMethod?.toUpperCase() === 'COD',
+          });
+
+          if (serviceability) {
+            const estDate = new Date(serviceability.estimatedDeliveryDate);
+            if (!shipment) {
+              return {
+                id: `ship_${order.id}`,
+                orderId: order.id,
+                deliveryPartnerId: serviceability.courierName,
+                trackingNumber: order.trackingNumber || null,
+                status: 'READY_TO_SHIP',
+                estimatedDeliveryDate: estDate,
+                notes: 'Shiprocket courier serviceability estimate',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              };
+            } else if (!shipment.estimatedDeliveryDate) {
+              (shipment as any)._props.estimatedDeliveryDate = estDate;
+              if (!shipment.deliveryPartnerId) {
+                (shipment as any)._props.deliveryPartnerId = serviceability.courierName;
+              }
+              await this.shipmentRepo.save(shipment);
+            }
+          }
+        }
+      } catch {}
+    }
+
     if (!shipment) return null;
     return mapToShipmentResponseDTO(shipment);
   }
@@ -110,6 +168,34 @@ export class TrackShipmentUseCase implements IUseCase<string, ShipmentResponseDT
         shipment = await this.shipmentRepo.findByOrderId(order.id);
       }
     }
+
+    // Check Shiprocket for live tracking update
+    try {
+      const liveTracking = await ShiprocketService.getInstance().trackByAwb(trackingNumber);
+      if (liveTracking) {
+        if (shipment) {
+          if (liveTracking.estimatedDeliveryDate) {
+            (shipment as any)._props.estimatedDeliveryDate = new Date(liveTracking.estimatedDeliveryDate);
+          }
+          if (liveTracking.courierName) {
+            (shipment as any)._props.deliveryPartnerId = liveTracking.courierName;
+          }
+          await this.shipmentRepo.save(shipment);
+        } else {
+          return {
+            id: `track_${trackingNumber}`,
+            orderId: '',
+            deliveryPartnerId: liveTracking.courierName,
+            trackingNumber: trackingNumber,
+            status: liveTracking.currentStatus || 'IN_TRANSIT',
+            estimatedDeliveryDate: liveTracking.estimatedDeliveryDate ? new Date(liveTracking.estimatedDeliveryDate) : null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+        }
+      }
+    } catch {}
+
     if (!shipment) throw new Error('No active tracking info found for this tracking number');
 
     // Attempt live tracking fetch from Shiprocket if awbCode or trackingNumber exists

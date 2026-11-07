@@ -13,8 +13,6 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
-  Bell,
-  Save,
   Smartphone,
   Check,
   RotateCcw,
@@ -26,56 +24,6 @@ import {
 
 export default function ProfileSettingsPage() {
   const { user } = useAuthStore();
-
-  // ─── Notification Preferences ───────────────────────────────────────────────
-  const [orderUpdates, setOrderUpdates] = useState(true);
-  const [promotionalEmails, setPromotionalEmails] = useState(false);
-  const [returnUpdates, setReturnUpdates] = useState(true);
-  const [smsAlerts, setSmsAlerts] = useState(true);
-  const [isSavingPrefs, setIsSavingPrefs] = useState(false);
-
-  // Load preferences from localStorage on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('yox_user_notifications');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed.orderUpdates !== undefined) setOrderUpdates(parsed.orderUpdates);
-          if (parsed.promotionalEmails !== undefined) setPromotionalEmails(parsed.promotionalEmails);
-          if (parsed.returnUpdates !== undefined) setReturnUpdates(parsed.returnUpdates);
-          if (parsed.smsAlerts !== undefined) setSmsAlerts(parsed.smsAlerts);
-        }
-      } catch (e) {
-        // ignore JSON parse error
-      }
-    }
-  }, []);
-
-  const handleSavePreferences = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSavingPrefs(true);
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(
-          'yox_user_notifications',
-          JSON.stringify({
-            orderUpdates,
-            promotionalEmails,
-            returnUpdates,
-            smsAlerts,
-          })
-        );
-      }
-      setTimeout(() => {
-        setIsSavingPrefs(false);
-        toast.success('Notification preferences updated successfully!');
-      }, 400);
-    } catch {
-      setIsSavingPrefs(false);
-      toast.error('Failed to save preferences');
-    }
-  };
 
   // ─── Security Tab ──────────────────────────────────────────────────────────
   const [securityMethod, setSecurityMethod] = useState<'current-password' | 'phone-otp'>('current-password');
@@ -300,7 +248,7 @@ export default function ProfileSettingsPage() {
       <div className="border-b border-gray-100 pb-5">
         <h2 className="text-xl font-bold text-gray-900 tracking-tight">Account Settings & Security</h2>
         <p className="text-xs text-gray-500 mt-1">
-          Manage your account credentials, security preferences, and notification alerts
+          Manage your account credentials and security preferences
         </p>
       </div>
 
@@ -679,95 +627,6 @@ export default function ProfileSettingsPage() {
           )}
         </div>
       </div>
-
-      {/* ─── 2. NOTIFICATIONS & PREFERENCES ─────────────────────────────────── */}
-      <form onSubmit={handleSavePreferences} className="bg-white border border-gray-200/90 rounded-sm shadow-xs overflow-hidden">
-        <div className="p-5 sm:p-6 border-b border-gray-100 flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center">
-              <Bell size={18} />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Communication & Notifications</h3>
-              <p className="text-xs text-gray-500">Control how and when you receive order, shipping, and promotional updates</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-5 sm:p-6 divide-y divide-gray-100">
-          <div className="flex items-center justify-between py-3.5 first:pt-0">
-            <div>
-              <p className="text-xs font-bold text-gray-900">Order & Logistics Tracking Updates</p>
-              <p className="text-gray-500 text-[11px] mt-0.5">Receive real-time notifications when your order status changes.</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={orderUpdates}
-              onChange={(e) => setOrderUpdates(e.target.checked)}
-              className="w-4 h-4 text-black accent-black rounded-xs border-gray-300 focus:ring-black cursor-pointer"
-            />
-          </div>
-
-          <div className="flex items-center justify-between py-3.5">
-            <div>
-              <p className="text-xs font-bold text-gray-900">Return & Refund Status Alerts</p>
-              <p className="text-gray-500 text-[11px] mt-0.5">Receive driver assignment & refund completed notifications.</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={returnUpdates}
-              onChange={(e) => setReturnUpdates(e.target.checked)}
-              className="w-4 h-4 text-black accent-black rounded-xs border-gray-300 focus:ring-black cursor-pointer"
-            />
-          </div>
-
-          <div className="flex items-center justify-between py-3.5">
-            <div>
-              <p className="text-xs font-bold text-gray-900">SMS Express Notifications</p>
-              <p className="text-gray-500 text-[11px] mt-0.5">Send SMS alerts for delivery executive arrivals to your mobile number.</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={smsAlerts}
-              onChange={(e) => setSmsAlerts(e.target.checked)}
-              className="w-4 h-4 text-black accent-black rounded-xs border-gray-300 focus:ring-black cursor-pointer"
-            />
-          </div>
-
-          <div className="flex items-center justify-between py-3.5 last:pb-0">
-            <div>
-              <p className="text-xs font-bold text-gray-900">Exclusive Sales & Member Offers</p>
-              <p className="text-gray-500 text-[11px] mt-0.5">Receive early access to seasonal discount sales, VIP perks, and new arrivals.</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={promotionalEmails}
-              onChange={(e) => setPromotionalEmails(e.target.checked)}
-              className="w-4 h-4 text-black accent-black rounded-xs border-gray-300 focus:ring-black cursor-pointer"
-            />
-          </div>
-        </div>
-
-        <div className="p-5 sm:p-6 bg-gray-50/70 border-t border-gray-100 flex justify-end">
-          <button
-            type="submit"
-            disabled={isSavingPrefs}
-            className="inline-flex items-center gap-1.5 px-6 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider rounded-sm transition-all cursor-pointer shadow-xs active:scale-[0.99] disabled:opacity-50"
-          >
-            {isSavingPrefs ? (
-              <>
-                <Loader2 size={14} className="animate-spin" />
-                <span>Saving...</span>
-              </>
-            ) : (
-              <>
-                <Save size={14} />
-                <span>Save Preferences</span>
-              </>
-            )}
-          </button>
-        </div>
-      </form>
     </div>
   );
 }

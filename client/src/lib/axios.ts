@@ -86,13 +86,13 @@ apiClient.interceptors.response.use(
       requestUrl.includes('/auth/refresh');
 
     const statusCode = error.response?.status;
+    const isClientError = Boolean(statusCode && statusCode >= 400 && statusCode < 500);
 
-    // Suppress console.error overlay for expected client errors:
+    // Suppress console.error overlay for expected client errors (4xx):
     // 1. 429 Rate Limit errors (handled cleanly by toast)
     // 2. Normal 401/403 authentication & authorization errors
     // 3. 400/422 validation errors (handled by forms/UI)
-    // 4. 404 resource not found
-    const isClientError = statusCode && statusCode >= 400 && statusCode < 500;
+    // 4. 404/409 resource conflicts/not found
     const isRateLimit = statusCode === 429;
 
     const shouldLog =
@@ -103,8 +103,10 @@ apiClient.interceptors.response.use(
 
     if (shouldLog) {
       console.error(`[API Error] ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url} (${statusCode}):`, error.response?.data);
-    } else if (process.env.NODE_ENV === 'development' && !isRateLimit && !is401 && statusCode !== 400 && statusCode !== 422) {
-      console.warn(`[API Notice] ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url} (${statusCode}):`, error.response?.data);
+    } else if (process.env.NODE_ENV === 'development' && isClientError && !isRateLimit) {
+      console.warn(`[API ${statusCode}] ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}:`, error.response?.data);
+    } else if (!error.response && error.message) {
+      console.error(`[API Network Error] ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}:`, error.message);
     }
 
     // ── 429 Rate Limit Handling ──────────────────────────────────────────────

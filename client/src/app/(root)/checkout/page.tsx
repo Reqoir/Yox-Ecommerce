@@ -12,7 +12,7 @@ import { useCartStore } from '@/store/useCartStore';
 import { useCheckoutStore } from '@/store/useCheckoutStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
-import { ShieldCheck, Lock, ArrowLeft, Loader2, Wrench, AlertTriangle, Zap, ShoppingBag } from 'lucide-react';
+import { ShieldCheck, ArrowLeft, Loader2, Wrench, AlertTriangle, Zap, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
 
 function CheckoutContent() {
@@ -188,18 +188,11 @@ function CheckoutContent() {
           </div>
         )}
 
-        {/* Header Breadcrumb & Security Indicator */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-200 pb-4 mb-6 lg:mb-8 gap-2">
-          <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900 tracking-tight">
-              {isDirectCheckout ? 'Direct Buy Checkout & Payment' : 'Checkout & Payment'}
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded border border-emerald-100 self-start sm:self-auto">
-            <Lock size={14} />
-            <span>256-Bit SSL Encrypted Checkout</span>
-          </div>
+        {/* Header Breadcrumb */}
+        <div className="border-b border-gray-200 pb-4 mb-6 lg:mb-8">
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-900 tracking-tight">
+            {isDirectCheckout ? 'Direct Buy Checkout & Payment' : 'Checkout & Payment'}
+          </h1>
         </div>
 
         {/* 2-Column Responsive Layout */}

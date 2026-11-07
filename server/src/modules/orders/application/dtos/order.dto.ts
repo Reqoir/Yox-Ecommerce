@@ -79,6 +79,7 @@ export interface OrderResponseDTO {
   shiprocketShipmentId?: number | string | null;
   labelUrl?: string | null;
   invoiceUrl?: string | null;
+  estimatedDeliveryDate?: Date | null;
   customer?: {
     id: string;
     fullName: string;

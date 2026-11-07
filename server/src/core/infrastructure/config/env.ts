@@ -75,6 +75,12 @@ const envSchema = z.object({
   // ── MSG91 OTP Widget ───────────────────────────────────────────────────────
   MSG91_AUTH_KEY: z.string().default('572383AKCG0ea2DR9x6aad22f1P1'),
   MSG91_WIDGET_ID: z.string().default('3669726b756e373832333938'),
+
+  // ── Shiprocket ─────────────────────────────────────────────────────────────
+  SHIPROCKET_EMAIL: z.string().default(''),
+  SHIPROCKET_PASSWORD: z.string().default(''),
+  SHIPROCKET_PICKUP_LOCATION_NAME: z.string().default('warehouse'),
+  SHIPROCKET_PICKUP_POSTCODE: z.string().default('400051'),
 });
 
 export type Env = z.infer<typeof envSchema>;

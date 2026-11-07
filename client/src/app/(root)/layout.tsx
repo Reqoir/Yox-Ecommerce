@@ -21,20 +21,34 @@ export const dynamic = 'force-dynamic';
 export default function CommonLayout({ children }: RootLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col">
-      <TopBar />
-      <Suspense fallback={<div className="h-18 bg-white w-full border-b border-gray-200" />}>
-        <Navbar />
-      </Suspense>
-      <Suspense fallback={null}>
-        <CategoryNav />
-      </Suspense>
+      <div className="print:hidden">
+        <TopBar />
+      </div>
+      <div className="print:hidden">
+        <Suspense fallback={<div className="h-18 bg-white w-full border-b border-gray-200" />}>
+          <Navbar />
+        </Suspense>
+      </div>
+      <div className="print:hidden">
+        <Suspense fallback={null}>
+          <CategoryNav />
+        </Suspense>
+      </div>
       <main className="flex-1 pb-16 lg:pb-0">{children}</main>
-      <Footer />
-      <Suspense fallback={null}>
-        <BottomNav />
-      </Suspense>
-      <GuestLoginModal />
-      <AuthModal />
+      <div className="print:hidden">
+        <Footer />
+      </div>
+      <div className="print:hidden">
+        <Suspense fallback={null}>
+          <BottomNav />
+        </Suspense>
+      </div>
+      <div className="print:hidden">
+        <GuestLoginModal />
+      </div>
+      <div className="print:hidden">
+        <AuthModal />
+      </div>
     </div>
   );
 }

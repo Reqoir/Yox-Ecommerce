@@ -68,6 +68,7 @@ export interface BackendOrder {
   shiprocketShipmentId?: number | string | null;
   labelUrl?: string | null;
   invoiceUrl?: string | null;
+  estimatedDeliveryDate?: string | null;
   customer?: {
     id?: string;
     fullName?: string;

@@ -78,6 +78,14 @@ export interface ShiprocketTrackingResult {
   rawResponse?: any;
 }
 
+export interface CourierServiceabilityResult {
+  courierName: string;
+  estimatedDeliveryDate: string; // ISO date string
+  estimatedDeliveryDays: number;
+  rate?: number;
+  courierCompanyId?: number;
+}
+
 export class ShiprocketService {
   private static instance: ShiprocketService;
   private readonly baseUrl = 'https://apiv2.shiprocket.in/v1/external';
@@ -427,6 +435,68 @@ export class ShiprocketService {
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message;
       throw new Error(`Tracking lookup failed: ${msg}`);
+    }
+  }
+
+  /**
+   * Queries Shiprocket for courier serviceability and estimated delivery date (EDD/ETD)
+   * for a given delivery postal code.
+   */
+  public async getEstimatedDelivery(params: {
+    deliveryPincode: string;
+    pickupPincode?: string;
+    weight?: number;
+    isCod?: boolean;
+  }): Promise<CourierServiceabilityResult | null> {
+    const delivery = params.deliveryPincode?.trim();
+    if (!delivery || delivery.length < 5) return null;
+
+    const pickup = params.pickupPincode || process.env['SHIPROCKET_PICKUP_POSTCODE']?.trim() || '400051';
+    const isCod = params.isCod ? '1' : '0';
+    const weightParam = (params.weight || 0.5).toString();
+
+    try {
+      const url = `/courier/serviceability/?pickup_postcode=${encodeURIComponent(
+        pickup
+      )}&delivery_postcode=${encodeURIComponent(delivery)}&cod=${isCod}&weight=${encodeURIComponent(weightParam)}`;
+
+      const res = await this.request({
+        method: 'get',
+        url,
+      });
+
+      const companies = res?.data?.available_courier_companies;
+      if (!Array.isArray(companies) || companies.length === 0) {
+        return null;
+      }
+
+      const validCouriers = companies.filter((c: any) => c.etd || c.estimated_delivery_days);
+      const sorted = validCouriers.sort((a: any, b: any) => {
+        const daysA = Number(a.estimated_delivery_days) || 99;
+        const daysB = Number(b.estimated_delivery_days) || 99;
+        return daysA - daysB;
+      });
+
+      const fastest = sorted[0] || companies[0];
+      let estDateStr: string;
+
+      if (fastest.etd) {
+        const parsed = new Date(fastest.etd);
+        estDateStr = !isNaN(parsed.getTime()) ? parsed.toISOString() : new Date(Date.now() + 4 * 86400000).toISOString();
+      } else {
+        const days = Number(fastest.estimated_delivery_days) || 4;
+        estDateStr = new Date(Date.now() + days * 86400000).toISOString();
+      }
+
+      return {
+        courierName: fastest.courier_name || 'Shiprocket Express',
+        estimatedDeliveryDate: estDateStr,
+        estimatedDeliveryDays: Number(fastest.estimated_delivery_days) || 4,
+        rate: Number(fastest.rate) || 0,
+        courierCompanyId: fastest.courier_company_id,
+      };
+    } catch {
+      return null;
     }
   }
 

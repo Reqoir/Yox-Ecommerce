@@ -10,6 +10,7 @@ import { ReturnStatusTracker } from '@/components/features/orders/ReturnStatusTr
 import { ManualShipmentCard } from '@/components/features/orders/ManualShipmentCard';
 import { ProductReviewModal } from '@/components/features/orders/ProductReviewModal';
 import { reviewsApi } from '@/lib/api/reviews';
+import { PrintableInvoice } from '@/components/features/orders/PrintableInvoice';
 import { useCartStore } from '@/store/useCartStore';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
 import { IoBagCheckOutline } from "react-icons/io5";
@@ -143,6 +144,21 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       return 'Order Cancelled';
     }
 
+    // 1. Use real-time estimated delivery date provided by Shiprocket API
+    const estDateRaw = shipment?.estimatedDeliveryDate || order?.estimatedDeliveryDate;
+    if (estDateRaw) {
+      const estDate = new Date(estDateRaw);
+      if (!isNaN(estDate.getTime())) {
+        const formattedDate = estDate.toLocaleDateString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+        });
+        return `Arriving on ${formattedDate} between 7:00 AM - 10:00 PM`;
+      }
+    }
+
+    // 2. Fallback calculation if Shiprocket hasn't synced yet
     const baseDate = new Date(order.placedAt);
     const estimatedDate = new Date(baseDate.getTime() + 4 * 24 * 60 * 60 * 1000);
     const formattedDate = estimatedDate.toLocaleDateString('en-US', {
@@ -464,7 +480,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     : null;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300 print:p-0 print:space-y-4">
+    <>
+      <div className="space-y-6 animate-in fade-in duration-300 print:hidden">
       {/* Page Navigation & Title */}
       <div className="flex items-center justify-between border-b border-gray-100 pb-4 print:hidden">
         <div className="flex items-center gap-3">
@@ -1478,5 +1495,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         }}
       />
     </div>
+
+    {/* Printable Actual Tax Invoice (Visible in Print / Save-PDF Only) */}
+    <div className="hidden print:block w-full">
+      <PrintableInvoice order={order} />
+    </div>
+  </>
   );
 }
