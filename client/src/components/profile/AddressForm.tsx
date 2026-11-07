@@ -189,7 +189,7 @@ export function AddressForm({ isOpen, onClose, onSubmit, initialData }: AddressF
                 placeholder="e.g. Rahul Sharma"
                 value={formData.fullName}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 rounded-sm border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-sm ${
+                className={`w-full px-4 py-2.5 rounded-sm border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-base md:text-sm ${
                   errors.fullName ? 'border-red-500 bg-red-50/20' : 'border-gray-200 dark:border-gray-800'
                 }`}
               />
@@ -223,7 +223,7 @@ export function AddressForm({ isOpen, onClose, onSubmit, initialData }: AddressF
                   placeholder={countryCode === '+91' ? '10-digit mobile number' : 'Contact number'}
                   value={phoneNumber}
                   onChange={handlePhoneChange}
-                  className={`w-full px-4 py-2.5 bg-transparent outline-none text-sm ${
+                  className={`w-full px-4 py-2.5 bg-transparent outline-none text-base md:text-sm ${
                     errors.phone ? 'bg-red-50/20' : ''
                   }`}
                 />
@@ -250,7 +250,7 @@ export function AddressForm({ isOpen, onClose, onSubmit, initialData }: AddressF
                 placeholder="House/Flat No, Building, Street, Landmark"
                 value={formData.street}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 rounded-sm border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-sm ${
+                className={`w-full px-4 py-2.5 rounded-sm border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-base md:text-sm ${
                   errors.street ? 'border-red-500 bg-red-50/20' : 'border-gray-200 dark:border-gray-800'
                 }`}
               />
@@ -272,7 +272,7 @@ export function AddressForm({ isOpen, onClose, onSubmit, initialData }: AddressF
                 placeholder="e.g. Mumbai"
                 value={formData.city}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 rounded-sm border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-sm ${
+                className={`w-full px-4 py-2.5 rounded-sm border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-base md:text-sm ${
                   errors.city ? 'border-red-500 bg-red-50/20' : 'border-gray-200 dark:border-gray-800'
                 }`}
               />
@@ -294,7 +294,7 @@ export function AddressForm({ isOpen, onClose, onSubmit, initialData }: AddressF
                 placeholder="e.g. Maharashtra"
                 value={formData.state}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 rounded-sm border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-sm ${
+                className={`w-full px-4 py-2.5 rounded-sm border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-base md:text-sm ${
                   errors.state ? 'border-red-500 bg-red-50/20' : 'border-gray-200 dark:border-gray-800'
                 }`}
               />
@@ -316,7 +316,7 @@ export function AddressForm({ isOpen, onClose, onSubmit, initialData }: AddressF
                 placeholder="e.g. 400001"
                 value={formData.zipCode}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 rounded-sm border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-sm ${
+                className={`w-full px-4 py-2.5 rounded-sm border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-base md:text-sm ${
                   errors.zipCode ? 'border-red-500 bg-red-50/20' : 'border-gray-200 dark:border-gray-800'
                 }`}
               />
@@ -338,7 +338,7 @@ export function AddressForm({ isOpen, onClose, onSubmit, initialData }: AddressF
                 placeholder="e.g. India"
                 value={formData.country}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 rounded-sm border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-sm ${
+                className={`w-full px-4 py-2.5 rounded-sm border bg-transparent focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-base md:text-sm ${
                   errors.country ? 'border-red-500 bg-red-50/20' : 'border-gray-200 dark:border-gray-800'
                 }`}
               />

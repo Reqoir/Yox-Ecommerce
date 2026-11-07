@@ -347,7 +347,7 @@ export function Footer() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="flex-1 bg-white/70 border border-[#C4BA9D] rounded-sm px-4 py-2.5 h-11 text-sm text-gray-900 placeholder-gray-600 outline-none focus:border-black transition-colors"
+                  className="flex-1 bg-white/70 border border-[#C4BA9D] rounded-sm px-4 py-2.5 h-11 text-base md:text-sm text-gray-900 placeholder-gray-600 outline-none focus:border-black transition-colors"
                 />
                 <button
                   suppressHydrationWarning

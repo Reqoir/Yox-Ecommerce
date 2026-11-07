@@ -150,3 +150,26 @@
 .dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.35);
 }
+
+/* ==========================================================================
+   Prevent iOS Safari Auto-Zoom on Input Focus
+   On iOS Safari (iPhone & iPad), any <input>, <textarea>, or <select> with a
+   computed font-size of less than 16px triggers an automatic viewport zoom.
+   Enforcing a minimum 16px font-size on mobile screens (max-width: 768px)
+   completely prevents this annoying zoom jump across all forms and text boxes.
+   ========================================================================== */
+@media screen and (max-width: 768px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="color"]):not([type="image"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Optimize touch interactions and prevent double-tap delay */
+input,
+select,
+textarea,
+button {
+  touch-action: manipulation;
+}

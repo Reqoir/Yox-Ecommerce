@@ -360,7 +360,7 @@ export default function ProfileSettingsPage() {
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="Enter your current password"
-                    className="w-full px-3.5 py-2.5 text-xs border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all pr-10"
+                    className="w-full px-3.5 py-2.5 text-base md:text-xs border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all pr-10"
                   />
                   <button
                     type="button"
@@ -384,7 +384,7 @@ export default function ProfileSettingsPage() {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="At least 8 characters"
-                      className="w-full px-3.5 py-2.5 text-xs border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all pr-10"
+                      className="w-full px-3.5 py-2.5 text-base md:text-xs border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all pr-10"
                     />
                     <button
                       type="button"
@@ -406,7 +406,7 @@ export default function ProfileSettingsPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Re-enter new password"
-                    className="w-full px-3.5 py-2.5 text-xs border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
+                    className="w-full px-3.5 py-2.5 text-base md:text-xs border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
                   />
                 </div>
               </div>
@@ -593,7 +593,7 @@ export default function ProfileSettingsPage() {
                             value={otpNewPassword}
                             onChange={(e) => setOtpNewPassword(e.target.value)}
                             placeholder="At least 8 characters"
-                            className="w-full px-3.5 py-2.5 text-xs border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all pr-10"
+                            className="w-full px-3.5 py-2.5 text-base md:text-xs border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all pr-10"
                           />
                           <button
                             type="button"
@@ -615,7 +615,7 @@ export default function ProfileSettingsPage() {
                           value={otpConfirmPassword}
                           onChange={(e) => setOtpConfirmPassword(e.target.value)}
                           placeholder="Re-enter new password"
-                          className="w-full px-3.5 py-2.5 text-xs border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
+                          className="w-full px-3.5 py-2.5 text-base md:text-xs border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
                         />
                       </div>
                       <p className="text-[11px] text-gray-400">

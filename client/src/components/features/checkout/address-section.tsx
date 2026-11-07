@@ -230,7 +230,7 @@ export function AddressSection() {
                       setFormData({ ...formData, fullName: e.target.value });
                       if (errors.fullName) setErrors({ ...errors, fullName: '' });
                     }}
-                    className={`w-full px-3 py-2 border rounded outline-none bg-white text-gray-900 placeholder-gray-400 ${
+                    className={`w-full px-3 py-2 border rounded outline-none bg-white text-gray-900 placeholder-gray-400 text-base md:text-xs ${
                       errors.fullName ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#1A2E4C]'
                     }`}
                   />
@@ -249,7 +249,7 @@ export function AddressSection() {
                           setFormData((prev) => ({ ...prev, country: c }));
                         }
                       }}
-                      className="bg-gray-50 text-gray-800 px-2 py-2 text-xs font-semibold border-r border-gray-300 outline-none cursor-pointer max-w-[125px]"
+                      className="bg-gray-50 text-gray-800 px-2 py-2 text-base md:text-xs font-semibold border-r border-gray-300 outline-none cursor-pointer max-w-[125px]"
                     >
                       {COUNTRY_CODES.map((c) => (
                         <option key={c.code} value={c.code}>
@@ -267,7 +267,7 @@ export function AddressSection() {
                         setPhoneNumber(val);
                         if (errors.phone) setErrors({ ...errors, phone: '' });
                       }}
-                      className={`flex-1 min-w-0 px-3 py-2 outline-none bg-white text-gray-900 placeholder-gray-400 ${
+                      className={`flex-1 min-w-0 px-3 py-2 outline-none bg-white text-gray-900 placeholder-gray-400 text-base md:text-xs ${
                         errors.phone ? 'bg-red-50/20' : ''
                       }`}
                     />
@@ -288,7 +288,7 @@ export function AddressSection() {
                       setFormData({ ...formData, zipCode: e.target.value });
                       if (errors.zipCode) setErrors({ ...errors, zipCode: '' });
                     }}
-                    className={`w-full px-3 py-2 border rounded outline-none bg-white text-gray-900 placeholder-gray-400 ${
+                    className={`w-full px-3 py-2 border rounded outline-none bg-white text-gray-900 placeholder-gray-400 text-base md:text-xs ${
                       errors.zipCode ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#1A2E4C]'
                     }`}
                   />
@@ -305,7 +305,7 @@ export function AddressSection() {
                       setFormData({ ...formData, country: e.target.value });
                       if (errors.country) setErrors({ ...errors, country: '' });
                     }}
-                    className={`w-full px-3 py-2 border rounded outline-none bg-white text-gray-900 placeholder-gray-400 ${
+                    className={`w-full px-3 py-2 border rounded outline-none bg-white text-gray-900 placeholder-gray-400 text-base md:text-xs ${
                       errors.country ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#1A2E4C]'
                     }`}
                   />
@@ -343,7 +343,7 @@ export function AddressSection() {
                       setFormData({ ...formData, city: e.target.value });
                       if (errors.city) setErrors({ ...errors, city: '' });
                     }}
-                    className={`w-full px-3 py-2 border rounded outline-none bg-white text-gray-900 placeholder-gray-400 ${
+                    className={`w-full px-3 py-2 border rounded outline-none bg-white text-gray-900 placeholder-gray-400 text-base md:text-xs ${
                       errors.city ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#1A2E4C]'
                     }`}
                   />
@@ -360,7 +360,7 @@ export function AddressSection() {
                       setFormData({ ...formData, state: e.target.value });
                       if (errors.state) setErrors({ ...errors, state: '' });
                     }}
-                    className={`w-full px-3 py-2 border rounded outline-none bg-white text-gray-900 placeholder-gray-400 ${
+                    className={`w-full px-3 py-2 border rounded outline-none bg-white text-gray-900 placeholder-gray-400 text-base md:text-xs ${
                       errors.state ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#1A2E4C]'
                     }`}
                   />

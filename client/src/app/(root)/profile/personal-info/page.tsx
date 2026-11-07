@@ -325,7 +325,7 @@ export default function PersonalInfoPage() {
               onChange={handleChange}
               disabled={!isEditing}
               placeholder="Enter your full name"
-              className="w-full px-3.5 py-2.5 text-xs text-gray-900 border border-gray-300 rounded-[2px] bg-white focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition-all disabled:bg-gray-50/70 disabled:text-gray-500 disabled:cursor-not-allowed"
+              className="w-full px-3.5 py-2.5 text-base md:text-xs text-gray-900 border border-gray-300 rounded-[2px] bg-white focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition-all disabled:bg-gray-50/70 disabled:text-gray-500 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -348,7 +348,7 @@ export default function PersonalInfoPage() {
               onChange={handleChange}
               disabled={!isEditing}
               placeholder="Enter your email address"
-              className="w-full px-3.5 py-2.5 text-xs text-gray-900 border border-gray-300 rounded-[2px] bg-white focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition-all disabled:bg-gray-50/70 disabled:text-gray-500 disabled:cursor-not-allowed"
+              className="w-full px-3.5 py-2.5 text-base md:text-xs text-gray-900 border border-gray-300 rounded-[2px] bg-white focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition-all disabled:bg-gray-50/70 disabled:text-gray-500 disabled:cursor-not-allowed"
             />
             <p className="text-[11px] text-gray-400 mt-1">
               Used for order receipts, tracking updates, and password recovery.
@@ -366,7 +366,7 @@ export default function PersonalInfoPage() {
               )}
             </div>
             <div className="flex items-center">
-              <span className="inline-flex items-center justify-center px-3 py-2.5 text-xs font-semibold text-gray-700 bg-gray-50 border border-r-0 border-gray-300 select-none">
+              <span className="inline-flex items-center justify-center px-3 py-2.5 text-base md:text-xs font-semibold text-gray-700 bg-gray-50 border border-r-0 border-gray-300 select-none">
                 +91
               </span>
               <input
@@ -379,7 +379,7 @@ export default function PersonalInfoPage() {
                 }
                 disabled={!isEditing}
                 placeholder="10-digit mobile number"
-                className="w-full px-3.5 py-2.5 text-xs text-gray-900 border border-gray-300 rounded-[2px] rounded-l-none bg-white focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition-all disabled:bg-gray-50/70 disabled:text-gray-500 disabled:cursor-not-allowed"
+                className="w-full px-3.5 py-2.5 text-base md:text-xs text-gray-900 border border-gray-300 rounded-[2px] rounded-l-none bg-white focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition-all disabled:bg-gray-50/70 disabled:text-gray-500 disabled:cursor-not-allowed"
               />
             </div>
             <p className="text-[11px] text-gray-400 mt-1">

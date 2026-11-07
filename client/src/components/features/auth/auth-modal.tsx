@@ -872,7 +872,7 @@ export function AuthModal() {
                     placeholder="Enter your email address or mobile number"
                     value={loginIdentifier}
                     onChange={(e) => setLoginIdentifier(e.target.value)}
-                    className="w-full px-3.5 py-3 text-xs sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
+                    className="w-full px-3.5 py-3 text-base sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
                   />
                 </div>
 
@@ -897,7 +897,7 @@ export function AuthModal() {
                       placeholder="Enter your password"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
-                      className="w-full pl-3.5 pr-10 py-3 text-xs sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
+                      className="w-full pl-3.5 pr-10 py-3 text-base sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
                     />
                     <button
                       type="button"
@@ -960,7 +960,7 @@ export function AuthModal() {
                     </span>
                   </div>
                   <div className="flex items-center">
-                    <span className="inline-flex items-center justify-center px-3 py-3 text-xs sm:text-sm font-semibold text-gray-700 bg-gray-50 border border-r-0 border-gray-300 select-none">
+                    <span className="inline-flex items-center justify-center px-3 py-3 text-base sm:text-sm font-semibold text-gray-700 bg-gray-50 border border-r-0 border-gray-300 select-none">
                       +91
                     </span>
                     <input
@@ -971,7 +971,7 @@ export function AuthModal() {
                       placeholder="10-digit mobile number"
                       value={loginPhone}
                       onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                      className="w-full px-3.5 py-3 text-xs sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
+                      className="w-full px-3.5 py-3 text-base sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
                     />
                   </div>
                   <p className="text-[11px] text-gray-500 pt-1">
@@ -1231,7 +1231,7 @@ export function AuthModal() {
                     placeholder="Enter your full name"
                     value={signupFullName}
                     onChange={(e) => setSignupFullName(e.target.value)}
-                    className="w-full px-3.5 py-3 text-xs sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
+                    className="w-full px-3.5 py-3 text-base sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
                   />
                 </div>
 
@@ -1246,7 +1246,7 @@ export function AuthModal() {
                     placeholder="Enter your email address"
                     value={signupEmail}
                     onChange={(e) => setSignupEmail(e.target.value)}
-                    className="w-full px-3.5 py-3 text-xs sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
+                    className="w-full px-3.5 py-3 text-base sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
                   />
                 </div>
 
@@ -1262,7 +1262,7 @@ export function AuthModal() {
                       placeholder="Create a password (min. 8 characters)"
                       value={signupPassword}
                       onChange={(e) => setSignupPassword(e.target.value)}
-                      className="w-full pl-3.5 pr-10 py-3 text-xs sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
+                      className="w-full pl-3.5 pr-10 py-3 text-base sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
                     />
                     <button
                       type="button"
@@ -1282,7 +1282,7 @@ export function AuthModal() {
                     </label>
                   </div>
                   <div className="flex items-center">
-                    <span className="inline-flex items-center justify-center px-3 py-3 text-xs sm:text-sm font-semibold text-gray-700 bg-gray-50 border border-r-0 border-gray-300 select-none">
+                    <span className="inline-flex items-center justify-center px-3 py-3 text-base sm:text-sm font-semibold text-gray-700 bg-gray-50 border border-r-0 border-gray-300 select-none">
                       +91
                     </span>
                     <input
@@ -1294,7 +1294,7 @@ export function AuthModal() {
                       onChange={(e) =>
                         setSignupOptionalPhone(e.target.value.replace(/\D/g, '').slice(0, 10))
                       }
-                      className="w-full px-3.5 py-3 text-xs sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
+                      className="w-full px-3.5 py-3 text-base sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
                     />
                   </div>
                 </div>
@@ -1350,7 +1350,7 @@ export function AuthModal() {
                     placeholder="Enter your full name"
                     value={signupFullName}
                     onChange={(e) => setSignupFullName(e.target.value)}
-                    className="w-full px-3.5 py-3 text-xs sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
+                    className="w-full px-3.5 py-3 text-base sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
                   />
                 </div>
 
@@ -1364,7 +1364,7 @@ export function AuthModal() {
                     </span>
                   </div>
                   <div className="flex items-center">
-                    <span className="inline-flex items-center justify-center px-3 py-3 text-xs sm:text-sm font-semibold text-gray-700 bg-gray-50 border border-r-0 border-gray-300 select-none">
+                    <span className="inline-flex items-center justify-center px-3 py-3 text-base sm:text-sm font-semibold text-gray-700 bg-gray-50 border border-r-0 border-gray-300 select-none">
                       +91
                     </span>
                     <input
@@ -1377,7 +1377,7 @@ export function AuthModal() {
                       onChange={(e) =>
                         setSignupPhone(e.target.value.replace(/\D/g, '').slice(0, 10))
                       }
-                      className="w-full px-3.5 py-3 text-xs sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
+                      className="w-full px-3.5 py-3 text-base sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
                     />
                   </div>
                 </div>
@@ -1394,7 +1394,7 @@ export function AuthModal() {
                       placeholder="Create a password (min. 8 characters)"
                       value={signupPassword}
                       onChange={(e) => setSignupPassword(e.target.value)}
-                      className="w-full pl-3.5 pr-10 py-3 text-xs sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
+                      className="w-full pl-3.5 pr-10 py-3 text-base sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
                     />
                     <button
                       type="button"
@@ -1417,7 +1417,7 @@ export function AuthModal() {
                     placeholder="Enter email address (optional)"
                     value={signupOptionalEmail}
                     onChange={(e) => setSignupOptionalEmail(e.target.value)}
-                    className="w-full px-3.5 py-3 text-xs sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
+                    className="w-full px-3.5 py-3 text-base sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
                   />
                 </div>
 
@@ -1607,7 +1607,7 @@ export function AuthModal() {
                         Registered Mobile Number
                       </label>
                       <div className="flex">
-                        <span className="inline-flex items-center px-3 text-xs sm:text-sm text-gray-500 bg-gray-50 border border-r-0 border-gray-300 font-medium">
+                        <span className="inline-flex items-center px-3 text-base sm:text-sm text-gray-500 bg-gray-50 border border-r-0 border-gray-300 font-medium">
                           +91
                         </span>
                         <input
@@ -1619,7 +1619,7 @@ export function AuthModal() {
                           placeholder="10-digit mobile number"
                           value={forgotPhone}
                           onChange={(e) => setForgotPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                          className="flex-1 px-3.5 py-3 text-xs sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all font-mono"
+                          className="flex-1 px-3.5 py-3 text-base sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all font-mono"
                         />
                       </div>
                       <p className="text-[11px] text-gray-400">
@@ -1862,7 +1862,7 @@ export function AuthModal() {
                           placeholder="At least 8 characters"
                           value={forgotNewPassword}
                           onChange={(e) => setForgotNewPassword(e.target.value)}
-                          className="w-full px-3.5 py-3 pr-10 text-xs sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
+                          className="w-full px-3.5 py-3 pr-10 text-base sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
                         />
                         <button
                           type="button"
@@ -1886,7 +1886,7 @@ export function AuthModal() {
                         placeholder="Re-enter your new password"
                         value={forgotConfirmPassword}
                         onChange={(e) => setForgotConfirmPassword(e.target.value)}
-                        className="w-full px-3.5 py-3 text-xs sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
+                        className="w-full px-3.5 py-3 text-base sm:text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
                       />
                       <p className="text-[11px] text-gray-400">
                         Must contain uppercase, lowercase, number, and special character.

@@ -506,7 +506,7 @@ export function Navbar() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Search..."
-                className="bg-transparent border-none outline-none w-full text-sm text-gray-900"
+                className="bg-transparent border-none outline-none w-full text-base md:text-sm text-gray-900"
               />
               {inputValue && (
                 <button suppressHydrationWarning type="button" onClick={() => setInputValue('')} className="p-1 text-gray-400">
