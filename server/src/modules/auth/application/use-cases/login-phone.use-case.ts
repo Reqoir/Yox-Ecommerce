@@ -6,9 +6,10 @@
  * Intelligently handles multiple accounts sharing the same mobile number.
  */
 
-import { ApiError } from '@shared/utils/api-error.util';
+import crypto from 'crypto';
 import { IUserRepository } from '../../../users/domain/repositories/user.repository.interface';
 import { IRoleRepository } from '../../../roles/domain/repositories/role.repository.interface';
+import { User } from '../../../users/domain/entities/user.entity';
 import { LoginPhoneRequestDTO, LoginPhoneResponseDTO } from '../dtos/login-phone.dto';
 import { signAccessToken, signRefreshToken } from '@shared/utils/jwt.helper';
 import { msg91OtpService } from '../../infrastructure/services/msg91-otp.service';
@@ -41,12 +42,26 @@ export class LoginPhoneUseCase {
     const users = await this.userRepository.findAllByPhone(rawPhone);
     const activeUsers = users.filter((u) => u.canLogin());
 
-    if (activeUsers.length === 0) {
-      throw ApiError.notFound('No active account found with this mobile number. Please sign up to create your account.');
-    }
+    let user: User;
 
-    // 3. If multiple accounts found, prompt user to select which account to access
-    if (activeUsers.length > 1) {
+    if (activeUsers.length === 0) {
+      // Modern D2C Auto-Registration on first phone OTP verification:
+      // If customer doesn't exist yet, automatically create their account
+      const customerRole = await this.roleRepository.findByName('CUSTOMER');
+      const roleId = customerRole ? customerRole.id : 'CUSTOMER_ROLE_ID';
+
+      const newUser = await User.create({
+        fullName: 'Customer',
+        phone: rawPhone,
+        email: null,
+        password: crypto.randomUUID(),
+        roleId,
+        isPhoneVerified: true,
+      });
+
+      user = await this.userRepository.create(newUser);
+    } else if (activeUsers.length > 1) {
+      // If multiple accounts found, prompt user to select which account to access
       const selectionToken = signAccessToken({
         phone: rawPhone,
         purpose: 'phone_account_selection',
@@ -64,10 +79,9 @@ export class LoginPhoneUseCase {
           createdAt: u.createdAt,
         })),
       };
+    } else {
+      user = activeUsers[0];
     }
-
-    // 4. Single account: proceed directly with authentication
-    const user = activeUsers[0];
 
     // Generate tokens
     const tokenPayload = {

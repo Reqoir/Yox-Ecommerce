@@ -5,6 +5,16 @@ export function middleware(request: NextRequest) {
   const host = request.headers.get('host') || '';
   const { pathname } = request.nextUrl;
 
+  // In local development, bypass subdomain redirect to allow direct access to /admin on localhost
+  const isLocalDev =
+    process.env.NODE_ENV === 'development' ||
+    host.includes('localhost') ||
+    host.includes('127.0.0.1');
+
+  if (isLocalDev) {
+    return NextResponse.next();
+  }
+
   // Detect if accessing through the admin subdomain
   const isAdminSubdomain = host.startsWith('admin.');
 
