@@ -92,7 +92,7 @@ export class AuthController {
 
       ApiResponse.success(
         res,
-        { user: result.user },
+        { user: result.user, accessToken: result.accessToken },
         'Logged in successfully',
         HttpStatus.OK
       );
@@ -127,7 +127,7 @@ export class AuthController {
 
       ApiResponse.success(
         res,
-        { user: result.user },
+        { user: result.user, accessToken: result.accessToken },
         'Logged in successfully',
         HttpStatus.OK
       );
@@ -151,7 +151,7 @@ export class AuthController {
 
       ApiResponse.success(
         res,
-        { user: result.user },
+        { user: result.user, accessToken: result.accessToken },
         'Logged in successfully',
         HttpStatus.OK
       );

@@ -33,7 +33,6 @@ import {
   MapPin,
   Maximize2,
   Check,
-  Sparkles,
   ArrowRight,
   Info,
 } from 'lucide-react';

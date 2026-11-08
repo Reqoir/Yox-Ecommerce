@@ -5,6 +5,7 @@ export interface Role {
   name: string;
   description: string | null;
   permissions: string[];
+  level: number;
   isSystem: boolean;
   createdAt: string;
   updatedAt: string;
@@ -14,12 +15,14 @@ export interface CreateRoleDTO {
   name: string;
   description?: string;
   permissions: string[];
+  level?: number;
 }
 
 export interface UpdateRoleDTO {
   name?: string;
   description?: string;
   permissions?: string[];
+  level?: number;
 }
 
 export const PERMISSIONS_LIST = [
@@ -30,7 +33,8 @@ export const PERMISSIONS_LIST = [
   { id: 'manage_categories', label: 'Manage Categories' },
   { id: 'manage_orders', label: 'Manage Orders' },
   { id: 'manage_users', label: 'Manage Customers' },
-  { id: 'manage_staff', label: 'Manage Staff Members' },
+  { id: 'view_staff', label: 'View Staff Directory (Read-Only)' },
+  { id: 'manage_staff', label: 'Manage Staff Members (Add, Edit, Reset Password, Suspend, Delete)' },
   { id: 'manage_roles', label: 'Manage Roles & Permissions' },
   { id: 'manage_settings', label: 'Manage Settings' },
   { id: 'view_analytics', label: 'View Analytics' },

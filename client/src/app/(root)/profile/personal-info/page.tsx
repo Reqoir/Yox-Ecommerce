@@ -8,14 +8,16 @@ import { useMsg91Otp } from '@/hooks/useMsg91Otp';
 import {
   User,
   Mail,
-  Phone,
-  ShieldCheck,
+  Smartphone,
+  CheckCircle2,
   Edit3,
   Save,
   X,
   Loader2,
   RotateCcw,
-  AlertCircle,
+  ShieldCheck,
+  ArrowRight,
+  Info,
 } from 'lucide-react';
 
 export default function PersonalInfoPage() {
@@ -30,10 +32,12 @@ export default function PersonalInfoPage() {
   });
 
   // OTP Verification States for Phone Number Change
-  const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+  const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
+  const [newPhoneNumber, setNewPhoneNumber] = useState('');
+  const [phoneStep, setPhoneStep] = useState<'input' | 'otp'>('input');
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '']);
   const [resendCountdown, setResendCountdown] = useState(0);
-  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [isPhoneLoading, setIsPhoneLoading] = useState(false);
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const { sendOtp, retryOtp, verifyOtp, formatPhoneForMsg91 } = useMsg91Otp();
@@ -41,7 +45,7 @@ export default function PersonalInfoPage() {
   useEffect(() => {
     if (user) {
       setFormData({
-        fullName: user.fullName || '',
+        fullName: user.fullName && user.fullName.toLowerCase() !== 'customer' ? user.fullName : '',
         phone: user.phone ? user.phone.replace(/^(\+91|91)/, '') : '',
         email: user.email && !user.email.endsWith('@user.yox.internal') ? user.email : '',
       });
@@ -63,91 +67,74 @@ export default function PersonalInfoPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const isPhoneChanged = () => {
-    const currentLast10 = (user?.phone || '').replace(/\D/g, '').slice(-10);
-    const newLast10 = formData.phone.replace(/\D/g, '').slice(-10);
-    return formData.phone.trim() !== '' && newLast10 !== currentLast10;
-  };
-
   /**
-   * Main Save handler:
-   * - If phone number was changed, triggers mobile OTP verification first.
-   * - If only name/email changed, saves directly with server email uniqueness check.
+   * Save Profile Name and Email (No password or mandatory email required)
    */
-  const handleInitiateSave = async (e: React.FormEvent) => {
+  const handleSaveDetails = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!formData.fullName.trim()) {
-      toast.error('Please enter your full name');
-      return;
-    }
 
     if (formData.email.trim() && !/^\S+@\S+\.\S+$/.test(formData.email.trim())) {
       toast.error('Please enter a valid email address');
       return;
     }
 
-    // Check if phone number has changed
-    if (isPhoneChanged()) {
-      const cleanPhone = formData.phone.replace(/\D/g, '').slice(-10);
-      if (cleanPhone.length !== 10) {
-        toast.error('Please enter a valid 10-digit mobile number');
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        await sendOtp(cleanPhone);
-        toast.success(`Verification code sent to +91 ${cleanPhone}`);
-        setOtpDigits(['', '', '', '']);
-        setResendCountdown(30);
-        setIsOtpModalOpen(true);
-        setTimeout(() => {
-          otpInputRefs.current[0]?.focus();
-        }, 150);
-      } catch (err: any) {
-        toast.error(err?.message || 'Failed to send OTP to new mobile number.');
-      } finally {
-        setIsLoading(false);
-      }
-      return;
-    }
-
-    // Phone was not changed: Save directly
-    await executeSaveProfile();
-  };
-
-  /**
-   * Direct Profile Update (without phone verification)
-   */
-  const executeSaveProfile = async (verificationToken?: string) => {
     setIsLoading(true);
     try {
       const updateData: UpdateProfileDto = {
-        fullName: formData.fullName.trim(),
-        email: formData.email.trim() || undefined,
-        phone: formData.phone.trim() ? formatPhoneForMsg91(formData.phone) : undefined,
-        verificationToken,
+        fullName: formData.fullName.trim() || undefined,
+        email: formData.email.trim(),
       };
 
       const updatedUser = await profileApi.updateProfile(updateData);
       setUser(updatedUser);
-      toast.success('Personal profile updated successfully!');
+      toast.success('Profile details saved successfully!');
       setIsEditing(false);
-      setIsOtpModalOpen(false);
     } catch (error: any) {
-      const msg = error?.response?.data?.message || 'Failed to update personal info.';
+      const msg = error?.response?.data?.message || 'Failed to update personal details.';
       toast.error(msg);
-      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
   /**
-   * Confirm OTP and complete profile update with verified phone
+   * Phone Change Step 1: Send OTP to new mobile number
    */
-  const handleConfirmPhoneOtp = async (e: React.FormEvent) => {
+  const handleSendPhoneChangeOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanPhone = newPhoneNumber.replace(/\D/g, '').slice(-10);
+    if (cleanPhone.length !== 10) {
+      toast.error('Please enter a valid 10-digit mobile number');
+      return;
+    }
+
+    const currentClean = (user?.phone || '').replace(/\D/g, '').slice(-10);
+    if (cleanPhone === currentClean) {
+      toast.error('This is already your current mobile number');
+      return;
+    }
+
+    setIsPhoneLoading(true);
+    try {
+      await sendOtp(cleanPhone);
+      toast.success(`Verification code sent to +91 ${cleanPhone}`);
+      setPhoneStep('otp');
+      setOtpDigits(['', '', '', '']);
+      setResendCountdown(30);
+      setTimeout(() => {
+        otpInputRefs.current[0]?.focus();
+      }, 150);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to send OTP to new mobile number.');
+    } finally {
+      setIsPhoneLoading(false);
+    }
+  };
+
+  /**
+   * Phone Change Step 2: Verify OTP and update phone in DB
+   */
+  const handleVerifyPhoneChangeOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const fullOtp = otpDigits.join('');
     if (fullOtp.length !== 4) {
@@ -155,23 +142,31 @@ export default function PersonalInfoPage() {
       return;
     }
 
-    setIsVerifyingOtp(true);
+    setIsPhoneLoading(true);
     try {
-      // 1. Verify OTP with MSG91 widget
       const verificationToken = await verifyOtp(fullOtp);
+      const cleanPhone = newPhoneNumber.replace(/\D/g, '').slice(-10);
 
-      // 2. Execute profile update with verification token
-      await executeSaveProfile(verificationToken);
+      const updatedUser = await profileApi.updateProfile({
+        phone: formatPhoneForMsg91(cleanPhone),
+        verificationToken,
+      });
+
+      setUser(updatedUser);
+      toast.success('Mobile number updated and verified successfully!');
+      setIsPhoneModalOpen(false);
+      setNewPhoneNumber('');
+      setPhoneStep('input');
     } catch (err: any) {
-      toast.error(err?.message || 'Invalid verification code. Please try again.');
+      toast.error(err?.message || 'Failed to verify OTP. Please try again.');
     } finally {
-      setIsVerifyingOtp(false);
+      setIsPhoneLoading(false);
     }
   };
 
-  const handleResendOtp = async () => {
-    if (resendCountdown > 0 || isVerifyingOtp) return;
-    setIsVerifyingOtp(true);
+  const handleResendPhoneOtp = async () => {
+    if (resendCountdown > 0 || isPhoneLoading) return;
+    setIsPhoneLoading(true);
     try {
       await retryOtp();
       toast.success('New verification code sent via SMS');
@@ -179,7 +174,7 @@ export default function PersonalInfoPage() {
     } catch (err: any) {
       toast.error(err?.message || 'Failed to resend verification code');
     } finally {
-      setIsVerifyingOtp(false);
+      setIsPhoneLoading(false);
     }
   };
 
@@ -200,43 +195,29 @@ export default function PersonalInfoPage() {
     }
   };
 
-  const handleOtpPaste = (e: React.ClipboardEvent) => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
-    if (!pasted) return;
-
-    const newDigits = [...otpDigits];
-    for (let i = 0; i < 4; i++) {
-      newDigits[i] = pasted[i] || '';
-    }
-    setOtpDigits(newDigits);
-
-    const focusIdx = Math.min(pasted.length, 3);
-    otpInputRefs.current[focusIdx]?.focus();
-  };
-
-  const displayEmail =
-    user?.email && !user.email.endsWith('@user.yox.internal') ? user.email : 'Not provided';
-  const displayPhone = user?.phone ? `+91 ${user.phone.replace(/^(\+91|91)/, '')}` : 'Not linked';
+  const rawPhone = (user?.phone || '').replace(/\D/g, '').slice(-10);
+  const displayPhone = rawPhone ? `+91 ${rawPhone.slice(0, 5)} ${rawPhone.slice(5)}` : 'Not linked';
+  const displayEmail = user?.email && !user.email.endsWith('@user.yox.internal') ? user.email : null;
+  const displayName = user?.fullName && user.fullName.toLowerCase() !== 'customer' ? user.fullName : null;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Section Header */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 pb-5 gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 tracking-tight">Personal Information</h2>
+          <h2 className="text-xl font-bold text-gray-900 tracking-tight">Personal Information</h2>
           <p className="text-xs text-gray-500 mt-1">
-            Manage your account credentials, primary contact email, and mobile phone number
+            Your personal profile and contact preferences for orders and deliveries
           </p>
         </div>
 
         {!isEditing ? (
           <button
             onClick={() => setIsEditing(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-medium rounded-[2px] transition-colors shadow-2xs self-start sm:self-auto cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider rounded-xs transition-colors shadow-2xs self-start sm:self-auto cursor-pointer"
           >
             <Edit3 size={14} />
-            <span>Edit Information</span>
+            <span>Edit Profile</span>
           </button>
         ) : (
           <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -246,22 +227,22 @@ export default function PersonalInfoPage() {
                 setIsEditing(false);
                 if (user) {
                   setFormData({
-                    fullName: user.fullName || '',
-                    phone: user.phone ? user.phone.replace(/^(\+91|91)/, '') : '',
-                    email: user.email && !user.email.endsWith('@user.yox.internal') ? user.email : '',
+                    fullName: displayName || '',
+                    phone: rawPhone,
+                    email: displayEmail || '',
                   });
                 }
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-xs font-medium rounded-[2px] transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-xs font-semibold rounded-xs transition-colors cursor-pointer"
             >
               <X size={14} />
               <span>Cancel</span>
             </button>
             <button
               type="button"
-              onClick={handleInitiateSave}
+              onClick={handleSaveDetails}
               disabled={isLoading}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-medium rounded-[2px] transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider rounded-xs transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
             >
               {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               <span>{isLoading ? 'Saving...' : 'Save Changes'}</span>
@@ -270,250 +251,322 @@ export default function PersonalInfoPage() {
         )}
       </div>
 
-      {/* Account Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white border border-gray-200 rounded-[2px] p-4 flex items-center gap-3.5 shadow-2xs">
-          <div className="w-10 h-10 rounded-[2px] bg-gray-100 text-gray-900 flex items-center justify-center font-semibold shrink-0">
-            <User size={18} />
+      {/* Modern Profile Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Card 1: Verified Mobile Number (Primary) */}
+        <div className="bg-white border-2 border-[#C09B7A]/40 rounded-sm p-4 relative flex flex-col justify-between shadow-xs">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-[#C09B7A] uppercase tracking-wider">
+                Primary Account Login
+              </span>
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-xs border border-emerald-200/60">
+                <CheckCircle2 size={11} className="text-emerald-600" /> VERIFIED
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3 pt-1">
+              <div className="w-10 h-10 rounded-sm bg-neutral-900 text-white flex items-center justify-center shrink-0">
+                <Smartphone size={18} className="text-[#C09B7A]" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-gray-900 tracking-wide font-mono">
+                  {displayPhone}
+                </p>
+                <p className="text-[11px] text-gray-400">Instant OTP Access</p>
+              </div>
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-0.5">
-              Account Name
-            </span>
-            <span className="text-xs font-medium text-gray-900 truncate block">
-              {user?.fullName || 'Not provided'}
-            </span>
-          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setPhoneStep('input');
+              setNewPhoneNumber('');
+              setIsPhoneModalOpen(true);
+            }}
+            className="mt-4 text-xs font-bold text-black hover:text-[#C09B7A] underline underline-offset-2 text-left cursor-pointer transition-colors"
+          >
+            Change Mobile Number →
+          </button>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-[2px] p-4 flex items-center gap-3.5 shadow-2xs">
-          <div className="w-10 h-10 rounded-[2px] bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center justify-center font-semibold shrink-0">
-            <Mail size={18} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-0.5">
-              Email Address
+        {/* Card 2: Full Name */}
+        <div className="bg-white border border-gray-200 rounded-sm p-4 flex flex-col justify-between shadow-2xs">
+          <div className="space-y-2">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+              Full Name
             </span>
-            <span className="text-xs font-medium text-gray-900 truncate block">{displayEmail}</span>
+            <div className="flex items-center gap-3 pt-1">
+              <div className="w-10 h-10 rounded-sm bg-gray-100 text-gray-800 flex items-center justify-center shrink-0">
+                <User size={18} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-gray-900 truncate">
+                  {displayName || 'Not provided yet'}
+                </p>
+                <p className="text-[11px] text-gray-400">Used for greetings & labels</p>
+              </div>
+            </div>
           </div>
+
+          {!displayName && !isEditing && (
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              className="mt-4 text-xs font-bold text-black hover:text-[#C09B7A] underline underline-offset-2 text-left cursor-pointer transition-colors"
+            >
+              + Add Full Name
+            </button>
+          )}
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-[2px] p-4 flex items-center gap-3.5 shadow-2xs">
-          <div className="w-10 h-10 rounded-[2px] bg-amber-50 text-amber-700 border border-amber-100 flex items-center justify-center font-semibold shrink-0">
-            <Phone size={18} />
+        {/* Card 3: Email Address (Optional) */}
+        <div className="bg-white border border-gray-200 rounded-sm p-4 flex flex-col justify-between shadow-2xs">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Email Address
+              </span>
+              <span className="text-[10px] text-gray-400 font-medium">Optional</span>
+            </div>
+            <div className="flex items-center gap-3 pt-1">
+              <div className="w-10 h-10 rounded-sm bg-gray-100 text-gray-800 flex items-center justify-center shrink-0">
+                <Mail size={18} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-gray-900 truncate">
+                  {displayEmail || 'Not added'}
+                </p>
+                <p className="text-[11px] text-gray-400">For tax invoices & receipts</p>
+              </div>
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-0.5">
-              Phone Contact
-            </span>
-            <span className="text-xs font-medium text-gray-900 truncate block">{displayPhone}</span>
-          </div>
+
+          {!displayEmail && !isEditing && (
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              className="mt-4 text-xs font-bold text-black hover:text-[#C09B7A] underline underline-offset-2 text-left cursor-pointer transition-colors"
+            >
+              + Add Email for Receipts
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Form Fields */}
-      <form onSubmit={handleInitiateSave} className="space-y-6 pt-2">
-        <div className="space-y-4 max-w-2xl">
+      {/* Editing Form */}
+      {isEditing && (
+        <form onSubmit={handleSaveDetails} className="bg-gray-50/70 border border-gray-200 rounded-sm p-5 sm:p-6 space-y-4 max-w-xl animate-in fade-in duration-200">
+          <div className="flex items-center gap-2 pb-2 border-b border-gray-200/70">
+            <Edit3 size={16} className="text-[#C09B7A]" />
+            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+              Edit Account Details
+            </h3>
+          </div>
+
           {/* Full Name */}
-          <div>
-            <label className="text-xs font-medium text-gray-800 block mb-1.5">Full Name *</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-gray-800 block">
+              Full Name
+            </label>
             <input
               type="text"
               name="fullName"
-              required
               value={formData.fullName}
               onChange={handleChange}
-              disabled={!isEditing}
-              placeholder="Enter your full name"
-              className="w-full px-3.5 py-2.5 text-base md:text-xs text-gray-900 border border-gray-300 rounded-[2px] bg-white focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition-all disabled:bg-gray-50/70 disabled:text-gray-500 disabled:cursor-not-allowed"
+              placeholder="e.g. John Doe"
+              className="w-full px-3.5 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-xs bg-white focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-all"
             />
+            <p className="text-[11px] text-gray-500">
+              Your name will appear on package shipping slips and order receipts.
+            </p>
           </div>
 
-          {/* Email Address - Editable with Duplicate Check */}
-          <div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1.5 gap-1">
-              <label className="text-xs font-medium text-gray-800">
-                Email Address <span className="text-gray-400 font-normal">(Primary Login)</span>
+          {/* Email Address */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-gray-800">
+                Email Address
               </label>
-              {isEditing && (
-                <span className="text-[11px] text-[#C09B7A] font-medium">
-                  Checked for availability
-                </span>
-              )}
+              <span className="text-[11px] text-gray-400">Optional</span>
             </div>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              disabled={!isEditing}
-              placeholder="Enter your email address"
-              className="w-full px-3.5 py-2.5 text-base md:text-xs text-gray-900 border border-gray-300 rounded-[2px] bg-white focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition-all disabled:bg-gray-50/70 disabled:text-gray-500 disabled:cursor-not-allowed"
+              placeholder="e.g. john@example.com"
+              className="w-full px-3.5 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-xs bg-white focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-all"
             />
-            <p className="text-[11px] text-gray-400 mt-1">
-              Used for order receipts, tracking updates, and password recovery.
+            <p className="text-[11px] text-gray-500">
+              Provide your email if you wish to receive digital GST invoices and tracking emails.
             </p>
           </div>
 
-          {/* Phone Number - Editable with MSG91 OTP Verification */}
-          <div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1.5 gap-1">
-              <label className="text-xs font-medium text-gray-800">Mobile Number</label>
-              {isEditing && isPhoneChanged() && (
-                <span className="text-[11px] text-amber-700 font-medium bg-amber-50 px-2 py-0.5 rounded-xs border border-amber-200">
-                  * Requires SMS OTP Verification
-                </span>
-              )}
-            </div>
-            <div className="flex items-center">
-              <span className="inline-flex items-center justify-center px-3 py-2.5 text-base md:text-xs font-semibold text-gray-700 bg-gray-50 border border-r-0 border-gray-300 select-none">
-                +91
-              </span>
-              <input
-                type="tel"
-                name="phone"
-                maxLength={10}
-                value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })
-                }
-                disabled={!isEditing}
-                placeholder="10-digit mobile number"
-                className="w-full px-3.5 py-2.5 text-base md:text-xs text-gray-900 border border-gray-300 rounded-[2px] rounded-l-none bg-white focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition-all disabled:bg-gray-50/70 disabled:text-gray-500 disabled:cursor-not-allowed"
-              />
-            </div>
-            <p className="text-[11px] text-gray-400 mt-1">
-              Used for one-click OTP login, shipping notifications, and delivery coordination.
-            </p>
-          </div>
-        </div>
-
-        {/* Security Assurance Banner */}
-        <div className="p-4 bg-white border border-gray-200 rounded-[2px] flex items-start gap-3.5 text-xs text-gray-900 max-w-2xl shadow-2xs">
-          <ShieldCheck size={18} className="text-black shrink-0 mt-0.5" />
-          <div>
-            <p className="font-semibold text-gray-900">Your Privacy & Data Protection</p>
-            <p className="text-gray-500 text-[11px] mt-0.5 leading-relaxed">
-              YOX encrypts personal data using 256-bit security. Changing contact details requires
-              identity and mobile verification to prevent unauthorized account access.
-            </p>
-          </div>
-        </div>
-      </form>
-
-      {/* ─── Mobile OTP Verification Modal for Phone Change ───────────────── */}
-      {isOtpModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="absolute inset-0" onClick={() => !isVerifyingOtp && setIsOtpModalOpen(false)} />
-
-          <div
-            className="relative z-10 bg-white rounded-md max-w-[480px] w-full p-6 sm:p-8 shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200"
-            role="dialog"
-            aria-modal="true"
-          >
+          {/* Actions */}
+          <div className="pt-2 flex items-center justify-end gap-3">
             <button
               type="button"
-              onClick={() => !isVerifyingOtp && setIsOtpModalOpen(false)}
-              className="absolute top-5 right-5 p-1 text-gray-500 hover:text-black transition-colors cursor-pointer"
-              aria-label="Close"
+              onClick={() => setIsEditing(false)}
+              className="px-4 py-2 text-xs font-semibold text-gray-600 hover:text-black border border-gray-300 bg-white rounded-xs cursor-pointer"
             >
-              <X size={22} />
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="px-5 py-2 text-xs font-bold uppercase tracking-wider text-white bg-black hover:bg-neutral-800 rounded-xs transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
+            >
+              {isLoading ? 'Saving...' : 'Save Profile'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* Info notice about modern phone login */}
+      <div className="bg-neutral-50 border border-neutral-200/80 rounded-sm p-4 flex items-start gap-3">
+        <Info size={16} className="text-[#C09B7A] shrink-0 mt-0.5" />
+        <div className="text-xs text-neutral-600 leading-relaxed">
+          <span className="font-semibold text-neutral-900">Phone-First Account Security:</span> Your mobile number is your primary security credential. When signing in from any device, we send an instant SMS OTP. No passwords to remember or reset!
+        </div>
+      </div>
+
+      {/* ─── MODAL: CHANGE MOBILE NUMBER WITH OTP ───────────────────────────── */}
+      {isPhoneModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-md max-w-[460px] w-full p-6 sm:p-8 shadow-2xl border border-gray-100 relative">
+            <button
+              type="button"
+              onClick={() => setIsPhoneModalOpen(false)}
+              className="absolute top-5 right-5 p-1 text-gray-400 hover:text-black cursor-pointer"
+            >
+              <X size={20} />
             </button>
 
-            <div className="mb-5 space-y-1.5">
+            <div className="mb-5 space-y-1">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="text-[#C09B7A]" size={26} />
-                <h3 className="text-2xl font-normal text-gray-900">Verify Mobile Number</h3>
+                <Smartphone className="text-[#C09B7A]" size={22} />
+                <h3 className="text-xl font-bold text-gray-900">
+                  {phoneStep === 'input' ? 'Change Mobile Number' : 'Verify New Number'}
+                </h3>
               </div>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                To link <span className="font-bold text-gray-900">+91 {formData.phone}</span> to your
-                account, please enter the 4-digit verification code sent via SMS.
+              <p className="text-xs text-gray-500">
+                {phoneStep === 'input'
+                  ? 'Enter your new 10-digit mobile number. We will send an SMS OTP to verify ownership.'
+                  : `Enter the 4-digit verification code sent to +91 ${newPhoneNumber}`}
               </p>
             </div>
 
-            <form onSubmit={handleConfirmPhoneOtp} className="space-y-5">
-              {/* 4-Digit Segmented OTP Input */}
-              <div className="space-y-2">
-                <label className="block text-xs font-bold text-gray-900 uppercase tracking-wider text-center">
-                  Verification Code
-                </label>
-                <div className="flex items-center justify-center gap-3 sm:gap-4" onPaste={handleOtpPaste}>
-                  {otpDigits.map((digit, idx) => (
+            {phoneStep === 'input' ? (
+              <form onSubmit={handleSendPhoneChangeOtp} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-900 uppercase tracking-wider block">
+                    New Mobile Number
+                  </label>
+                  <div className="flex items-center">
+                    <span className="inline-flex items-center justify-center px-3 py-2.5 text-sm font-semibold text-gray-700 bg-gray-50 border border-r-0 border-gray-300 select-none">
+                      +91
+                    </span>
                     <input
-                      key={idx}
-                      ref={(el) => {
-                        otpInputRefs.current[idx] = el;
-                      }}
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
-                      onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                      className="w-14 sm:w-16 h-14 sm:h-16 text-center text-xl sm:text-2xl font-bold text-gray-900 bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] transition-all shadow-xs"
-                      autoFocus={idx === 0}
+                      type="tel"
+                      required
+                      autoFocus
+                      maxLength={10}
+                      placeholder="10-digit number"
+                      value={newPhoneNumber}
+                      onChange={(e) => setNewPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] text-gray-900 placeholder:text-gray-400"
                     />
-                  ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Resend Section */}
-              <div className="flex items-center justify-between text-xs pt-1 px-1">
-                <button
-                  type="button"
-                  onClick={() => setIsOtpModalOpen(false)}
-                  className="text-gray-500 hover:text-black underline transition-colors cursor-pointer"
-                >
-                  Edit Number
-                </button>
-
-                <div>
-                  {resendCountdown > 0 ? (
-                    <span className="text-gray-400 font-medium">
-                      Resend code in 00:{resendCountdown < 10 ? `0${resendCountdown}` : resendCountdown}
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleResendOtp}
-                      disabled={isVerifyingOtp}
-                      className="flex items-center gap-1 font-bold text-black hover:text-[#C09B7A] underline transition-colors cursor-pointer disabled:opacity-50"
-                    >
-                      <RotateCcw size={12} />
-                      <span>Resend OTP</span>
-                    </button>
-                  )}
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsPhoneModalOpen(false)}
+                    className="px-4 py-2.5 text-xs font-semibold text-gray-600 hover:text-black border border-gray-300 rounded-xs cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isPhoneLoading || newPhoneNumber.length !== 10}
+                    className="px-5 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider rounded-xs disabled:opacity-50 cursor-pointer shadow-xs"
+                  >
+                    {isPhoneLoading ? 'Sending OTP...' : 'Send OTP'}
+                  </button>
                 </div>
-              </div>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyPhoneChangeOtp} className="space-y-5">
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-gray-900 uppercase tracking-wider text-center">
+                    Enter 4-Digit Code
+                  </label>
+                  <div className="flex items-center justify-center gap-3">
+                    {otpDigits.map((digit, idx) => (
+                      <input
+                        key={idx}
+                        ref={(el) => {
+                          otpInputRefs.current[idx] = el;
+                        }}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
+                        onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                        className="w-12 h-12 text-center text-xl font-bold text-gray-900 border border-gray-300 rounded-none focus:border-[#C09B7A] focus:outline-none"
+                        autoFocus={idx === 0}
+                      />
+                    ))}
+                  </div>
+                </div>
 
-              {/* Actions */}
-              <div className="pt-3 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsOtpModalOpen(false)}
-                  disabled={isVerifyingOtp}
-                  className="px-4 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-semibold uppercase tracking-wider rounded-none transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  Cancel
-                </button>
+                <div className="flex items-center justify-between text-xs px-1">
+                  <button
+                    type="button"
+                    onClick={() => setPhoneStep('input')}
+                    className="text-gray-500 hover:text-black underline cursor-pointer"
+                  >
+                    Change Number
+                  </button>
 
-                <button
-                  type="submit"
-                  disabled={isVerifyingOtp || otpDigits.join('').length !== 4}
-                  className="px-6 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider rounded-none transition-colors cursor-pointer disabled:opacity-50 shadow-xs"
-                >
-                  {isVerifyingOtp ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 size={14} className="animate-spin" />
-                      <span>VERIFYING...</span>
-                    </span>
-                  ) : (
-                    <span>CONFIRM & SAVE</span>
-                  )}
-                </button>
-              </div>
-            </form>
+                  <div>
+                    {resendCountdown > 0 ? (
+                      <span className="text-gray-400">Resend in {resendCountdown}s</span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleResendPhoneOtp}
+                        disabled={isPhoneLoading}
+                        className="font-bold text-black hover:text-[#C09B7A] underline cursor-pointer"
+                      >
+                        Resend OTP
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsPhoneModalOpen(false)}
+                    className="px-4 py-2.5 text-xs font-semibold text-gray-600 hover:text-black border border-gray-300 rounded-xs cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isPhoneLoading || otpDigits.join('').length !== 4}
+                    className="px-5 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider rounded-xs disabled:opacity-50 cursor-pointer shadow-xs"
+                  >
+                    {isPhoneLoading ? 'Verifying...' : 'Verify & Update'}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

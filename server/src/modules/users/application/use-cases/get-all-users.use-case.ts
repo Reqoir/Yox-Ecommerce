@@ -30,6 +30,7 @@ export class GetAllUsersUseCase {
       (userJson as any).roleName =
         roleMap.get(user.roleId) ||
         (user.roleId === 'CUSTOMER_ROLE_ID' || !user.roleId ? 'CUSTOMER' : 'Customer');
+      (userJson as any).deletedAt = user.deletedAt;
       return userJson;
     });
 

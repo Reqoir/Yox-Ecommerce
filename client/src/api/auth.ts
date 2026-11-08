@@ -45,6 +45,7 @@ export interface SelectPhoneAccountCredentials {
 
 export interface AuthResponse {
   user: User;
+  accessToken?: string;
 }
 
 export interface RegisterCredentials {
@@ -84,10 +85,13 @@ export const authApi = {
     const response = await apiClient.post<{ data: AuthResponse }>('/auth/register', credentials);
     return response.data.data.user;
   },
-  login: async (credentials: LoginCredentials): Promise<User> => {
-    // The backend login endpoint returns: { status: 'success', data: { user: {...} }, message: '...' }
+  login: async (credentials: LoginCredentials): Promise<User & { accessToken?: string }> => {
+    // The backend login endpoint returns: { status: 'success', data: { user: {...}, accessToken: '...' }, message: '...' }
     const response = await apiClient.post<{ data: AuthResponse }>('/auth/login', credentials);
-    return response.data.data.user;
+    return {
+      ...response.data.data.user,
+      accessToken: response.data.data.accessToken,
+    };
   },
   loginWithPhone: async (credentials: LoginPhoneCredentials): Promise<LoginPhoneResponse> => {
     const response = await apiClient.post<{ data: LoginPhoneResponse }>('/auth/login-phone', credentials);

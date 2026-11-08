@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationApi } from '@/api/admin/notifications';
 import { toast } from 'sonner';
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAdminAuthStore } from '@/store/useAdminAuthStore';
 
 /**
  * Normalise params so that `undefined` values are stripped.
@@ -17,7 +17,7 @@ function normaliseParams(params?: { type?: string; isRead?: string }) {
 
 export const useNotifications = (params?: { type?: string; isRead?: string }) => {
   const queryClient = useQueryClient();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isAuthenticated = useAdminAuthStore((state) => state.isAuthenticated);
 
   // Both sidebar (no params) and page ({type:undefined}) will produce {} → same cache key
   const clean = normaliseParams(params);

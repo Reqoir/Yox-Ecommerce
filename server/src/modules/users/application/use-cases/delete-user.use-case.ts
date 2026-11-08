@@ -1,5 +1,6 @@
 import { IUserRepository } from '../../domain/repositories/user.repository.interface';
 import { NotFoundError } from '@core/application/errors/application.error';
+import { ApiError } from '@shared/utils/api-error.util';
 
 export interface DeleteUserDTO {
   userId: string;
@@ -12,6 +13,10 @@ export class DeleteUserUseCase {
     const user = await this.userRepository.findById(dto.userId);
     if (!user) {
       throw new NotFoundError('User not found');
+    }
+
+    if (user.email && user.email.toLowerCase() === 'admin@yox.com') {
+      throw ApiError.forbidden('The primary Store Owner account cannot be deleted or deactivated.');
     }
 
     user.deactivate();

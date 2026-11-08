@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAdminAuthStore } from '@/store/useAdminAuthStore';
 import { analyticsApi, DashboardStats, SalesChartData } from '@/api/admin/analytics';
 import { SalesChart } from '@/components/admin/analytics/sales-chart';
 import {
@@ -27,7 +27,7 @@ import { navItems, hasNavPermission } from '@/components/layout/AdminSidebar';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user } = useAdminAuthStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [salesData, setSalesData] = useState<SalesChartData[]>([]);
   const [chartDays, setChartDays] = useState<number>(30);

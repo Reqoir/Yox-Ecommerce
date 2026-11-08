@@ -58,6 +58,10 @@ export const requirePermission = (requiredPermission: string | string[]) => {
             return true;
           }
 
+          if (perm === 'view_staff' && (role.hasPermission('view_staff') || role.hasPermission('manage_staff') || role.hasPermission('manage_roles') || role.hasPermission('manage_users'))) {
+            return true;
+          }
+
           if (perm === 'manage_staff' && role.hasPermission('manage_roles')) {
             return true;
           }

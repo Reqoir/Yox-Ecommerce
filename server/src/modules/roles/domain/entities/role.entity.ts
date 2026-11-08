@@ -11,6 +11,7 @@ export interface RoleProps extends EntityProps {
   name: string;
   description?: string | null;
   permissions: string[];
+  level: number; // Hierarchy level (1-100, where higher number = higher authority)
   isSystem: boolean; // System roles cannot be deleted
 }
 
@@ -22,19 +23,36 @@ export class Role extends BaseEntity<RoleProps> {
   get name(): string { return this._props.name; }
   get description(): string | null | undefined { return this._props.description; }
   get permissions(): string[] { return this._props.permissions; }
+  get level(): number {
+    if (this._props.level !== undefined) return this._props.level;
+    const name = (this._props.name || '').toUpperCase();
+    if (name === 'ADMIN' || name === 'SUPER_ADMIN') return 100;
+    if (name === 'CUSTOMER') return 0;
+    if (name === 'MANAGER') return 75;
+    if (name === 'EDITOR' || name === 'SUPPORT') return 50;
+    return 50;
+  }
   get isSystem(): boolean { return this._props.isSystem; }
 
   /**
    * Factory method to create a new custom role
    */
-  public static create(props: Pick<RoleProps, 'name' | 'description' | 'permissions'>): Role {
+  public static create(props: Pick<RoleProps, 'name' | 'description' | 'permissions'> & { level?: number }): Role {
+    const roleName = props.name.trim().toUpperCase();
+    let defaultLevel = 50;
+    if (roleName === 'ADMIN' || roleName === 'SUPER_ADMIN') defaultLevel = 100;
+    else if (roleName === 'CUSTOMER') defaultLevel = 0;
+    else if (roleName === 'MANAGER') defaultLevel = 75;
+    else if (roleName === 'EDITOR' || roleName === 'SUPPORT') defaultLevel = 50;
+
     return new Role({
       id: '',
       createdAt: new Date(),
       updatedAt: new Date(),
-      name: props.name.trim().toUpperCase(),
+      name: roleName,
       description: props.description || null,
       permissions: props.permissions || [],
+      level: props.level !== undefined ? props.level : defaultLevel,
       isSystem: false,
     });
   }

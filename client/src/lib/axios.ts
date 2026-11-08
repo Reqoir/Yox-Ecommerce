@@ -41,9 +41,35 @@ export const apiClient = axios.create({
 // ── Request Interceptor ────────────────────────────────────────────────────────
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Access token will be attached here by the auth layer
-    // const token = useAuthStore.getState().accessToken;
-    // if (token) config.headers.Authorization = `Bearer ${token}`;
+    // If the request originates from or targets the admin dashboard,
+    // attach the Admin Bearer token so admin actions are completely isolated
+    // from any customer cookies present in the same browser.
+    if (typeof window !== 'undefined') {
+      const pathname = window.location.pathname;
+      const isAdminContext =
+        pathname.startsWith('/admin') ||
+        pathname.startsWith('/admin-login') ||
+        (typeof config.url === 'string' && (
+          config.url.startsWith('/admin') ||
+          config.url.startsWith('/staff') ||
+          config.url.startsWith('/roles') ||
+          config.url.startsWith('/reports') ||
+          config.url.startsWith('/audit-logs')
+        ));
+
+      if (isAdminContext) {
+        try {
+          const raw = localStorage.getItem('admin-auth-storage');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            const token = parsed?.state?.token;
+            if (token) {
+              config.headers.Authorization = `Bearer ${token}`;
+            }
+          }
+        } catch {}
+      }
+    }
     return config;
   },
   (error: AxiosError) => {
@@ -123,6 +149,44 @@ apiClient.interceptors.response.use(
       }
     }
 
+    if (is401) {
+      const responseData = error.response?.data as any;
+      const errorMsg = String(responseData?.message || error.message || '').toLowerCase();
+      const isSuspendedError =
+        errorMsg.includes('suspended') ||
+        errorMsg.includes('deactivated') ||
+        errorMsg.includes('revoked');
+
+      // If account was suspended/deactivated, immediately logout and redirect to login with notification flag
+      if (isSuspendedError) {
+        if (typeof window !== 'undefined') {
+          const currentPath = window.location.pathname;
+          const isLoginPage = currentPath.includes('/login') || currentPath.includes('/admin-login');
+
+          sessionStorage.setItem('yox_admin_logout_reason', 'suspended');
+          sessionStorage.setItem(
+            'yox_admin_logout_message',
+            responseData?.message || 'Your staff account has been suspended by the administrator. Access revoked.'
+          );
+
+          if (currentPath.startsWith('/admin')) {
+            const { useAdminAuthStore } = await import('../store/useAdminAuthStore');
+            useAdminAuthStore.getState().logoutUser();
+            if (!isLoginPage) {
+              window.location.href = '/admin-login?suspended=true';
+            }
+          } else {
+            const { useAuthStore } = await import('../store/useAuthStore');
+            useAuthStore.getState().logoutUser();
+            if (!isLoginPage) {
+              window.location.href = '/login?suspended=true';
+            }
+          }
+        }
+        return Promise.reject(error);
+      }
+    }
+
     if (is401 && originalRequest && !isAuthEndpoint) {
       if (!originalRequest._retry) {
         if (isRefreshing) {
@@ -153,26 +217,44 @@ apiClient.interceptors.response.use(
           processQueue(refreshError, null);
           isRefreshing = false;
           
-          // Refresh failed, clear session
-          const { useAuthStore } = await import('../store/useAuthStore');
-          useAuthStore.getState().logoutUser();
+          const refreshMsg = String(refreshError.response?.data?.message || refreshError.message || '').toLowerCase();
+          const isSuspendedInRefresh =
+            refreshMsg.includes('suspended') ||
+            refreshMsg.includes('deactivated') ||
+            refreshMsg.includes('revoked');
 
+          // Refresh failed, clear session
           if (typeof window !== 'undefined') {
             const currentPath = window.location.pathname;
             const isLoginPage = currentPath.includes('/login') || currentPath.includes('/admin-login');
 
-            const isProtectedRoute =
-              currentPath.startsWith('/profile') ||
-              currentPath.startsWith('/checkout') ||
-              currentPath.startsWith('/admin');
+            if (isSuspendedInRefresh) {
+              sessionStorage.setItem('yox_admin_logout_reason', 'suspended');
+              sessionStorage.setItem(
+                'yox_admin_logout_message',
+                refreshError.response?.data?.message || 'Your staff account has been suspended by the administrator.'
+              );
+            }
 
-            if (isProtectedRoute && !isLoginPage) {
-              if (currentPath.startsWith('/admin')) {
-                window.location.href = '/admin-login';
-              } else {
-                window.location.href = '/login';
+            if (currentPath.startsWith('/admin')) {
+              const { useAdminAuthStore } = await import('../store/useAdminAuthStore');
+              useAdminAuthStore.getState().logoutUser();
+              if (!isLoginPage) {
+                window.location.href = isSuspendedInRefresh ? '/admin-login?suspended=true' : '/admin-login';
+              }
+            } else {
+              const { useAuthStore } = await import('../store/useAuthStore');
+              useAuthStore.getState().logoutUser();
+              const isProtectedRoute =
+                currentPath.startsWith('/profile') ||
+                currentPath.startsWith('/checkout');
+              if (isProtectedRoute && !isLoginPage) {
+                window.location.href = isSuspendedInRefresh ? '/login?suspended=true' : '/login';
               }
             }
+          } else {
+            const { useAuthStore } = await import('../store/useAuthStore');
+            useAuthStore.getState().logoutUser();
           }
           return Promise.reject(refreshError);
         }

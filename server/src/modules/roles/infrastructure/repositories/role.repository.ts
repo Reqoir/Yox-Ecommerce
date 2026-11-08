@@ -18,11 +18,25 @@ export class RoleRepository
   }
 
   protected toDomain(doc: IRoleDocument): Role {
+    const roleName = doc.name ? doc.name.toUpperCase() : '';
+    let defaultLevel = 50;
+    if (roleName === 'ADMIN' || roleName === 'SUPER_ADMIN') defaultLevel = 100;
+    else if (roleName === 'CUSTOMER') defaultLevel = 0;
+    else if (roleName === 'MANAGER') defaultLevel = 75;
+    else if (roleName === 'EDITOR' || roleName === 'SUPPORT') defaultLevel = 50;
+
+    let level = doc.level;
+    // Auto-heal legacy unmigrated default levels (e.g. 20) for system roles
+    if (level === undefined || (level === 20 && (roleName === 'ADMIN' || roleName === 'CUSTOMER' || roleName === 'MANAGER'))) {
+      level = defaultLevel;
+    }
+
     return Role.reconstitute({
       id: doc.id,
       name: doc.name,
       description: doc.description,
       permissions: doc.permissions,
+      level: level,
       isSystem: doc.isSystem,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
@@ -34,6 +48,7 @@ export class RoleRepository
       name: entity.name,
       description: entity.description || undefined,
       permissions: entity.permissions,
+      level: entity.level,
       isSystem: entity.isSystem,
     };
   }

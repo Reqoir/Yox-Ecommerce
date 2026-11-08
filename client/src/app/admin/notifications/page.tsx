@@ -22,7 +22,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNotifications } from '@/hooks/admin/useNotifications';
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAdminAuthStore } from '@/store/useAdminAuthStore';
 import { Notification } from '@/api/admin/notifications';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -94,7 +94,7 @@ const TYPE_CONFIG: Record<
 
 export default function AdminNotificationsPage() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user } = useAdminAuthStore();
   const userPermissions = user?.permissions || [];
   const userRole = (user as any)?.role || (user as any)?.roleId;
   const roleUpper = String(userRole || '').toUpperCase();

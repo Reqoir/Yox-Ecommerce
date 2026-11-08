@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAdminAuthStore } from '@/store/useAdminAuthStore';
 import { toast } from 'sonner';
 
 import { navItems, hasNavPermission } from '@/components/layout/AdminSidebar';
 
 const ROUTE_PERMISSIONS: Record<string, string | string[]> = {
   '/admin/user': 'manage_users',
-  '/admin/staff': 'manage_staff',
+  '/admin/staff': ['view_staff', 'manage_staff'],
   '/admin/product': 'manage_products',
   '/admin/category': 'manage_categories',
   '/admin/brand': 'manage_brands',
@@ -28,7 +28,7 @@ const ROUTE_PERMISSIONS: Record<string, string | string[]> = {
 export function AdminGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user } = useAdminAuthStore();
   const [isMounted, setIsMounted] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
 
@@ -47,6 +47,17 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
         } else {
           router.push('/login');
         }
+      } else if (user.status === 'SUSPENDED') {
+        useAdminAuthStore.getState().logoutUser();
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('yox_admin_logout_reason', 'suspended');
+          sessionStorage.setItem(
+            'yox_admin_logout_message',
+            'Your staff account has been suspended by the store administrator. Access revoked.'
+          );
+          window.location.href = '/admin-login?suspended=true';
+        }
+        return;
       } else {
         const userPermissions = user.permissions || [];
         const userRole = user.role || user.roleId || '';

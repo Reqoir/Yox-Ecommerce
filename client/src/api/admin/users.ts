@@ -11,6 +11,7 @@ export interface User {
   permissions?: string[];
   roleName?: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 
 export interface GetUsersParams {
@@ -20,6 +21,8 @@ export interface GetUsersParams {
   roleId?: string;
   status?: string;
   userType?: 'customer' | 'staff';
+  includeDeleted?: boolean;
+  deletedOnly?: boolean;
 }
 
 export interface UsersResponse {
@@ -46,9 +49,20 @@ export const userApi = {
     return response.data.data;
   },
 
-  updateRole: async (userId: string, roleId: string): Promise<User> => {
-    const response = await apiClient.patch<{ data: User }>(`/users/${userId}/role`, { roleId });
+  updateRole: async (
+    userId: string,
+    roleId: string,
+    data?: { email?: string; password?: string }
+  ): Promise<User> => {
+    const response = await apiClient.patch<{ data: User }>(`/users/${userId}/role`, {
+      roleId,
+      ...data,
+    });
     return response.data.data;
+  },
+
+  resetPassword: async (userId: string, password: string): Promise<void> => {
+    await apiClient.patch(`/users/${userId}/password`, { password });
   },
 
   updateStatus: async (userId: string, status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'): Promise<User> => {
@@ -60,8 +74,16 @@ export const userApi = {
     await apiClient.delete(`/users/${userId}`);
   },
 
-  createUser: async (data: { fullName: string; email: string; password?: string; roleId: string }): Promise<User> => {
+  createUser: async (data: { fullName: string; email: string; password?: string; phone?: string; roleId: string }): Promise<User> => {
     const response = await apiClient.post<{ data: User }>('/users', data);
+    return response.data.data;
+  },
+
+  updateStaff: async (
+    userId: string,
+    data: { fullName?: string; email?: string; phone?: string; roleId?: string }
+  ): Promise<User> => {
+    const response = await apiClient.patch<{ data: User }>(`/users/${userId}/staff`, data);
     return response.data.data;
   },
 };

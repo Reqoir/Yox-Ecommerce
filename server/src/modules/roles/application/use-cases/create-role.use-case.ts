@@ -26,6 +26,7 @@ export class CreateRoleUseCase implements IUseCase<CreateRoleRequestDTO, RoleDTO
       name: savedRole.name,
       description: savedRole.description || null,
       permissions: savedRole.permissions,
+      level: savedRole.level,
       isSystem: savedRole.isSystem,
       createdAt: savedRole.createdAt,
       updatedAt: savedRole.updatedAt,

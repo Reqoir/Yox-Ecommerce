@@ -16,9 +16,11 @@ import { AddCartItemDTO, UpdateCartItemDTO, CartResponseDTO, CartItemResponseDTO
 async function mapToCartResponseDTO(
   cart: Cart,
   variantRepo?: IProductVariantRepository,
-  productRepo?: IProductRepository
+  productRepo?: IProductRepository,
+  cartRepo?: ICartRepository
 ): Promise<CartResponseDTO> {
   const enrichedItems: CartItemResponseDTO[] = [];
+  const orphanVariantIds: string[] = [];
 
   for (const item of cart.items) {
     let productId: string | undefined;
@@ -33,7 +35,7 @@ async function mapToCartResponseDTO(
     if (variantRepo) {
       try {
         const variant = await variantRepo.findById(item.variantId);
-        if (variant) {
+        if (variant && variant.isActive) {
           productId = variant.productId;
           color = variant.color || undefined;
           size = variant.size || undefined;
@@ -43,24 +45,39 @@ async function mapToCartResponseDTO(
 
           if (productRepo && variant.productId) {
             const product = await productRepo.findById(variant.productId);
-            if (product) {
+            if (product && product.isActive) {
               name = product.name;
               slug = product.slug;
               if (!image && product.thumbnail) {
                 image = product.thumbnail;
               }
+            } else {
+              // Product deleted or inactive — mark as orphan
+              orphanVariantIds.push(item.variantId);
+              continue;
             }
           }
+        } else {
+          // Variant deleted or inactive — mark as orphan
+          orphanVariantIds.push(item.variantId);
+          continue;
         }
       } catch (error) {
-        // Continue with fallback values if lookup fails
+        orphanVariantIds.push(item.variantId);
+        continue;
       }
+    }
+
+    if (!name && variantRepo) {
+      // Missing required product info — discard orphan placeholder
+      orphanVariantIds.push(item.variantId);
+      continue;
     }
 
     enrichedItems.push({
       variantId: item.variantId,
       productId,
-      name: name || `Product Variant (${item.variantId})`,
+      name: name || `Product Variant`,
       slug,
       image: image || '/images/default-product.png',
       color: color || 'Default',
@@ -71,6 +88,14 @@ async function mapToCartResponseDTO(
       quantity: item.quantity,
       subtotal: item.subtotal,
     });
+  }
+
+  // Auto-clean orphan or stale items from the database cart
+  if (orphanVariantIds.length > 0 && cartRepo) {
+    for (const orphanId of orphanVariantIds) {
+      cart.removeItem(orphanId);
+    }
+    await cartRepo.save(cart);
   }
 
   return {
@@ -100,7 +125,7 @@ export class GetCartUseCase implements IUseCase<string, CartResponseDTO> {
       cart = Cart.create({ userId, items: [] });
       cart = await this.cartRepo.save(cart);
     }
-    return mapToCartResponseDTO(cart, this.variantRepo, this.productRepo);
+    return mapToCartResponseDTO(cart, this.variantRepo, this.productRepo, this.cartRepo);
   }
 }
 
@@ -136,7 +161,7 @@ export class AddItemToCartUseCase implements IUseCase<{ userId: string; data: Ad
     });
 
     const savedCart = await this.cartRepo.save(cart);
-    return mapToCartResponseDTO(savedCart, this.variantRepo, this.productRepo);
+    return mapToCartResponseDTO(savedCart, this.variantRepo, this.productRepo, this.cartRepo);
   }
 }
 
@@ -148,8 +173,10 @@ export class UpdateCartItemUseCase implements IUseCase<{ userId: string; variant
   ) {}
 
   async execute(input: { userId: string; variantId: string; data: UpdateCartItemDTO }): Promise<CartResponseDTO> {
-    const cart = await this.cartRepo.findByUserId(input.userId);
-    if (!cart) throw new Error('Cart not found');
+    let cart = await this.cartRepo.findByUserId(input.userId);
+    if (!cart) {
+      cart = Cart.create({ userId: input.userId, items: [] });
+    }
 
     if (this.variantRepo && input.data.quantity > 0) {
       const variant = await this.variantRepo.findById(input.variantId);
@@ -163,7 +190,7 @@ export class UpdateCartItemUseCase implements IUseCase<{ userId: string; variant
     cart.updateItemQuantity(input.variantId, input.data.quantity);
     const savedCart = await this.cartRepo.save(cart);
 
-    return mapToCartResponseDTO(savedCart, this.variantRepo, this.productRepo);
+    return mapToCartResponseDTO(savedCart, this.variantRepo, this.productRepo, this.cartRepo);
   }
 }
 
@@ -175,13 +202,17 @@ export class RemoveCartItemUseCase implements IUseCase<{ userId: string; variant
   ) {}
 
   async execute(input: { userId: string; variantId: string }): Promise<CartResponseDTO> {
-    const cart = await this.cartRepo.findByUserId(input.userId);
-    if (!cart) throw new Error('Cart not found');
+    let cart = await this.cartRepo.findByUserId(input.userId);
+    if (!cart) {
+      cart = Cart.create({ userId: input.userId, items: [] });
+      const savedCart = await this.cartRepo.save(cart);
+      return mapToCartResponseDTO(savedCart, this.variantRepo, this.productRepo, this.cartRepo);
+    }
 
     cart.removeItem(input.variantId);
     const savedCart = await this.cartRepo.save(cart);
 
-    return mapToCartResponseDTO(savedCart, this.variantRepo, this.productRepo);
+    return mapToCartResponseDTO(savedCart, this.variantRepo, this.productRepo, this.cartRepo);
   }
 }
 
@@ -193,12 +224,16 @@ export class ClearCartUseCase implements IUseCase<string, CartResponseDTO> {
   ) {}
 
   async execute(userId: string): Promise<CartResponseDTO> {
-    const cart = await this.cartRepo.findByUserId(userId);
-    if (!cart) throw new Error('Cart not found');
+    let cart = await this.cartRepo.findByUserId(userId);
+    if (!cart) {
+      cart = Cart.create({ userId, items: [] });
+      const savedCart = await this.cartRepo.save(cart);
+      return mapToCartResponseDTO(savedCart, this.variantRepo, this.productRepo, this.cartRepo);
+    }
 
     cart.clear();
     const savedCart = await this.cartRepo.save(cart);
 
-    return mapToCartResponseDTO(savedCart, this.variantRepo, this.productRepo);
+    return mapToCartResponseDTO(savedCart, this.variantRepo, this.productRepo, this.cartRepo);
   }
 }

@@ -29,7 +29,8 @@ const userSchema = new Schema<IUserDocument>(
   {
     fullName: {
       type: String,
-      required: true,
+      required: false,
+      default: 'Customer',
       trim: true,
     },
     email: {
@@ -37,13 +38,12 @@ const userSchema = new Schema<IUserDocument>(
       required: false,
       unique: true,
       sparse: true,
-      default: null,
       lowercase: true,
       trim: true,
     },
     phone: {
       type: String,
-      default: null,
+      required: false,
       trim: true,
     },
     password: {
@@ -88,7 +88,7 @@ const userSchema = new Schema<IUserDocument>(
 );
 
 // Indexes
-userSchema.index({ phone: 1 });
+userSchema.index({ phone: 1 }, { unique: true, sparse: true });
 userSchema.index({ status: 1 });
 
 export const UserModel = model<IUserDocument>('User', userSchema);

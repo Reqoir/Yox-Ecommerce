@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuthStore } from '@/store/useAuthStore';
+import { useAdminAuthStore } from '@/store/useAdminAuthStore';
 import { ReactNode } from 'react';
 
 interface HasPermissionProps {
@@ -10,7 +11,9 @@ interface HasPermissionProps {
 }
 
 export function HasPermission({ permission, children, fallback = null }: HasPermissionProps) {
-  const { user } = useAuthStore();
+  const adminUser = useAdminAuthStore((state) => state.user);
+  const authUser = useAuthStore((state) => state.user);
+  const user = adminUser || authUser;
 
   if (!user || !user.permissions) {
     return <>{fallback}</>;

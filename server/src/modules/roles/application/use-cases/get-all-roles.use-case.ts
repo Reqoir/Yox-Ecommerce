@@ -17,6 +17,7 @@ export class GetAllRolesUseCase implements IUseCase<void, RoleDTO[]> {
       name: role.name,
       description: role.description || null,
       permissions: role.permissions,
+      level: role.level,
       isSystem: role.isSystem,
       createdAt: role.createdAt,
       updatedAt: role.updatedAt,

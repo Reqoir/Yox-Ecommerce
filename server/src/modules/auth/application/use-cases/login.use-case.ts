@@ -70,6 +70,12 @@ export class LoginUseCase {
     const permissions = role ? role.permissions : [];
     const roleName = role ? role.name.toUpperCase() : 'CUSTOMER';
 
+    // Storefront customer accounts must use Mobile Number & OTP.
+    // Email + password authentication is strictly reserved for Admin & Staff.
+    if (roleName === 'CUSTOMER') {
+      throw ApiError.forbidden('Customer accounts must sign in using Mobile Number & OTP.');
+    }
+
     // 5. Return user info and tokens
     return {
       user: {

@@ -29,6 +29,7 @@ const roleController = new RoleController(
   updateRoleUseCase,
   getAllRolesUseCase,
   deleteRoleUseCase,
+  roleRepository
 );
 
 router.use(requireAuth);

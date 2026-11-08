@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Key,
   Eye,
@@ -8,16 +8,22 @@ import {
   CheckCircle2,
   XCircle,
   ShieldCheck,
-  Sparkles,
+  KeyRound,
   Lock,
   RefreshCw,
   Copy,
   Check,
   Loader2,
   AlertCircle,
+  Phone,
+  RotateCcw,
+  ArrowLeft,
+  ArrowRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { authApi } from '@/api/auth';
+import { useAdminAuthStore } from '@/store/useAdminAuthStore';
+import { useMsg91Otp } from '@/hooks/useMsg91Otp';
 import { Button } from '@/components/ui/button';
 
 interface Props {
@@ -27,17 +33,47 @@ interface Props {
 }
 
 export function AdminChangePasswordCard({ onSuccess, className = '', isModal = false }: Props) {
+  const { user } = useAdminAuthStore();
+  const { sendOtp, retryOtp, verifyOtp, isLoading: isOtpLoading } = useMsg91Otp();
+
+  // Mode: standard password change or forgot password with mobile OTP
+  const [isForgotMode, setIsForgotMode] = useState(false);
+
+  // Standard password change state
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedGenerated, setCopiedGenerated] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Forgot password OTP flow state: 'phone' -> 'otp' -> 'new-password'
+  const [forgotStep, setForgotStep] = useState<'phone' | 'otp' | 'new-password'>('phone');
+  const [forgotPhone, setForgotPhone] = useState(user?.phone || '8089399521');
+  const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '']);
+  const [resendCountdown, setResendCountdown] = useState(0);
+  const [verifiedResetToken, setVerifiedResetToken] = useState('');
+  const [verifiedUserId, setVerifiedUserId] = useState('');
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Update phone if user changes
+  useEffect(() => {
+    if (user?.phone) {
+      setForgotPhone(user.phone);
+    }
+  }, [user]);
+
+  // Resend OTP countdown
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendCountdown > 0) {
+      timer = setTimeout(() => setResendCountdown((c) => c - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendCountdown]);
 
   // Real-time password strength checks
   const criteria = useMemo(() => {
@@ -96,7 +132,6 @@ export function AdminChangePasswordCard({ onSuccess, className = '', isModal = f
     const all = uppercase + lowercase + numbers + symbols;
 
     let generated = '';
-    // Ensure at least one of each
     generated += uppercase[Math.floor(Math.random() * uppercase.length)];
     generated += lowercase[Math.floor(Math.random() * lowercase.length)];
     generated += numbers[Math.floor(Math.random() * numbers.length)];
@@ -106,7 +141,6 @@ export function AdminChangePasswordCard({ onSuccess, className = '', isModal = f
       generated += all[Math.floor(Math.random() * all.length)];
     }
 
-    // Shuffle characters
     const shuffled = generated
       .split('')
       .sort(() => 0.5 - Math.random())
@@ -118,7 +152,6 @@ export function AdminChangePasswordCard({ onSuccess, className = '', isModal = f
     setShowConfirmPassword(true);
     setErrorMsg(null);
 
-    // Copy to clipboard
     if (navigator.clipboard) {
       navigator.clipboard.writeText(shuffled).then(() => {
         setCopiedGenerated(true);
@@ -129,6 +162,7 @@ export function AdminChangePasswordCard({ onSuccess, className = '', isModal = f
     toast.success('Generated strong password and copied to clipboard!');
   };
 
+  // Standard submit (with current password)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -186,6 +220,409 @@ export function AdminChangePasswordCard({ onSuccess, className = '', isModal = f
     }
   };
 
+  // -------------------------------------------------------------------
+  // FORGOT PASSWORD VIA MOBILE OTP FLOW
+  // -------------------------------------------------------------------
+  const handleSendForgotOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanPhone = (forgotPhone || user?.phone || '8089399521').replace(/\D/g, '');
+    if (cleanPhone.length < 10) {
+      toast.error('Please enter a valid 10-digit registered phone number');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await sendOtp(cleanPhone);
+      toast.success(`Verification code sent to +91 ${cleanPhone}`);
+      setForgotStep('otp');
+      setResendCountdown(30);
+      setOtpDigits(['', '', '', '']);
+      setTimeout(() => {
+        otpInputRefs.current[0]?.focus();
+      }, 150);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to send OTP code');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifyForgotOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const fullOtp = otpDigits.join('');
+    if (fullOtp.length !== 4) {
+      toast.error('Please enter the 4-digit verification code');
+      return;
+    }
+
+    const cleanPhone = (forgotPhone || user?.phone || '8089399521').replace(/\D/g, '');
+    setIsSubmitting(true);
+    try {
+      const verificationToken = await verifyOtp(fullOtp);
+
+      const verifyRes = await authApi.verifyResetPasswordPhone({
+        phone: cleanPhone,
+        verificationToken,
+      });
+
+      const targetId = user?.id || verifyRes.user?.id || verifyRes.accounts?.[0]?.id;
+      if (!targetId || !verifyRes.resetToken) {
+        throw new Error('Could not identify administrator account');
+      }
+
+      setVerifiedResetToken(verifyRes.resetToken);
+      setVerifiedUserId(targetId);
+      setForgotStep('new-password');
+      toast.success('Mobile number verified! Please choose your new password.');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Invalid or expired OTP code');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      toast.error('New password must be at least 8 characters long');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await authApi.confirmResetPasswordPhone({
+        resetToken: verifiedResetToken,
+        userId: verifiedUserId,
+        newPassword,
+      });
+
+      toast.success('Password reset successfully via Mobile OTP!');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setIsForgotMode(false);
+      setForgotStep('phone');
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Failed to reset password');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleOtpDigitChange = (index: number, val: string) => {
+    const char = val.replace(/\D/g, '').slice(-1);
+    const next = [...otpDigits];
+    next[index] = char;
+    setOtpDigits(next);
+    if (char && index < 3) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  // ===================================================================
+  // RENDER: Forgot Password Mode (via Mobile OTP)
+  // ===================================================================
+  if (isForgotMode) {
+    return (
+      <div className={`space-y-4 ${className}`}>
+        <div className="flex items-center justify-between border-b pb-3">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+              <Phone size={14} />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-foreground block">
+                Reset Password with Mobile OTP
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                Reset directly using your registered admin phone number
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setIsForgotMode(false);
+              setForgotStep('phone');
+              setErrorMsg(null);
+            }}
+            className="text-xs text-primary hover:underline font-medium inline-flex items-center gap-1 cursor-pointer"
+          >
+            <ArrowLeft size={12} />
+            <span>Use current password</span>
+          </button>
+        </div>
+
+        {/* Step 1: Send OTP to Phone */}
+        {forgotStep === 'phone' && (
+          <form onSubmit={handleSendForgotOtp} className="space-y-3.5">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">
+                Registered Administrator Phone
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
+                  +91
+                </span>
+                <input
+                  type="tel"
+                  maxLength={10}
+                  value={forgotPhone}
+                  onChange={(e) => setForgotPhone(e.target.value.replace(/\D/g, ''))}
+                  placeholder="8089399521"
+                  required
+                  disabled={isSubmitting || isOtpLoading}
+                  className="w-full pl-12 pr-4 py-2 text-sm bg-card border rounded-xl font-medium tracking-wide focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                A 4-digit SMS OTP will be sent to this phone number to authorize the password reset.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsForgotMode(false)}
+                className="text-xs cursor-pointer"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isSubmitting || isOtpLoading || forgotPhone.length < 10}
+                className="gap-1.5 text-xs font-bold bg-[#1A2E4C] hover:bg-[#132238] text-white cursor-pointer"
+              >
+                {isSubmitting || isOtpLoading ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Sending Code...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Send Verification OTP</span>
+                    <ArrowRight size={13} />
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {/* Step 2: 4-digit OTP */}
+        {forgotStep === 'otp' && (
+          <form onSubmit={handleVerifyForgotOtp} className="space-y-3.5">
+            <div className="text-center text-xs text-muted-foreground">
+              Enter 4-digit verification code sent to <strong className="text-foreground">+91 {forgotPhone}</strong>
+            </div>
+
+            <div className="flex items-center justify-center gap-2.5 my-3">
+              {otpDigits.map((digit, idx) => (
+                <input
+                  key={idx}
+                  ref={(el) => {
+                    otpInputRefs.current[idx] = el;
+                  }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
+                  onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                  className="w-11 h-11 text-center text-xl font-bold rounded-xl border border-border bg-card focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-xs"
+                />
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between text-xs px-1">
+              <button
+                type="button"
+                onClick={() => setForgotStep('phone')}
+                className="text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                Change number
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (resendCountdown > 0) return;
+                  await retryOtp();
+                  setResendCountdown(30);
+                  toast.success('New code sent via SMS');
+                }}
+                disabled={resendCountdown > 0}
+                className="text-primary font-medium hover:underline disabled:opacity-50 cursor-pointer flex items-center gap-1"
+              >
+                <RotateCcw size={12} />
+                {resendCountdown > 0 ? `Resend in ${resendCountdown}s` : 'Resend Code'}
+              </button>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setForgotStep('phone')}
+                className="text-xs cursor-pointer"
+              >
+                Back
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isSubmitting || isOtpLoading || otpDigits.join('').length !== 4}
+                className="gap-1.5 text-xs font-bold bg-[#1A2E4C] hover:bg-[#132238] text-white cursor-pointer"
+              >
+                {isSubmitting || isOtpLoading ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Verifying...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Verify & Continue</span>
+                    <CheckCircle2 size={13} />
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {/* Step 3: Enter New Password directly without old password */}
+        {forgotStep === 'new-password' && (
+          <form onSubmit={handleConfirmResetPassword} className="space-y-4">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-foreground">New Security Password</label>
+                <button
+                  type="button"
+                  onClick={handleGeneratePassword}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer"
+                >
+                  <KeyRound size={12} className="text-primary" />
+                  <span>Generate strong password</span>
+                  {copiedGenerated && <Check size={12} className="text-emerald-500" />}
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Min 8 characters with letters, numbers, and symbols"
+                  className="w-full pl-3.5 pr-10 py-2.5 text-sm bg-card border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword((p) => !p)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                >
+                  {showNewPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+
+              {/* Requirements Checklist */}
+              <div className="grid grid-cols-2 gap-1.5 pt-1.5 text-[11px]">
+                <div className={`flex items-center gap-1.5 ${criteria.minLength ? 'text-emerald-600 font-medium' : 'text-muted-foreground'}`}>
+                  {criteria.minLength ? <CheckCircle2 size={12} className="text-emerald-500" /> : <div className="w-2.5 h-2.5 rounded-full border border-muted-foreground/40" />}
+                  <span>At least 8 characters</span>
+                </div>
+                <div className={`flex items-center gap-1.5 ${criteria.hasUpper && criteria.hasLower ? 'text-emerald-600 font-medium' : 'text-muted-foreground'}`}>
+                  {criteria.hasUpper && criteria.hasLower ? <CheckCircle2 size={12} className="text-emerald-500" /> : <div className="w-2.5 h-2.5 rounded-full border border-muted-foreground/40" />}
+                  <span>Upper & lowercase</span>
+                </div>
+                <div className={`flex items-center gap-1.5 ${criteria.hasNumber ? 'text-emerald-600 font-medium' : 'text-muted-foreground'}`}>
+                  {criteria.hasNumber ? <CheckCircle2 size={12} className="text-emerald-500" /> : <div className="w-2.5 h-2.5 rounded-full border border-muted-foreground/40" />}
+                  <span>At least 1 number</span>
+                </div>
+                <div className={`flex items-center gap-1.5 ${criteria.hasSpecial ? 'text-emerald-600 font-medium' : 'text-muted-foreground'}`}>
+                  {criteria.hasSpecial ? <CheckCircle2 size={12} className="text-emerald-500" /> : <div className="w-2.5 h-2.5 rounded-full border border-muted-foreground/40" />}
+                  <span>Special character (!@#)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Confirm New Password */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-foreground">Confirm New Password</label>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-type your new password"
+                  className="w-full pl-3.5 pr-10 py-2.5 text-sm bg-card border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((p) => !p)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                >
+                  {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsForgotMode(false)}
+                className="text-xs cursor-pointer"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isSubmitting || newPassword.length < 8 || newPassword !== confirmPassword}
+                className="gap-1.5 text-xs font-bold bg-[#1A2E4C] hover:bg-[#132238] text-white cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Saving Password...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Confirm & Save Password</span>
+                    <CheckCircle2 size={13} />
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        )}
+      </div>
+    );
+  }
+
+  // ===================================================================
+  // RENDER: Standard Password Change Mode
+  // ===================================================================
   return (
     <form onSubmit={handleSubmit} className={`space-y-5 ${className}`}>
       {errorMsg && (
@@ -195,11 +632,21 @@ export function AdminChangePasswordCard({ onSuccess, className = '', isModal = f
         </div>
       )}
 
-      {/* Current Password */}
+      {/* Current Password with Forgot Link */}
       <div className="space-y-1.5">
         <label className="text-xs font-bold text-foreground flex items-center justify-between">
           <span>Current Password</span>
-          <span className="text-[10px] text-muted-foreground font-normal">Required for identity verification</span>
+          <button
+            type="button"
+            onClick={() => {
+              setIsForgotMode(true);
+              setForgotStep('phone');
+              setErrorMsg(null);
+            }}
+            className="text-[11px] text-primary hover:underline font-semibold cursor-pointer transition-colors"
+          >
+            Forgot current password? Reset with OTP
+          </button>
         </label>
         <div className="relative">
           <input
@@ -217,7 +664,7 @@ export function AdminChangePasswordCard({ onSuccess, className = '', isModal = f
           <button
             type="button"
             onClick={() => setShowCurrentPassword((prev) => !prev)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 cursor-pointer"
             title={showCurrentPassword ? 'Hide password' : 'Show password'}
             tabIndex={-1}
           >
@@ -235,7 +682,7 @@ export function AdminChangePasswordCard({ onSuccess, className = '', isModal = f
             onClick={handleGeneratePassword}
             className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer"
           >
-            <Sparkles size={12} className="text-amber-500" />
+            <KeyRound size={12} className="text-primary" />
             <span>Generate strong password</span>
             {copiedGenerated && <Check size={12} className="text-emerald-500" />}
           </button>
@@ -256,7 +703,7 @@ export function AdminChangePasswordCard({ onSuccess, className = '', isModal = f
           <button
             type="button"
             onClick={() => setShowNewPassword((prev) => !prev)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 cursor-pointer"
             title={showNewPassword ? 'Hide password' : 'Show password'}
             tabIndex={-1}
           >
@@ -343,7 +790,7 @@ export function AdminChangePasswordCard({ onSuccess, className = '', isModal = f
           <button
             type="button"
             onClick={() => setShowConfirmPassword((prev) => !prev)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 cursor-pointer"
             title={showConfirmPassword ? 'Hide password' : 'Show password'}
             tabIndex={-1}
           >
@@ -366,7 +813,7 @@ export function AdminChangePasswordCard({ onSuccess, className = '', isModal = f
               setErrorMsg(null);
             }}
             disabled={isSubmitting}
-            className="text-xs text-muted-foreground hover:text-foreground"
+            className="text-xs text-muted-foreground hover:text-foreground cursor-pointer"
           >
             Clear
           </Button>
@@ -375,7 +822,7 @@ export function AdminChangePasswordCard({ onSuccess, className = '', isModal = f
         <Button
           type="submit"
           disabled={!isFormValid || isSubmitting}
-          className="gap-2 px-5 py-2 rounded-xl text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="gap-2 px-5 py-2 rounded-xl text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-[#1A2E4C] hover:bg-[#132238] text-white"
         >
           {isSubmitting ? (
             <>

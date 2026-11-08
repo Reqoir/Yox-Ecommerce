@@ -25,7 +25,7 @@ import {
   PanelLeftOpen,
 } from 'lucide-react';
 import { authApi } from '@/api/auth';
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAdminAuthStore } from '@/store/useAdminAuthStore';
 import { useNotifications } from '@/hooks/admin/useNotifications';
 import { useAdminSidebarStore } from '@/store/useAdminSidebarStore';
 import { toast } from 'sonner';
@@ -45,7 +45,7 @@ export const navItems: NavItem[] = [
   { name: 'Orders', href: '/admin/order', icon: ShoppingBag, permission: ['manage_orders', 'manage_shipments', 'manage_returns'] },
   { name: 'Reviews', href: '/admin/reviews', icon: MessageSquare, permission: 'manage_reviews' },
   { name: 'Customers', href: '/admin/user', icon: Users, permission: 'manage_users' },
-  { name: 'Staff Members', href: '/admin/staff', icon: UserCog, permission: 'manage_staff' },
+  { name: 'Staff Members', href: '/admin/staff', icon: UserCog, permission: ['view_staff', 'manage_staff'] },
   { name: 'Products', href: '/admin/product', icon: Package, permission: 'manage_products' },
   { name: 'Categories', href: '/admin/category', icon: FolderTree, permission: 'manage_categories' },
   { name: 'Brands', href: '/admin/brand', icon: Tag, permission: 'manage_brands' },
@@ -54,7 +54,8 @@ export const navItems: NavItem[] = [
   { name: 'Content Management', href: '/admin/content', icon: LayoutTemplate, permission: 'manage_content' },
   { name: 'Roles', href: '/admin/role', icon: Shield, permission: 'manage_roles' },
   { name: 'Notifications', href: '/admin/notifications', icon: Bell },
-  { name: 'Settings', href: '/admin/settings', icon: Settings, permission: 'manage_settings' },
+  { name: 'Store Settings', href: '/admin/settings', icon: Settings, permission: 'manage_settings' },
+  { name: 'My Account', href: '/admin/profile', icon: UserCog },
 ];
 
 export function hasNavPermission(
@@ -87,7 +88,7 @@ export function AdminNavContent({
 }: AdminNavContentProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { logoutUser, user } = useAuthStore();
+  const { logoutUser, user } = useAdminAuthStore();
   const userPermissions = user?.permissions || [];
   const { unreadCount } = useNotifications();
 

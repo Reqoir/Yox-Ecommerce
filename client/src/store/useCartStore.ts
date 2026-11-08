@@ -40,10 +40,10 @@ export const useCartStore = create<CartState>()(
         const variantId = newItem.variantId || newItem.id || `${newItem.productId}-${newItem.color}-${newItem.size}`;
         const id = variantId;
         const maxStock = newItem.stock !== undefined ? newItem.stock : 99;
+        const addedQty = newItem.quantity || 1;
 
         set((state) => {
           const existingIndex = state.items.findIndex((i) => i.id === id || i.variantId === variantId);
-          const addedQty = newItem.quantity || 1;
 
           if (existingIndex > -1) {
             const updatedItems = [...state.items];
@@ -72,36 +72,35 @@ export const useCartStore = create<CartState>()(
           };
         });
 
-        // Sync with server asynchronously if logged in
-        setTimeout(async () => {
-          try {
-            const { isAuthenticated } = useAuthStore.getState();
-            if (isAuthenticated && variantId && !variantId.includes('-')) {
-              await cartApi.addItem(variantId, newItem.quantity || 1);
-            }
-          } catch (err) {
+        // Sync with server immediately if logged in
+        const { isAuthenticated } = useAuthStore.getState();
+        if (isAuthenticated && variantId && !variantId.includes('-')) {
+          cartApi.addItem(variantId, addedQty).catch((err) => {
             console.error('Error adding item to server cart:', err);
-          }
-        }, 0);
+          });
+        }
       },
 
       removeItem: (id) => {
         const item = get().items.find((i) => i.id === id || i.variantId === id);
-        set((state) => ({
-          items: state.items.filter((i) => i.id !== id && i.variantId !== id),
-        }));
+        const remainingItems = get().items.filter((i) => i.id !== id && i.variantId !== id);
+        set({ items: remainingItems });
 
-        setTimeout(async () => {
-          try {
-            const { isAuthenticated } = useAuthStore.getState();
+        const { isAuthenticated } = useAuthStore.getState();
+        if (isAuthenticated) {
+          if (remainingItems.length === 0) {
+            cartApi.clearCart().catch((err) => {
+              console.error('Error clearing server cart:', err);
+            });
+          } else {
             const variantId = item?.variantId || id;
-            if (isAuthenticated && variantId && !variantId.includes('-')) {
-              await cartApi.removeItem(variantId);
+            if (variantId && !variantId.includes('-')) {
+              cartApi.removeItem(variantId).catch((err) => {
+                console.error('Error removing cart item from server:', err);
+              });
             }
-          } catch (err) {
-            console.error('Error removing cart item from server:', err);
           }
-        }, 0);
+        }
       },
 
       updateQuantity: (id, delta) => {
@@ -129,17 +128,13 @@ export const useCartStore = create<CartState>()(
             .filter(Boolean) as CartItem[],
         }));
 
-        setTimeout(async () => {
-          try {
-            const { isAuthenticated } = useAuthStore.getState();
-            const variantId = item.variantId || id;
-            if (isAuthenticated && variantId && !variantId.includes('-')) {
-              await cartApi.updateItem(variantId, newQty);
-            }
-          } catch (err) {
+        const { isAuthenticated } = useAuthStore.getState();
+        const variantId = item.variantId || id;
+        if (isAuthenticated && variantId && !variantId.includes('-')) {
+          cartApi.updateItem(variantId, newQty).catch((err) => {
             console.error('Error updating cart quantity on server:', err);
-          }
-        }, 0);
+          });
+        }
       },
 
       setQuantity: (id, quantity) => {
@@ -156,31 +151,23 @@ export const useCartStore = create<CartState>()(
           items: state.items.map((i) => (i.id === id || i.variantId === id ? { ...i, quantity: actualQty } : i)),
         }));
 
-        setTimeout(async () => {
-          try {
-            const { isAuthenticated } = useAuthStore.getState();
-            const variantId = item.variantId || id;
-            if (isAuthenticated && variantId && !variantId.includes('-')) {
-              await cartApi.updateItem(variantId, actualQty);
-            }
-          } catch (err) {
+        const { isAuthenticated } = useAuthStore.getState();
+        const variantId = item.variantId || id;
+        if (isAuthenticated && variantId && !variantId.includes('-')) {
+          cartApi.updateItem(variantId, actualQty).catch((err) => {
             console.error('Error setting cart quantity on server:', err);
-          }
-        }, 0);
+          });
+        }
       },
 
       clearCart: () => {
         set({ items: [] });
-        setTimeout(async () => {
-          try {
-            const { isAuthenticated } = useAuthStore.getState();
-            if (isAuthenticated) {
-              await cartApi.clearCart();
-            }
-          } catch (err) {
+        const { isAuthenticated } = useAuthStore.getState();
+        if (isAuthenticated) {
+          cartApi.clearCart().catch((err) => {
             console.error('Error clearing server cart:', err);
-          }
-        }, 0);
+          });
+        }
       },
 
       syncWithServer: async () => {
@@ -209,11 +196,22 @@ export const useCartStore = create<CartState>()(
           // Refetch authoritative server cart
           const updatedServerCart = await cartApi.getCart();
           if (updatedServerCart && updatedServerCart.items) {
-            const mappedItems: CartItem[] = updatedServerCart.items.map((si) => ({
+            // Discard any items that do not have valid product names or are orphan placeholders
+            const validItems = updatedServerCart.items.filter(
+              (si) => si.variantId && si.name && !si.name.startsWith('Product Variant') && si.name !== 'Product Variant'
+            );
+
+            // If the user intentionally emptied their cart and there are no valid items, keep it empty
+            if (currentLocalItems.length === 0 && validItems.length === 0) {
+              set({ items: [] });
+              return;
+            }
+
+            const mappedItems: CartItem[] = validItems.map((si) => ({
               id: si.variantId,
               variantId: si.variantId,
               productId: si.productId || si.variantId,
-              name: si.name || `Product Variant`,
+              name: si.name || 'Product',
               image: si.image || '/images/product-1.jpeg',
               color: si.color || 'Default',
               size: si.size || 'Standard',
@@ -223,6 +221,8 @@ export const useCartStore = create<CartState>()(
               stock: si.stock !== undefined ? si.stock : 99,
             }));
             set({ items: mappedItems });
+          } else {
+            set({ items: [] });
           }
         } catch (err) {
           console.error('Failed to sync cart with server:', err);

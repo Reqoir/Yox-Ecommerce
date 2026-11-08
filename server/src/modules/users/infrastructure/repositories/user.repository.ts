@@ -56,10 +56,18 @@ export class UserRepository
       filter.roleId = { $nin: excludeRoleIds };
     }
 
+    if (query.deletedOnly === true || query.deletedOnly === 'true' || query.status === 'DELETED') {
+      filter.deletedAt = { $ne: null };
+    } else if (query.includeDeleted === true || query.includeDeleted === 'true') {
+      // Don't filter deletedAt
+    } else {
+      filter.deletedAt = null;
+    }
+
     if (roleId && roleId !== 'all') {
       filter.roleId = roleId;
     }
-    if (status && status !== 'all') {
+    if (status && status !== 'all' && status !== 'DELETED') {
       filter.status = status;
     }
 
@@ -108,19 +116,32 @@ export class UserRepository
    * Maps a Domain Entity to a format Mongoose can save
    */
   protected toPersistence(entity: User): Partial<IUserDocument> {
-    return {
+    const raw: any = {
       fullName: entity.fullName,
-      email: entity.email,
-      phone: entity.phone,
       password: entity.password,
-      profileImage: entity.profileImage,
+      profileImage: entity.profileImage || null,
       roleId: entity.roleId,
-      isEmailVerified: entity.isEmailVerified,
-      isPhoneVerified: entity.isPhoneVerified,
-      status: entity.status as any,
-      lastLogin: entity.lastLogin,
-      deletedAt: entity.deletedAt,
+      isEmailVerified: entity.isEmailVerified ?? false,
+      isPhoneVerified: entity.isPhoneVerified ?? false,
+      status: (entity.status as any) || UserStatus.ACTIVE,
+      lastLogin: entity.lastLogin || null,
+      deletedAt: entity.deletedAt || null,
     };
+
+    const cleanEmail =
+      entity.email && !entity.email.endsWith('@user.yox.internal') && entity.email.trim()
+        ? entity.email.trim().toLowerCase()
+        : null;
+    if (cleanEmail) {
+      raw.email = cleanEmail;
+    }
+
+    const cleanPhone = entity.phone && entity.phone.trim() ? entity.phone.trim() : null;
+    if (cleanPhone) {
+      raw.phone = cleanPhone;
+    }
+
+    return raw;
   }
 
   public async create(entity: User): Promise<User> {
@@ -130,11 +151,31 @@ export class UserRepository
   }
 
   public async update(id: string, data: Partial<User>): Promise<User | null> {
-    const rawData = data instanceof User ? this.toPersistence(data) : data;
+    const rawData: any = data instanceof User ? this.toPersistence(data) : data;
+    const updateQuery: any = { $set: {} };
+    const unsetQuery: any = {};
+
+    for (const [key, val] of Object.entries(rawData)) {
+      if (key === 'email' && (!val || (typeof val === 'string' && val.endsWith('@user.yox.internal')))) {
+        unsetQuery.email = 1;
+      } else if (key === 'phone' && !val) {
+        unsetQuery.phone = 1;
+      } else if (val !== undefined) {
+        updateQuery.$set[key] = val;
+      }
+    }
+
+    if (Object.keys(unsetQuery).length > 0) {
+      updateQuery.$unset = unsetQuery;
+    }
+    if (Object.keys(updateQuery.$set).length === 0) {
+      delete updateQuery.$set;
+    }
+
     const doc = await this.model
       .findByIdAndUpdate(
         id,
-        rawData as any,
+        updateQuery,
         { new: true, runValidators: true }
       )
       .exec();
@@ -150,7 +191,8 @@ export class UserRepository
   }
 
   public async existsByEmail(email: string): Promise<boolean> {
-    const count = await this.model.countDocuments({ email } as FilterQuery<IUserDocument>).exec();
+    const normalizedEmail = email.toLowerCase().trim();
+    const count = await this.model.countDocuments({ email: normalizedEmail } as FilterQuery<IUserDocument>).exec();
     return count > 0;
   }
 

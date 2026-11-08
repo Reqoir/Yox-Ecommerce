@@ -1,34 +1,36 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { authApi } from '@/api/auth';
 import { useMsg91Otp } from '@/hooks/useMsg91Otp';
 import { toast } from 'sonner';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
-  Shield,
-  Key,
+  ShieldCheck,
+  Smartphone,
   Lock,
   Eye,
   EyeOff,
+  Bell,
   CheckCircle2,
-  Smartphone,
-  Check,
-  RotateCcw,
+  ChevronDown,
+  LogOut,
+  ExternalLink,
   Loader2,
-  AlertCircle,
+  KeyRound,
+  RotateCcw,
   ArrowRight,
-  ShieldAlert,
+  ArrowLeft,
+  Check,
 } from 'lucide-react';
 
 export default function ProfileSettingsPage() {
-  const { user } = useAuthStore();
+  const router = useRouter();
+  const { user, logoutUser } = useAuthStore();
 
-  // ─── Security Tab ──────────────────────────────────────────────────────────
-  const [securityMethod, setSecurityMethod] = useState<'current-password' | 'phone-otp'>('current-password');
-
-  // ─── Method 1: Change Password using Current Password ──────────────────────
+  // Optional password management
+  const [isPasswordSectionOpen, setIsPasswordSectionOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -36,23 +38,36 @@ export default function ProfileSettingsPage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  // Password rules validation helper
-  const hasMinLength = newPassword.length >= 8;
-  const hasUpper = /[A-Z]/.test(newPassword);
-  const hasLower = /[a-z]/.test(newPassword);
-  const hasNumber = /\d/.test(newPassword);
-  const hasSpecial = /[^A-Za-z0-9]/.test(newPassword);
-  const isPasswordValid = hasMinLength && hasUpper && hasLower && hasNumber && hasSpecial;
-  const isMatching = newPassword.length > 0 && newPassword === confirmPassword;
+  // Mobile OTP Reset flow
+  const { sendOtp, retryOtp, verifyOtp, isLoading: isOtpLoading } = useMsg91Otp();
+  const [isOtpResetMode, setIsOtpResetMode] = useState(false);
+  const [otpStep, setOtpStep] = useState<'otp' | 'new-password'>('otp');
+  const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '']);
+  const [otpCountdown, setOtpCountdown] = useState(0);
+  const [verifiedResetToken, setVerifiedResetToken] = useState('');
+  const [verifiedUserId, setVerifiedUserId] = useState('');
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentPassword) {
-      toast.error('Please enter your current password');
-      return;
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (otpCountdown > 0) {
+      timer = setTimeout(() => setOtpCountdown((c) => c - 1), 1000);
     }
-    if (!isPasswordValid) {
-      toast.error('New password does not meet the security requirements');
+    return () => clearTimeout(timer);
+  }, [otpCountdown]);
+
+  // Notification preferences (Local UI state)
+  const [smsAlerts, setSmsAlerts] = useState(true);
+  const [whatsappAlerts, setWhatsappAlerts] = useState(true);
+  const [promotionalAlerts, setPromotionalAlerts] = useState(false);
+
+  const rawPhone = (user?.phone || '').replace(/\D/g, '').slice(-10);
+  const formattedPhone = rawPhone ? `+91 ${rawPhone.slice(0, 5)} ${rawPhone.slice(5)}` : 'Not linked';
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters long');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -63,423 +78,201 @@ export default function ProfileSettingsPage() {
     setIsChangingPassword(true);
     try {
       const res = await authApi.changePassword({
-        currentPassword,
+        currentPassword: currentPassword || 'default_initial_otp',
         newPassword,
         confirmPassword,
       });
 
-      toast.success(res.message || 'Security password updated successfully!');
+      toast.success(res.message || 'Security password set successfully!');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      setIsPasswordSectionOpen(false);
     } catch (error: any) {
-      if (error.response?.data?.errors && error.response.data.errors.length > 0) {
-        toast.error(error.response.data.errors[0].message);
-      } else {
-        toast.error(error.response?.data?.message || 'Failed to update password. Please check your current password.');
-      }
+      const msg = error?.response?.data?.message || 'Failed to update password. Please check your credentials.';
+      toast.error(msg);
     } finally {
       setIsChangingPassword(false);
     }
   };
 
-  // ─── Method 2: Reset Password via Mobile OTP ───────────────────────────────
-  const [otpStep, setOtpStep] = useState<'request' | 'verify'>('request');
-  const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '']);
-  const [otpNewPassword, setOtpNewPassword] = useState('');
-  const [otpConfirmPassword, setOtpConfirmPassword] = useState('');
-  const [showOtpNewPassword, setShowOtpNewPassword] = useState(false);
-  const [resendCountdown, setResendCountdown] = useState(0);
-  const [isOtpLoading, setIsOtpLoading] = useState(false);
-  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  const { sendOtp, retryOtp, verifyOtp, formatPhoneForMsg91 } = useMsg91Otp();
-
-  // Countdown timer for OTP
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (resendCountdown > 0) {
-      interval = setInterval(() => {
-        setResendCountdown((prev) => Math.max(prev - 1, 0));
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [resendCountdown]);
-
-  // Clean phone number for user
-  const userCleanPhone = user?.phone ? user.phone.replace(/\D/g, '').slice(-10) : '';
-
-  const handleSendOtp = async () => {
-    if (!userCleanPhone || userCleanPhone.length !== 10) {
-      toast.error('No valid mobile number linked to this account. Please update your mobile number under Personal Info first.');
+  // OTP Reset Handlers
+  const handleStartOtpReset = async () => {
+    if (!rawPhone) {
+      toast.error('No mobile phone number is linked to your account');
       return;
     }
-
-    setIsOtpLoading(true);
+    setIsChangingPassword(true);
     try {
-      await sendOtp(userCleanPhone);
-      toast.success(`Verification code sent to +91 ${userCleanPhone}`);
-      setOtpStep('verify');
-      setResendCountdown(30);
+      await sendOtp(rawPhone);
+      toast.success(`Verification code sent to +91 ${rawPhone}`);
+      setIsOtpResetMode(true);
+      setOtpStep('otp');
+      setOtpCountdown(30);
       setOtpDigits(['', '', '', '']);
       setTimeout(() => {
         otpInputRefs.current[0]?.focus();
       }, 150);
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to send OTP. Please try again.');
+      toast.error(err?.message || 'Failed to send OTP code');
     } finally {
-      setIsOtpLoading(false);
+      setIsChangingPassword(false);
     }
   };
 
-  const handleResendOtp = async () => {
-    if (resendCountdown > 0 || isOtpLoading) return;
-    setIsOtpLoading(true);
-    try {
-      await retryOtp();
-      toast.success('New verification code sent via SMS');
-      setResendCountdown(30);
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to resend verification code');
-    } finally {
-      setIsOtpLoading(false);
-    }
-  };
-
-  // OTP Digits input handlers
-  const handleOtpChange = (index: number, val: string) => {
-    const digit = val.slice(-1).replace(/\D/g, '');
-    const nextDigits = [...otpDigits];
-    nextDigits[index] = digit;
-    setOtpDigits(nextDigits);
-
-    if (digit && index < 3) {
-      otpInputRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
-      otpInputRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const handleOtpPaste = (e: React.ClipboardEvent) => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
-    if (!pasted) return;
-
-    const nextDigits = [...otpDigits];
-    for (let i = 0; i < 4; i++) {
-      nextDigits[i] = pasted[i] || '';
-    }
-    setOtpDigits(nextDigits);
-    const focusIdx = Math.min(pasted.length, 3);
-    otpInputRefs.current[focusIdx]?.focus();
-  };
-
-  const handleVerifyOtpAndResetPassword = async (e: React.FormEvent) => {
+  const handleVerifyOtpReset = async (e: React.FormEvent) => {
     e.preventDefault();
     const fullOtp = otpDigits.join('');
     if (fullOtp.length !== 4) {
-      toast.error('Please enter the complete 4-digit verification code');
+      toast.error('Please enter the 4-digit code');
       return;
     }
+    setIsChangingPassword(true);
+    try {
+      const verificationToken = await verifyOtp(fullOtp);
+      const verifyRes = await authApi.verifyResetPasswordPhone({
+        phone: rawPhone,
+        verificationToken,
+      });
 
-    if (otpNewPassword.length < 8) {
-      toast.error('New password must be at least 8 characters');
+      const targetId = user?.id || verifyRes.user?.id || verifyRes.accounts?.[0]?.id;
+      if (!targetId || !verifyRes.resetToken) {
+        throw new Error('Account verification failed');
+      }
+
+      setVerifiedResetToken(verifyRes.resetToken);
+      setVerifiedUserId(targetId);
+      setOtpStep('new-password');
+      toast.success('Phone verified! Please set your new password.');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Invalid or expired OTP code');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleConfirmOtpReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      toast.error('New password must be at least 8 characters long');
       return;
     }
-
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).*$/;
-    if (!passwordRegex.test(otpNewPassword)) {
-      toast.error('Password must contain uppercase, lowercase, number, and special character');
-      return;
-    }
-
-    if (otpNewPassword !== otpConfirmPassword) {
+    if (newPassword !== confirmPassword) {
       toast.error('Passwords do not match');
       return;
     }
 
-    if (!user?.id) {
-      toast.error('User session expired. Please refresh the page.');
-      return;
-    }
-
-    setIsOtpLoading(true);
+    setIsChangingPassword(true);
     try {
-      // 1. Verify OTP with MSG91 widget
-      const verificationToken = await verifyOtp(fullOtp);
-
-      // 2. Call backend to verify phone and get resetToken
-      const verifyRes = await authApi.verifyResetPasswordPhone({
-        phone: formatPhoneForMsg91(userCleanPhone),
-        verificationToken,
+      await authApi.confirmResetPasswordPhone({
+        resetToken: verifiedResetToken,
+        userId: verifiedUserId,
+        newPassword,
       });
 
-      // 3. Confirm password reset strictly for this logged-in account
-      const confirmRes = await authApi.confirmResetPasswordPhone({
-        resetToken: verifyRes.resetToken,
-        userId: user.id,
-        newPassword: otpNewPassword,
-      });
-
-      toast.success(confirmRes.message || 'Password reset successfully!');
-      setOtpStep('request');
-      setOtpDigits(['', '', '', '']);
-      setOtpNewPassword('');
-      setOtpConfirmPassword('');
-      setSecurityMethod('current-password');
-    } catch (error: any) {
-      if (error.response?.data?.errors && error.response.data.errors.length > 0) {
-        toast.error(error.response.data.errors[0].message);
-      } else {
-        toast.error(error.response?.data?.message || error?.message || 'Failed to reset password');
-      }
+      toast.success('Password updated successfully via Mobile OTP!');
+      setNewPassword('');
+      setConfirmPassword('');
+      setIsOtpResetMode(false);
+      setIsPasswordSectionOpen(false);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Failed to update password');
     } finally {
-      setIsOtpLoading(false);
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      logoutUser();
+      toast.success('Signed out successfully');
+      router.push('/');
     }
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
-      {/* Page Header */}
+    <div className="space-y-7 animate-in fade-in duration-300">
+      {/* Header */}
       <div className="border-b border-gray-100 pb-5">
-        <h2 className="text-xl font-bold text-gray-900 tracking-tight">Account Settings & Security</h2>
+        <h2 className="text-xl font-bold text-gray-900 tracking-tight">Account Settings</h2>
         <p className="text-xs text-gray-500 mt-1">
-          Manage your account credentials and security preferences
+          Manage your security preferences, order notifications, and active session
         </p>
       </div>
 
-      {/* ─── 1. SECURITY & PASSWORD SECTION ─────────────────────────────────── */}
-      <div className="bg-white border border-gray-200/90 rounded-sm shadow-xs overflow-hidden">
-        <div className="p-5 sm:p-6 border-b border-gray-100 flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center">
-              <Key size={18} />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Security & Password</h3>
-              <p className="text-xs text-gray-500">Ensure your account is protected with a strong, updated password</p>
-            </div>
-          </div>
-
-          {/* Method Selector Tabs */}
-          <div className="inline-flex p-1 bg-gray-100/90 rounded-sm border border-gray-200/60">
-            <button
-              type="button"
-              onClick={() => setSecurityMethod('current-password')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-xs transition-all cursor-pointer ${
-                securityMethod === 'current-password'
-                  ? 'bg-white text-black shadow-xs font-bold'
-                  : 'text-gray-500 hover:text-black'
-              }`}
-            >
-              Current Password
-            </button>
-            <button
-              type="button"
-              onClick={() => setSecurityMethod('phone-otp')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-xs transition-all cursor-pointer flex items-center gap-1.5 ${
-                securityMethod === 'phone-otp'
-                  ? 'bg-white text-black shadow-xs font-bold'
-                  : 'text-gray-500 hover:text-black'
-              }`}
-            >
-              <Smartphone size={13} />
-              <span>Mobile OTP</span>
-            </button>
-          </div>
+      {/* ─── 1. LOGIN & SECURITY ────────────────────────────────────────────── */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <ShieldCheck size={18} className="text-[#C09B7A]" />
+          <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+            Login & Security
+          </h3>
         </div>
 
-        <div className="p-5 sm:p-6">
-          {/* Method A: Standard Current Password Change */}
-          {securityMethod === 'current-password' && (
-            <form onSubmit={handleChangePassword} className="space-y-4 max-w-xl">
+        {/* Primary Phone Auth Status Card */}
+        <div className="bg-white border border-gray-200 rounded-sm p-5 space-y-4 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-sm bg-neutral-900 text-white flex items-center justify-center shrink-0">
+                <Smartphone size={20} className="text-[#C09B7A]" />
+              </div>
               <div>
-                <label className="text-xs font-bold text-gray-900 block mb-1">
-                  Current Password <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type={showCurrentPassword ? 'text' : 'password'}
-                    required
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Enter your current password"
-                    className="w-full px-3.5 py-2.5 text-base md:text-xs border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-                  >
-                    {showCurrentPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-gray-900">
+                    Phone & SMS OTP Authentication
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-xs border border-emerald-200/60">
+                    <CheckCircle2 size={11} className="text-emerald-600" /> ACTIVE
+                  </span>
                 </div>
+                <p className="text-xs text-gray-500 font-mono mt-0.5">
+                  Linked Number: <span className="text-gray-900 font-semibold">{formattedPhone}</span>
+                </p>
               </div>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-gray-900 block mb-1">
-                    New Password <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showNewPassword ? 'text' : 'password'}
-                      required
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="At least 8 characters"
-                      className="w-full px-3.5 py-2.5 text-base md:text-xs border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-                    >
-                      {showNewPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                    </button>
-                  </div>
-                </div>
+            <span className="text-xs font-medium text-emerald-700 bg-emerald-50/70 px-3 py-1.5 rounded-sm border border-emerald-100 self-start sm:self-auto">
+              Passwordless & Secure
+            </span>
+          </div>
 
-                <div>
-                  <label className="text-xs font-bold text-gray-900 block mb-1">
-                    Confirm New Password <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type={showNewPassword ? 'text' : 'password'}
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Re-enter new password"
-                    className="w-full px-3.5 py-2.5 text-base md:text-xs border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
-                  />
-                </div>
+          <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-xs leading-relaxed border border-gray-100">
+            Every time you sign in on any device, you receive a dynamic 4-digit verification code directly to your phone. This eliminates password-theft risks and simplifies your checkout experience.
+          </div>
+
+          {/* Optional Password Collapsible */}
+          <div className="pt-2 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => setIsPasswordSectionOpen(!isPasswordSectionOpen)}
+              className="flex items-center justify-between w-full text-left text-xs font-bold text-gray-700 hover:text-black py-1 cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <KeyRound size={14} className="text-gray-400" />
+                <span>Optional Password Setup</span>
+                <span className="text-[10px] text-gray-400 font-normal">(Not required)</span>
               </div>
+              <ChevronDown
+                size={16}
+                className={`text-gray-400 transition-transform ${isPasswordSectionOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
 
-              {/* Password Requirements Badges */}
-              {newPassword.length > 0 && (
-                <div className="bg-gray-50 border border-gray-200/80 rounded-sm p-3 space-y-2 text-[11px]">
-                  <p className="font-semibold text-gray-700">Password Requirements:</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    <span className={`flex items-center gap-1.5 ${hasMinLength ? 'text-emerald-600 font-medium' : 'text-gray-400'}`}>
-                      <Check size={12} strokeWidth={hasMinLength ? 3 : 1.5} />
-                      <span>8+ Characters</span>
-                    </span>
-                    <span className={`flex items-center gap-1.5 ${hasUpper ? 'text-emerald-600 font-medium' : 'text-gray-400'}`}>
-                      <Check size={12} strokeWidth={hasUpper ? 3 : 1.5} />
-                      <span>Uppercase (A-Z)</span>
-                    </span>
-                    <span className={`flex items-center gap-1.5 ${hasLower ? 'text-emerald-600 font-medium' : 'text-gray-400'}`}>
-                      <Check size={12} strokeWidth={hasLower ? 3 : 1.5} />
-                      <span>Lowercase (a-z)</span>
-                    </span>
-                    <span className={`flex items-center gap-1.5 ${hasNumber ? 'text-emerald-600 font-medium' : 'text-gray-400'}`}>
-                      <Check size={12} strokeWidth={hasNumber ? 3 : 1.5} />
-                      <span>Number (0-9)</span>
-                    </span>
-                    <span className={`flex items-center gap-1.5 ${hasSpecial ? 'text-emerald-600 font-medium' : 'text-gray-400'}`}>
-                      <Check size={12} strokeWidth={hasSpecial ? 3 : 1.5} />
-                      <span>Special Character</span>
-                    </span>
-                    <span className={`flex items-center gap-1.5 ${isMatching ? 'text-emerald-600 font-medium' : 'text-gray-400'}`}>
-                      <Check size={12} strokeWidth={isMatching ? 3 : 1.5} />
-                      <span>Passwords Match</span>
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => setSecurityMethod('phone-otp')}
-                  className="text-xs text-gray-500 hover:text-black underline transition-colors cursor-pointer text-left"
-                >
-                  Forgot current password? Reset with Mobile OTP →
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={isChangingPassword || !currentPassword || !isPasswordValid || !isMatching}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider rounded-sm transition-all cursor-pointer disabled:opacity-50 shadow-xs active:scale-[0.99]"
-                >
-                  {isChangingPassword ? (
-                    <>
-                      <Loader2 size={14} className="animate-spin" />
-                      <span>Updating...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Lock size={14} />
-                      <span>Update Password</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* Method B: Mobile OTP Reset (Instant without knowing current password) */}
-          {securityMethod === 'phone-otp' && (
-            <div className="space-y-4 max-w-xl">
-              {userCleanPhone ? (
-                otpStep === 'request' ? (
-                  <div className="space-y-4">
-                    <div className="bg-amber-50/70 border border-amber-200/60 p-3.5 rounded-sm flex items-start gap-3">
-                      <Shield className="text-[#C09B7A] shrink-0 mt-0.5" size={18} />
-                      <div className="text-xs text-amber-900 leading-relaxed">
-                        Reset your password directly by verifying an SMS OTP sent to your verified mobile number{' '}
-                        <span className="font-bold">+91 {userCleanPhone}</span>.
+            {isPasswordSectionOpen && (
+              <div className="mt-4 max-w-md bg-gray-50/60 p-4 rounded-xs border border-gray-200/70 animate-in fade-in duration-150 space-y-3.5">
+                {isOtpResetMode ? (
+                  /* OTP Reset Mode */
+                  otpStep === 'otp' ? (
+                    <form onSubmit={handleVerifyOtpReset} className="space-y-3">
+                      <div className="text-xs text-gray-700">
+                        Enter the 4-digit code sent to <strong className="text-black">+91 {rawPhone}</strong>
                       </div>
-                    </div>
 
-                    <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setSecurityMethod('current-password')}
-                        className="text-xs text-gray-500 hover:text-black underline transition-colors cursor-pointer text-left"
-                      >
-                        ← Back to Current Password
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={handleSendOtp}
-                        disabled={isOtpLoading}
-                        className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider rounded-sm transition-all cursor-pointer disabled:opacity-50 shadow-xs active:scale-[0.99]"
-                      >
-                        {isOtpLoading ? (
-                          <>
-                            <Loader2 size={14} className="animate-spin" />
-                            <span>Sending OTP...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Smartphone size={14} />
-                            <span>Send Verification Code</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <form onSubmit={handleVerifyOtpAndResetPassword} className="space-y-4">
-                    <div className="bg-amber-50/70 border border-amber-200/60 p-3.5 rounded-sm flex items-start gap-3">
-                      <Shield className="text-[#C09B7A] shrink-0 mt-0.5" size={18} />
-                      <div className="text-xs text-amber-900 leading-relaxed">
-                        Verification code sent to <span className="font-bold">+91 {userCleanPhone}</span>. Enter code and your new password:
-                      </div>
-                    </div>
-
-                    {/* 4-Digit OTP Boxes */}
-                    <div className="space-y-2">
-                      <label className="block text-xs font-bold text-gray-900 uppercase tracking-wider text-center">
-                        Enter 4-Digit SMS Code
-                      </label>
-                      <div className="flex items-center justify-center gap-3" onPaste={handleOtpPaste}>
+                      <div className="flex items-center gap-2.5 my-2">
                         {otpDigits.map((digit, idx) => (
                           <input
                             key={idx}
@@ -488,143 +281,294 @@ export default function ProfileSettingsPage() {
                             }}
                             type="text"
                             inputMode="numeric"
-                            pattern="[0-9]*"
                             maxLength={1}
                             value={digit}
-                            onChange={(e) => handleOtpChange(idx, e.target.value)}
-                            onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                            className="w-13 h-13 sm:w-14 sm:h-14 text-center text-xl font-bold text-gray-900 bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] transition-all shadow-xs"
-                            autoFocus={idx === 0}
+                            onChange={(e) => {
+                              const char = e.target.value.replace(/\D/g, '').slice(-1);
+                              const next = [...otpDigits];
+                              next[idx] = char;
+                              setOtpDigits(next);
+                              if (char && idx < 3) otpInputRefs.current[idx + 1]?.focus();
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Backspace' && !otpDigits[idx] && idx > 0) {
+                                otpInputRefs.current[idx - 1]?.focus();
+                              }
+                            }}
+                            className="w-10 h-10 text-center text-lg font-bold border border-gray-300 bg-white focus:outline-none focus:border-black rounded-none shadow-xs"
                           />
                         ))}
                       </div>
 
-                      {/* Resend row */}
-                      <div className="flex items-center justify-between text-xs pt-1 px-1">
+                      <div className="flex items-center justify-between text-xs">
                         <button
                           type="button"
-                          onClick={() => setOtpStep('request')}
-                          className="text-gray-500 hover:text-black transition-colors cursor-pointer"
+                          onClick={() => setIsOtpResetMode(false)}
+                          className="text-gray-500 hover:text-black cursor-pointer"
                         >
-                          ← Change
+                          Cancel
                         </button>
-                        <div>
-                          {resendCountdown > 0 ? (
-                            <span className="text-gray-400 font-medium">
-                              Resend in 00:{resendCountdown < 10 ? `0${resendCountdown}` : resendCountdown}
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={handleResendOtp}
-                              disabled={isOtpLoading}
-                              className="flex items-center gap-1 font-bold text-black hover:text-[#C09B7A] underline transition-colors cursor-pointer disabled:opacity-50"
-                            >
-                              <RotateCcw size={12} />
-                              <span>Resend Code</span>
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* New Password fields */}
-                    <div className="space-y-3 pt-1">
-                      <div>
-                        <label className="text-xs font-bold text-gray-900 block mb-1">
-                          New Password <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showOtpNewPassword ? 'text' : 'password'}
-                            required
-                            value={otpNewPassword}
-                            onChange={(e) => setOtpNewPassword(e.target.value)}
-                            placeholder="At least 8 characters"
-                            className="w-full px-3.5 py-2.5 text-base md:text-xs border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all pr-10"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowOtpNewPassword(!showOtpNewPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-                          >
-                            {showOtpNewPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (otpCountdown > 0) return;
+                            await retryOtp();
+                            setOtpCountdown(30);
+                            toast.success('New code sent via SMS');
+                          }}
+                          disabled={otpCountdown > 0 || isOtpLoading}
+                          className="text-black font-semibold hover:underline disabled:opacity-50 cursor-pointer flex items-center gap-1"
+                        >
+                          <RotateCcw size={12} />
+                          {otpCountdown > 0 ? `Resend in ${otpCountdown}s` : 'Resend Code'}
+                        </button>
                       </div>
 
-                      <div>
-                        <label className="text-xs font-bold text-gray-900 block mb-1">
-                          Confirm New Password <span className="text-red-500">*</span>
-                        </label>
+                      <div className="pt-2 flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setIsOtpResetMode(false)}
+                          className="px-3.5 py-1.5 text-xs text-gray-600 hover:text-black border border-gray-300 bg-white rounded-none cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={isChangingPassword || isOtpLoading || otpDigits.join('').length !== 4}
+                          className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white bg-black hover:bg-neutral-800 rounded-none disabled:opacity-50 cursor-pointer shadow-xs"
+                        >
+                          {isChangingPassword || isOtpLoading ? 'Verifying...' : 'Verify Code'}
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleConfirmOtpReset} className="space-y-3.5">
+                      <div className="text-xs font-bold text-gray-900 border-b pb-1.5">
+                        Set New Password
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold text-gray-800">New Password</label>
                         <input
-                          type={showOtpNewPassword ? 'text' : 'password'}
+                          type="password"
                           required
-                          value={otpConfirmPassword}
-                          onChange={(e) => setOtpConfirmPassword(e.target.value)}
-                          placeholder="Re-enter new password"
-                          className="w-full px-3.5 py-2.5 text-base md:text-xs border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] focus:ring-1 focus:ring-[#C09B7A] text-gray-900 placeholder:text-gray-400 transition-all"
+                          placeholder="At least 8 characters"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="w-full px-3 py-2 text-xs text-gray-900 bg-white border border-gray-300 rounded-none focus:outline-none focus:border-black"
                         />
                       </div>
-                      <p className="text-[11px] text-gray-400">
-                        Must contain uppercase, lowercase, number, and special character.
-                      </p>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold text-gray-800">Confirm Password</label>
+                        <input
+                          type="password"
+                          required
+                          placeholder="Re-enter password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="w-full px-3 py-2 text-xs text-gray-900 bg-white border border-gray-300 rounded-none focus:outline-none focus:border-black"
+                        />
+                      </div>
+
+                      <div className="pt-1 flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setIsOtpResetMode(false)}
+                          className="px-3.5 py-1.5 text-xs text-gray-600 hover:text-black border border-gray-300 bg-white rounded-none cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={isChangingPassword || newPassword.length < 8 || newPassword !== confirmPassword}
+                          className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white bg-black hover:bg-neutral-800 rounded-none disabled:opacity-50 cursor-pointer shadow-xs"
+                        >
+                          {isChangingPassword ? 'Saving...' : 'Save Password'}
+                        </button>
+                      </div>
+                    </form>
+                  )
+                ) : (
+                  /* Standard Password Form */
+                  <form onSubmit={handleUpdatePassword} className="space-y-3.5">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-gray-800">New Password</label>
+                        {rawPhone && (
+                          <button
+                            type="button"
+                            onClick={handleStartOtpReset}
+                            className="text-[11px] text-black font-semibold hover:underline cursor-pointer"
+                          >
+                            Reset with Mobile OTP
+                          </button>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <input
+                          type={showNewPassword ? 'text' : 'password'}
+                          required
+                          placeholder="At least 8 characters"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="w-full px-3 py-2 text-xs text-gray-900 bg-white border border-gray-300 rounded-none focus:outline-none focus:border-black pr-9"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                        >
+                          {showNewPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="pt-2 flex items-center justify-between">
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-gray-800">Confirm Password</label>
+                      <input
+                        type="password"
+                        required
+                        placeholder="Re-enter password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full px-3 py-2 text-xs text-gray-900 bg-white border border-gray-300 rounded-none focus:outline-none focus:border-black"
+                      />
+                    </div>
+
+                    <div className="pt-1 flex justify-end gap-2">
                       <button
                         type="button"
-                        onClick={() => setOtpStep('request')}
-                        className="text-xs text-gray-500 hover:text-black underline transition-colors cursor-pointer"
+                        onClick={() => setIsPasswordSectionOpen(false)}
+                        className="px-3.5 py-1.5 text-xs text-gray-600 hover:text-black border border-gray-300 bg-white rounded-none cursor-pointer"
                       >
                         Cancel
                       </button>
-
                       <button
                         type="submit"
-                        disabled={
-                          isOtpLoading ||
-                          otpDigits.join('').length !== 4 ||
-                          otpNewPassword.length < 8 ||
-                          otpNewPassword !== otpConfirmPassword
-                        }
-                        className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider rounded-sm transition-all cursor-pointer disabled:opacity-50 shadow-xs active:scale-[0.99]"
+                        disabled={isChangingPassword}
+                        className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white bg-black hover:bg-neutral-800 rounded-none disabled:opacity-50 cursor-pointer shadow-xs"
                       >
-                        {isOtpLoading ? (
-                          <>
-                            <Loader2 size={14} className="animate-spin" />
-                            <span>Updating...</span>
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle2 size={14} />
-                            <span>Verify & Set Password</span>
-                          </>
-                        )}
+                        {isChangingPassword ? 'Saving...' : 'Set Password'}
                       </button>
                     </div>
                   </form>
-                )
-              ) : (
-                <div className="p-4 bg-gray-50 border border-gray-200 rounded-sm text-center space-y-3">
-                  <ShieldAlert className="mx-auto text-amber-600" size={32} />
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-900 uppercase">No Mobile Number Linked</h4>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      You must add and verify a mobile number in your profile to use SMS OTP reset.
-                    </p>
-                  </div>
-                  <Link
-                    href="/profile/personal-info"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-black text-white text-xs font-bold uppercase rounded-sm hover:bg-neutral-800 transition-colors"
-                  >
-                    <span>Go to Personal Info</span>
-                    <ArrowRight size={12} />
-                  </Link>
-                </div>
-              )}
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ─── 2. ORDER NOTIFICATIONS & PREFERENCES ───────────────────────────── */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Bell size={18} className="text-[#C09B7A]" />
+          <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+            Order Notifications
+          </h3>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-sm divide-y divide-gray-100 shadow-2xs">
+          {/* SMS Tracking */}
+          <div className="p-4 sm:p-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-900">
+                SMS Order Updates & OTPs
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Instant delivery alerts, courier dispatch tracking, and security codes via SMS
+              </p>
             </div>
-          )}
+            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-xs shrink-0 select-none">
+              ALWAYS ON
+            </span>
+          </div>
+
+          {/* WhatsApp Updates */}
+          <div className="p-4 sm:p-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-900">
+                WhatsApp Delivery Tracking
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Receive live live tracking links and delivery confirmations on WhatsApp
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setWhatsappAlerts(!whatsappAlerts);
+                toast.success(`WhatsApp updates ${!whatsappAlerts ? 'enabled' : 'disabled'}`);
+              }}
+              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${
+                whatsappAlerts ? 'bg-black' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${
+                  whatsappAlerts ? 'right-1' : 'left-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Promotional Drops */}
+          <div className="p-4 sm:p-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-900">
+                Exclusive Drops & Style Previews
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Be the first to hear about seasonal collections, restocks, and private sales
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setPromotionalAlerts(!promotionalAlerts);
+                toast.success(`Drop previews ${!promotionalAlerts ? 'enabled' : 'disabled'}`);
+              }}
+              className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${
+                promotionalAlerts ? 'bg-black' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${
+                  promotionalAlerts ? 'right-1' : 'left-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── 3. ACCOUNT ACTIONS ─────────────────────────────────────────────── */}
+      <div className="space-y-4 pt-2">
+        <div className="flex items-center gap-2">
+          <LogOut size={18} className="text-gray-400" />
+          <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+            Account Session
+          </h3>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-sm p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+          <div>
+            <p className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+              Active Browser Session
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Securely sign out of this browser. Your cart and orders will be safely preserved.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-rose-600 hover:text-white hover:bg-rose-600 border border-rose-300 rounded-xs transition-colors cursor-pointer self-start sm:self-auto shrink-0 shadow-2xs"
+          >
+            Sign Out
+          </button>
         </div>
       </div>
     </div>

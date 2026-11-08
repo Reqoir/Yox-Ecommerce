@@ -34,11 +34,14 @@ export class UpdateRoleUseCase implements IUseCase<{ id: string; data: UpdateRol
     if (input.data.name && !role.isSystem) {
       updatedRole.name = input.data.name.toUpperCase().trim();
     }
-    if (input.data.description !== undefined && !role.isSystem) {
+    if (input.data.description !== undefined) {
       updatedRole.description = input.data.description;
     }
     if (input.data.permissions) {
       updatedRole.permissions = input.data.permissions;
+    }
+    if (input.data.level !== undefined) {
+      updatedRole.level = input.data.level;
     }
     
     updatedRole.updatedAt = new Date();
@@ -51,6 +54,7 @@ export class UpdateRoleUseCase implements IUseCase<{ id: string; data: UpdateRol
       name: savedRole.name,
       description: savedRole.description || null,
       permissions: savedRole.permissions,
+      level: savedRole.level,
       isSystem: savedRole.isSystem,
       createdAt: savedRole.createdAt,
       updatedAt: savedRole.updatedAt,

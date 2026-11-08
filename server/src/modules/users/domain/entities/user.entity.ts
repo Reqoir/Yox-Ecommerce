@@ -51,7 +51,7 @@ export class User extends BaseEntity<UserProps> {
    * Factory method to create a NEW user (from registration).
    * Enforces business rules (e.g. setting defaults).
    */
-  public static async create(props: Omit<UserProps, 'id' | 'createdAt' | 'updatedAt' | 'isEmailVerified' | 'isPhoneVerified' | 'status' | 'email'> & { email?: string | null; isPhoneVerified?: boolean }): Promise<User> {
+  public static async create(props: Omit<UserProps, 'id' | 'createdAt' | 'updatedAt' | 'isEmailVerified' | 'isPhoneVerified' | 'status' | 'email'> & { email?: string | null; isEmailVerified?: boolean; isPhoneVerified?: boolean }): Promise<User> {
     // Hash password immediately upon creation
     const hashedPassword = await hashPassword(props.password);
     const resolvedEmail = props.email && props.email.trim()
@@ -68,7 +68,7 @@ export class User extends BaseEntity<UserProps> {
       phone: props.phone || null,
       profileImage: props.profileImage || null,
       roleId: props.roleId,
-      isEmailVerified: false,
+      isEmailVerified: props.isEmailVerified ?? (resolvedEmail && !resolvedEmail.endsWith('@user.yox.internal') ? true : false),
       isPhoneVerified: props.isPhoneVerified ?? false,
       status: UserStatus.ACTIVE,
       lastLogin: null,
@@ -96,16 +96,24 @@ export class User extends BaseEntity<UserProps> {
    */
   public updateProfile(data: {
     fullName?: string;
-    email?: string;
+    email?: string | null;
     phone?: string | null;
     profileImage?: string | null;
     isPhoneVerified?: boolean;
+    isEmailVerified?: boolean;
   }): void {
-    if (data.fullName) this._props.fullName = data.fullName;
-    if (data.email !== undefined && data.email !== null) this._props.email = data.email;
+    if (data.fullName !== undefined) {
+      this._props.fullName = data.fullName.trim() || this._props.fullName || 'Customer';
+    }
+    if (data.email !== undefined) {
+      this._props.email = data.email && data.email.trim()
+        ? data.email.toLowerCase().trim()
+        : '';
+    }
     if (data.phone !== undefined) this._props.phone = data.phone;
     if (data.profileImage !== undefined) this._props.profileImage = data.profileImage;
     if (data.isPhoneVerified !== undefined) this._props.isPhoneVerified = data.isPhoneVerified;
+    if (data.isEmailVerified !== undefined) this._props.isEmailVerified = data.isEmailVerified;
     
     this._props.updatedAt = new Date();
   }
@@ -141,6 +149,15 @@ export class User extends BaseEntity<UserProps> {
   public deactivate(): void {
     this._props.status = UserStatus.INACTIVE;
     this._props.deletedAt = new Date();
+    this._props.updatedAt = new Date();
+  }
+
+  /**
+   * Restores a soft-deleted user account.
+   */
+  public restore(): void {
+    this._props.status = UserStatus.ACTIVE;
+    this._props.deletedAt = null;
     this._props.updatedAt = new Date();
   }
 }

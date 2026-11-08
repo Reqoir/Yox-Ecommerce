@@ -15,6 +15,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "type-check": "tsc --noEmit",
+    "reset-admin": "tsx scripts/reset-admin-password.ts",
     "clean": "rm -rf dist"
   },
   "keywords": [

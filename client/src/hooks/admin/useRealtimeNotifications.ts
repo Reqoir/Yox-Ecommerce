@@ -14,7 +14,7 @@ import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import Swal from 'sweetalert2';
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAdminAuthStore } from '@/store/useAdminAuthStore';
 import { Notification, notificationApi } from '@/api/admin/notifications';
 import { getApiBaseUrl } from '@/lib/axios';
 
@@ -130,7 +130,7 @@ function isAdminUser(permissions: string[], role?: string): boolean {
 }
 
 export function useRealtimeNotifications() {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, token } = useAdminAuthStore();
   const queryClient = useQueryClient();
   const router = useRouter();
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -165,7 +165,10 @@ export function useRealtimeNotifications() {
       console.debug('[SSE] Connecting to notification stream...');
 
       const apiBase = getApiBaseUrl();
-      const es = new EventSource(`${apiBase}/notifications/stream`, {
+      const sseUrl = token
+        ? `${apiBase}/notifications/stream?token=${encodeURIComponent(token)}`
+        : `${apiBase}/notifications/stream`;
+      const es = new EventSource(sseUrl, {
         withCredentials: true,
       });
       eventSourceRef.current = es;

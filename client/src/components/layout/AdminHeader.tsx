@@ -22,13 +22,14 @@ import {
   ChevronDown,
   PanelLeftClose,
   PanelLeftOpen,
+  UserCog,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { AdminNavContent } from '@/components/layout/AdminSidebar';
 import { useNotifications } from '@/hooks/admin/useNotifications';
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAdminAuthStore } from '@/store/useAdminAuthStore';
 import { useAdminSidebarStore } from '@/store/useAdminSidebarStore';
 import { Notification } from '@/api/admin/notifications';
 import { authApi } from '@/api/auth';
@@ -51,7 +52,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/audit-logs': 'Audit Logs',
   '/admin/content': 'Content Management',
   '/admin/notifications': 'Notifications',
-  '/admin/settings': 'Settings',
+  '/admin/settings': 'Store Settings',
+  '/admin/profile': 'Account Settings',
 };
 
 const TYPE_CONFIG: Record<
@@ -83,7 +85,7 @@ function formatTimeAgo(dateString: string): string {
 export function AdminHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logoutUser } = useAuthStore();
+  const { user, logoutUser } = useAdminAuthStore();
   const { notifications, unreadCount, markRead, markAllRead, isMarkingAllRead } = useNotifications();
   const { isCollapsed, toggleSidebar } = useAdminSidebarStore();
   const [mounted, setMounted] = useState(false);
@@ -382,6 +384,18 @@ export function AdminHeader() {
 
                 {/* Actions */}
                 <div className="p-1.5 space-y-0.5">
+                  <Link
+                    href="/admin/profile"
+                    onClick={() => setIsProfileOpen(false)}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+                  >
+                    <UserCog className="h-4 w-4 text-primary" />
+                    <div className="flex-1">
+                      <span>My Account Settings</span>
+                      <p className="text-[10px] font-normal text-muted-foreground">Email, phone & security</p>
+                    </div>
+                  </Link>
+
                   <button
                     type="button"
                     onClick={() => {
@@ -397,17 +411,21 @@ export function AdminHeader() {
                     </div>
                   </button>
 
-                  <Link
-                    href="/admin/settings?tab=security"
-                    onClick={() => setIsProfileOpen(false)}
-                    className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
-                  >
-                    <Shield className="h-4 w-4 text-muted-foreground" />
-                    <div className="flex-1">
-                      <span>Security & Settings</span>
-                      <p className="text-[10px] font-normal text-muted-foreground">Store & account policies</p>
-                    </div>
-                  </Link>
+                  {(user?.role?.toUpperCase() === 'ADMIN' ||
+                    user?.role?.toUpperCase() === 'SUPER_ADMIN' ||
+                    (user?.permissions && (user.permissions.includes('*') || user.permissions.includes('manage_settings')))) && (
+                    <Link
+                      href="/admin/settings"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer text-left"
+                    >
+                      <Shield className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1">
+                        <span>Store Settings</span>
+                        <p className="text-[10px] font-normal text-muted-foreground">Store configuration & policies</p>
+                      </div>
+                    </Link>
+                  )}
                 </div>
 
                 {/* Footer / Logout */}

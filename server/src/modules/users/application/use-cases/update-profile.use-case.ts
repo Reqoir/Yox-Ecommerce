@@ -11,6 +11,7 @@ import { IUserRepository } from '../../domain/repositories/user.repository.inter
 import { UpdateProfileRequestDTO } from '../dtos/update-profile.dto';
 import { User } from '../../domain/entities/user.entity';
 import { msg91OtpService } from '../../../auth/infrastructure/services/msg91-otp.service';
+import { RoleModel } from '../../../roles/infrastructure/models/role.model';
 
 export class UpdateProfileUseCase {
   constructor(private readonly userRepository: IUserRepository) {}
@@ -22,25 +23,49 @@ export class UpdateProfileUseCase {
       throw ApiError.notFound('User profile not found');
     }
 
-    let resolvedEmail = user.email;
+    // Security Rule: Internal staff members cannot change their assigned work email or phone number.
+    // Only the Store Owner (admin@yox.com / Super Admin) or Customers may change these.
+    const isOwner = user.email === 'admin@yox.com';
+    if (!isOwner && user.roleId && (data.email !== undefined || data.phone !== undefined)) {
+      const role = await RoleModel.findById(user.roleId).select('name').lean();
+      if (
+        role &&
+        role.name.toUpperCase() !== 'CUSTOMER' &&
+        role.name.toUpperCase() !== 'ADMIN' &&
+        role.name.toUpperCase() !== 'SUPER_ADMIN'
+      ) {
+        throw ApiError.forbidden(
+          'Staff members cannot change their assigned work email or contact phone number. Please contact your store administrator.'
+        );
+      }
+    }
 
-    // 1. If email is being changed, check if it is already taken by another account
+    let resolvedEmail: string | null | undefined = user.email;
+
+    // 1. If email is being changed, check uniqueness or clear it
     if (data.email !== undefined) {
-      const normalizedNewEmail = data.email.trim().toLowerCase();
-      const currentEmail = user.email ? user.email.toLowerCase().trim() : '';
+      const normalizedNewEmail = data.email ? data.email.trim().toLowerCase() : '';
+      const currentEmail = user.email && !user.email.endsWith('@user.yox.internal')
+        ? user.email.toLowerCase().trim()
+        : '';
 
-      if (normalizedNewEmail && normalizedNewEmail !== currentEmail) {
-        // Basic email syntax check
-        if (!/^\S+@\S+\.\S+$/.test(normalizedNewEmail)) {
-          throw ApiError.badRequest('Please provide a valid email address');
+      if (normalizedNewEmail) {
+        if (normalizedNewEmail !== currentEmail) {
+          // Basic email syntax check
+          if (!/^\S+@\S+\.\S+$/.test(normalizedNewEmail)) {
+            throw ApiError.badRequest('Please provide a valid email address');
+          }
+
+          const existingUser = await this.userRepository.findByEmail(normalizedNewEmail);
+          if (existingUser && existingUser.id !== userId) {
+            throw ApiError.conflict('This email address is already in use by another account');
+          }
+
+          resolvedEmail = normalizedNewEmail;
         }
-
-        const existingUser = await this.userRepository.findByEmail(normalizedNewEmail);
-        if (existingUser && existingUser.id !== userId) {
-          throw ApiError.conflict('This email address is already in use by another account');
-        }
-
-        resolvedEmail = normalizedNewEmail;
+      } else {
+        // User is clearing their email address
+        resolvedEmail = null;
       }
     }
 
@@ -72,9 +97,14 @@ export class UpdateProfileUseCase {
       }
     }
 
+    const resolvedFullName =
+      data.fullName !== undefined
+        ? (data.fullName.trim() || user.fullName || 'Customer')
+        : user.fullName;
+
     // 3. Update User Entity
     user.updateProfile({
-      fullName: data.fullName !== undefined ? data.fullName.trim() : undefined,
+      fullName: resolvedFullName,
       email: resolvedEmail,
       phone: resolvedPhone !== undefined ? (resolvedPhone || null) : undefined,
       profileImage: data.profileImage,

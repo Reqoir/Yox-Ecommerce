@@ -26,7 +26,7 @@ export class RefreshTokenUseCase {
       }
 
       if (!user.canLogin()) {
-        throw ApiError.unauthorized('Your account has been deactivated or suspended');
+        throw ApiError.unauthorized('Your staff account has been deactivated or suspended by the administrator.');
       }
 
       // 3. Generate new tokens
@@ -44,6 +44,9 @@ export class RefreshTokenUseCase {
         refreshToken: newRefreshToken,
       };
     } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
       // Catch JWT errors (expired, invalid signature, etc)
       throw ApiError.unauthorized('Invalid or expired refresh token');
     }

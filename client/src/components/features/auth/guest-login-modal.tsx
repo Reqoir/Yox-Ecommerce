@@ -164,11 +164,11 @@ export function GuestLoginModal() {
             </div>
 
             <h2 id="modal-title" className="text-lg sm:text-2xl font-black uppercase tracking-tight text-gray-900 leading-tight">
-              Log In or Sign Up
+              Log In or Create Account
             </h2>
 
             <p className="text-xs sm:text-sm text-gray-600 mt-1.5 sm:mt-2 leading-relaxed font-normal">
-              Sign in to your account or create a new one to access your orders, track shipments, and save items to your wishlist.
+              Sign in or create your YOX account to access your orders, track shipments, and save items to your wishlist.
             </p>
 
             {/* Account Benefits List */}
@@ -187,7 +187,7 @@ export function GuestLoginModal() {
               </div>
               <div className="flex items-center gap-2 sm:gap-2.5">
                 <Check size={14} className="text-black shrink-0" strokeWidth={2.5} />
-                <span><strong>Member-only offers</strong> and early sale access</span>
+                <span><strong>Exclusive YOX drops</strong> and private seasonal sales</span>
               </div>
             </div>
           </div>
@@ -206,7 +206,7 @@ export function GuestLoginModal() {
             <button
               type="button"
               onClick={handleGoToRegister}
-              className="w-full bg-white hover:bg-gray-50 text-black border border-black font-bold text-xs sm:text-sm uppercase tracking-widest py-3 sm:py-3.5 px-6 rounded-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer"
+              className="w-full bg-white hover:bg-black hover:text-white text-black border border-black font-bold text-xs sm:text-sm uppercase tracking-widest py-3 sm:py-3.5 px-6 rounded-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer"
             >
               <span>Create an Account</span>
             </button>

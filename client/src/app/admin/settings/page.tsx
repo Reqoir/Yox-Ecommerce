@@ -37,8 +37,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAdminAuthStore } from '@/store/useAdminAuthStore';
 import { AdminChangePasswordCard } from '@/components/admin/AdminChangePasswordCard';
+import { AdminCredentialsCard } from '@/components/admin/AdminCredentialsCard';
 import { StoreConfig, DEFAULT_STORE_CONFIG } from '@/api/admin/settings';
 import { offersApi, Offer } from '@/api/admin/offers';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -49,7 +50,7 @@ type SettingsTab = 'general' | 'shipping' | 'payments' | 'returns' | 'announceme
 
 export default function AdminSettingsPage() {
   const { config, isLoading, isSaving, fetchSettings, updateSettings, resetToDefaults } = useStoreSettingsStore();
-  const { user } = useAuthStore();
+  const { user } = useAdminAuthStore();
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
   const [formData, setFormData] = useState<StoreConfig>(config);
@@ -1284,6 +1285,21 @@ export default function AdminSettingsPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Admin Work Email & Recovery Phone */}
+                  <div className="border-t pt-5 space-y-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                        <ShieldCheck size={16} className="text-primary" />
+                        <span>Work Email & Recovery Phone</span>
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Manage your official admin work email and OTP-verified recovery phone number.
+                      </p>
+                    </div>
+
+                    <AdminCredentialsCard />
+                  </div>
 
                   {/* Change Password Inline Form */}
                   <div className="border-t pt-5">

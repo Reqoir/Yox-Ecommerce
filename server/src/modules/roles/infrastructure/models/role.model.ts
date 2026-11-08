@@ -9,6 +9,7 @@ export interface IRoleDocument extends Document {
   name: string;
   description?: string;
   permissions: string[];
+  level: number;
   isSystem: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -31,6 +32,12 @@ const roleSchema = new Schema<IRoleDocument>(
       type: String,
       required: true,
     }],
+    level: {
+      type: Number,
+      default: 50,
+      min: 0,
+      max: 100,
+    },
     isSystem: {
       type: Boolean,
       default: false,
