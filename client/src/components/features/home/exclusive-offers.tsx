@@ -527,8 +527,9 @@ export function ExclusiveOffers() {
                     src={item.image}
                     fill
                     sizes="(max-width: 640px) 50vw, (max-width: 768px) 110px, 130px"
-                    className={`object-cover object-top transition-opacity duration-300 ${item.secondImage && item.secondImage !== item.image ? 'group-hover:opacity-0' : ''
-                      }`}
+                    className={`object-cover object-top transition-all duration-300 ${
+                      item.inStock === false ? 'grayscale contrast-125 brightness-75' : ''
+                    } ${item.secondImage && item.secondImage !== item.image ? 'group-hover:opacity-0' : ''}`}
                     alt={item.title}
                   />
                   {item.secondImage && item.secondImage !== item.image && (
@@ -536,9 +537,15 @@ export function ExclusiveOffers() {
                       src={item.secondImage}
                       fill
                       sizes="(max-width: 640px) 50vw, (max-width: 768px) 110px, 130px"
-                      className="object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                      className={`object-cover object-top opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none ${
+                        item.inStock === false ? 'grayscale contrast-125 brightness-75' : ''
+                      }`}
                       alt={`${item.title} alternate view`}
                     />
+                  )}
+
+                  {item.inStock === false && (
+                    <div className="absolute inset-0 bg-black/15 pointer-events-none z-[5]" />
                   )}
 
                   {/* Sold Out or Discount percentage tag on product thumbnail */}

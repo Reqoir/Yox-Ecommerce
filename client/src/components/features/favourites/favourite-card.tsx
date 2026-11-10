@@ -60,13 +60,17 @@ export function FavouriteCard({ item }: FavouriteCardProps) {
             src={item.image || '/images/product-1.jpeg'}
             alt={item.name}
             className={`w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500 ${
-              item.inStock === false ? 'opacity-75 grayscale-[25%]' : ''
+              item.inStock === false ? 'grayscale contrast-125 brightness-75' : ''
             }`}
             onError={(e) => {
               e.currentTarget.src = '/images/product-1.jpeg';
             }}
           />
         </Link>
+
+        {item.inStock === false && (
+          <div className="absolute inset-0 bg-black/15 pointer-events-none z-[5]" />
+        )}
 
         {/* Floating Remove Button on Image Top-Right */}
         <button

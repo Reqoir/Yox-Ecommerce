@@ -455,17 +455,24 @@ export function ProductGrid({ onOpenFilter, onOpenSort }: ProductGridProps = {})
                   <img
                     src={product.image}
                     alt={`${product.name}${cardColor ? ` - ${cardColor}` : ''}`}
-                    className={`w-full h-full object-cover object-top transition-opacity duration-300 ${product.inStock === false ? 'opacity-80 grayscale-[20%]' : ''
-                      } ${product.secondImage && product.secondImage !== product.image ? 'group-hover:opacity-0' : ''
-                      }`}
+                    className={`w-full h-full object-cover object-top transition-all duration-300 ${
+                      product.inStock === false ? 'grayscale contrast-125 brightness-75' : ''
+                    } ${product.secondImage && product.secondImage !== product.image ? 'group-hover:opacity-0' : ''
+                    }`}
                   />
                   {product.secondImage && product.secondImage !== product.image && (
                     <img
                       src={product.secondImage}
                       alt={`${product.name}${cardColor ? ` - ${cardColor}` : ''} alternate view`}
-                      className={`absolute inset-0 w-full h-full object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none ${product.inStock === false ? 'grayscale-[20%]' : ''
-                        }`}
+                      className={`absolute inset-0 w-full h-full object-cover object-top opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none ${
+                        product.inStock === false ? 'grayscale contrast-125 brightness-75' : ''
+                      }`}
                     />
+                  )}
+
+                  {/* Dark tint overlay for sold out products */}
+                  {product.inStock === false && (
+                    <div className="absolute inset-0 bg-black/15 pointer-events-none z-[5]" />
                   )}
 
                   {/* Sold Out or Offer Badge */}

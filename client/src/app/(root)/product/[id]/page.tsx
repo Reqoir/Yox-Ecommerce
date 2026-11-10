@@ -20,20 +20,182 @@ import {
   Sparkles,
   Clock,
   Copy,
-  Check
+  Check,
+  Share2,
+  Sun,
+  ShieldCheck,
+  Wind
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { productsApi } from '@/lib/api/products';
+import { productsApi, BackendProduct } from '@/lib/api/products';
 import { offersApi } from '@/api/admin/offers';
 import { useCartStore } from '@/store/useCartStore';
 import { useCheckoutStore } from '@/store/useCheckoutStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useFavouritesStore } from '@/store/useFavouritesStore';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
+import { useCategories } from '@/hooks/admin/useCategories';
 import { toast } from 'sonner';
 import { ProductReviews } from '@/components/features/product/product-reviews';
 import { ProductSuggestions } from '@/components/features/product/product-suggestions';
 import { ProductImagePreviewModal } from '@/components/features/product/product-image-preview-modal';
+
+interface ProductSpec {
+  care: { icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; title: string; subtitle: string };
+  fit: { icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; title: string; subtitle: string };
+  material: { icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; title: string; subtitle: string };
+  accordionCareTitle: string;
+  accordionCareText: string;
+  accordionFitTitle: string;
+  accordionFitText: string;
+}
+
+function getProductSpecifications(
+  product: BackendProduct,
+  categoryName?: string,
+  subCategoryName?: string
+): ProductSpec {
+  const cat = (categoryName || '').toLowerCase();
+  const sub = (subCategoryName || '').toLowerCase();
+  const name = (product.name || '').toLowerCase();
+
+  // 1. Eyewear / Sunglasses
+  if (sub.includes('eyewear') || name.includes('sunglass') || name.includes('glasses')) {
+    return {
+      care: { icon: Sparkles, title: 'Wipe clean', subtitle: 'Microfiber cloth' },
+      fit: { icon: Sun, title: '100% UV400', subtitle: 'Polarized lenses' },
+      material: { icon: ShieldCheck, title: 'Acetate frame', subtitle: 'German hinges' },
+      accordionCareTitle: 'MATERIAL & CARE',
+      accordionCareText: 'Hand-polished cellulose acetate frame with scratch-resistant lenses. Includes protective case and microfiber cloth. Clean lenses with lukewarm water and a microfiber cloth.',
+      accordionFitTitle: 'FIT & DIMENSIONS',
+      accordionFitText: 'Unisex standard fit. Wire-core temples can be slightly adjusted by an optical specialist for a customized fit.',
+    };
+  }
+
+  // 2. Belts
+  if (sub.includes('belt') || name.includes('belt')) {
+    return {
+      care: { icon: Sparkles, title: 'Wipe clean', subtitle: 'Dry soft cloth' },
+      fit: { icon: Ruler, title: 'Adjustable fit', subtitle: 'True to waist size' },
+      material: { icon: ShieldCheck, title: 'Full-grain leather', subtitle: 'Solid metal buckle' },
+      accordionCareTitle: 'MATERIAL & CARE',
+      accordionCareText: '100% genuine full-grain leather with hand-finished edges and solid metal buckle. Keep away from water. Clean with a dry cloth and condition with leather cream.',
+      accordionFitTitle: 'SIZING GUIDE',
+      accordionFitText: 'Order your exact trouser waist size for a center-hole fit. 5 pin holes provide easy micro-adjustments.',
+    };
+  }
+
+  // 3. Wallets, Cardholders, Bags
+  if (sub.includes('wallet') || sub.includes('bag') || name.includes('wallet') || name.includes('cardholder') || name.includes('backpack') || name.includes('bag') || name.includes('tote')) {
+    const isWallet = sub.includes('wallet') || name.includes('wallet') || name.includes('cardholder');
+    return {
+      care: { icon: Sparkles, title: 'Wipe clean', subtitle: 'Condition as needed' },
+      fit: { icon: Ruler, title: isWallet ? 'Slim profile' : 'Standard capacity', subtitle: isWallet ? 'Fits cards & cash' : 'Everyday carry' },
+      material: { icon: ShieldCheck, title: isWallet ? 'RFID protected' : 'Durable build', subtitle: isWallet ? 'Reinforced edges' : 'Heavy-duty hardware' },
+      accordionCareTitle: 'MATERIAL & CARE',
+      accordionCareText: 'Genuine leather and heavy-duty hardware. Wipe with a dry, clean cloth to remove surface dirt. Do not machine wash or soak.',
+      accordionFitTitle: isWallet ? 'SPECIFICATIONS & CAPACITY' : 'DIMENSIONS & STORAGE',
+      accordionFitText: isWallet
+        ? 'Designed to hold credit cards, folded currency, and ID cards neatly without adding pocket bulk.'
+        : 'Spacious main compartment designed for everyday essentials and tech accessories.',
+    };
+  }
+
+  // 4. Other Accessories (Caps, Hats, Socks, Jewelry, etc.)
+  if (cat.includes('accessori') || name.includes('cap') || name.includes('hat') || name.includes('socks') || name.includes('beanie')) {
+    return {
+      care: { icon: Sparkles, title: 'Spot clean', subtitle: 'Air dry in shade' },
+      fit: { icon: Ruler, title: 'Standard size', subtitle: 'Unisex fit' },
+      material: { icon: ShieldCheck, title: 'Durable finish', subtitle: 'Reinforced build' },
+      accordionCareTitle: 'MATERIAL & CARE',
+      accordionCareText: 'Constructed from durable, quality materials designed for everyday use. Spot clean with mild detergent and air dry in shade.',
+      accordionFitTitle: 'FIT & SIZING',
+      accordionFitText: 'Standard one-size fits most.',
+    };
+  }
+
+  // 5. Jackets & Outerwear
+  if (cat.includes('jacket') || name.includes('jacket') || name.includes('coat') || name.includes('blazer') || name.includes('bomber') || name.includes('parka') || name.includes('puffer')) {
+    return {
+      care: { icon: Droplets, title: 'Specialist clean', subtitle: 'Do not tumble dry' },
+      fit: { icon: Ruler, title: product.fit || 'Layering fit', subtitle: 'True to size' },
+      material: { icon: Wind, title: 'Wind resistant', subtitle: 'Durable shell' },
+      accordionCareTitle: 'FABRIC & CARE',
+      accordionCareText: 'Dry clean or specialist outerwear clean only. Do not machine wash, tumble dry, or bleach. Store on a contoured suit hanger to preserve shape.',
+      accordionFitTitle: 'FIT & SIZING',
+      accordionFitText: 'Engineered with ease of movement for layering over shirts and knitwear. Select your regular size for an authentic outerwear silhouette.',
+    };
+  }
+
+  // 6. Pants & Trousers & Jeans
+  if (cat.includes('pant') || sub.includes('chino') || sub.includes('cargo') || sub.includes('jeans') || sub.includes('tailored') || name.includes('pant') || name.includes('jeans') || name.includes('trouser') || name.includes('chino') || name.includes('cargo')) {
+    const isDenim = sub.includes('jeans') || name.includes('jeans') || name.includes('denim');
+    return {
+      care: { icon: Droplets, title: isDenim ? 'Wash inside out' : 'Machine wash cold', subtitle: isDenim ? 'Cold gentle cycle' : 'Tumble dry low' },
+      fit: { icon: Ruler, title: product.fit || (isDenim ? 'Straight fit' : 'Tailored fit'), subtitle: 'True to waist size' },
+      material: { icon: Scissors, title: isDenim ? 'Durable denim' : 'Cotton twill blend', subtitle: isDenim ? 'Pure indigo dye' : 'Wrinkle resistant' },
+      accordionCareTitle: 'FABRIC & CARE',
+      accordionCareText: isDenim
+        ? '100% cotton denim. Machine wash cold inside out with dark colors. Line dry in shade to preserve denim character and avoid fading.'
+        : 'Durable cotton blend with slight stretch for mobility. Machine wash cold with like colors. Warm iron if required.',
+      accordionFitTitle: 'FIT & SIZING',
+      accordionFitText: 'Fits true to waist size. Designed with standard inseam length and ergonomic waist construction.',
+    };
+  }
+
+  // 7. Shirts (Casual, Linen, Oxford)
+  if ((cat.includes('shirt') && !cat.includes('t-shirt')) || sub.includes('oxford') || sub.includes('linen') || sub.includes('casual') || name.includes('oxford') || name.includes('linen')) {
+    const isLinen = sub.includes('linen') || name.includes('linen');
+    return {
+      care: { icon: Droplets, title: isLinen ? 'Hand or cold wash' : 'Machine wash cold', subtitle: isLinen ? 'Air dry in shade' : 'Warm iron on reverse' },
+      fit: { icon: Ruler, title: product.fit || (isLinen ? 'Relaxed fit' : 'Regular fit'), subtitle: 'True to size' },
+      material: { icon: Scissors, title: isLinen ? '100% Pure linen' : '100% Combed cotton', subtitle: isLinen ? 'Naturally cooling' : 'Structured collar' },
+      accordionCareTitle: 'FABRIC & CARE',
+      accordionCareText: isLinen
+        ? '100% natural European linen. Wash in cold water on gentle cycle. Hang dry while damp and steam or press lightly for effortless texture.'
+        : '100% combed long-staple cotton. Machine wash cold at 30°C. Hang dry and iron while slightly damp for a sharp, clean finish.',
+      accordionFitTitle: 'FIT & SIZING',
+      accordionFitText: 'Tailored through the shoulders with standard chest ease. Order your regular size for an elegant fit.',
+    };
+  }
+
+  // 8. T-Shirts & Tops
+  if (cat.includes('t-shirt') || name.includes('t-shirt') || name.includes('tee') || name.includes('polo')) {
+    return {
+      care: { icon: Droplets, title: 'Machine wash cold', subtitle: 'Gentle cycle' },
+      fit: { icon: Ruler, title: product.fit || 'Regular fit', subtitle: 'True to size' },
+      material: { icon: Scissors, title: '100% Combed cotton', subtitle: 'Pre-shrunk fabric' },
+      accordionCareTitle: 'FABRIC & CARE',
+      accordionCareText: '100% pre-shrunk combed cotton jersey. Machine wash cold with like colors. Do not bleach. Tumble dry on low or line dry.',
+      accordionFitTitle: 'FIT & SIZING',
+      accordionFitText: 'True to size. Choose your standard size for a clean classic fit, or size up one size for a modern relaxed fit.',
+    };
+  }
+
+  // 9. Hoodies & Sweatshirts
+  if (cat.includes('hoodie') || name.includes('hoodie') || name.includes('sweatshirt') || name.includes('sweater')) {
+    return {
+      care: { icon: Droplets, title: 'Cold wash inside out', subtitle: 'Flat dry' },
+      fit: { icon: Ruler, title: product.fit || 'Relaxed fit', subtitle: 'True to size' },
+      material: { icon: Scissors, title: 'Heavyweight fleece', subtitle: 'Brushed interior' },
+      accordionCareTitle: 'FABRIC & CARE',
+      accordionCareText: 'Heavyweight cotton-blend fleece with soft brushed interior. Machine wash cold inside out. Flat dry to maintain shape and prevent shrinkage.',
+      accordionFitTitle: 'FIT & SIZING',
+      accordionFitText: 'Cut in a relaxed, comfortable silhouette with dropped shoulders and ribbed cuffs. True to size.',
+    };
+  }
+
+  // 10. Fallback / General Apparel
+  return {
+    care: { icon: Droplets, title: 'Machine wash cold', subtitle: 'Gentle cycle' },
+    fit: { icon: Ruler, title: product.fit || 'Standard fit', subtitle: 'True to size' },
+    material: { icon: Scissors, title: 'Quality fabric', subtitle: 'Reinforced seams' },
+    accordionCareTitle: 'FABRIC & CARE',
+    accordionCareText: 'Machine wash cold with like colors. Do not bleach. Line dry in shade to preserve fabric integrity and color longevity.',
+    accordionFitTitle: 'FIT & SIZING',
+    accordionFitText: 'Fits true to standard retail sizing. Order your regular size.',
+  };
+}
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -76,6 +238,39 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const { config } = useStoreSettingsStore();
   const { isFavourite, toggleFavourite } = useFavouritesStore();
   const isFav = product ? isFavourite(product.id, selectedColor) : false;
+
+  const { categories: apiCategories = [] } = useCategories();
+  const [isCopiedShare, setIsCopiedShare] = useState(false);
+
+  const handleShare = async () => {
+    if (!product) return;
+    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const shareData = {
+      title: product.name,
+      text: `Check out ${product.name} on YOX`,
+      url: shareUrl,
+    };
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setIsCopiedShare(true);
+        toast.success('Link copied to clipboard!');
+        setTimeout(() => setIsCopiedShare(false), 2000);
+      } catch {
+        toast.error('Failed to copy link');
+      }
+    }
+  };
 
   // Initialize selected variants and SEO metadata when data loads
   useEffect(() => {
@@ -254,6 +449,19 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       </div>
     );
   }
+
+  // Resolve product specifications (category-aware features and care specs)
+  const currentCategory = (apiCategories || []).find(
+    (c) => c.id === product.categoryId || c.slug?.toLowerCase() === product.categoryId?.toLowerCase()
+  );
+  const currentSubCategory = (apiCategories || []).find(
+    (c) => c.id === product.subCategoryId || c.slug?.toLowerCase() === product.subCategoryId?.toLowerCase()
+  );
+  const productSpecs = getProductSpecifications(
+    product,
+    currentCategory?.name || currentCategory?.slug,
+    currentSubCategory?.name || currentSubCategory?.slug
+  );
 
   // Derive unique colors safely
   const variants = product.variants && Array.isArray(product.variants) ? product.variants : [];
@@ -509,9 +717,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   <img 
                     src={img} 
                     alt={`${product.name} View ${idx + 1}`}
-                    className={`w-full h-full object-cover object-top mix-blend-multiply transition-transform duration-300 group-hover:scale-105 ${
-                      isOutOfStock ? 'opacity-85 grayscale-[15%]' : ''
-                    }`}
+                    className="w-full h-full object-cover object-top mix-blend-multiply transition-transform duration-300 group-hover:scale-105"
                   />
                   
                   {/* Subtle click to preview overlay hint */}
@@ -543,17 +749,36 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         {/* Right Column: 35% Details & Actions */}
         <div className="w-full lg:w-[35%] lg:sticky lg:top-24 lg:pl-10 lg:pr-14 pt-6 lg:pt-8 px-4 sm:px-6">
             
-            {/* Tag Badge / Sold Out Badge */}
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              {isOutOfStock ? (
-                <span className="inline-block text-[10px] font-black uppercase tracking-widest text-white bg-zinc-900 px-2.5 py-1 rounded-none">
-                  SOLD OUT
-                </span>
-              ) : product.tag ? (
-                <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-black bg-gray-100 px-2 py-0.5 rounded-none">
-                  {product.tag}
-                </span>
-              ) : null}
+            {/* Tag Badge / Sold Out Badge & Top Share Button */}
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {isOutOfStock ? (
+                  <span className="inline-block text-[10px] font-black uppercase tracking-widest text-white bg-zinc-900 px-2.5 py-1 rounded-none">
+                    SOLD OUT
+                  </span>
+                ) : product.tag ? (
+                  <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-black bg-gray-100 px-2 py-0.5 rounded-none">
+                    {product.tag}
+                  </span>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                onClick={handleShare}
+                className="text-gray-500 hover:text-black transition-colors p-1 flex items-center gap-1.5 cursor-pointer"
+                title="Share product"
+                aria-label="Share product"
+              >
+                {isCopiedShare ? (
+                  <span className="text-emerald-600 text-[11px] font-semibold flex items-center gap-1">
+                    <Check size={14} strokeWidth={2.5} /> Copied
+                  </span>
+                ) : (
+                  <span className="text-gray-600 hover:text-black text-[11px] font-medium flex items-center gap-1">
+                    <Share2 size={14} strokeWidth={1.75} /> Share
+                  </span>
+                )}
+              </button>
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-medium text-gray-900 mb-2.5 tracking-tight">
@@ -710,8 +935,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
             {/* Action Buttons (Mobile & Desktop Responsive Layout) */}
             <div className="flex flex-col gap-2.5 sm:gap-3 mb-8">
-              {/* Row 1: Add to Bag + Wishlist (Aligned on mobile & responsive) */}
-              <div className="flex items-center gap-2.5 sm:hidden">
+              {/* Row 1: Add to Bag + Wishlist + Share (Aligned on mobile & responsive) */}
+              <div className="flex items-center gap-2 sm:hidden">
                 <button 
                   type="button"
                   onClick={handleAddToBasket}
@@ -729,6 +954,19 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 >
                   <Heart size={20} className={isFav ? "fill-red-500 text-red-500" : "text-black"} />
                 </button>
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="w-12 h-[48px] flex items-center justify-center border border-gray-300 hover:border-black hover:bg-gray-50 active:scale-[0.96] transition-all cursor-pointer shrink-0 rounded-none"
+                  title="Share product"
+                  aria-label="Share product"
+                >
+                  {isCopiedShare ? (
+                    <Check size={18} className="text-emerald-600" />
+                  ) : (
+                    <Share2 size={18} className="text-black" />
+                  )}
+                </button>
               </div>
 
               {/* Mobile Buy Now (Full width) */}
@@ -742,7 +980,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               </button>
 
               {/* Desktop Action Buttons Row (>= sm screens) */}
-              <div className="hidden sm:flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2.5">
                 <button 
                   type="button"
                   onClick={handleAddToBasket}
@@ -768,62 +1006,85 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 >
                   <Heart size={20} className={isFav ? "fill-red-500 text-red-500" : "text-black"} />
                 </button>
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="w-12 h-[48px] flex items-center justify-center border border-gray-300 hover:border-black hover:bg-gray-50 active:scale-[0.96] transition-all cursor-pointer shrink-0 rounded-none"
+                  title="Share product"
+                  aria-label="Share product"
+                >
+                  {isCopiedShare ? (
+                    <Check size={18} className="text-emerald-600" />
+                  ) : (
+                    <Share2 size={18} className="text-black" />
+                  )}
+                </button>
               </div>
             </div>
 
             {/* Offers card */}
             {renderOffers()}
 
-            {/* Feature Highlights */}
-            <div className="grid grid-cols-3 gap-2 py-6 border-t border-b border-gray-100 my-6">
-              <div className="flex flex-col items-center text-center gap-2">
-                <div className="w-9 h-9 rounded-none bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-700">
-                  <Droplets size={16} strokeWidth={1.5} />
+            {/* Feature Highlights (Grounded, category-appropriate retail specifications) */}
+            {productSpecs && (
+              <div className="grid grid-cols-3 gap-2 py-6 border-t border-b border-gray-100 my-6">
+                <div className="flex flex-col items-center text-center gap-2">
+                  <div className="w-9 h-9 rounded-none bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-700">
+                    <productSpecs.care.icon size={16} strokeWidth={1.5} />
+                  </div>
+                  <span className="text-[11px] font-semibold text-gray-800 leading-tight">
+                    {productSpecs.care.title}<br/>{productSpecs.care.subtitle}
+                  </span>
                 </div>
-                <span className="text-[11px] font-semibold text-gray-800 leading-tight">
-                  Dry clean or<br/>cold wash
-                </span>
-              </div>
-              <div className="flex flex-col items-center text-center gap-2">
-                <div className="w-9 h-9 rounded-none bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-700">
-                  <Ruler size={16} strokeWidth={1.5} />
+                <div className="flex flex-col items-center text-center gap-2">
+                  <div className="w-9 h-9 rounded-none bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-700">
+                    <productSpecs.fit.icon size={16} strokeWidth={1.5} />
+                  </div>
+                  <span className="text-[11px] font-semibold text-gray-800 leading-tight">
+                    {productSpecs.fit.title}<br/>{productSpecs.fit.subtitle}
+                  </span>
                 </div>
-                <span className="text-[11px] font-semibold text-gray-800 leading-tight">
-                  Standard fit<br/>true to size
-                </span>
-              </div>
-              <div className="flex flex-col items-center text-center gap-2">
-                <div className="w-9 h-9 rounded-none bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-700">
-                  <Scissors size={16} strokeWidth={1.5} />
+                <div className="flex flex-col items-center text-center gap-2">
+                  <div className="w-9 h-9 rounded-none bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-700">
+                    <productSpecs.material.icon size={16} strokeWidth={1.5} />
+                  </div>
+                  <span className="text-[11px] font-semibold text-gray-800 leading-tight">
+                    {productSpecs.material.title}<br/>{productSpecs.material.subtitle}
+                  </span>
                 </div>
-                <span className="text-[11px] font-semibold text-gray-800 leading-tight">
-                  Premium fabric<br/>breathable weave
-                </span>
               </div>
-            </div>
+            )}
 
             {/* Accordions */}
-            <div className="mb-6 flex flex-col divide-y divide-gray-100">
-              {['FABRIC & CARE', 'FIT & SIZING', 'SHIPPING & RETURNS'].map(tab => (
-                <div key={tab} className="py-3.5">
-                  <button 
-                    type="button"
-                    onClick={() => setOpenAccordion(openAccordion === tab ? null : tab)} 
-                    className="w-full flex items-center justify-between text-[12px] sm:text-[13px] font-bold text-gray-900 tracking-wider cursor-pointer"
-                  >
-                    {tab}
-                    <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${openAccordion === tab ? 'rotate-180' : ''}`} />
-                  </button>
-                  {openAccordion === tab && (
-                    <div className="mt-3 text-[12px] text-gray-600 leading-relaxed pr-4">
-                      {tab === 'FABRIC & CARE' ? 'Crafted from premium fabrics designed for durability and comfort. We recommend cold washing and laying flat to dry.'
-                       : tab === 'FIT & SIZING' ? 'True to size. Order your regular size for a relaxed fit, or size down for a slimmer silhouette.'
-                       : `Free shipping on orders above ${config.currencySymbol}${config.freeShippingThreshold}. ${config.returnWindowDays}-day hassle-free return policy.`}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+            {productSpecs && (
+              <div className="mb-6 flex flex-col divide-y divide-gray-100">
+                {[
+                  { id: 'CARE', title: productSpecs.accordionCareTitle, content: productSpecs.accordionCareText },
+                  { id: 'FIT', title: productSpecs.accordionFitTitle, content: productSpecs.accordionFitText },
+                  { 
+                    id: 'SHIPPING', 
+                    title: 'SHIPPING & RETURNS', 
+                    content: `Free shipping on orders above ${config.currencySymbol}${config.freeShippingThreshold}. ${config.returnWindowDays}-day hassle-free return policy.` 
+                  }
+                ].map(tab => (
+                  <div key={tab.id} className="py-3.5">
+                    <button 
+                      type="button"
+                      onClick={() => setOpenAccordion(openAccordion === tab.id ? null : tab.id)} 
+                      className="w-full flex items-center justify-between text-[12px] sm:text-[13px] font-bold text-gray-900 tracking-wider cursor-pointer"
+                    >
+                      {tab.title}
+                      <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${openAccordion === tab.id ? 'rotate-180' : ''}`} />
+                    </button>
+                    {openAccordion === tab.id && (
+                      <div className="mt-3 text-[12px] text-gray-600 leading-relaxed pr-4">
+                        {tab.content}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Description */}
             <div className="text-[11px] sm:text-[12px] text-gray-600 leading-relaxed pb-6">

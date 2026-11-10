@@ -80,8 +80,8 @@ function SuggestionCard({ product, categoryDisplayName }: SuggestionCardProps) {
         <img
           src={optimizeCloudinaryUrl(primaryImage)}
           alt={product.name}
-          className={`w-full h-full object-cover object-top transition-opacity duration-300 ${
-            isOutOfStock ? 'opacity-80 grayscale-[20%]' : ''
+          className={`w-full h-full object-cover object-top transition-all duration-300 ${
+            isOutOfStock ? 'grayscale contrast-125 brightness-75' : ''
           } ${
             secondImage ? 'group-hover:opacity-0' : ''
           }`}
@@ -92,10 +92,15 @@ function SuggestionCard({ product, categoryDisplayName }: SuggestionCardProps) {
           <img
             src={optimizeCloudinaryUrl(secondImage)}
             alt={`${product.name} alternate view`}
-            className={`absolute inset-0 w-full h-full object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none ${
-              isOutOfStock ? 'grayscale-[20%]' : ''
+            className={`absolute inset-0 w-full h-full object-cover object-top opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none ${
+              isOutOfStock ? 'grayscale contrast-125 brightness-75' : ''
             }`}
           />
+        )}
+
+        {/* Dark tint overlay for sold out products */}
+        {isOutOfStock && (
+          <div className="absolute inset-0 bg-black/15 pointer-events-none z-[5]" />
         )}
 
         {/* Sold Out or Discount badge */}

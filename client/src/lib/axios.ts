@@ -149,6 +149,19 @@ apiClient.interceptors.response.use(
       }
     }
 
+    // Sanitize any raw backend refresh-token errors so they are never exposed to UI/toasts
+    if (error.response?.data && typeof error.response.data === 'object') {
+      const data = error.response.data as Record<string, any>;
+      if (
+        typeof data.message === 'string' &&
+        (data.message.toLowerCase().includes('refresh token') ||
+          data.message.toLowerCase().includes('token provided') ||
+          data.message.toLowerCase().includes('no token'))
+      ) {
+        data.message = 'Please log in to continue.';
+      }
+    }
+
     if (is401) {
       const responseData = error.response?.data as any;
       const errorMsg = String(responseData?.message || error.message || '').toLowerCase();
@@ -201,6 +214,23 @@ apiClient.interceptors.response.use(
             });
         }
 
+        // Only attempt /auth/refresh if the user previously had an authenticated session
+        let hasActiveSession = false;
+        if (typeof window !== 'undefined') {
+          try {
+            const userStorage = localStorage.getItem('auth-storage');
+            const adminStorage = localStorage.getItem('admin-auth-storage');
+            const userAuth = userStorage ? JSON.parse(userStorage)?.state?.isAuthenticated : false;
+            const adminAuth = adminStorage ? JSON.parse(adminStorage)?.state?.isAuthenticated : false;
+            hasActiveSession = Boolean(userAuth || adminAuth);
+          } catch {}
+        }
+
+        // If user is a guest, do not attempt to refresh tokens (guest has no refresh token)
+        if (!hasActiveSession) {
+          return Promise.reject(error);
+        }
+
         originalRequest._retry = true;
         isRefreshing = true;
 
@@ -214,7 +244,19 @@ apiClient.interceptors.response.use(
           // Retry original request
           return apiClient(originalRequest);
         } catch (refreshError: any) {
-          processQueue(refreshError, null);
+          // Sanitize refresh error so "No refresh token provided" is never exposed
+          if (refreshError.response?.data && typeof refreshError.response.data === 'object') {
+            const data = refreshError.response.data as Record<string, any>;
+            if (
+              typeof data.message === 'string' &&
+              (data.message.toLowerCase().includes('refresh token') ||
+                data.message.toLowerCase().includes('token provided'))
+            ) {
+              data.message = 'Session expired. Please log in again.';
+            }
+          }
+
+          processQueue(error, null);
           isRefreshing = false;
           
           const refreshMsg = String(refreshError.response?.data?.message || refreshError.message || '').toLowerCase();
@@ -256,7 +298,7 @@ apiClient.interceptors.response.use(
             const { useAuthStore } = await import('../store/useAuthStore');
             useAuthStore.getState().logoutUser();
           }
-          return Promise.reject(refreshError);
+          return Promise.reject(error);
         }
       }
     }

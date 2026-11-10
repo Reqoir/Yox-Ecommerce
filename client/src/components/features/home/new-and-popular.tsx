@@ -239,8 +239,8 @@ export function NewAndPopular() {
                     alt={product.name}
                     fill
                     sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                    className={`object-cover object-top transition-opacity duration-300 ${
-                      product.isOutOfStock ? 'opacity-80 grayscale-[20%]' : ''
+                    className={`object-cover object-top transition-all duration-300 ${
+                      product.isOutOfStock ? 'grayscale contrast-125 brightness-75' : ''
                     } ${
                       product.secondImage && product.secondImage !== product.image ? 'group-hover:opacity-0' : ''
                     }`}
@@ -251,10 +251,14 @@ export function NewAndPopular() {
                       alt={`${product.name} alternate view`}
                       fill
                       sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                      className={`object-cover object-top opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none ${
-                        product.isOutOfStock ? 'grayscale-[20%]' : ''
+                      className={`object-cover object-top opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none ${
+                        product.isOutOfStock ? 'grayscale contrast-125 brightness-75' : ''
                       }`}
                     />
+                  )}
+
+                  {product.isOutOfStock && (
+                    <div className="absolute inset-0 bg-black/15 pointer-events-none z-[5]" />
                   )}
                   <button 
                     type="button"

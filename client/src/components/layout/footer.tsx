@@ -86,55 +86,55 @@ export function Footer() {
   ];
 
   return (
-    <footer className="w-full bg-[#E5DCC5] text-gray-900 border-t border-[#C4BA9D]">
+    <footer className="w-full bg-[#F8F7F4] text-gray-600 border-t border-[#EAE6DF]">
       
       {/* 1. Value Proposition & Trust Strip */}
-      <div className="border-b border-[#C4BA9D] bg-[#E5DCC5]">
+      <div className="border-b border-[#EAE6DF] bg-[#F8F7F4]">
         <div className="w-[95%] max-w-7xl mx-auto py-8 sm:py-10 grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
 
           <div className="flex items-center gap-4">
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none bg-white/60 shadow-xs border border-[#C4BA9D] flex items-center justify-center text-black shrink-0">
-              <Truck size={20} strokeWidth={1.8} />
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none bg-white/80 shadow-2xs border border-[#EAE6DF] flex items-center justify-center text-gray-500 shrink-0">
+              <Truck size={20} strokeWidth={1.75} />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-900">Express Delivery</h4>
-              <p className="text-[11px] sm:text-xs text-gray-600 mt-1 font-medium">
+              <h4 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700">Express Delivery</h4>
+              <p className="text-[11px] sm:text-xs text-gray-400 mt-1 font-normal">
                 Free on orders above {config.currencySymbol}{config.freeShippingThreshold}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none bg-white/60 shadow-xs border border-[#C4BA9D] flex items-center justify-center text-black shrink-0">
-              <RefreshCw size={20} strokeWidth={1.8} />
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none bg-white/80 shadow-2xs border border-[#EAE6DF] flex items-center justify-center text-gray-500 shrink-0">
+              <RefreshCw size={20} strokeWidth={1.75} />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-900">Easy Returns</h4>
-              <p className="text-[11px] sm:text-xs text-gray-600 mt-1 font-medium">
+              <h4 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700">Easy Returns</h4>
+              <p className="text-[11px] sm:text-xs text-gray-400 mt-1 font-normal">
                 {config.returnWindowDays}-day hassle-free returns
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none bg-white/60 shadow-xs border border-[#C4BA9D] flex items-center justify-center text-black shrink-0">
-              <ShieldCheck size={20} strokeWidth={1.8} />
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none bg-white/80 shadow-2xs border border-[#EAE6DF] flex items-center justify-center text-gray-500 shrink-0">
+              <ShieldCheck size={20} strokeWidth={1.75} />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-900">100% Secure Checkout</h4>
-              <p className="text-[11px] sm:text-xs text-gray-600 mt-1 font-medium">
+              <h4 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700">100% Secure Checkout</h4>
+              <p className="text-[11px] sm:text-xs text-gray-400 mt-1 font-normal">
                 Encrypted & verified payments
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none bg-white/60 shadow-xs border border-[#C4BA9D] flex items-center justify-center text-black shrink-0">
-              <Award size={20} strokeWidth={1.8} />
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none bg-white/80 shadow-2xs border border-[#EAE6DF] flex items-center justify-center text-gray-500 shrink-0">
+              <Award size={20} strokeWidth={1.75} />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-900">Premium Quality</h4>
-              <p className="text-[11px] sm:text-xs text-gray-600 mt-1 font-medium">
+              <h4 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700">Premium Quality</h4>
+              <p className="text-[11px] sm:text-xs text-gray-400 mt-1 font-normal">
                 Authentic contemporary fabrics
               </p>
             </div>
@@ -153,32 +153,32 @@ export function Footer() {
               <img
                 src="/images/logo.png"
                 alt="YOX Men's Fashion"
-                className="h-12 sm:h-14 w-auto object-contain block"
+                className="h-12 sm:h-14 w-auto object-contain block opacity-90"
               />
             </Link>
 
-            <p className="text-sm leading-relaxed text-gray-600 max-w-sm">
+            <p className="text-sm leading-relaxed text-gray-400 max-w-sm">
               {config.tagline || 'Elevating modern menswear with timeless tailoring, clean aesthetics, and unmatched everyday confidence.'}
             </p>
 
             {/* Direct Contact Touchpoints */}
-            <div className="flex flex-col gap-2.5 text-sm text-gray-700 font-medium mt-1">
+            <div className="flex flex-col gap-2.5 text-sm text-gray-400 font-normal mt-1">
               {config.supportPhone && (
-                <a href={`tel:${config.supportPhone}`} className="flex items-center gap-2.5 hover:text-black transition-colors w-fit">
-                  <Phone size={15} className="text-gray-500 shrink-0" />
+                <a href={`tel:${config.supportPhone}`} className="flex items-center gap-2.5 hover:text-gray-800 transition-colors w-fit">
+                  <Phone size={15} className="text-gray-400 shrink-0" />
                   <span>{config.supportPhone}</span>
                 </a>
               )}
               {config.supportEmail && (
-                <a href={`mailto:${config.supportEmail}`} className="flex items-center gap-2.5 hover:text-black transition-colors w-fit">
-                  <Mail size={15} className="text-gray-500 shrink-0" />
+                <a href={`mailto:${config.supportEmail}`} className="flex items-center gap-2.5 hover:text-gray-800 transition-colors w-fit">
+                  <Mail size={15} className="text-gray-400 shrink-0" />
                   <span>{config.supportEmail}</span>
                 </a>
               )}
 
               {config.storeAddress && (
-                <div className="flex items-start gap-2.5 text-gray-600 text-xs max-w-xs leading-relaxed">
-                  <MapPin size={15} className="text-gray-500 shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2.5 text-gray-400 text-xs max-w-xs leading-relaxed">
+                  <MapPin size={15} className="text-gray-400 shrink-0 mt-0.5" />
                   <span>{config.storeAddress}</span>
                 </div>
               )}
@@ -186,16 +186,16 @@ export function Footer() {
 
             {/* Social Icons */}
             <div className="flex items-center gap-2.5 mt-2">
-              <a href="https://facebook.com" target="_blank" rel="noreferrer" aria-label="Facebook" className="w-8 h-8 rounded-none border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-700 hover:border-black hover:bg-black hover:text-white transition-all shadow-xs">
+              <a href="https://facebook.com" target="_blank" rel="noreferrer" aria-label="Facebook" className="w-8 h-8 rounded-none border border-[#EAE6DF] bg-white/70 flex items-center justify-center text-gray-500 hover:border-gray-800 hover:bg-gray-800 hover:text-white transition-all shadow-2xs">
                 <FaFacebookF size={12} />
               </a>
-              <a href="https://twitter.com" target="_blank" rel="noreferrer" aria-label="X (Twitter)" className="w-8 h-8 rounded-none border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-700 hover:border-black hover:bg-black hover:text-white transition-all shadow-xs">
+              <a href="https://twitter.com" target="_blank" rel="noreferrer" aria-label="X (Twitter)" className="w-8 h-8 rounded-none border border-[#EAE6DF] bg-white/70 flex items-center justify-center text-gray-500 hover:border-gray-800 hover:bg-gray-800 hover:text-white transition-all shadow-2xs">
                 <FaXTwitter size={12} />
               </a>
-              <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label="Instagram" className="w-8 h-8 rounded-none border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-700 hover:border-black hover:bg-black hover:text-white transition-all shadow-xs">
+              <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label="Instagram" className="w-8 h-8 rounded-none border border-[#EAE6DF] bg-white/70 flex items-center justify-center text-gray-500 hover:border-gray-800 hover:bg-gray-800 hover:text-white transition-all shadow-2xs">
                 <FaInstagram size={13} />
               </a>
-              <a href="https://youtube.com" target="_blank" rel="noreferrer" aria-label="YouTube" className="w-8 h-8 rounded-none border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-700 hover:border-black hover:bg-black hover:text-white transition-all shadow-xs">
+              <a href="https://youtube.com" target="_blank" rel="noreferrer" aria-label="YouTube" className="w-8 h-8 rounded-none border border-[#EAE6DF] bg-white/70 flex items-center justify-center text-gray-500 hover:border-gray-800 hover:bg-gray-800 hover:text-white transition-all shadow-2xs">
                 <FaYoutube size={13} />
               </a>
             </div>
@@ -203,51 +203,51 @@ export function Footer() {
 
           {/* Col 2: Shop Collections (2 cols on lg) */}
           <div className="lg:col-span-2">
-            <h4 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-4">
+            <h4 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700 mb-4">
               Shop
             </h4>
-            <ul className="flex flex-col gap-2.5 text-sm text-gray-600 font-medium">
-              <li><Link href="/shop" className="hover:text-black transition-colors">All Products</Link></li>
-              <li><Link href="/shop?sort=newest" className="hover:text-black transition-colors">New Arrivals</Link></li>
-              <li><Link href="/shop?sort=popular" className="hover:text-black transition-colors">Best Sellers</Link></li>
-              <li><Link href="/shop?category=shirts" className="hover:text-black transition-colors">Shirts & Overshirts</Link></li>
-              <li><Link href="/shop?category=t-shirt" className="hover:text-black transition-colors">T-Shirts & Polos</Link></li>
-              <li><Link href="/shop?category=jacket" className="hover:text-black transition-colors">Jackets & Outerwear</Link></li>
-              <li><Link href="/shop?category=pants" className="hover:text-black transition-colors">Pants & Trousers</Link></li>
+            <ul className="flex flex-col gap-2.5 text-sm text-gray-400 font-normal">
+              <li><Link href="/shop" className="hover:text-gray-800 transition-colors">All Products</Link></li>
+              <li><Link href="/shop?sort=newest" className="hover:text-gray-800 transition-colors">New Arrivals</Link></li>
+              <li><Link href="/shop?sort=popular" className="hover:text-gray-800 transition-colors">Best Sellers</Link></li>
+              <li><Link href="/shop?category=shirts" className="hover:text-gray-800 transition-colors">Shirts & Overshirts</Link></li>
+              <li><Link href="/shop?category=t-shirt" className="hover:text-gray-800 transition-colors">T-Shirts & Polos</Link></li>
+              <li><Link href="/shop?category=jacket" className="hover:text-gray-800 transition-colors">Jackets & Outerwear</Link></li>
+              <li><Link href="/shop?category=pants" className="hover:text-gray-800 transition-colors">Pants & Trousers</Link></li>
             </ul>
           </div>
 
           {/* Col 3: About Column (2 cols on lg - Exact from reference) */}
           <div className="lg:col-span-2">
-            <h4 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-4">
+            <h4 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700 mb-4">
               About
             </h4>
-            <ul className="flex flex-col gap-2.5 text-sm text-gray-600 font-medium">
+            <ul className="flex flex-col gap-2.5 text-sm text-gray-400 font-normal">
               <li>
-                <Link href="/shop" className="hover:text-black transition-colors">
+                <Link href="/shop" className="hover:text-gray-800 transition-colors">
                   About us
                 </Link>
               </li>
               <li>
                 <a
                   href={`mailto:${config.supportEmail || 'support@yox.com'}`}
-                  className="hover:text-black transition-colors"
+                  className="hover:text-gray-800 transition-colors"
                 >
                   Write to us
                 </a>
               </li>
               <li>
-                <Link href="/shop" className="hover:text-black transition-colors">
+                <Link href="/shop" className="hover:text-gray-800 transition-colors">
                   Careers
                 </Link>
               </li>
               <li>
-                <Link href="/shop" className="hover:text-black transition-colors">
+                <Link href="/shop" className="hover:text-gray-800 transition-colors">
                   Take a Tour
                 </Link>
               </li>
               <li>
-                <Link href="/shop" className="hover:text-black transition-colors">
+                <Link href="/shop" className="hover:text-gray-800 transition-colors">
                   Blog
                 </Link>
               </li>
@@ -256,68 +256,53 @@ export function Footer() {
                   suppressHydrationWarning
                   type="button"
                   onClick={() => setIsStoreLocatorOpen(true)}
-                  className="text-left text-black font-semibold hover:underline flex items-center gap-1.5 cursor-pointer"
+                  className="text-left text-gray-600 hover:text-gray-900 font-medium flex items-center gap-1.5 cursor-pointer"
                 >
                   <span>Store Locator</span>
-                  <span className="text-[10px] bg-black text-white px-1.5 py-0.2 rounded-xs font-bold uppercase tracking-wider">
+                  <span className="text-[9px] bg-gray-700 text-white px-1.5 py-0.5 rounded-none font-bold uppercase tracking-wider">
                     Stores
                   </span>
                 </button>
-              </li>
-              <li>
-                <Link href="/shop" className="hover:text-black transition-colors">
-                  YOX Foundation
-                </Link>
-              </li>
-              <li>
-                <Link href="/shop" className="hover:text-black transition-colors">
-                  YOX Cares
-                </Link>
-              </li>
-              <li>
-                <Link href="/shop" className="hover:text-black transition-colors">
-                  YOX Elite
-                </Link>
               </li>
             </ul>
           </div>
 
           {/* Col 4: Help & Support Column (2 cols on lg - Exact from reference) */}
           <div className="lg:col-span-2">
-            <h4 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-4">
+            <h4 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700 mb-4">
               Help
             </h4>
-            <ul className="flex flex-col gap-2.5 text-sm text-gray-600 font-medium">
+            <ul className="flex flex-col gap-2.5 text-sm text-gray-400 font-normal">
               <li>
                 <a
                   href={`tel:${config.supportPhone || '1800-123-1444'}`}
-                  className="hover:text-black transition-colors"
+                  className="hover:text-gray-800 transition-colors"
                 >
                   Contact us
                 </a>
               </li>
               <li>
-                <Link href="/profile/orders" className="hover:text-black transition-colors">
+                <Link href="/shipping" className="hover:text-gray-800 transition-colors">
                   Shipping
                 </Link>
               </li>
               <li>
-                <Link href="/profile/orders" className="hover:text-black transition-colors">
+                <Link href="/returns-process" className="hover:text-gray-800 transition-colors">
                   Returns Process
                 </Link>
               </li>
               <li>
-                <Link href="/profile/orders" className="hover:text-black transition-colors">
+                <Link href="/returns-exchange-policy" className="hover:text-gray-800 transition-colors">
                   Returns And Exchange Policy
                 </Link>
               </li>
               <li>
-                <Link href="/profile/orders" className="hover:text-black transition-colors">
+                <Link href="/help-centre" className="hover:text-gray-800 transition-colors">
                   Help Centre
                 </Link>
               </li>
               <li>
-                <Link href="/profile/orders" className="hover:text-black transition-colors">
+                <Link href="/track-order" className="hover:text-gray-800 transition-colors">
                   Track Your Order
                 </Link>
               </li>
@@ -326,16 +311,16 @@ export function Footer() {
 
           {/* Col 5: Newsletter & VIP Club (3 cols on lg) */}
           <div className="lg:col-span-3 sm:col-span-2 md:col-span-3 flex flex-col gap-3.5">
-            <h4 className="text-sm font-bold uppercase tracking-wider text-gray-900">
+            <h4 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700">
               Be In The Know
             </h4>
-            <p className="text-sm text-gray-600 leading-relaxed">
+            <p className="text-sm text-gray-400 leading-relaxed">
               Subscribe to get 10% off your first order, member-only drops, and private seasonal sales.
             </p>
 
             {isSubscribed ? (
-              <div className="p-3.5 bg-gray-50 border border-gray-200 rounded-sm text-sm font-medium text-gray-900 flex items-center gap-2.5">
-                <Check size={18} className="text-green-600 shrink-0" />
+              <div className="p-3.5 bg-white border border-[#EAE6DF] rounded-none text-sm font-medium text-gray-800 flex items-center gap-2.5">
+                <Check size={18} className="text-emerald-600 shrink-0" />
                 <span>Thank you! You&apos;re now on our VIP subscriber list.</span>
               </div>
             ) : (
@@ -347,18 +332,18 @@ export function Footer() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="flex-1 bg-white/70 border border-[#C4BA9D] rounded-sm px-4 py-2.5 h-11 text-base md:text-sm text-gray-900 placeholder-gray-600 outline-none focus:border-black transition-colors"
+                  className="flex-1 bg-white border border-[#EAE6DF] rounded-none px-4 py-2.5 h-11 text-base md:text-sm text-gray-700 placeholder-gray-400 outline-none focus:border-gray-700 transition-colors"
                 />
                 <button
                   suppressHydrationWarning
                   type="submit"
-                  className="bg-black text-white hover:bg-gray-800 transition-colors text-xs sm:text-sm font-bold uppercase tracking-wider px-6 h-11 rounded-sm whitespace-nowrap cursor-pointer shadow-xs"
+                  className="bg-gray-900 text-white hover:bg-black transition-colors text-xs sm:text-sm font-bold uppercase tracking-wider px-6 h-11 rounded-none whitespace-nowrap cursor-pointer shadow-xs"
                 >
                   Join
                 </button>
               </form>
             )}
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-gray-400">
               By subscribing, you agree to our privacy policy. No spam, ever.
             </p>
           </div>
@@ -367,7 +352,7 @@ export function Footer() {
       </div>
 
       {/* 3. Reference Contact Action Strip (Talk to us, Helpcentre, Write to us, Socials) */}
-      <div className="border-t border-[#C4BA9D]">
+      <div className="border-t border-[#EAE6DF] bg-[#F8F7F4]">
         <div className="w-[95%] max-w-7xl mx-auto py-6 sm:py-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
 
           {/* Action Pills */}
@@ -375,14 +360,14 @@ export function Footer() {
 
             {/* Talk to us */}
             <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-800 shrink-0">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none border border-[#EAE6DF] bg-white/80 flex items-center justify-center text-gray-500 shrink-0">
                 <Phone size={19} strokeWidth={1.75} />
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-gray-600 font-normal">Talk to us</span>
+                <span className="text-xs text-gray-400 font-normal">Talk to us</span>
                 <a
                   href={`tel:${config.supportPhone || '1800-123-1444'}`}
-                  className="text-sm sm:text-[15px] font-semibold text-gray-900 hover:text-black transition-colors"
+                  className="text-sm sm:text-[15px] font-medium text-gray-700 hover:text-gray-900 transition-colors"
                 >
                   {config.supportPhone || '1800-123-1444'}
                 </a>
@@ -391,14 +376,14 @@ export function Footer() {
 
             {/* Helpcentre */}
             <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-800 shrink-0">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none border border-[#EAE6DF] bg-white/80 flex items-center justify-center text-gray-500 shrink-0">
                 <HelpCircle size={19} strokeWidth={1.75} />
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-gray-600 font-normal">Helpcentre</span>
+                <span className="text-xs text-gray-400 font-normal">Helpcentre</span>
                 <Link
-                  href="/profile/orders"
-                  className="text-sm sm:text-[15px] font-semibold text-gray-900 hover:text-black transition-colors"
+                  href="/help-centre"
+                  className="text-sm sm:text-[15px] font-medium text-gray-700 hover:text-gray-900 transition-colors"
                 >
                   help.yoxfashion.in
                 </Link>
@@ -407,14 +392,14 @@ export function Footer() {
 
             {/* Write to us */}
             <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none border border-[#C4BA9D] bg-white/40 flex items-center justify-center text-gray-800 shrink-0">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-none border border-[#EAE6DF] bg-white/80 flex items-center justify-center text-gray-500 shrink-0">
                 <Mail size={19} strokeWidth={1.75} />
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-gray-600 font-normal">Write to us</span>
+                <span className="text-xs text-gray-400 font-normal">Write to us</span>
                 <a
                   href={`mailto:${config.supportEmail || 'help@yoxfashion.in'}`}
-                  className="text-sm sm:text-[15px] font-semibold text-gray-900 hover:text-black transition-colors"
+                  className="text-sm sm:text-[15px] font-medium text-gray-700 hover:text-gray-900 transition-colors"
                 >
                   {config.supportEmail || 'help@yoxfashion.in'}
                 </a>
@@ -424,13 +409,13 @@ export function Footer() {
           </div>
 
           {/* Social Media Icons */}
-          <div className="flex items-center gap-6 text-xl text-gray-800 self-start md:self-auto pt-2 md:pt-0">
+          <div className="flex items-center gap-6 text-xl text-gray-500 self-start md:self-auto pt-2 md:pt-0">
             <a
               href="https://facebook.com"
               target="_blank"
               rel="noreferrer"
               aria-label="Facebook"
-              className="hover:text-black transition-opacity hover:opacity-75"
+              className="hover:text-gray-800 transition-opacity hover:opacity-75"
             >
               <FaFacebookF size={18} />
             </a>
@@ -439,7 +424,7 @@ export function Footer() {
               target="_blank"
               rel="noreferrer"
               aria-label="X (Twitter)"
-              className="hover:text-black transition-opacity hover:opacity-75"
+              className="hover:text-gray-800 transition-opacity hover:opacity-75"
             >
               <FaXTwitter size={18} />
             </a>
@@ -448,7 +433,7 @@ export function Footer() {
               target="_blank"
               rel="noreferrer"
               aria-label="Instagram"
-              className="hover:text-black transition-opacity hover:opacity-75"
+              className="hover:text-gray-800 transition-opacity hover:opacity-75"
             >
               <FaInstagram size={20} />
             </a>
@@ -458,20 +443,20 @@ export function Footer() {
       </div>
 
       {/* 4. Bottom Bar: Copyright, Reqoir Technologies Credit, and Payment Badges */}
-      <div className="border-t border-[#C4BA9D] bg-[#D6CDAF]">
-        <div className="w-[95%] max-w-7xl mx-auto py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-gray-700">
+      <div className="border-t border-[#EAE6DF] bg-[#F1EFEA]">
+        <div className="w-[95%] max-w-7xl mx-auto py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-gray-500">
 
           {/* Copyright & Developed by Reqoir Technologies */}
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-center sm:text-left">
             <span suppressHydrationWarning>© {new Date().getFullYear()} YOX Men&apos;s Fashion. All rights reserved.</span>
-            <span className="hidden sm:inline text-gray-400">|</span>
+            <span className="hidden sm:inline text-gray-300">|</span>
             <span className="flex items-center gap-1">
               <span>Developed by</span>
               <a
                 href="https://reqoir.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-bold text-gray-900 hover:text-black hover:underline inline-flex items-center gap-0.5 transition-colors"
+                className="font-semibold text-gray-600 hover:text-black hover:underline inline-flex items-center gap-0.5 transition-colors"
               >
                 <span>Reqoir Technologies</span>
 
@@ -481,8 +466,8 @@ export function Footer() {
 
           {/* Payment Badges */}
           <div className="flex items-center gap-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-700">Secured Payments</span>
-            <div className="flex items-center gap-2.5 text-2xl text-gray-700">
+            <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Secured Payments</span>
+            <div className="flex items-center gap-2.5 text-2xl text-gray-400">
               <FaCcVisa title="Visa" className="hover:text-[#1A1F71] transition-colors" />
               <FaCcMastercard title="Mastercard" className="hover:text-[#EB001B] transition-colors" />
               <FaCcAmex title="American Express" className="hover:text-[#2E77BC] transition-colors" />
