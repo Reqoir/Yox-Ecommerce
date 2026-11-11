@@ -175,7 +175,7 @@ export function FeaturedSection() {
                     fill
                     sizes="(max-width: 768px) 260px, (max-width: 1024px) 300px, 25vw"
                     className={`object-cover object-center transition-all duration-300 ${
-                      product.isOutOfStock ? 'grayscale contrast-125 brightness-75' : ''
+                      product.isOutOfStock ? 'grayscale contrast-110 brightness-[0.78]' : ''
                     } ${
                       product.secondImage && product.secondImage !== product.image ? 'group-hover:opacity-0' : ''
                     }`}
@@ -187,13 +187,9 @@ export function FeaturedSection() {
                       fill
                       sizes="(max-width: 768px) 260px, (max-width: 1024px) 300px, 25vw"
                       className={`object-cover object-center opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none ${
-                        product.isOutOfStock ? 'grayscale contrast-125 brightness-75' : ''
+                        product.isOutOfStock ? 'grayscale contrast-110 brightness-[0.78]' : ''
                       }`}
                     />
-                  )}
-
-                  {product.isOutOfStock && (
-                    <div className="absolute inset-0 bg-black/15 pointer-events-none z-[5]" />
                   )}
                   
                   {/* Badge / Sold Out Badge */}

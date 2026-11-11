@@ -129,10 +129,10 @@ apiClient.interceptors.response.use(
 
     if (shouldLog) {
       console.error(`[API Error] ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url} (${statusCode}):`, error.response?.data);
-    } else if (process.env.NODE_ENV === 'development' && isClientError && !isRateLimit) {
+    } else if (process.env.NODE_ENV === 'development' && isClientError && !isRateLimit && !is401) {
       console.warn(`[API ${statusCode}] ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}:`, error.response?.data);
     } else if (!error.response && error.message) {
-      console.error(`[API Network Error] ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}:`, error.message);
+      console.warn(`[API Network Error] ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}:`, `${error.message} (Ensure backend server is running on port 5001)`);
     }
 
     // ── 429 Rate Limit Handling ──────────────────────────────────────────────
@@ -156,7 +156,8 @@ apiClient.interceptors.response.use(
         typeof data.message === 'string' &&
         (data.message.toLowerCase().includes('refresh token') ||
           data.message.toLowerCase().includes('token provided') ||
-          data.message.toLowerCase().includes('no token'))
+          data.message.toLowerCase().includes('no token') ||
+          data.message.toLowerCase().includes('refresh token is required'))
       ) {
         data.message = 'Please log in to continue.';
       }
@@ -244,17 +245,23 @@ apiClient.interceptors.response.use(
           // Retry original request
           return apiClient(originalRequest);
         } catch (refreshError: any) {
-          // Sanitize refresh error so "No refresh token provided" is never exposed
-          if (refreshError.response?.data && typeof refreshError.response.data === 'object') {
-            const data = refreshError.response.data as Record<string, any>;
-            if (
-              typeof data.message === 'string' &&
-              (data.message.toLowerCase().includes('refresh token') ||
-                data.message.toLowerCase().includes('token provided'))
-            ) {
-              data.message = 'Session expired. Please log in again.';
+          // Sanitize refresh error and original error so "No refresh token provided" is never exposed
+          const sanitizeErr = (targetErr: any) => {
+            if (targetErr?.response?.data && typeof targetErr.response.data === 'object') {
+              const data = targetErr.response.data as Record<string, any>;
+              if (
+                typeof data.message === 'string' &&
+                (data.message.toLowerCase().includes('refresh token') ||
+                  data.message.toLowerCase().includes('token provided') ||
+                  data.message.toLowerCase().includes('no token') ||
+                  data.message.toLowerCase().includes('refresh token is required'))
+              ) {
+                data.message = 'Session expired. Please log in again.';
+              }
             }
-          }
+          };
+          sanitizeErr(refreshError);
+          sanitizeErr(error);
 
           processQueue(error, null);
           isRefreshing = false;

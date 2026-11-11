@@ -169,7 +169,7 @@ export class AuthController {
       const refreshTokenCookie = req.cookies?.refresh_token || req.cookies?.refreshToken;
 
       if (!refreshTokenCookie) {
-        throw ApiError.unauthorized('No refresh token provided');
+        throw ApiError.unauthorized('Session expired. Please log in again.');
       }
 
       // Execute use case (will throw ApiError if invalid)

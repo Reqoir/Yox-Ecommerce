@@ -54,8 +54,8 @@ function OrderSuccessContent() {
         if (isMounted && fetchedOrder) {
           setOrder(fetchedOrder);
         }
-      } catch (err) {
-        console.error('Failed to load order for success page:', err);
+      } catch (err: any) {
+        console.warn('Notice loading order for success page:', err?.message || err);
       } finally {
         if (isMounted) setLoading(false);
       }

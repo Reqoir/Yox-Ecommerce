@@ -10,7 +10,6 @@ import {
   Heart,
   Settings,
   LogOut,
-  ShieldCheck,
   ChevronRight,
   ChevronDown,
   CheckCircle2,
@@ -20,6 +19,7 @@ import {
 import { useAuthStore } from '@/store/useAuthStore';
 import { authApi } from '@/api/auth';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 const sidebarLinks = [
   { name: 'Personal Info', href: '/profile/personal-info', icon: User, description: 'Manage name, phone & email' },
@@ -32,18 +32,26 @@ const sidebarLinks = [
 export default function ProfileLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logoutUser } = useAuthStore();
+  const { user, isAuthenticated, logoutUser } = useAuthStore();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Layout sync if needed
-  }, [user]);
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && !isAuthenticated) {
+      const returnUrl = encodeURIComponent(pathname || '/profile');
+      router.replace(`/login?callbackUrl=${returnUrl}`);
+    }
+  }, [mounted, isAuthenticated, pathname, router]);
 
   const handleLogout = async () => {
     try {
       await authApi.logout();
-    } catch (e) {
-      console.error(e);
+    } catch {
+      // Ignored
     } finally {
       logoutUser();
       toast.success('Signed out successfully');
@@ -51,15 +59,30 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
     }
   };
 
+  // Prevent rendering protected subcomponents or making unauthenticated API calls
+  if (!mounted || !isAuthenticated) {
+    return (
+      <div className="w-full min-h-[60vh] flex flex-col items-center justify-center gap-3 bg-neutral-50/60 py-20">
+        <Loader2 className="w-7 h-7 animate-spin text-gray-800" />
+        <span className="text-xs uppercase tracking-widest text-gray-500 font-semibold">
+          Verifying session...
+        </span>
+      </div>
+    );
+  }
+
   const isOverviewPage = pathname === '/profile';
 
-  // Format clean display values
-  const hasRealName = user?.fullName && user.fullName.trim() !== '' && user.fullName.toLowerCase() !== 'customer';
-  const displayName = hasRealName ? user.fullName : 'YOX Member';
-  const initial = hasRealName ? user.fullName.charAt(0).toUpperCase() : 'Y';
   const rawPhone = (user?.phone || '').replace(/\D/g, '').slice(-10);
   const formattedPhone = rawPhone ? `+91 ${rawPhone.slice(0, 5)} ${rawPhone.slice(5)}` : null;
   const hasRealEmail = user?.email && !user.email.endsWith('@user.yox.internal') && user.email.includes('@');
+
+  // Format clean display values - prioritize the user's name
+  const rawName = (user?.fullName || '').trim();
+  const displayName = rawName && rawName.toLowerCase() !== 'customer'
+    ? rawName
+    : rawName || (hasRealEmail ? user?.email?.split('@')[0] : '') || (formattedPhone ? `User (${formattedPhone})` : 'User');
+  const initial = displayName ? displayName.charAt(0).toUpperCase() : 'U';
 
   return (
     <div className="w-full bg-neutral-50/60 min-h-screen pb-16 pt-4 lg:pt-8 selection:bg-black selection:text-white">
@@ -80,9 +103,6 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                   <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">
                     {displayName}
                   </h1>
-                  <span className="inline-flex items-center gap-1 bg-[#C09B7A] text-white text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-xs tracking-wider shadow-2xs">
-                    <ShieldCheck size={12} /> YOX CLUB
-                  </span>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 pt-0.5">
@@ -96,18 +116,11 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                     </span>
                   )}
 
-                  {hasRealEmail ? (
+                  {hasRealEmail && (
                     <span className="inline-flex items-center gap-1.5 text-gray-600">
                       <Mail size={13} className="text-gray-400" />
                       <span>{user?.email}</span>
                     </span>
-                  ) : (
-                    <Link
-                      href="/profile/personal-info"
-                      className="inline-flex items-center gap-1 text-[11px] text-[#C09B7A] hover:text-black font-medium underline underline-offset-2 transition-colors"
-                    >
-                      + Add email for invoices
-                    </Link>
                   )}
                 </div>
               </div>

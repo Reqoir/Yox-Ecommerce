@@ -272,10 +272,24 @@ export default function ReturnsProcessPage() {
 
             <div className="py-4 last:pb-0">
               <h4 className="font-bold text-gray-900 mb-1">
-                Read our complete legal return terms:
+                Need more help or have doubts about cancellation?
               </h4>
               <p className="text-gray-600 leading-relaxed">
-                For detailed legal terms, conditions, and special circumstances, please view our full{' '}
+                Explore our comprehensive{' '}
+                <Link
+                  href="/help-centre#returns"
+                  className="font-bold text-black underline hover:text-emerald-700 transition-colors"
+                >
+                  Returns FAQs
+                </Link>{' '}
+                or view our{' '}
+                <Link
+                  href="/help-centre#cancellation"
+                  className="font-bold text-black underline hover:text-emerald-700 transition-colors"
+                >
+                  Order Cancellation Guide
+                </Link>
+                . For legal terms, visit our{' '}
                 <Link
                   href="/returns-exchange-policy"
                   className="font-bold text-black underline hover:text-emerald-700 transition-colors"

@@ -1,13 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/useCartStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCheckoutStore } from '@/store/useCheckoutStore';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
-import { DEFAULT_STORE_CONFIG } from '@/api/admin/settings';
 import { CartItemsList } from '@/components/features/cart/cart-items-list';
 import { CartSummary } from '@/components/features/cart/cart-summary';
 import { EmptyCart } from '@/components/features/cart/empty-cart';
@@ -29,10 +27,8 @@ export default function CartPage() {
 
   const isMaintenance = Boolean(config.maintenanceMode);
   const subtotal = getSubtotal();
-  const freeShippingThreshold = config.freeShippingThreshold ?? DEFAULT_STORE_CONFIG.freeShippingThreshold;
-  const standardShippingFee = config.standardShippingFee ?? DEFAULT_STORE_CONFIG.standardShippingFee;
-  const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : standardShippingFee;
-  const grandTotal = Math.max(0, subtotal + shippingFee);
+  const shippingFee = 0;
+  const grandTotal = subtotal;
   const itemCount = getItemCount();
 
   const handleProceedToCheckout = () => {

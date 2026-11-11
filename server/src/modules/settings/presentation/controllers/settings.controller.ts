@@ -11,12 +11,12 @@ export const DEFAULT_STORE_CONFIG = {
   currency: "INR",
   currencySymbol: "₹",
 
-  // Shipping & Delivery
-  freeShippingThreshold: 699,
-  standardShippingFee: 99,
-  estimatedDeliveryDaysMin: 3,
-  estimatedDeliveryDaysMax: 5,
-  deliveryPartner: "Delhivery / BlueDart Express",
+  // Shipping & Delivery (100% Free Shipping nationwide on all orders)
+  freeShippingThreshold: 0,
+  standardShippingFee: 0,
+  estimatedDeliveryDaysMin: 2,
+  estimatedDeliveryDaysMax: 4,
+  deliveryPartner: "Priority Express Logistics",
 
   // Payment & COD
   codEnabled: true,
@@ -32,7 +32,7 @@ export const DEFAULT_STORE_CONFIG = {
 
   // Announcement & Store Alerts
   announcementEnabled: true,
-  announcementText: "⚡ Festive Season Exclusive: Get Extra 10% Off with Code YOX10 | Free Shipping On Orders Above ₹699",
+  announcementText: "⚡ Festive Season Exclusive: Get Extra 10% Off with Code YOX10 | 100% Free Shipping On All Orders Nationwide",
   announcementLink: "/shop",
   announcementBgColor: "bg-black",
 

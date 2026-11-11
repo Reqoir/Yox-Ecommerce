@@ -54,10 +54,8 @@ export function CheckoutSummaryPanel() {
     ? directBuyItem.quantity
     : getItemCount();
 
-  const freeShippingThreshold = config.freeShippingThreshold ?? DEFAULT_STORE_CONFIG.freeShippingThreshold;
-  const standardShippingFee = config.standardShippingFee ?? DEFAULT_STORE_CONFIG.standardShippingFee;
-  const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : standardShippingFee;
-  const grandTotal = subtotal + shippingFee;
+  const shippingFee = 0;
+  const grandTotal = subtotal;
 
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
 

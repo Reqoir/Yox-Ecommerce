@@ -11,6 +11,7 @@ import { ManualShipmentCard } from '@/components/features/orders/ManualShipmentC
 import { ProductReviewModal } from '@/components/features/orders/ProductReviewModal';
 import { reviewsApi } from '@/lib/api/reviews';
 import { PrintableInvoice } from '@/components/features/orders/PrintableInvoice';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
 import { IoBagCheckOutline } from "react-icons/io5";
@@ -105,7 +106,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     color?: string;
   } | null>(null);
 
+  const { isAuthenticated } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const fetchOrderDetails = async () => {
+    if (!isAuthenticated) return;
     try {
       setIsLoading(true);
       const data = await ordersApi.getOrderById(resolvedParams.id);
@@ -123,16 +132,25 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       setUserReturns(returnsData.filter((r: any) => r.orderId === data.id));
       setUserReviews(reviewsData?.reviews || reviewsData || []);
     } catch (error: any) {
-      console.error('Failed to fetch order details:', error);
-      toast.error(error?.response?.data?.message || 'Order not found');
+      if (error?.response?.status === 401) {
+        return;
+      }
+      console.warn('Notice fetching order details:', error?.message || error);
+      if (error?.response?.status !== 401) {
+        toast.error(error?.response?.data?.message || 'Order not found');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchOrderDetails();
-  }, [resolvedParams.id]);
+    if (mounted && isAuthenticated) {
+      fetchOrderDetails();
+    } else if (mounted && !isAuthenticated) {
+      setIsLoading(false);
+    }
+  }, [mounted, isAuthenticated, resolvedParams.id]);
 
   // Compute estimated arrival text
   const getEstimatedArrivalText = () => {

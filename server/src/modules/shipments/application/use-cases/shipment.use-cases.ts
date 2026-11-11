@@ -5,6 +5,7 @@
 
 import { IUseCase } from '@core/application/use-cases/base.use-case.interface';
 import { ApplicationError } from '@core/application/errors/application.error';
+import { ApiError } from '@shared/utils/api-error.util';
 import { IShipmentRepository } from '../../domain/repositories/shipment.repository.interface';
 import { IOrderRepository } from '../../../orders/domain/repositories/order.repository.interface';
 import { Shipment } from '../../domain/entities/shipment.entity';
@@ -152,55 +153,80 @@ export class GetShipmentByOrderUseCase implements IUseCase<string, ShipmentRespo
   }
 }
 
-export class TrackShipmentUseCase implements IUseCase<string, ShipmentResponseDTO> {
+export interface TrackShipmentInput {
+  trackingNumber: string;
+  userId?: string;
+  isAdmin?: boolean;
+}
+
+export class TrackShipmentUseCase implements IUseCase<string | TrackShipmentInput, ShipmentResponseDTO> {
   constructor(
     private readonly shipmentRepo: IShipmentRepository,
     private readonly orderRepo: IOrderRepository
   ) {}
 
-  async execute(trackingNumber: string): Promise<ShipmentResponseDTO> {
-    const cleanNumber = trackingNumber.trim();
-    let shipment = await this.shipmentRepo.findByTrackingNumber(cleanNumber);
-    if (!shipment) {
-      // Fallback check order by tracking number or order number
-      const order = await this.orderRepo.findByOrderNumber(cleanNumber);
-      if (order) {
-        shipment = await this.shipmentRepo.findByOrderId(order.id);
+  async execute(input: string | TrackShipmentInput): Promise<ShipmentResponseDTO> {
+    const trackingNumber = typeof input === 'string' ? input : input.trackingNumber;
+    const userId = typeof input === 'object' ? input.userId : undefined;
+    const isAdmin = typeof input === 'object' ? Boolean(input.isAdmin) : false;
+
+    const cleanNumber = (trackingNumber || '').trim();
+    if (!cleanNumber) {
+      throw ApiError.badRequest('Please enter your Order ID or AWB Tracking Number');
+    }
+
+    // 1. Verify user's active orders in local database first (never hit 3rd-party API without checking local DB)
+    let order: any = null;
+    let shipment: any = null;
+
+    // Check by Order Number
+    order = await this.orderRepo.findByOrderNumber(cleanNumber);
+    if (order) {
+      // Validate customer ownership
+      if (userId && !isAdmin && order.userId !== userId) {
+        throw ApiError.forbidden('You are not authorized to track this order.');
+      }
+      shipment = await this.shipmentRepo.findByOrderId(order.id);
+    } else {
+      // Check by Tracking Number / AWB Code
+      shipment = await this.shipmentRepo.findByTrackingNumber(cleanNumber);
+      if (shipment) {
+        order = await this.orderRepo.findById(shipment.orderId);
+        if (order && userId && !isAdmin && order.userId !== userId) {
+          throw ApiError.forbidden('You are not authorized to track this shipment.');
+        }
       }
     }
 
-    // Check Shiprocket for live tracking update
-    try {
-      const liveTracking = await ShiprocketService.getInstance().trackByAwb(trackingNumber);
-      if (liveTracking) {
-        if (shipment) {
-          if (liveTracking.estimatedDeliveryDate) {
-            (shipment as any)._props.estimatedDeliveryDate = new Date(liveTracking.estimatedDeliveryDate);
-          }
-          if (liveTracking.courierName) {
-            (shipment as any)._props.deliveryPartnerId = liveTracking.courierName;
-          }
-          await this.shipmentRepo.save(shipment);
-        } else {
-          return {
-            id: `track_${trackingNumber}`,
-            orderId: '',
-            deliveryPartnerId: liveTracking.courierName,
-            trackingNumber: trackingNumber,
-            status: liveTracking.currentStatus || 'IN_TRANSIT',
-            estimatedDeliveryDate: liveTracking.estimatedDeliveryDate ? new Date(liveTracking.estimatedDeliveryDate) : null,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
+    // 2. If no matching order or shipment was found in our database:
+    if (!order && !shipment) {
+      if (userId && !isAdmin) {
+        const userOrders = await this.orderRepo.findByUserId(userId, { limit: 1 });
+        if (userOrders.total === 0) {
+          throw ApiError.notFound('You currently have no active orders in your account to track.');
         }
       }
-    } catch {}
+      throw ApiError.notFound('No order found in your account matching this Order ID or AWB code.');
+    }
 
-    if (!shipment) throw new Error('No active tracking info found for this tracking number');
+    // If order was cancelled, return shipment status without calling external thirdparty API
+    if (order && order.orderStatus === 'CANCELLED') {
+      if (shipment) return mapToShipmentResponseDTO(shipment);
+      return {
+        id: `cancelled_${order.id}`,
+        orderId: order.id,
+        deliveryPartnerId: 'Standard Logistics',
+        trackingNumber: order.orderNumber,
+        status: 'CANCELLED',
+        estimatedDeliveryDate: null,
+        createdAt: order.createdAt,
+        updatedAt: order.updatedAt,
+      };
+    }
 
-    // Attempt live tracking fetch from Shiprocket if awbCode or trackingNumber exists
-    const awbToQuery = shipment.awbCode || shipment.trackingNumber;
-    if (awbToQuery) {
+    // 3. Only if a valid active order exists for this user and an AWB is assigned, query Shiprocket for live scans
+    const awbToQuery = shipment?.awbCode || shipment?.trackingNumber;
+    if (shipment && awbToQuery && awbToQuery.trim() !== '') {
       try {
         const liveTrack = await ShiprocketService.getInstance().trackByAwb(awbToQuery);
         if (liveTrack.scans && liveTrack.scans.length > 0) {
@@ -221,10 +247,15 @@ export class TrackShipmentUseCase implements IUseCase<string, ShipmentResponseDT
         if (normalizedStatus !== shipment.status) {
           shipment.updateStatus(normalizedStatus, `Shiprocket status: ${liveTrack.currentStatus}`);
         }
+        if (liveTrack.estimatedDeliveryDate) {
+          (shipment as any)._props.estimatedDeliveryDate = new Date(liveTrack.estimatedDeliveryDate);
+        }
+        if (liveTrack.courierName) {
+          (shipment as any)._props.deliveryPartnerId = liveTrack.courierName;
+        }
         await this.shipmentRepo.save(shipment);
 
         // Sync order status
-        const order = await this.orderRepo.findById(shipment.orderId);
         if (order) {
           if (normalizedStatus === 'DELIVERED' && order.orderStatus !== 'DELIVERED') {
             order.deliver();
@@ -240,6 +271,19 @@ export class TrackShipmentUseCase implements IUseCase<string, ShipmentResponseDT
       } catch (trackErr: any) {
         console.warn('Live Shiprocket tracking query notice:', trackErr.message);
       }
+    }
+
+    if (!shipment) {
+      return {
+        id: `pending_${order.id}`,
+        orderId: order.id,
+        deliveryPartnerId: 'Standard Logistics',
+        trackingNumber: order.orderNumber,
+        status: order.orderStatus || 'CONFIRMED',
+        estimatedDeliveryDate: null,
+        createdAt: order.createdAt,
+        updatedAt: order.updatedAt,
+      };
     }
 
     return mapToShipmentResponseDTO(shipment);

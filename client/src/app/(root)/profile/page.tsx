@@ -23,8 +23,8 @@ export default function ProfileOverviewPage() {
   const handleLogout = async () => {
     try {
       await authApi.logout();
-    } catch (e) {
-      console.error(e);
+    } catch {
+      // Ignored
     } finally {
       logoutUser();
       toast.success('Signed out successfully');

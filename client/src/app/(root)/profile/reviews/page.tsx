@@ -5,10 +5,13 @@ import Link from 'next/link';
 import { reviewsApi } from '@/lib/api/reviews';
 import { Loader2, MessageSquare, Star, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { InfiniteScrollStatus } from '@/components/ui/infinite-scroll-status';
 
 export default function MyReviewsPage() {
+  const { isAuthenticated } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
   const [reviews, setReviews] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -17,6 +20,7 @@ export default function MyReviewsPage() {
   const [totalCount, setTotalCount] = useState(0);
 
   const fetchInitialReviews = async () => {
+    if (!isAuthenticated) return;
     try {
       setIsLoading(true);
       const data = await reviewsApi.getMyReviews({ page: 1, limit: 8 });
@@ -25,7 +29,10 @@ export default function MyReviewsPage() {
       setTotalCount(data.total || data.reviews?.length || 0);
       setPage(1);
     } catch (error: any) {
-      console.error('Failed to load your reviews:', error);
+      if (error?.response?.status === 401) {
+        return;
+      }
+      console.warn('Notice loading reviews:', error?.message || error);
       toast.error(error?.response?.data?.message || 'Failed to fetch your reviews.');
     } finally {
       setIsLoading(false);
@@ -33,13 +40,22 @@ export default function MyReviewsPage() {
   };
 
   useEffect(() => {
-    fetchInitialReviews();
+    setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (isAuthenticated) {
+      fetchInitialReviews();
+    } else {
+      setIsLoading(false);
+    }
+  }, [mounted, isAuthenticated]);
 
   const hasMore = page < totalPages;
 
   const handleLoadMore = async () => {
-    if (!hasMore || isLoadingMore || isLoading) return;
+    if (!hasMore || isLoadingMore || isLoading || !isAuthenticated) return;
     try {
       setIsLoadingMore(true);
       const nextPage = page + 1;
@@ -48,8 +64,10 @@ export default function MyReviewsPage() {
       setReviews((prev) => [...prev, ...nextReviews]);
       setPage(nextPage);
       setTotalPages(data.totalPages || 1);
-    } catch (err) {
-      console.error('Failed to load more reviews:', err);
+    } catch (err: any) {
+      if (err?.response?.status !== 401) {
+        console.warn('Notice loading more reviews:', err?.message || err);
+      }
     } finally {
       setIsLoadingMore(false);
     }

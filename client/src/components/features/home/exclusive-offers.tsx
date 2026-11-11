@@ -528,7 +528,7 @@ export function ExclusiveOffers() {
                     fill
                     sizes="(max-width: 640px) 50vw, (max-width: 768px) 110px, 130px"
                     className={`object-cover object-top transition-all duration-300 ${
-                      item.inStock === false ? 'grayscale contrast-125 brightness-75' : ''
+                      item.inStock === false ? 'grayscale contrast-110 brightness-[0.78]' : ''
                     } ${item.secondImage && item.secondImage !== item.image ? 'group-hover:opacity-0' : ''}`}
                     alt={item.title}
                   />
@@ -538,14 +538,10 @@ export function ExclusiveOffers() {
                       fill
                       sizes="(max-width: 640px) 50vw, (max-width: 768px) 110px, 130px"
                       className={`object-cover object-top opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none ${
-                        item.inStock === false ? 'grayscale contrast-125 brightness-75' : ''
+                        item.inStock === false ? 'grayscale contrast-110 brightness-[0.78]' : ''
                       }`}
                       alt={`${item.title} alternate view`}
                     />
-                  )}
-
-                  {item.inStock === false && (
-                    <div className="absolute inset-0 bg-black/15 pointer-events-none z-[5]" />
                   )}
 
                   {/* Sold Out or Discount percentage tag on product thumbnail */}

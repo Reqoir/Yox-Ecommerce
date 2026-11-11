@@ -85,24 +85,11 @@ export const useStoreSettingsStore = create<StoreSettingsState>()(
         }
       },
 
-      getShippingFee: (subtotal: number) => {
-        const { freeShippingThreshold, standardShippingFee } = get().config;
-        if (subtotal === 0 || subtotal >= freeShippingThreshold) {
-          return 0;
-        }
-        return standardShippingFee;
-      },
+      getShippingFee: (_subtotal: number) => 0,
 
-      getRemainingForFreeShipping: (subtotal: number) => {
-        const { freeShippingThreshold } = get().config;
-        return Math.max(0, freeShippingThreshold - subtotal);
-      },
+      getRemainingForFreeShipping: (_subtotal: number) => 0,
 
-      getFreeShippingPercentage: (subtotal: number) => {
-        const { freeShippingThreshold } = get().config;
-        if (freeShippingThreshold <= 0) return 100;
-        return Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100));
-      },
+      getFreeShippingPercentage: (_subtotal: number) => 100,
     }),
     {
       name: 'yox_store_settings',

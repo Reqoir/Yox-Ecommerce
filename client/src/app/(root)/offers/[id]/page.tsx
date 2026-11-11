@@ -355,7 +355,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
                             src={optimizeCloudinaryUrl(product.thumbnail)}
                             alt={product.name}
                             className={`w-full h-full object-cover object-top transition-all duration-300 ${
-                              product.inStock === false ? 'grayscale contrast-125 brightness-75' : ''
+                              product.inStock === false ? 'grayscale' : ''
                             } ${
                               (product.secondImage || (product.images && product.images.length > 1 && product.images[1] !== product.thumbnail))
                                 ? 'group-hover:opacity-0'
@@ -367,7 +367,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
                               src={optimizeCloudinaryUrl(product.secondImage || product.images![1])}
                               alt={`${product.name} alternate view`}
                               className={`absolute inset-0 w-full h-full object-cover object-top opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none ${
-                                product.inStock === false ? 'grayscale contrast-125 brightness-75' : ''
+                                product.inStock === false ? 'grayscale' : ''
                               }`}
                             />
                           )}
@@ -376,10 +376,6 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
                         <div className="w-full h-full flex items-center justify-center text-xs text-gray-400 font-medium">
                           No Preview Available
                         </div>
-                      )}
-
-                      {product.inStock === false && (
-                        <div className="absolute inset-0 bg-black/15 pointer-events-none z-[5]" />
                       )}
 
                       {/* Badge / Sold Out */}

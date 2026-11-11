@@ -240,7 +240,7 @@ export default function ReturnsExchangePolicyPage() {
           </div>
         </div>
 
-        {/* ─── Contact Concierge Banner ───────────────────────────────────────── */}
+        {/* ─── Contact Support Banner ───────────────────────────────────────── */}
         <div className="mt-12 bg-gray-50 border border-gray-200 p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-1 text-center md:text-left">
             <h3 className="text-base sm:text-lg font-bold text-gray-900">
@@ -257,15 +257,22 @@ export default function ReturnsExchangePolicyPage() {
                 className="px-4 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 transition-colors"
               >
                 <Phone size={14} />
-                <span>Call Concierge</span>
+                <span>Call Support</span>
               </a>
             )}
             <Link
-              href="/help-centre"
+              href="/help-centre#returns"
               className="px-4 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-900 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 transition-colors"
             >
               <HelpCircle size={14} />
-              <span>Help Centre</span>
+              <span>Returns FAQ</span>
+            </Link>
+            <Link
+              href="/help-centre#cancellation"
+              className="px-4 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-900 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 transition-colors"
+            >
+              <HelpCircle size={14} />
+              <span>Cancellation FAQ</span>
             </Link>
           </div>
         </div>

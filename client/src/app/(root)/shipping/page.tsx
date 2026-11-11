@@ -6,24 +6,19 @@ import {
   Truck,
   Clock,
   ShieldCheck,
-  MapPin,
-  CheckCircle2,
-  AlertCircle,
-  HelpCircle,
   ChevronRight,
   ArrowRight,
   PackageCheck,
   CreditCard,
-  Building2,
+  AlertCircle,
+  HelpCircle,
+  CheckCircle2,
+  Zap,
 } from 'lucide-react';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
 
 export default function ShippingPage() {
   const { config } = useStoreSettingsStore();
-
-  const freeThreshold = config.freeShippingThreshold ?? 999;
-  const standardFee = config.standardShippingFee ?? 99;
-  const currency = config.currencySymbol || '₹';
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -42,15 +37,15 @@ export default function ShippingPage() {
       <section className="bg-white border-b border-gray-200 py-10 sm:py-14">
         <div className="w-[95%] max-w-7xl mx-auto">
           <div className="max-w-2xl">
-            <span className="inline-block text-[11px] font-bold uppercase tracking-widest text-gray-800 bg-gray-100 px-3 py-1 mb-3 border border-gray-200">
-              Reliable Logistics
+            <span className="inline-block text-[11px] font-bold uppercase tracking-widest text-emerald-800 bg-emerald-50 px-3 py-1 mb-3 border border-emerald-200">
+              100% Free Shipping Nationwide
             </span>
             <h1 className="text-2xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
-              Shipping & Delivery
+              Shipping & Delivery Policy
             </h1>
             <p className="mt-3 text-sm sm:text-base text-gray-600 leading-relaxed">
-              We partner with premier courier networks to deliver contemporary menswear safely,
-              swiftly, and securely to 27,000+ pin codes across India.
+              We provide fast, complimentary express shipping on all orders across India. Zero hidden shipping
+              charges, zero delivery fees, and automated courier routing for prompt doorstep arrival.
             </p>
           </div>
         </div>
@@ -63,26 +58,21 @@ export default function ShippingPage() {
             <div className="w-12 h-12 bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center mb-4">
               <Truck size={24} />
             </div>
-            <h3 className="text-base font-bold text-gray-900">Free Express Shipping</h3>
+            <h3 className="text-base font-bold text-gray-900">100% Free Shipping</h3>
             <p className="text-xs text-gray-600 mt-2 leading-relaxed">
-              Enjoy complimentary shipping on all orders over{' '}
-              <strong className="text-gray-900 font-semibold">
-                {currency}
-                {freeThreshold}
-              </strong>
-              . A nominal fee of {currency}
-              {standardFee} applies to orders below this amount.
+              Every single order on YOX qualifies for free delivery nationwide. No minimum purchase threshold,
+              no hidden fees, and zero shipping charges added at checkout.
             </p>
           </div>
 
           <div className="bg-white border border-gray-200 p-6 sm:p-7 shadow-xs">
             <div className="w-12 h-12 bg-gray-50 border border-gray-200 text-gray-900 flex items-center justify-center mb-4">
-              <Clock size={24} />
+              <Zap size={24} />
             </div>
-            <h3 className="text-base font-bold text-gray-900">Fast Turnaround</h3>
+            <h3 className="text-base font-bold text-gray-900">Fast Express Dispatch</h3>
             <p className="text-xs text-gray-600 mt-2 leading-relaxed">
-              Most metro deliveries arrive within <strong>2–3 business days</strong>. Rest of India
-              orders are delivered within <strong>4–6 business days</strong> from dispatch.
+              Orders are packaged and dispatched with top priority via air and express surface networks.
+              Real-time automated courier allocation ensures the quickest route to your doorstep.
             </p>
           </div>
 
@@ -92,61 +82,47 @@ export default function ShippingPage() {
             </div>
             <h3 className="text-base font-bold text-gray-900">Tamper-Proof Packaging</h3>
             <p className="text-xs text-gray-600 mt-2 leading-relaxed">
-              Every garment is carefully folded, steam-pressed, and encased in our branded,
-              tamper-evident luxury packaging to ensure pristine arrival.
+              Every garment is individually inspected, steam-pressed, and packed into our reinforced,
+              tamper-evident luxury packaging to guarantee immaculate condition upon arrival.
             </p>
           </div>
         </div>
 
-        {/* ─── Detailed Policies & Information ───────────────────────────────── */}
+        {/* ─── Detailed Logistics Information ─────────────────────────────────── */}
         <div className="mt-12 space-y-10">
-          {/* Timelines Table */}
+          {/* Express Logistics Grid */}
           <div className="bg-white border border-gray-200 p-6 sm:p-8 shadow-xs">
             <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wide mb-1">
-              Estimated Delivery Timelines
+              Priority Carrier Network & Fulfillment
             </h2>
             <p className="text-xs text-gray-500 mb-6">
-              Timelines are calculated from the moment your order is verified and dispatched from our
-              central warehouse.
+              All orders are fulfilled via Shiprocket, dynamically routing packages through leading courier partners based on pin code efficiency.
             </p>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs sm:text-sm border-collapse">
-                <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50 text-gray-800 font-bold uppercase text-[11px] tracking-wider">
-                    <th className="py-3 px-4">Region / Zone</th>
-                    <th className="py-3 px-4">Estimated Transit</th>
-                    <th className="py-3 px-4">Courier Partner</th>
-                    <th className="py-3 px-4">Service Type</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 text-gray-600">
-                  <tr>
-                    <td className="py-3.5 px-4 font-semibold text-gray-900">
-                      Tier 1 Metros (Mumbai, Delhi NCR, Bengaluru, Hyderabad, Chennai, Kolkata)
-                    </td>
-                    <td className="py-3.5 px-4">2 – 3 Business Days</td>
-                    <td className="py-3.5 px-4">Bluedart / Delhivery Express</td>
-                    <td className="py-3.5 px-4 text-emerald-700 font-medium">Air Priority</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3.5 px-4 font-semibold text-gray-900">
-                      Tier 2 & Capital Cities (Pune, Ahmedabad, Jaipur, Kochi, Chandigarh, Lucknow)
-                    </td>
-                    <td className="py-3.5 px-4">3 – 4 Business Days</td>
-                    <td className="py-3.5 px-4">Delhivery / Xpressbees / Ekart</td>
-                    <td className="py-3.5 px-4 text-emerald-700 font-medium">Standard Surface / Air</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3.5 px-4 font-semibold text-gray-900">
-                      Rest of India & Remote Districts
-                    </td>
-                    <td className="py-3.5 px-4">4 – 6 Business Days</td>
-                    <td className="py-3.5 px-4">DTDC / Ekart / India Post EMS</td>
-                    <td className="py-3.5 px-4 text-gray-700 font-medium">Standard Surface</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-4 border border-gray-200 bg-gray-50/50">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Courier Allocation</span>
+                <p className="text-sm font-bold text-gray-900 mt-1">Bluedart & Delhivery</p>
+                <p className="text-xs text-gray-600 mt-1">Air priority express routing for rapid delivery across serviceable zones.</p>
+              </div>
+
+              <div className="p-4 border border-gray-200 bg-gray-50/50">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Pan-India Reach</span>
+                <p className="text-sm font-bold text-gray-900 mt-1">Ekart, DTDC & Xpressbees</p>
+                <p className="text-xs text-gray-600 mt-1">Full coverage across 27,000+ pin codes including remote districts.</p>
+              </div>
+
+              <div className="p-4 border border-gray-200 bg-gray-50/50">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Live Tracking</span>
+                <p className="text-sm font-bold text-gray-900 mt-1">Automated AWB Milestones</p>
+                <p className="text-xs text-gray-600 mt-1">Instant SMS & email alerts with live courier tracking at every stage.</p>
+              </div>
+
+              <div className="p-4 border border-gray-200 bg-gray-50/50">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Zero Surcharges</span>
+                <p className="text-sm font-bold text-gray-900 mt-1">100% Free Nationwide</p>
+                <p className="text-xs text-gray-600 mt-1">No shipping fees, no handling charges, and zero COD transaction fees.</p>
+              </div>
             </div>
           </div>
 
@@ -168,17 +144,17 @@ export default function ShippingPage() {
               <ul className="space-y-3 text-xs sm:text-sm text-gray-600 leading-relaxed divide-y divide-gray-100">
                 <li className="pt-2">
                   <strong className="text-gray-900">Same-Day Processing:</strong> Orders placed before
-                  1:00 PM IST on business days are processed and packed on the same day.
+                  1:00 PM IST on working days are verified, picked, and packed on the same day.
                 </li>
                 <li className="pt-2">
                   <strong className="text-gray-900">Dispatch Notification:</strong> Once your package is
-                  handed over to the courier partner, an automated SMS and email containing your AWB
+                  handed over to the courier partner, an automated SMS and email containing your official AWB
                   tracking link will be dispatched immediately.
                 </li>
                 <li className="pt-2">
                   <strong className="text-gray-900">Sundays & Public Holidays:</strong> Warehouse
-                  dispatches operate Monday through Saturday. Orders placed on Sundays or gazetted
-                  holidays ship the following business morning.
+                  dispatches operate Monday through Saturday. Orders placed on Sundays or public holidays
+                  ship the following business morning.
                 </li>
               </ul>
             </div>
@@ -199,16 +175,15 @@ export default function ShippingPage() {
               <ul className="space-y-3 text-xs sm:text-sm text-gray-600 leading-relaxed divide-y divide-gray-100">
                 <li className="pt-2">
                   <strong className="text-gray-900">Zero COD Convenience Surcharge:</strong> We do not
-                  levy any extra payment gateway fee on Cash on Delivery orders.
+                  levy any extra payment gateway fee or surcharge on Cash on Delivery orders.
                 </li>
                 <li className="pt-2">
-                  <strong className="text-gray-900">Cash & UPI at Doorstep:</strong> Most courier
-                  partners offer digital QR / UPI collection at the doorstep in addition to cash.
+                  <strong className="text-gray-900">Cash & UPI at Doorstep:</strong> Most delivery
+                  executives support QR code / UPI collection at the doorstep in addition to cash.
                 </li>
                 <li className="pt-2">
-                  <strong className="text-gray-900">Pre-Dispatch Verification:</strong> High-value COD
-                  orders may receive a quick automated OTP verification or call to prevent spurious
-                  shipments.
+                  <strong className="text-gray-900">3 Delivery Attempts:</strong> Our courier partners
+                  will make up to 3 delivery attempts before returning the shipment to our warehouse.
                 </li>
               </ul>
             </div>
@@ -224,8 +199,8 @@ export default function ShippingPage() {
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
                   Please do not accept any parcel if the outer seal is visibly broken, tampered with, or
-                  re-taped with generic tape. If the delivery executive insists, please record an unboxing
-                  video and contact our support concierge immediately at{' '}
+                  re-taped with generic tape. If you encounter any issue upon delivery, please contact our
+                  customer care team immediately at{' '}
                   <a
                     href={`mailto:${config.supportEmail || 'support@yoxfashion.in'}`}
                     className="font-bold underline text-black"
@@ -245,27 +220,38 @@ export default function ShippingPage() {
             </div>
           </div>
 
-          {/* Quick Action Navigation */}
-          <div className="bg-white border border-gray-200 p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* Quick FAQ Shortcuts */}
+          <div className="bg-white border border-gray-200 p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-5">
             <div>
-              <h3 className="text-sm font-bold text-gray-900">Looking for your current shipment?</h3>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Enter your order ID or tracking code to check real-time courier transit milestones.
+              <div className="flex items-center gap-2">
+                <HelpCircle size={18} className="text-gray-700" />
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
+                  Have Questions or Need to Cancel?
+                </h3>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Explore our detailed FAQs for instant answers on shipping, order cancellation, returns, and refunds.
               </p>
             </div>
-            <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
               <Link
-                href="/track-order"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider transition-colors"
+                href="/help-centre#shipping"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider transition-colors"
               >
-                <span>Track Your Order</span>
-                <ArrowRight size={14} />
+                <span>Shipping FAQs</span>
+                <ArrowRight size={13} />
               </Link>
               <Link
-                href="/returns-process"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 border border-gray-300 hover:bg-gray-50 text-gray-800 text-xs font-bold uppercase tracking-wider transition-colors"
+                href="/help-centre#cancellation"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 border border-gray-300 hover:bg-gray-50 text-gray-900 text-xs font-bold uppercase tracking-wider transition-colors"
               >
-                <span>Returns Process</span>
+                <span>Cancellation FAQs</span>
+              </Link>
+              <Link
+                href="/track-order"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 border border-gray-300 hover:bg-gray-50 text-gray-900 text-xs font-bold uppercase tracking-wider transition-colors"
+              >
+                <span>Track Order</span>
               </Link>
             </div>
           </div>

@@ -206,20 +206,12 @@ export class PlaceOrderUseCase implements IUseCase<{ userId: string; data: Place
     const subtotal = orderItems.reduce((sum, i) => sum + i.subtotal, 0);
 
     // Fetch dynamic store configuration
-    let freeShippingThreshold = 699;
-    let standardShippingFee = 99;
     let codEnabled = true;
     let codMaxLimit = 5000;
 
     try {
       const storeSetting = await SettingsModel.findOne({ key: 'store_config' }).lean();
       if (storeSetting?.value) {
-        if (typeof storeSetting.value.freeShippingThreshold === 'number') {
-          freeShippingThreshold = storeSetting.value.freeShippingThreshold;
-        }
-        if (typeof storeSetting.value.standardShippingFee === 'number') {
-          standardShippingFee = storeSetting.value.standardShippingFee;
-        }
         if (typeof storeSetting.value.codEnabled === 'boolean') {
           codEnabled = storeSetting.value.codEnabled;
         }
@@ -241,7 +233,8 @@ export class PlaceOrderUseCase implements IUseCase<{ userId: string; data: Place
       }
     }
 
-    const shippingCharge = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : standardShippingFee;
+    // 100% Free Shipping on all orders nationwide
+    const shippingCharge = 0;
     const discount = 0;
     const tax = 0; // Inclusive of all taxes
     const totalAmount = Math.max(0, subtotal + shippingCharge - discount);

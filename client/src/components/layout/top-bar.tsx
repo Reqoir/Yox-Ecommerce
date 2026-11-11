@@ -75,10 +75,7 @@ export function TopBar() {
           <div className="hidden sm:flex items-center gap-2 text-white/90 shrink-0">
             <TbTruckDelivery className="text-base text-emerald-400" />
             <span>
-              Free Shipping on orders above{' '}
-              <strong className="text-white font-bold">
-                {config.currencySymbol}{config.freeShippingThreshold}
-              </strong>
+              100% Free Shipping on All Orders Nationwide
             </span>
           </div>
 

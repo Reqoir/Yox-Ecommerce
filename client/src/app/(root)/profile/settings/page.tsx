@@ -185,8 +185,8 @@ export default function ProfileSettingsPage() {
   const handleLogout = async () => {
     try {
       await authApi.logout();
-    } catch (e) {
-      console.error(e);
+    } catch {
+      // Ignored
     } finally {
       logoutUser();
       toast.success('Signed out successfully');

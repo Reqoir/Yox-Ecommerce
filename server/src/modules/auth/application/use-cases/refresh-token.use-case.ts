@@ -12,7 +12,7 @@ export class RefreshTokenUseCase {
 
   public async execute(token: string): Promise<RefreshTokenResponseDTO> {
     if (!token) {
-      throw ApiError.unauthorized('Refresh token is required');
+      throw ApiError.unauthorized('Session expired. Please log in again.');
     }
 
     try {
@@ -48,7 +48,7 @@ export class RefreshTokenUseCase {
         throw error;
       }
       // Catch JWT errors (expired, invalid signature, etc)
-      throw ApiError.unauthorized('Invalid or expired refresh token');
+      throw ApiError.unauthorized('Session expired. Please log in again.');
     }
   }
 }

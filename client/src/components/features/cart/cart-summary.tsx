@@ -26,11 +26,8 @@ export function CartSummary() {
   const savings = getSavingsTotal();
   const itemCount = getItemCount();
 
-  // Dynamic free shipping threshold & standard shipping fee from store settings
-  const freeShippingThreshold = config.freeShippingThreshold ?? DEFAULT_STORE_CONFIG.freeShippingThreshold;
-  const standardShippingFee = config.standardShippingFee ?? DEFAULT_STORE_CONFIG.standardShippingFee;
-  const shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : standardShippingFee;
-  const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
+  // 100% Free Shipping nationwide on all orders
+  const shippingFee = 0;
 
   const { setDirectBuyItem } = useCheckoutStore();
 
@@ -50,7 +47,7 @@ export function CartSummary() {
     }
   };
 
-  const grandTotal = Math.max(0, subtotal + shippingFee);
+  const grandTotal = subtotal;
 
   return (
     <div className="w-full bg-white border border-gray-200/90 rounded-md p-4 sm:p-6 sticky top-24 shadow-2xs">
@@ -61,21 +58,11 @@ export function CartSummary() {
         </span>
       </h3>
 
-      {/* Free Shipping Progress Indicator */}
-      <div className="bg-emerald-50/50 border border-emerald-100 rounded-sm p-3 mb-4 sm:mb-5">
-        <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 mb-1.5">
+      {/* Free Shipping Guarantee Indicator */}
+      <div className="bg-emerald-50/70 border border-emerald-100 rounded-sm p-3 mb-4 sm:mb-5">
+        <div className="flex items-center gap-2 text-xs font-bold text-emerald-800">
           <Truck size={15} className="text-emerald-600 shrink-0" />
-          {remainingForFreeShipping === 0 ? (
-            <span>You qualify for FREE Delivery!</span>
-          ) : (
-            <span>Add ₹{remainingForFreeShipping} more for FREE Delivery</span>
-          )}
-        </div>
-        <div className="w-full bg-emerald-100/60 h-1.5 rounded-full overflow-hidden">
-          <div
-            className="bg-emerald-500 h-full transition-all duration-300"
-            style={{ width: `${Math.min(100, (subtotal / freeShippingThreshold) * 100)}%` }}
-          />
+          <span>Complimentary 100% FREE Delivery nationwide</span>
         </div>
       </div>
 

@@ -51,12 +51,12 @@ const shipmentController = new ShipmentController(
   handleShiprocketWebhookUseCase
 );
 
-// Public routes: Tracking and Shiprocket Webhook
-router.get('/track/:trackingNumber', shipmentController.trackShipment);
+// Public routes: Shiprocket Webhook (called by external Shiprocket webhook server)
 router.post('/webhook/shiprocket', shipmentController.handleShiprocketWebhook);
 
-// Authenticated customer/staff routes
+// Authenticated customer/staff routes (User must be logged in to track orders)
 router.use(requireAuth);
+router.get('/track/:trackingNumber', shipmentController.trackShipment);
 router.get('/order/:orderId', shipmentController.getShipmentByOrder);
 router.get('/order/:orderId/sync', shipmentController.syncCourierStatus);
 router.get('/order/:orderId/invoice', shipmentController.generateInvoice);

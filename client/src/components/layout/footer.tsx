@@ -19,6 +19,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import {
   FaFacebookF,
   FaInstagram,
@@ -34,6 +35,7 @@ import { FaXTwitter } from 'react-icons/fa6';
 
 export function Footer() {
   const { config } = useStoreSettingsStore();
+  const { isAuthenticated } = useAuthStore();
   const [email, setEmail] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isStoreLocatorOpen, setIsStoreLocatorOpen] = useState(false);
@@ -97,9 +99,9 @@ export function Footer() {
               <Truck size={20} strokeWidth={1.75} />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700">Express Delivery</h4>
+              <h4 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700">100% Free Shipping</h4>
               <p className="text-[11px] sm:text-xs text-gray-400 mt-1 font-normal">
-                Free on orders above {config.currencySymbol}{config.freeShippingThreshold}
+                Zero shipping charges on all orders nationwide
               </p>
             </div>
           </div>
@@ -282,23 +284,23 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <Link href="/shipping" className="hover:text-gray-800 transition-colors">
+                <Link href="/help-centre#shipping" className="hover:text-gray-800 transition-colors">
                   Shipping
                 </Link>
               </li>
               <li>
-                <Link href="/returns-process" className="hover:text-gray-800 transition-colors">
-                  Returns Process
+                <Link href="/help-centre#cancellation" className="hover:text-gray-800 transition-colors">
+                  Cancellation
                 </Link>
               </li>
               <li>
-                <Link href="/returns-exchange-policy" className="hover:text-gray-800 transition-colors">
-                  Returns And Exchange Policy
+                <Link href="/help-centre#returns" className="hover:text-gray-800 transition-colors">
+                  Returns & Exchange
                 </Link>
               </li>
               <li>
                 <Link href="/help-centre" className="hover:text-gray-800 transition-colors">
-                  Help Centre
+                  FAQ & Help Centre
                 </Link>
               </li>
               <li>
@@ -309,43 +311,58 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Col 5: Newsletter & VIP Club (3 cols on lg) */}
+          {/* Col 5: Quick Order Tracker & Customer Guarantees */}
           <div className="lg:col-span-3 sm:col-span-2 md:col-span-3 flex flex-col gap-3.5">
             <h4 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700">
-              Be In The Know
+              Track Your Order
             </h4>
             <p className="text-sm text-gray-400 leading-relaxed">
-              Subscribe to get 10% off your first order, member-only drops, and private seasonal sales.
+              Have an active order? Enter your Order ID or tracking code to check real-time courier milestones.
             </p>
 
-            {isSubscribed ? (
-              <div className="p-3.5 bg-white border border-[#EAE6DF] rounded-none text-sm font-medium text-gray-800 flex items-center gap-2.5">
-                <Check size={18} className="text-emerald-600 shrink-0" />
-                <span>Thank you! You&apos;re now on our VIP subscriber list.</span>
-              </div>
-            ) : (
-              <form suppressHydrationWarning onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2 mt-1">
-                <input
-                  suppressHydrationWarning
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  className="flex-1 bg-white border border-[#EAE6DF] rounded-none px-4 py-2.5 h-11 text-base md:text-sm text-gray-700 placeholder-gray-400 outline-none focus:border-gray-700 transition-colors"
-                />
-                <button
-                  suppressHydrationWarning
-                  type="submit"
-                  className="bg-gray-900 text-white hover:bg-black transition-colors text-xs sm:text-sm font-bold uppercase tracking-wider px-6 h-11 rounded-none whitespace-nowrap cursor-pointer shadow-xs"
-                >
-                  Join
-                </button>
-              </form>
-            )}
-            <p className="text-xs text-gray-400">
-              By subscribing, you agree to our privacy policy. No spam, ever.
-            </p>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const input = form.elements.namedItem('trackingCode') as HTMLInputElement;
+                const val = input?.value?.trim();
+                const targetUrl = val ? `/track-order?q=${encodeURIComponent(val)}` : '/track-order';
+                if (!isAuthenticated) {
+                  window.location.href = `/login?callbackUrl=${encodeURIComponent(targetUrl)}`;
+                } else {
+                  window.location.href = targetUrl;
+                }
+              }}
+              className="flex flex-col sm:flex-row gap-2 mt-1"
+            >
+              <input
+                type="text"
+                name="trackingCode"
+                placeholder="Order ID / AWB Code"
+                className="flex-1 bg-white border border-[#EAE6DF] rounded-none px-4 py-2.5 h-11 text-base md:text-sm text-gray-700 placeholder-gray-400 outline-none focus:border-gray-700 transition-colors"
+              />
+              <button
+                type="submit"
+                className="bg-gray-900 text-white hover:bg-black transition-colors text-xs sm:text-sm font-bold uppercase tracking-wider px-5 h-11 rounded-none whitespace-nowrap cursor-pointer shadow-xs"
+              >
+                Track
+              </button>
+            </form>
+
+            <div className="flex flex-col gap-1.5 pt-1 text-xs text-gray-400">
+              <span className="flex items-center gap-1.5">
+                <Check size={13} className="text-emerald-600 shrink-0" />
+                100% Free Shipping on All Orders
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Check size={13} className="text-emerald-600 shrink-0" />
+                7-Day Easy Doorstep Exchanges
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Check size={13} className="text-emerald-600 shrink-0" />
+                Automated Express Courier Dispatch
+              </span>
+            </div>
           </div>
 
         </div>

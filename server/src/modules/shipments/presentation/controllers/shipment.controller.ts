@@ -6,6 +6,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { HttpStatus } from '../../../../shared/constants/http-status.constants';
 import { ApiResponse } from '../../../../shared/utils/api-response.util';
+import { ApiError } from '../../../../shared/utils/api-error.util';
 import {
   CreateShipmentUseCase,
   GetShipmentByIdUseCase,
@@ -66,7 +67,20 @@ export class ShipmentController {
 
   trackShipment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const shipment = await this.trackShipmentUseCase.execute(req.params.trackingNumber as string);
+      const userId = req.user?.id;
+      if (!userId) {
+        throw ApiError.unauthorized('Authentication required to track orders. Please log in.');
+      }
+
+      const userRole = (req.user?.role || '').toUpperCase();
+      const isAdmin = userRole.includes('ADMIN') || userRole.includes('SUPER') || ((req.user as any)?.permissions || []).includes('*');
+
+      const shipment = await this.trackShipmentUseCase.execute({
+        trackingNumber: req.params.trackingNumber as string,
+        userId,
+        isAdmin,
+      });
+
       ApiResponse.success(res, shipment, 'Shipment tracking info retrieved');
     } catch (error) {
       next(error);

@@ -4,21 +4,28 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, MapPin, CheckCircle2, Home, Building2, Check } from 'lucide-react';
 import { AddressForm } from '@/components/profile/AddressForm';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/store/useAuthStore';
 import { addressApi, Address, CreateAddressDto, UpdateAddressDto } from '@/api/addresses';
 import { getApiErrorMessage } from '@/lib/utils';
 
 export default function AddressesPage() {
+  const { isAuthenticated } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchAddresses = async () => {
+    if (!isAuthenticated) return;
     try {
       setIsLoading(true);
       const data = await addressApi.getAddresses();
       setAddresses(data);
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.response?.status === 401) {
+        return;
+      }
       toast.error('Failed to load addresses');
     } finally {
       setIsLoading(false);
@@ -26,8 +33,17 @@ export default function AddressesPage() {
   };
 
   useEffect(() => {
-    fetchAddresses();
+    setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (isAuthenticated) {
+      fetchAddresses();
+    } else {
+      setIsLoading(false);
+    }
+  }, [mounted, isAuthenticated]);
 
   const handleAddNew = () => {
     setEditingAddress(null);

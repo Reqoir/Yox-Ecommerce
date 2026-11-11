@@ -84,21 +84,13 @@ export class GetCheckoutSummaryUseCase implements IUseCase<string, CheckoutSumma
     const subtotal = cart.totalAmount;
     const discountAmount = cart.discountAmount || 0;
     
-    // Fetch dynamic store configuration
-    let freeShippingThreshold = 699;
-    let standardShippingFee = 99;
+    // Dynamic store configuration (100% Free Shipping nationwide on all orders)
     let isTaxInclusive = true;
     let taxRatePercent = 18;
 
     try {
       const storeSetting = await SettingsModel.findOne({ key: 'store_config' }).lean();
       if (storeSetting?.value) {
-        if (typeof storeSetting.value.freeShippingThreshold === 'number') {
-          freeShippingThreshold = storeSetting.value.freeShippingThreshold;
-        }
-        if (typeof storeSetting.value.standardShippingFee === 'number') {
-          standardShippingFee = storeSetting.value.standardShippingFee;
-        }
         if (typeof storeSetting.value.isTaxInclusive === 'boolean') {
           isTaxInclusive = storeSetting.value.isTaxInclusive;
         }
@@ -108,7 +100,8 @@ export class GetCheckoutSummaryUseCase implements IUseCase<string, CheckoutSumma
       }
     } catch (e) {}
 
-    const shippingAmount = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : standardShippingFee;
+    // Zero shipping charges across all orders nationwide
+    const shippingAmount = 0;
 
     const taxableAmount = Math.max(0, subtotal - discountAmount);
     const taxAmount = isTaxInclusive ? 0 : parseFloat(((taxableAmount * taxRatePercent) / 100).toFixed(2));

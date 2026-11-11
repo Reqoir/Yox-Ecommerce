@@ -244,21 +244,8 @@ export class CreateRazorpayOrderUseCase implements IUseCase<CreateRazorpayOrderI
     // 4. Calculate Order Financials
     const subtotal = orderItems.reduce((sum, i) => sum + i.subtotal, 0);
 
-    let freeShippingThreshold = 699;
-    let standardShippingFee = 99;
-    try {
-      const storeSetting = await SettingsModel.findOne({ key: 'store_config' }).lean();
-      if (storeSetting?.value) {
-        if (typeof storeSetting.value.freeShippingThreshold === 'number') {
-          freeShippingThreshold = storeSetting.value.freeShippingThreshold;
-        }
-        if (typeof storeSetting.value.standardShippingFee === 'number') {
-          standardShippingFee = storeSetting.value.standardShippingFee;
-        }
-      }
-    } catch {}
-
-    const shippingCharge = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : standardShippingFee;
+    // 100% Free Shipping on all orders nationwide
+    const shippingCharge = 0;
     const discount = 0;
     const tax = 0;
     const totalAmount = Math.max(0, subtotal + shippingCharge - discount);

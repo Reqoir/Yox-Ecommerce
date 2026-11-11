@@ -49,11 +49,11 @@ export const DEFAULT_STORE_CONFIG: StoreConfig = {
   currency: "INR",
   currencySymbol: "₹",
 
-  freeShippingThreshold: 999,
-  standardShippingFee: 10,
-  estimatedDeliveryDaysMin: 3,
-  estimatedDeliveryDaysMax: 5,
-  deliveryPartner: "Delhivery / BlueDart Express",
+  freeShippingThreshold: 0,
+  standardShippingFee: 0,
+  estimatedDeliveryDaysMin: 2,
+  estimatedDeliveryDaysMax: 4,
+  deliveryPartner: "Priority Express Logistics",
 
   codEnabled: false,
   codMaxLimit: 5000,

@@ -6,10 +6,13 @@ import { ordersApi, BackendOrder } from '@/lib/api/orders';
 import { returnsApi, BackendReturn } from '@/lib/api/returns';
 import { Loader2, ShoppingBag, ArrowRight, ChevronRight, PackageCheck, Star } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { InfiniteScrollStatus } from '@/components/ui/infinite-scroll-status';
 
 export default function MyOrdersPage() {
+  const { isAuthenticated } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
   const [orders, setOrders] = useState<BackendOrder[]>([]);
   const [userReturns, setUserReturns] = useState<BackendReturn[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,6 +22,7 @@ export default function MyOrdersPage() {
   const [totalOrders, setTotalOrders] = useState(0);
 
   const fetchOrdersAndReturns = async () => {
+    if (!isAuthenticated) return;
     try {
       setIsLoading(true);
       const [orderRes, returnRes] = await Promise.all([
@@ -31,7 +35,11 @@ export default function MyOrdersPage() {
       setPage(1);
       setUserReturns(returnRes);
     } catch (error: any) {
-      console.error('Failed to load orders:', error);
+      if (error?.response?.status === 401) {
+        // Handled silently to prevent AxiosError console crash overlay
+        return;
+      }
+      console.warn('Notice loading orders:', error?.message || error);
       toast.error(error?.response?.data?.message || 'Failed to fetch your orders.');
     } finally {
       setIsLoading(false);
@@ -39,13 +47,22 @@ export default function MyOrdersPage() {
   };
 
   useEffect(() => {
-    fetchOrdersAndReturns();
+    setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (isAuthenticated) {
+      fetchOrdersAndReturns();
+    } else {
+      setIsLoading(false);
+    }
+  }, [mounted, isAuthenticated]);
 
   const hasMore = page < totalPages;
 
   const handleLoadMore = async () => {
-    if (!hasMore || isLoadingMore || isLoading) return;
+    if (!hasMore || isLoadingMore || isLoading || !isAuthenticated) return;
     try {
       setIsLoadingMore(true);
       const nextPage = page + 1;
@@ -53,8 +70,10 @@ export default function MyOrdersPage() {
       setOrders((prev) => [...prev, ...orderRes.orders]);
       setPage(nextPage);
       setTotalPages(orderRes.totalPages || 1);
-    } catch (err) {
-      console.error('Failed to load more orders:', err);
+    } catch (err: any) {
+      if (err?.response?.status !== 401) {
+        console.warn('Notice loading more orders:', err?.message || err);
+      }
     } finally {
       setIsLoadingMore(false);
     }

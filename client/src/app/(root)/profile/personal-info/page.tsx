@@ -10,24 +10,20 @@ import {
   Mail,
   Smartphone,
   CheckCircle2,
-  Edit3,
-  Save,
+  Edit2,
   X,
   Loader2,
-  RotateCcw,
   ShieldCheck,
-  ArrowRight,
-  Info,
+  AlertCircle,
 } from 'lucide-react';
 
 export default function PersonalInfoPage() {
   const { user, setUser } = useAuthStore();
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     fullName: '',
-    phone: '',
     email: '',
   });
 
@@ -46,7 +42,6 @@ export default function PersonalInfoPage() {
     if (user) {
       setFormData({
         fullName: user.fullName && user.fullName.toLowerCase() !== 'customer' ? user.fullName : '',
-        phone: user.phone ? user.phone.replace(/^(\+91|91)/, '') : '',
         email: user.email && !user.email.endsWith('@user.yox.internal') ? user.email : '',
       });
     }
@@ -68,7 +63,7 @@ export default function PersonalInfoPage() {
   };
 
   /**
-   * Save Profile Name and Email (No password or mandatory email required)
+   * Save Profile Name and Email
    */
   const handleSaveDetails = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,8 +82,8 @@ export default function PersonalInfoPage() {
 
       const updatedUser = await profileApi.updateProfile(updateData);
       setUser(updatedUser);
-      toast.success('Profile details saved successfully!');
-      setIsEditing(false);
+      toast.success('Personal details updated successfully');
+      setIsEditModalOpen(false);
     } catch (error: any) {
       const msg = error?.response?.data?.message || 'Failed to update personal details.';
       toast.error(msg);
@@ -153,7 +148,7 @@ export default function PersonalInfoPage() {
       });
 
       setUser(updatedUser);
-      toast.success('Mobile number updated and verified successfully!');
+      toast.success('Mobile number updated and verified successfully');
       setIsPhoneModalOpen(false);
       setNewPhoneNumber('');
       setPhoneStep('input');
@@ -202,258 +197,277 @@ export default function PersonalInfoPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Header */}
+      {/* ─── Header (Matches Addresses Page pattern) ─────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 pb-5 gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 tracking-tight">Personal Information</h2>
+          <h2 className="text-xl font-semibold text-gray-900 tracking-tight">Personal Information</h2>
           <p className="text-xs text-gray-500 mt-1">
-            Your personal profile and contact preferences for orders and deliveries
+            Manage your personal profile and account credentials
           </p>
         </div>
 
-        {!isEditing ? (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider rounded-xs transition-colors shadow-2xs self-start sm:self-auto cursor-pointer"
-          >
-            <Edit3 size={14} />
-            <span>Edit Profile</span>
-          </button>
-        ) : (
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+        <button
+          type="button"
+          onClick={() => {
+            if (user) {
+              setFormData({
+                fullName: displayName || '',
+                email: displayEmail || '',
+              });
+            }
+            setIsEditModalOpen(true);
+          }}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-medium rounded-sm transition-colors shadow-2xs self-start sm:self-auto cursor-pointer"
+        >
+          <Edit2 size={15} />
+          <span>Edit Profile</span>
+        </button>
+      </div>
+
+      {/* ─── Profile Cards Grid (Matches Addresses Page 2-column pattern) ────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Card 1: Primary Mobile Login (Styled like Default Address Card) */}
+        <div className="relative p-5 rounded-sm border transition-all duration-200 flex flex-col justify-between border-[#1A2E4C] bg-blue-50/20 shadow-2xs">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Smartphone size={16} className="text-[#1A2E4C]" />
+                <span className="font-semibold text-sm text-gray-900">Mobile Number</span>
+              </div>
+
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-0.5 bg-[#1A2E4C] text-white rounded-sm uppercase tracking-wider shadow-2xs">
+                <CheckCircle2 size={12} /> Primary
+              </span>
+            </div>
+
+            <p className="text-sm font-semibold text-gray-900 font-mono tracking-wide mt-1">
+              {displayPhone}
+            </p>
+
+            <div className="text-xs text-gray-600 leading-relaxed mt-2 space-y-0.5">
+              <p>Primary sign-in credential with instant 1-tap OTP verification.</p>
+              <p>Used for shipping notifications, delivery coordination & returns.</p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-100 text-xs">
             <button
               type="button"
               onClick={() => {
-                setIsEditing(false);
+                setPhoneStep('input');
+                setNewPhoneNumber('');
+                setIsPhoneModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 font-medium text-[#1A2E4C] hover:underline cursor-pointer"
+            >
+              <Edit2 size={13} />
+              <span>Change Number</span>
+            </button>
+
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700">
+              <CheckCircle2 size={12} /> Verified
+            </span>
+          </div>
+        </div>
+
+        {/* Card 2: Personal Details (Name & Email) */}
+        <div className="relative p-5 rounded-sm border transition-all duration-200 flex flex-col justify-between border-gray-200 bg-white hover:border-gray-300">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <User size={16} className="text-gray-700" />
+                <span className="font-semibold text-sm text-gray-900">Personal Details</span>
+              </div>
+
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 bg-gray-100 text-gray-600 rounded-sm">
+                Profile Info
+              </span>
+            </div>
+
+            <div className="text-xs text-gray-600 leading-relaxed space-y-2 mt-1">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">
+                  Full Name
+                </span>
+                <p className="text-sm font-semibold text-gray-900 mt-0.5">
+                  {displayName || (
+                    <span className="text-gray-400 font-normal italic">Not provided yet</span>
+                  )}
+                </p>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">
+                  Email Address (Optional)
+                </span>
+                <p className="text-sm font-semibold text-gray-900 mt-0.5 truncate">
+                  {displayEmail || (
+                    <span className="text-gray-400 font-normal italic">Not added (used for invoices)</span>
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-100 text-xs">
+            <button
+              type="button"
+              onClick={() => {
                 if (user) {
                   setFormData({
                     fullName: displayName || '',
-                    phone: rawPhone,
                     email: displayEmail || '',
                   });
                 }
+                setIsEditModalOpen(true);
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-xs font-semibold rounded-xs transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 font-medium text-[#1A2E4C] hover:underline cursor-pointer"
             >
-              <X size={14} />
-              <span>Cancel</span>
+              <Edit2 size={13} />
+              <span>Edit Details</span>
             </button>
-            <button
-              type="button"
-              onClick={handleSaveDetails}
-              disabled={isLoading}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider rounded-xs transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
-            >
-              {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-              <span>{isLoading ? 'Saving...' : 'Save Changes'}</span>
-            </button>
-          </div>
-        )}
-      </div>
 
-      {/* Modern Profile Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Card 1: Verified Mobile Number (Primary) */}
-        <div className="bg-white border-2 border-[#C09B7A]/40 rounded-sm p-4 relative flex flex-col justify-between shadow-xs">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-[#C09B7A] uppercase tracking-wider">
-                Primary Account Login
-              </span>
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-xs border border-emerald-200/60">
-                <CheckCircle2 size={11} className="text-emerald-600" /> VERIFIED
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3 pt-1">
-              <div className="w-10 h-10 rounded-sm bg-neutral-900 text-white flex items-center justify-center shrink-0">
-                <Smartphone size={18} className="text-[#C09B7A]" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-gray-900 tracking-wide font-mono">
-                  {displayPhone}
-                </p>
-                <p className="text-[11px] text-gray-400">Instant OTP Access</p>
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              setPhoneStep('input');
-              setNewPhoneNumber('');
-              setIsPhoneModalOpen(true);
-            }}
-            className="mt-4 text-xs font-bold text-black hover:text-[#C09B7A] underline underline-offset-2 text-left cursor-pointer transition-colors"
-          >
-            Change Mobile Number →
-          </button>
-        </div>
-
-        {/* Card 2: Full Name */}
-        <div className="bg-white border border-gray-200 rounded-sm p-4 flex flex-col justify-between shadow-2xs">
-          <div className="space-y-2">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-              Full Name
+            <span className="text-[11px] text-gray-400">
+              Invoices & Delivery Slips
             </span>
-            <div className="flex items-center gap-3 pt-1">
-              <div className="w-10 h-10 rounded-sm bg-gray-100 text-gray-800 flex items-center justify-center shrink-0">
-                <User size={18} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-gray-900 truncate">
-                  {displayName || 'Not provided yet'}
-                </p>
-                <p className="text-[11px] text-gray-400">Used for greetings & labels</p>
-              </div>
-            </div>
           </div>
-
-          {!displayName && !isEditing && (
-            <button
-              type="button"
-              onClick={() => setIsEditing(true)}
-              className="mt-4 text-xs font-bold text-black hover:text-[#C09B7A] underline underline-offset-2 text-left cursor-pointer transition-colors"
-            >
-              + Add Full Name
-            </button>
-          )}
-        </div>
-
-        {/* Card 3: Email Address (Optional) */}
-        <div className="bg-white border border-gray-200 rounded-sm p-4 flex flex-col justify-between shadow-2xs">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                Email Address
-              </span>
-              <span className="text-[10px] text-gray-400 font-medium">Optional</span>
-            </div>
-            <div className="flex items-center gap-3 pt-1">
-              <div className="w-10 h-10 rounded-sm bg-gray-100 text-gray-800 flex items-center justify-center shrink-0">
-                <Mail size={18} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-gray-900 truncate">
-                  {displayEmail || 'Not added'}
-                </p>
-                <p className="text-[11px] text-gray-400">For tax invoices & receipts</p>
-              </div>
-            </div>
-          </div>
-
-          {!displayEmail && !isEditing && (
-            <button
-              type="button"
-              onClick={() => setIsEditing(true)}
-              className="mt-4 text-xs font-bold text-black hover:text-[#C09B7A] underline underline-offset-2 text-left cursor-pointer transition-colors"
-            >
-              + Add Email for Receipts
-            </button>
-          )}
         </div>
       </div>
 
-      {/* Editing Form */}
-      {isEditing && (
-        <form onSubmit={handleSaveDetails} className="bg-gray-50/70 border border-gray-200 rounded-sm p-5 sm:p-6 space-y-4 max-w-xl animate-in fade-in duration-200">
-          <div className="flex items-center gap-2 pb-2 border-b border-gray-200/70">
-            <Edit3 size={16} className="text-[#C09B7A]" />
-            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
-              Edit Account Details
-            </h3>
-          </div>
+      {/* ─── Security Notice Box (Matches Address Empty/Info Box Style) ──────── */}
+      <div className="p-4 rounded-sm border border-gray-200 bg-gray-50/50 flex items-start gap-3">
+        <ShieldCheck size={18} className="text-[#1A2E4C] shrink-0 mt-0.5" />
+        <div className="text-xs text-gray-600 leading-relaxed">
+          <span className="font-semibold text-gray-900">Phone-First Account Security:</span> Your mobile number is your primary credential for fast, passwordless 1-tap OTP sign-in and real-time delivery notifications across all devices.
+        </div>
+      </div>
 
-          {/* Full Name */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-gray-800 block">
-              Full Name
-            </label>
-            <input
-              type="text"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              placeholder="e.g. John Doe"
-              className="w-full px-3.5 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-xs bg-white focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-all"
-            />
-            <p className="text-[11px] text-gray-500">
-              Your name will appear on package shipping slips and order receipts.
-            </p>
-          </div>
-
-          {/* Email Address */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-gray-800">
-                Email Address
-              </label>
-              <span className="text-[11px] text-gray-400">Optional</span>
-            </div>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="e.g. john@example.com"
-              className="w-full px-3.5 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-xs bg-white focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-all"
-            />
-            <p className="text-[11px] text-gray-500">
-              Provide your email if you wish to receive digital GST invoices and tracking emails.
-            </p>
-          </div>
-
-          {/* Actions */}
-          <div className="pt-2 flex items-center justify-end gap-3">
+      {/* ─── MODAL: EDIT PERSONAL DETAILS (Matches AddressForm style) ────────── */}
+      {isEditModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn"
+          onClick={() => setIsEditModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-sm border border-gray-200 shadow-xl p-6 sm:p-7 relative animate-scaleUp"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
             <button
               type="button"
-              onClick={() => setIsEditing(false)}
-              className="px-4 py-2 text-xs font-semibold text-gray-600 hover:text-black border border-gray-300 bg-white rounded-xs cursor-pointer"
+              onClick={() => setIsEditModalOpen(false)}
+              className="absolute right-4 top-4 text-gray-400 hover:text-black p-1 transition-colors cursor-pointer"
+              aria-label="Close dialog"
             >
-              Cancel
+              <X size={18} />
             </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="px-5 py-2 text-xs font-bold uppercase tracking-wider text-white bg-black hover:bg-neutral-800 rounded-xs transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
-            >
-              {isLoading ? 'Saving...' : 'Save Profile'}
-            </button>
+
+            <div className="mb-5 pb-3 border-b border-gray-100">
+              <h3 className="text-base font-semibold text-gray-900 tracking-tight">
+                Edit Personal Details
+              </h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Update your name and email address for order receipts
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveDetails} className="space-y-4">
+              {/* Full Name */}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-700 block">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  placeholder="e.g. John Doe"
+                  className="w-full px-3.5 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1A2E4C] focus:border-transparent transition-all"
+                />
+                <p className="text-[11px] text-gray-500">
+                  Displayed on delivery slips and customer correspondence.
+                </p>
+              </div>
+
+              {/* Email Address */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-gray-700">
+                    Email Address
+                  </label>
+                  <span className="text-[11px] text-gray-400">Optional</span>
+                </div>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="e.g. john@example.com"
+                  className="w-full px-3.5 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1A2E4C] focus:border-transparent transition-all"
+                />
+                <p className="text-[11px] text-gray-500">
+                  Used for digital tax invoices, dispatch updates, and return summaries.
+                </p>
+              </div>
+
+              {/* Actions (Matches AddressForm footer style) */}
+              <div className="flex gap-3 pt-4 border-t border-gray-100 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="flex-1 py-2.5 text-xs font-medium text-gray-700 border border-gray-200 rounded-sm hover:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 py-2.5 bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-medium rounded-sm transition-colors shadow-2xs disabled:opacity-50 cursor-pointer inline-flex items-center justify-center gap-1.5"
+                >
+                  {isLoading && <Loader2 size={13} className="animate-spin" />}
+                  <span>{isLoading ? 'Saving...' : 'Save Details'}</span>
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
       )}
-
-      {/* Info notice about modern phone login */}
-      <div className="bg-neutral-50 border border-neutral-200/80 rounded-sm p-4 flex items-start gap-3">
-        <Info size={16} className="text-[#C09B7A] shrink-0 mt-0.5" />
-        <div className="text-xs text-neutral-600 leading-relaxed">
-          <span className="font-semibold text-neutral-900">Phone-First Account Security:</span> Your mobile number is your primary security credential. When signing in from any device, we send an instant SMS OTP. No passwords to remember or reset!
-        </div>
-      </div>
 
       {/* ─── MODAL: CHANGE MOBILE NUMBER WITH OTP ───────────────────────────── */}
       {isPhoneModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-md max-w-[460px] w-full p-6 sm:p-8 shadow-2xl border border-gray-100 relative">
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn"
+          onClick={() => setIsPhoneModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-sm border border-gray-200 shadow-xl p-6 sm:p-7 relative animate-scaleUp"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
             <button
               type="button"
               onClick={() => setIsPhoneModalOpen(false)}
-              className="absolute top-5 right-5 p-1 text-gray-400 hover:text-black cursor-pointer"
+              className="absolute right-4 top-4 text-gray-400 hover:text-black p-1 transition-colors cursor-pointer"
+              aria-label="Close dialog"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
 
-            <div className="mb-5 space-y-1">
+            <div className="mb-5 pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <Smartphone className="text-[#C09B7A]" size={22} />
-                <h3 className="text-xl font-bold text-gray-900">
-                  {phoneStep === 'input' ? 'Change Mobile Number' : 'Verify New Number'}
+                <Smartphone size={18} className="text-[#1A2E4C]" />
+                <h3 className="text-base font-semibold text-gray-900 tracking-tight">
+                  {phoneStep === 'input' ? 'Change Mobile Number' : 'Verify Mobile Number'}
                 </h3>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 mt-0.5">
                 {phoneStep === 'input'
-                  ? 'Enter your new 10-digit mobile number. We will send an SMS OTP to verify ownership.'
+                  ? 'Enter your new 10-digit mobile number to receive a verification code.'
                   : `Enter the 4-digit verification code sent to +91 ${newPhoneNumber}`}
               </p>
             </div>
@@ -461,11 +475,11 @@ export default function PersonalInfoPage() {
             {phoneStep === 'input' ? (
               <form onSubmit={handleSendPhoneChangeOtp} className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-900 uppercase tracking-wider block">
+                  <label className="text-xs font-medium text-gray-700 block">
                     New Mobile Number
                   </label>
                   <div className="flex items-center">
-                    <span className="inline-flex items-center justify-center px-3 py-2.5 text-sm font-semibold text-gray-700 bg-gray-50 border border-r-0 border-gray-300 select-none">
+                    <span className="inline-flex items-center justify-center px-3.5 py-2.5 text-xs font-semibold text-gray-700 bg-gray-50 border border-r-0 border-gray-200 rounded-l-sm select-none">
                       +91
                     </span>
                     <input
@@ -475,36 +489,39 @@ export default function PersonalInfoPage() {
                       maxLength={10}
                       placeholder="10-digit number"
                       value={newPhoneNumber}
-                      onChange={(e) => setNewPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                      className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-300 rounded-none focus:outline-none focus:border-[#C09B7A] text-gray-900 placeholder:text-gray-400"
+                      onChange={(e) =>
+                        setNewPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))
+                      }
+                      className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-r-sm focus:outline-none focus:ring-2 focus:ring-[#1A2E4C] focus:border-transparent text-gray-900 placeholder:text-gray-400 transition-all"
                     />
                   </div>
                 </div>
 
-                <div className="pt-2 flex justify-end gap-2">
+                <div className="flex gap-3 pt-4 border-t border-gray-100 mt-6">
                   <button
                     type="button"
                     onClick={() => setIsPhoneModalOpen(false)}
-                    className="px-4 py-2.5 text-xs font-semibold text-gray-600 hover:text-black border border-gray-300 rounded-xs cursor-pointer"
+                    className="flex-1 py-2.5 text-xs font-medium text-gray-700 border border-gray-200 rounded-sm hover:bg-gray-50 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isPhoneLoading || newPhoneNumber.length !== 10}
-                    className="px-5 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider rounded-xs disabled:opacity-50 cursor-pointer shadow-xs"
+                    className="flex-1 py-2.5 bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-medium rounded-sm transition-colors shadow-2xs disabled:opacity-50 cursor-pointer inline-flex items-center justify-center gap-1.5"
                   >
-                    {isPhoneLoading ? 'Sending OTP...' : 'Send OTP'}
+                    {isPhoneLoading && <Loader2 size={13} className="animate-spin" />}
+                    <span>{isPhoneLoading ? 'Sending OTP...' : 'Send Verification Code'}</span>
                   </button>
                 </div>
               </form>
             ) : (
-              <form onSubmit={handleVerifyPhoneChangeOtp} className="space-y-5">
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-gray-900 uppercase tracking-wider text-center">
+              <form onSubmit={handleVerifyPhoneChangeOtp} className="space-y-4">
+                <div className="space-y-2 text-center py-2">
+                  <label className="text-xs font-medium text-gray-700 block">
                     Enter 4-Digit Code
                   </label>
-                  <div className="flex items-center justify-center gap-3">
+                  <div className="flex justify-center gap-2.5">
                     {otpDigits.map((digit, idx) => (
                       <input
                         key={idx}
@@ -517,52 +534,45 @@ export default function PersonalInfoPage() {
                         value={digit}
                         onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
                         onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                        className="w-12 h-12 text-center text-xl font-bold text-gray-900 border border-gray-300 rounded-none focus:border-[#C09B7A] focus:outline-none"
-                        autoFocus={idx === 0}
+                        className="w-12 h-12 text-center text-lg font-bold border border-gray-200 rounded-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1A2E4C] focus:border-transparent text-gray-900 transition-all shadow-2xs"
                       />
                     ))}
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs px-1">
+                <div className="flex items-center justify-between text-xs pt-1">
                   <button
                     type="button"
                     onClick={() => setPhoneStep('input')}
-                    className="text-gray-500 hover:text-black underline cursor-pointer"
+                    className="text-gray-500 hover:text-black font-medium"
                   >
-                    Change Number
+                    ← Change number
                   </button>
-
-                  <div>
-                    {resendCountdown > 0 ? (
-                      <span className="text-gray-400">Resend in {resendCountdown}s</span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleResendPhoneOtp}
-                        disabled={isPhoneLoading}
-                        className="font-bold text-black hover:text-[#C09B7A] underline cursor-pointer"
-                      >
-                        Resend OTP
-                      </button>
-                    )}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={handleResendPhoneOtp}
+                    disabled={resendCountdown > 0 || isPhoneLoading}
+                    className="text-[#1A2E4C] font-semibold hover:underline disabled:text-gray-400 disabled:no-underline cursor-pointer"
+                  >
+                    {resendCountdown > 0 ? `Resend in ${resendCountdown}s` : 'Resend code'}
+                  </button>
                 </div>
 
-                <div className="pt-2 flex justify-end gap-2">
+                <div className="flex gap-3 pt-4 border-t border-gray-100 mt-6">
                   <button
                     type="button"
                     onClick={() => setIsPhoneModalOpen(false)}
-                    className="px-4 py-2.5 text-xs font-semibold text-gray-600 hover:text-black border border-gray-300 rounded-xs cursor-pointer"
+                    className="flex-1 py-2.5 text-xs font-medium text-gray-700 border border-gray-200 rounded-sm hover:bg-gray-50 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isPhoneLoading || otpDigits.join('').length !== 4}
-                    className="px-5 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-wider rounded-xs disabled:opacity-50 cursor-pointer shadow-xs"
+                    className="flex-1 py-2.5 bg-[#1A2E4C] hover:bg-[#132238] text-white text-xs font-medium rounded-sm transition-colors shadow-2xs disabled:opacity-50 cursor-pointer inline-flex items-center justify-center gap-1.5"
                   >
-                    {isPhoneLoading ? 'Verifying...' : 'Verify & Update'}
+                    {isPhoneLoading && <Loader2 size={13} className="animate-spin" />}
+                    <span>{isPhoneLoading ? 'Verifying...' : 'Verify & Update'}</span>
                   </button>
                 </div>
               </form>

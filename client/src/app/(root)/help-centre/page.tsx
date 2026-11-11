@@ -1,408 +1,658 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  HelpCircle,
-  Search,
-  Phone,
-  Mail,
-  MessageCircle,
-  Truck,
-  RotateCcw,
-  CreditCard,
-  User,
-  Shield,
-  ChevronDown,
-  ChevronRight,
-  ArrowRight,
-  Sparkles,
-  ExternalLink,
-  MapPin,
-} from 'lucide-react';
+import { Star, ChevronDown, Phone, Mail, X } from 'lucide-react';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
 
-interface FAQItem {
+export type FAQCategory =
+  | 'top'
+  | 'terms'
+  | 'shipping'
+  | 'cancellation'
+  | 'returns'
+  | 'orders'
+  | 'payments'
+  | 'coupons'
+  | 'sizing';
+
+export interface FAQItem {
   id: string;
-  category: 'orders' | 'shipping' | 'returns' | 'payments' | 'sizing';
+  category: FAQCategory;
   question: string;
   answer: string;
 }
 
-const FAQS: FAQItem[] = [
-  // Orders & Tracking
+const CATEGORIES: { id: FAQCategory; label: string }[] = [
+  { id: 'top', label: 'Top Queries' },
+  { id: 'terms', label: 'Terms and Conditions' },
+  { id: 'shipping', label: 'Shipping, Order Tracking & Delivery' },
+  { id: 'cancellation', label: 'Cancellations and Modifications' },
+  { id: 'returns', label: 'Returns and Exchange' },
+  { id: 'orders', label: 'Orders & Tracking' },
+  { id: 'payments', label: 'Payments & Refunds' },
+  { id: 'coupons', label: 'Coupons and Offers' },
+  { id: 'sizing', label: 'Sizing & Garment Care' },
+];
+
+export const FAQS: FAQItem[] = [
+  // ─── Top Queries ───────────────────────────────────────────────────────────
   {
-    id: 'ot-1',
-    category: 'orders',
-    question: 'How do I track my order in real-time?',
+    id: 'top-1',
+    category: 'top',
+    question: 'Why are there different prices for the same product? Is it legal?',
     answer:
-      'Once your order is dispatched, you will receive an automated SMS and email containing your AWB tracking link. You can also visit our dedicated Track Your Order page anytime and enter your Order Number or courier AWB to view live milestone updates.',
+      'Prices may vary based on seasonal promotions, limited-time flash offers, or specific color variants. All prices displayed are inclusive of taxes and fully compliant with Indian consumer pricing regulations.',
   },
   {
-    id: 'ot-2',
-    category: 'orders',
-    question: 'Can I modify my delivery address after placing an order?',
+    id: 'top-2',
+    category: 'top',
+    question: 'How do I track my order status?',
     answer:
-      'If your order has not yet been packed or dispatched (status is PLACED or CONFIRMED), our support concierge can quickly update your delivery address. Please reach out via phone or email as soon as possible.',
+      'You can track your order anytime on our Track Your Order page by entering your Order ID, or view real-time status updates directly under Profile > My Orders.',
   },
   {
-    id: 'ot-3',
-    category: 'orders',
-    question: 'Where can I download my official GST tax invoice?',
+    id: 'top-3',
+    category: 'top',
+    question: 'Do you charge for shipping?',
     answer:
-      'You can download your official GST invoice directly from your account. Navigate to Profile > My Orders, click on the specific order, and tap the "Download Invoice" button. An invoice is also included in your order confirmation email.',
+      'No. All orders ship free across India. There are no delivery charges, convenience fees, or minimum order thresholds required.',
+  },
+  {
+    id: 'top-4',
+    category: 'top',
+    question: 'Which courier partners handle YOX deliveries?',
+    answer:
+      'We ship all orders through Shiprocket, partnering with trusted courier services including Blue Dart, Delhivery, Ekart, DTDC, and Xpressbees to ensure fast, reliable doorstep delivery across India.',
+  },
+  {
+    id: 'top-5',
+    category: 'top',
+    question: 'How will I detect fraudulent emails/calls seeking sensitive personal and confidential information?',
+    answer:
+      'YOX will never contact you asking for your debit/credit card PIN, CVV, OTP, or net banking password. Always ensure emails come from official @yoxfashion.in addresses and never share financial credentials.',
+  },
+  {
+    id: 'top-6',
+    category: 'top',
+    question: 'How do I cancel the order, I have placed?',
+    answer:
+      'You can cancel your order directly before it is dispatched. Go to Profile > My Orders, select your order, and tap "Cancel Order".',
+  },
+  {
+    id: 'top-7',
+    category: 'top',
+    question: 'How do I create a Return Request?',
+    answer:
+      'Go to Profile > My Orders, select the delivered order, tap "Return / Exchange", choose your reason, and confirm. Our courier partner will pick up the item from your doorstep for free.',
+  },
+  {
+    id: 'top-8',
+    category: 'top',
+    question: 'I have created a Return request. When will the product be picked up?',
+    answer:
+      'Doorstep pickup is typically arranged within 24 to 48 hours of submitting your return request. The courier will notify you via SMS before arrival to coordinate pickup.',
+  },
+  {
+    id: 'top-9',
+    category: 'top',
+    question: 'I have created a Return request. When will I get the refund?',
+    answer:
+      'Once the returned item reaches our facility and passes basic quality inspection, your refund is credited within 24–48 hours to your original payment method (or directly to your bank account for COD orders).',
+  },
+  {
+    id: 'top-10',
+    category: 'top',
+    question: 'Where should I self-ship the Returns?',
+    answer:
+      'We provide free reverse doorstep pickup for almost all serviceable pin codes. In the rare case that your pin code is not covered for reverse pickup, our customer support team will guide you on self-shipping and reimburse the courier fee.',
+  },
+  {
+    id: 'top-11',
+    category: 'top',
+    question: 'Are there extra charges for Cash on Delivery (COD)?',
+    answer:
+      'No. Cash on Delivery is 100% free with no handling fees, cash collection charges, or extra surcharges.',
   },
 
-  // Shipping & Delivery
+  // ─── Terms and Conditions ──────────────────────────────────────────────────
   {
-    id: 'sd-1',
-    category: 'shipping',
-    question: 'What are your delivery timelines across India?',
+    id: 'terms-1',
+    category: 'terms',
+    question: 'What is YOX’s fair usage policy?',
     answer:
-      'Tier 1 Metros (Mumbai, Delhi NCR, Bengaluru, Hyderabad, Chennai, Kolkata) typically arrive within 2–3 business days. Tier 2 and other regions generally take 4–6 business days from dispatch.',
+      'Our returns and exchange services are provided complimentary for genuine customer satisfaction. Accounts showing unusually excessive cancellations or returns violating fair usage guidelines may be reviewed by our team.',
   },
   {
-    id: 'sd-2',
-    category: 'shipping',
-    question: 'What are the shipping charges?',
+    id: 'terms-2',
+    category: 'terms',
+    question: 'How is customer privacy and personal data protected?',
     answer:
-      'We offer complimentary free shipping on all prepaid and COD orders above the store free shipping threshold. For smaller orders below this threshold, a flat delivery fee of ₹99 is added at checkout.',
+      'We use secure encryption and certified payment gateways to safeguard your personal information. We never sell, lease, or trade your private data to third parties.',
   },
   {
-    id: 'sd-3',
+    id: 'terms-3',
+    category: 'terms',
+    question: 'How can I identify genuine communications from YOX?',
+    answer:
+      'All legitimate customer communications originate from our official domain (@yoxfashion.in) or registered SMS sender IDs. We never ask for passwords, OTPs, or remote screen access.',
+  },
+
+  // ─── Shipping, Order Tracking & Delivery ───────────────────────────────────
+  {
+    id: 'ship-1',
+    category: 'shipping',
+    question: 'Do you charge for shipping?',
+    answer:
+      'No. All orders ship free across India. There are no shipping charges, delivery fees, or minimum order value required.',
+  },
+  {
+    id: 'ship-2',
+    category: 'shipping',
+    question: 'How fast will my order be delivered?',
+    answer:
+      'Orders are dispatched within 24–48 hours. Most metro locations receive packages within 2–4 business days, while non-metro locations take 4–6 business days.',
+  },
+  {
+    id: 'ship-3',
     category: 'shipping',
     question: 'Which courier partners handle YOX deliveries?',
     answer:
-      'We operate with top logistics partners including Bluedart, Delhivery, Ekart, DTDC, and Xpressbees, orchestrated via automated Shiprocket courier allocation to ensure the fastest transit time to your specific pin code.',
+      'We ship all orders through Shiprocket, partnering with trusted courier services including Blue Dart, Delhivery, Ekart, DTDC, and Xpressbees to ensure fast, reliable doorstep delivery across India.',
+  },
+  {
+    id: 'ship-4',
+    category: 'shipping',
+    question: 'Do you deliver across India?',
+    answer:
+      'Yes, we deliver nationwide to over 27,000+ pin codes across India. You can enter your 6-digit pin code on any product page to check delivery estimates.',
+  },
+  {
+    id: 'ship-5',
+    category: 'shipping',
+    question: 'What happens if I miss the delivery?',
+    answer:
+      'Our courier partner will attempt delivery up to 3 times on consecutive business days. You will also receive an SMS beforehand with delivery details.',
+  },
+  {
+    id: 'ship-6',
+    category: 'shipping',
+    question: 'Can I change my delivery address or phone number?',
+    answer:
+      'If your order has not yet been dispatched, contact our customer support team and we will update your delivery address or contact number.',
   },
 
-  // Returns & Refunds
+  // ─── Cancellations and Modifications ───────────────────────────────────────
   {
-    id: 'rr-1',
-    category: 'returns',
-    question: 'What is the return window and how do I initiate a return?',
+    id: 'canc-1',
+    category: 'cancellation',
+    question: 'How do I cancel my order?',
     answer:
-      'You have 7 days from the confirmed date of delivery to request a return or exchange. Simply log into your YOX account, go to My Orders, click on the delivered order, select "Return Item", choose your reason, and attach 3 clear photos. Our team will verify it and book a free doorstep courier pickup.',
+      'You can cancel your order directly from your account before it is dispatched. Go to Profile > My Orders, click on the order, and tap "Cancel Order".',
   },
   {
-    id: 'rr-2',
-    category: 'returns',
-    question: 'Is reverse doorstep pickup free?',
+    id: 'canc-2',
+    category: 'cancellation',
+    question: 'Can I cancel an order after it has shipped?',
     answer:
-      'Yes, 100%! We provide free doorstep reverse pickup across all serviced pin codes. You will never be charged for reverse logistics or restocking.',
+      'Once an order has shipped, it cannot be cancelled online. However, you can simply decline the package when the courier arrives, and your refund will be processed once the item returns to our warehouse.',
   },
   {
-    id: 'rr-3',
-    category: 'returns',
-    question: 'How and when will I receive my refund?',
+    id: 'canc-3',
+    category: 'cancellation',
+    question: 'When will I receive my refund for a cancelled order?',
     answer:
-      'For prepaid orders (Card, UPI, Netbanking), the amount is reversed to your original payment mode within 3–5 business days after quality approval. For Cash on Delivery orders, we transfer the refund directly to your bank account via IMPS/NEFT within 24–48 hours.',
+      'For prepaid orders (UPI, cards, net banking), refunds are returned to your original payment method within 24–48 hours. For Cash on Delivery orders, no payment was collected so no refund is needed.',
+  },
+  {
+    id: 'canc-4',
+    category: 'cancellation',
+    question: 'Can I cancel a single item from an order?',
+    answer:
+      'Yes. You can cancel individual items before they are packed, or contact our support team to update your order.',
+  },
+  {
+    id: 'canc-5',
+    category: 'cancellation',
+    question: 'Can I modify the size or color of an item in my order?',
+    answer:
+      'If your order has not yet shipped, contact our support team to check if size or color adjustments can be made before packaging.',
   },
 
-  // Payments & Offers
+  // ─── Returns and Exchange ──────────────────────────────────────────────────
   {
-    id: 'po-1',
+    id: 'ret-1',
+    category: 'returns',
+    question: 'What is your return and exchange window?',
+    answer:
+      'We offer a 7-day return and exchange window from the date your order is delivered. You can request a return or exchange directly from Profile > My Orders.',
+  },
+  {
+    id: 'ret-2',
+    category: 'returns',
+    question: 'Is return pickup free?',
+    answer:
+      'Yes. Doorstep return pickup is completely free. We never charge return shipping, logistics, or restocking fees.',
+  },
+  {
+    id: 'ret-3',
+    category: 'returns',
+    question: 'How do I exchange an item for a different size or color?',
+    answer:
+      'Go to Profile > My Orders, select your order, tap "Exchange", and choose your new size or color. Once your original item is picked up, your replacement is dispatched.',
+  },
+  {
+    id: 'ret-4',
+    category: 'returns',
+    question: 'What condition must returned items be in?',
+    answer:
+      'Items must be unused, unwashed, and returned in their original condition with all brand tags and packaging attached.',
+  },
+  {
+    id: 'ret-5',
+    category: 'returns',
+    question: 'When will I receive my return refund?',
+    answer:
+      'Once your returned item reaches our warehouse and is checked, your refund is processed within 24–48 hours to your original payment method (or your bank account for COD orders).',
+  },
+  {
+    id: 'ret-6',
+    category: 'returns',
+    question: 'Where should I self-ship the Returns?',
+    answer:
+      'In rare cases where reverse pickup is unavailable for a remote location, our team will provide our warehouse address and reimburse up to ₹100 for your courier charges.',
+  },
+
+  // ─── Orders & Tracking ─────────────────────────────────────────────────────
+  {
+    id: 'ord-1',
+    category: 'orders',
+    question: 'How can I track my order?',
+    answer:
+      'You can track your order anytime on our Track Your Order page by entering your Order ID or tracking number. You can also view real-time status updates under Profile > My Orders.',
+  },
+  {
+    id: 'ord-2',
+    category: 'orders',
+    question: 'What do the order statuses mean?',
+    answer:
+      'Placed → Confirmed → Packed → Dispatched → Out for Delivery → Delivered. You will receive SMS and email notifications at each stage.',
+  },
+  {
+    id: 'ord-3',
+    category: 'orders',
+    question: 'Where can I download my tax invoice?',
+    answer:
+      'Go to Profile > My Orders, click on your order, and tap "Download Invoice" to download your official GST invoice PDF.',
+  },
+  {
+    id: 'ord-4',
+    category: 'orders',
+    question: 'What if I did not receive an order confirmation?',
+    answer:
+      'Order confirmations are sent by email and SMS immediately after placing an order. Please check your spam folder or visit Profile > My Orders to check your active orders.',
+  },
+
+  // ─── Payments & Refunds ────────────────────────────────────────────────────
+  {
+    id: 'pay-1',
     category: 'payments',
     question: 'What payment methods do you accept?',
     answer:
-      'We support all major payment modes including UPI (Google Pay, PhonePe, Paytm, BHIM), Credit & Debit Cards (Visa, Mastercard, RuPay, Amex), Net Banking across 50+ Indian banks, and Cash on Delivery (COD).',
+      'We accept UPI (Google Pay, PhonePe, Paytm, BHIM), credit and debit cards (Visa, Mastercard, RuPay), net banking, and Cash on Delivery (COD).',
   },
   {
-    id: 'po-2',
+    id: 'pay-2',
     category: 'payments',
-    question: 'Is Cash on Delivery (COD) available for all orders?',
+    question: 'Are there extra charges for Cash on Delivery (COD)?',
     answer:
-      'Yes, Cash on Delivery is available for most serviceable pin codes across India with zero extra payment convenience surcharge.',
+      'No. Cash on Delivery is completely free with no extra fees or convenience charges.',
   },
   {
-    id: 'po-3',
+    id: 'pay-3',
     category: 'payments',
-    question: 'How do I apply a discount coupon code?',
+    question: 'What if money was deducted but the order failed?',
     answer:
-      'During checkout, in the order summary sidebar, enter your coupon code in the "Promo Code" field and click "Apply". Valid discounts are instantly deducted from your cart subtotal.',
+      'If money was deducted from your bank during a network timeout, banks automatically reverse the full amount back to your account within 2–4 business days.',
+  },
+  {
+    id: 'pay-4',
+    category: 'payments',
+    question: 'Is my payment information secure?',
+    answer:
+      'Yes. All payments are encrypted and processed through certified, bank-grade payment gateways. We never store your full card number or CVV.',
+  },
+  {
+    id: 'pay-5',
+    category: 'payments',
+    question: 'How are COD refunds credited?',
+    answer:
+      'For COD orders, you can enter your bank account details or UPI ID under Profile > My Orders when initiating a return, and the refund is transferred via IMPS/NEFT.',
   },
 
-  // Sizing & Fabrics
+  // ─── Coupons and Offers ────────────────────────────────────────────────────
   {
-    id: 'sf-1',
-    category: 'sizing',
-    question: 'How do YOX contemporary garments fit?',
+    id: 'coup-1',
+    category: 'coupons',
+    question: 'How do I apply a coupon code?',
     answer:
-      'Our shirts, jackets, and trousers are crafted with tailored modern fits that balance relaxed comfort with a sharp, structured silhouette. Each product page features an exact size guide with chest, shoulder, and length measurements in inches and centimeters.',
+      'On the Cart or Checkout page, enter your promo code into the "Apply Coupon" field and click Apply. The discount will instantly reflect on your bill summary.',
   },
   {
-    id: 'sf-2',
-    category: 'sizing',
-    question: 'How should I care for my YOX fabrics?',
+    id: 'coup-2',
+    category: 'coupons',
+    question: 'Can I use multiple coupons on a single order?',
     answer:
-      'To maintain the natural fibers and rich finish, we recommend cold gentle machine wash or hand washing with mild detergent. Turn garments inside out and dry in shade. Avoid bleaching or high-temperature tumble drying.',
+      'Only one promo coupon can be applied per order. However, coupon codes can be combined with existing automatic store discounts.',
+  },
+  {
+    id: 'coup-3',
+    category: 'coupons',
+    question: 'Why is my coupon code not applying?',
+    answer:
+      'Please verify that the coupon has not expired and that your cart meets any applicable minimum cart criteria or eligible product categories.',
+  },
+
+  // ─── Sizing & Garment Care ─────────────────────────────────────────────────
+  {
+    id: 'size-1',
+    category: 'sizing',
+    question: 'How do YOX clothes fit?',
+    answer:
+      'Our clothing fits true to standard Indian sizing. If you prefer a looser or oversized look, we recommend choosing one size up.',
+  },
+  {
+    id: 'size-2',
+    category: 'sizing',
+    question: 'How do I find my exact size?',
+    answer:
+      'Each product page features a detailed size chart with chest, waist, and length measurements in inches and centimeters to help you choose the right fit.',
+  },
+  {
+    id: 'size-3',
+    category: 'sizing',
+    question: 'Do fabrics shrink after washing?',
+    answer:
+      'Our fabrics are pre-shrunk to retain their shape and fit. Following the care label on your garment will keep it looking its best.',
+  },
+  {
+    id: 'size-4',
+    category: 'sizing',
+    question: 'How should I care for my garments?',
+    answer:
+      'Check the care tag inside each garment. Most shirts and tees can be machine washed cold. For outerwear and jackets, professional dry cleaning is recommended.',
   },
 ];
 
 export default function HelpCentrePage() {
   const { config } = useStoreSettingsStore();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [openFaqId, setOpenFaqId] = useState<string | null>('ot-1');
+  const [selectedCategory, setSelectedCategory] = useState<FAQCategory>('top');
+  const [openFaqId, setOpenFaqId] = useState<string | null>(null);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
-  // Filter FAQs based on search and category tab
-  const filteredFaqs = FAQS.filter((faq) => {
-    const matchesCategory = selectedCategory === 'all' || faq.category === selectedCategory;
-    const matchesSearch =
-      searchQuery.trim() === '' ||
-      faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      faq.answer.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  // Handle URL hash changes (e.g. /help-centre#shipping, #cancellation, etc.)
+  const handleHashChange = () => {
+    if (typeof window === 'undefined') return;
+    const rawHash = window.location.hash.replace('#', '').toLowerCase();
+
+    let targetCat: FAQCategory | null = null;
+    if (rawHash === 'shipping' || rawHash === 'delivery') targetCat = 'shipping';
+    else if (rawHash === 'cancellation' || rawHash === 'cancel') targetCat = 'cancellation';
+    else if (rawHash === 'returns' || rawHash === 'exchange' || rawHash === 'refund') targetCat = 'returns';
+    else if (rawHash === 'orders' || rawHash === 'tracking' || rawHash === 'track') targetCat = 'orders';
+    else if (rawHash === 'payments' || rawHash === 'payment' || rawHash === 'cod') targetCat = 'payments';
+    else if (rawHash === 'sizing' || rawHash === 'size' || rawHash === 'care') targetCat = 'sizing';
+    else if (rawHash === 'terms') targetCat = 'terms';
+    else if (rawHash === 'coupons' || rawHash === 'offers') targetCat = 'coupons';
+
+    if (targetCat) {
+      setSelectedCategory(targetCat);
+    }
+  };
+
+  useEffect(() => {
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const selectCategory = (catId: FAQCategory) => {
+    setSelectedCategory(catId);
+    setOpenFaqId(null);
+    if (catId !== 'top') {
+      window.history.replaceState(null, '', `#${catId}`);
+    } else {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  };
 
   const toggleFaq = (id: string) => {
     setOpenFaqId((prev) => (prev === id ? null : id));
   };
+
+  const currentCategoryDef = CATEGORIES.find((c) => c.id === selectedCategory) || CATEGORIES[0];
+  const filteredFaqs = FAQS.filter((faq) => faq.category === selectedCategory);
 
   const supportPhone = config.supportPhone || '1800-123-1444';
   const supportEmail = config.supportEmail || 'support@yoxfashion.in';
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
-      {/* ─── Breadcrumbs ──────────────────────────────────────────────────────── */}
-      <div className="border-b border-gray-200 bg-white">
-        <div className="w-[95%] max-w-7xl mx-auto py-3 text-xs text-gray-500 flex items-center gap-2">
-          <Link href="/" className="hover:text-black transition-colors">
-            Home
-          </Link>
-          <ChevronRight size={13} className="text-gray-400" />
-          <span className="text-gray-900 font-medium">Help Centre</span>
+      {/* ─── Main Content Container ───────────────────────────────────────────── */}
+      <div className="w-[92%] max-w-6xl mx-auto py-8 lg:py-12">
+        {/* ─── Top Header Bar ─────────────────────────────────────────────────── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-gray-200 gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+            Frequently Asked Questions
+          </h1>
+          <div className="flex items-center gap-3">
+            <span className="text-xs sm:text-sm text-gray-500">Still need help?</span>
+            <button
+              type="button"
+              onClick={() => setIsContactModalOpen(true)}
+              className="px-4 py-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-600 rounded-none uppercase tracking-wider transition-colors cursor-pointer"
+            >
+              CONTACT US
+            </button>
+          </div>
+        </div>
+
+        {/* ─── Two-Column FAQ Layout ─────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-10 pt-8">
+          {/* ─── Left Sidebar Navigation ─────────────────────────────────────── */}
+          <div className="md:col-span-5 lg:col-span-4 border-b md:border-b-0 md:border-r border-gray-200 pb-6 md:pb-0 md:pr-4">
+            <nav className="flex flex-row md:flex-col overflow-x-auto md:overflow-x-visible no-scrollbar gap-1">
+              {CATEGORIES.map((cat) => {
+                const isActive = selectedCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => selectCategory(cat.id)}
+                    className={`relative w-full text-left flex items-center gap-3 py-3 px-3 transition-colors cursor-pointer whitespace-nowrap md:whitespace-normal group ${
+                      isActive
+                        ? 'text-[#F4A71D] font-semibold'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <Star
+                      size={17}
+                      className={`shrink-0 transition-colors ${
+                        isActive
+                          ? 'fill-[#F4A71D] text-[#F4A71D]'
+                          : 'text-gray-400 stroke-[1.5] group-hover:text-gray-600'
+                      }`}
+                    />
+                    <span className="text-xs sm:text-sm leading-tight">{cat.label}</span>
+
+                    {/* Active Golden Right Bar (Matches screenshot) */}
+                    {isActive && (
+                      <span className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 w-1 h-7 bg-[#F4A71D] rounded-l" />
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* ─── Right Content Area ───────────────────────────────────────────── */}
+          <div className="md:col-span-7 lg:col-span-8 pl-0 md:pl-2">
+            {/* Category Title */}
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight mb-4">
+              {currentCategoryDef.label}
+            </h2>
+
+            {/* Order Action Sub-banner (Matches screenshot) */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between py-3 border-b border-dashed border-gray-300 gap-3 mb-6">
+              <span className="text-xs sm:text-sm text-gray-600">
+                You can track your orders in &apos;My Orders.&apos;
+              </span>
+              <Link
+                href="/profile/orders"
+                className="inline-flex items-center justify-center px-4 py-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-600 uppercase tracking-wider rounded-none transition-colors self-start sm:self-auto"
+              >
+                TRACK ORDERS
+              </Link>
+            </div>
+
+            {/* Questions List */}
+            <div className="space-y-4">
+              {filteredFaqs.length > 0 ? (
+                filteredFaqs.map((faq) => {
+                  const isOpen = openFaqId === faq.id;
+                  return (
+                    <div
+                      key={faq.id}
+                      className="border-b border-gray-100 last:border-b-0 pb-3.5"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => toggleFaq(faq.id)}
+                        className="w-full text-left flex items-start justify-between gap-4 group cursor-pointer"
+                      >
+                        <span
+                          className={`text-xs sm:text-sm font-bold leading-snug transition-colors ${
+                            isOpen ? 'text-black' : 'text-gray-800 group-hover:text-black'
+                          }`}
+                        >
+                          {faq.question}
+                        </span>
+                        <ChevronDown
+                          size={16}
+                          className={`text-gray-400 shrink-0 mt-0.5 transition-transform duration-200 ${
+                            isOpen ? 'rotate-180 text-black' : 'group-hover:text-gray-700'
+                          }`}
+                        />
+                      </button>
+
+                      {isOpen && (
+                        <div className="mt-2 text-xs sm:text-sm text-gray-600 leading-relaxed pr-4 animate-fadeIn">
+                          <p>{faq.answer}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="py-8 text-center text-gray-500 text-sm">
+                  No questions currently listed under this category.
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ─── Hero Header With Search Bar ─────────────────────────────────────── */}
-      <section className="bg-white border-b border-gray-200 py-10 sm:py-14">
-        <div className="w-[95%] max-w-7xl mx-auto text-center">
-          <span className="inline-block text-[11px] font-bold uppercase tracking-widest text-gray-800 bg-gray-100 px-3 py-1 mb-3 border border-gray-200">
-            24/7 Dedicated Support
-          </span>
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
-            How Can We Assist You Today?
-          </h1>
-          <p className="mt-2 text-xs sm:text-sm text-gray-600 max-w-xl mx-auto">
-            Search our knowledge base for instant answers on orders, shipping, returns, sizing, and payments.
-          </p>
+      {/* ─── Contact Us Modal ─────────────────────────────────────────────────── */}
+      {isContactModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn"
+          onClick={() => setIsContactModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-md bg-white border border-gray-200 p-6 sm:p-8 shadow-xl relative animate-scaleUp"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setIsContactModalOpen(false)}
+              className="absolute right-4 top-4 text-gray-400 hover:text-black p-1 transition-colors cursor-pointer"
+              aria-label="Close dialog"
+            >
+              <X size={18} />
+            </button>
 
-          {/* Interactive Search Bar */}
-          <div className="mt-6 max-w-2xl mx-auto relative">
-            <div className="relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search questions (e.g. 'track shipment', 'return window', 'cod refund')..."
-                className="w-full bg-white border border-gray-300 rounded-none py-3.5 pl-12 pr-4 text-xs sm:text-sm text-gray-900 placeholder:text-gray-500 shadow-xs outline-none focus:border-black transition-colors"
-              />
-              <Search
-                size={18}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
-              />
+            <h3 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+              Contact Customer Support
+            </h3>
+            <p className="text-xs text-gray-500 mt-1">
+              Our customer care team is available Monday to Saturday, 9:30 AM – 9:30 PM IST.
+            </p>
+
+            <div className="mt-6 space-y-3">
+              {/* Phone */}
+              <a
+                href={`tel:${supportPhone}`}
+                className="flex items-center justify-between p-3.5 border border-gray-200 hover:border-black transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-black text-white flex items-center justify-center">
+                    <Phone size={14} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">
+                      Phone Call
+                    </span>
+                    <span className="text-xs sm:text-sm font-bold text-gray-900">
+                      {supportPhone}
+                    </span>
+                  </div>
+                </div>
+                <span className="text-xs font-semibold text-blue-600 group-hover:underline">
+                  Call Now
+                </span>
+              </a>
+
+              {/* Email */}
+              <a
+                href={`mailto:${supportEmail}`}
+                className="flex items-center justify-between p-3.5 border border-gray-200 hover:border-black transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-black text-white flex items-center justify-center">
+                    <Mail size={14} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">
+                      Email Support
+                    </span>
+                    <span className="text-xs sm:text-sm font-bold text-gray-900 truncate max-w-[180px] sm:max-w-[220px] block">
+                      {supportEmail}
+                    </span>
+                  </div>
+                </div>
+                <span className="text-xs font-semibold text-blue-600 group-hover:underline">
+                  Send Email
+                </span>
+              </a>
             </div>
-            {searchQuery && (
+
+            <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
+              <span>Average response time: &lt; 2 hrs</span>
               <button
                 type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-black bg-gray-100 px-2 py-0.5"
+                onClick={() => setIsContactModalOpen(false)}
+                className="text-gray-900 font-bold hover:underline cursor-pointer"
               >
-                Clear
+                Dismiss
               </button>
-            )}
+            </div>
           </div>
         </div>
-      </section>
-
-      {/* ─── Direct Concierge Contact Touchpoints ────────────────────────────── */}
-      <div className="w-[95%] max-w-7xl mx-auto py-10 sm:py-14">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-14">
-          {/* Call Support */}
-          <a
-            href={`tel:${supportPhone}`}
-            className="bg-white border border-gray-200 p-6 shadow-xs hover:border-black transition-all group flex flex-col justify-between"
-          >
-            <div>
-              <div className="w-10 h-10 bg-black text-white flex items-center justify-center mb-4 group-hover:bg-neutral-800 transition-colors">
-                <Phone size={18} />
-              </div>
-              <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Call Concierge</h4>
-              <p className="text-xs text-gray-500 mt-1">Direct phone assistance</p>
-              <p className="text-sm font-extrabold text-black mt-3">{supportPhone}</p>
-            </div>
-            <span className="text-[11px] text-gray-500 font-medium mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-              <span>9:30 AM – 9:30 PM IST</span>
-              <ArrowRight size={13} className="text-gray-400 group-hover:translate-x-1 transition-transform" />
-            </span>
-          </a>
-
-          {/* Email Support */}
-          <a
-            href={`mailto:${supportEmail}`}
-            className="bg-white border border-gray-200 p-6 shadow-xs hover:border-black transition-all group flex flex-col justify-between"
-          >
-            <div>
-              <div className="w-10 h-10 bg-black text-white flex items-center justify-center mb-4 group-hover:bg-neutral-800 transition-colors">
-                <Mail size={18} />
-              </div>
-              <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Email Concierge</h4>
-              <p className="text-xs text-gray-500 mt-1">Detailed written queries</p>
-              <p className="text-xs sm:text-sm font-extrabold text-black mt-3 truncate">{supportEmail}</p>
-            </div>
-            <span className="text-[11px] text-gray-500 font-medium mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-              <span>Average reply: Under 2 hrs</span>
-              <ArrowRight size={13} className="text-gray-400 group-hover:translate-x-1 transition-transform" />
-            </span>
-          </a>
-
-          {/* Track Order Direct */}
-          <Link
-            href="/track-order"
-            className="bg-white border border-gray-200 p-6 shadow-xs hover:border-black transition-all group flex flex-col justify-between"
-          >
-            <div>
-              <div className="w-10 h-10 bg-black text-white flex items-center justify-center mb-4 group-hover:bg-neutral-800 transition-colors">
-                <Truck size={18} />
-              </div>
-              <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Track Your Order</h4>
-              <p className="text-xs text-gray-500 mt-1">Real-time courier milestones</p>
-              <p className="text-xs font-semibold text-emerald-700 mt-3">Live AWB Tracking Lookup</p>
-            </div>
-            <span className="text-[11px] text-gray-500 font-medium mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-              <span>Instant Lookup</span>
-              <ArrowRight size={13} className="text-gray-400 group-hover:translate-x-1 transition-transform" />
-            </span>
-          </Link>
-
-          {/* Returns & Exchanges */}
-          <Link
-            href="/returns-process"
-            className="bg-white border border-gray-200 p-6 shadow-xs hover:border-black transition-all group flex flex-col justify-between"
-          >
-            <div>
-              <div className="w-10 h-10 bg-black text-white flex items-center justify-center mb-4 group-hover:bg-neutral-800 transition-colors">
-                <RotateCcw size={18} />
-              </div>
-              <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Returns Guide</h4>
-              <p className="text-xs text-gray-500 mt-1">7-Day free doorstep pickups</p>
-              <p className="text-xs font-semibold text-black mt-3">Step-by-step instructions</p>
-            </div>
-            <span className="text-[11px] text-gray-500 font-medium mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-              <span>View Returns Process</span>
-              <ArrowRight size={13} className="text-gray-400 group-hover:translate-x-1 transition-transform" />
-            </span>
-          </Link>
-        </div>
-
-        {/* ─── Frequently Asked Questions Section ─────────────────────────────── */}
-        <div className="bg-white border border-gray-200 p-6 sm:p-10 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-100">
-            <div>
-              <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wide">
-                Frequently Asked Questions
-              </h2>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Browse popular topics or select a category below
-              </p>
-            </div>
-
-            {/* Category Filter Pills */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              {[
-                { id: 'all', label: 'All Topics' },
-                { id: 'orders', label: 'Orders' },
-                { id: 'shipping', label: 'Shipping' },
-                { id: 'returns', label: 'Returns' },
-                { id: 'payments', label: 'Payments' },
-                { id: 'sizing', label: 'Sizing' },
-              ].map((cat) => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-none transition-all cursor-pointer ${
-                    selectedCategory === cat.id
-                      ? 'bg-black text-white'
-                      : 'bg-gray-100 text-gray-600 hover:text-black hover:bg-gray-200'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* FAQ Accordion List */}
-          <div className="divide-y divide-gray-100 mt-2">
-            {filteredFaqs.length > 0 ? (
-              filteredFaqs.map((faq) => {
-                const isOpen = openFaqId === faq.id;
-                return (
-                  <div key={faq.id} className="py-4">
-                    <button
-                      type="button"
-                      onClick={() => toggleFaq(faq.id)}
-                      className="w-full flex items-center justify-between text-left gap-4 py-1 cursor-pointer group"
-                    >
-                      <span className="text-sm font-bold text-gray-900 group-hover:text-black transition-colors">
-                        {faq.question}
-                      </span>
-                      <ChevronDown
-                        size={17}
-                        className={`text-gray-400 shrink-0 transition-transform duration-200 ${
-                          isOpen ? 'rotate-180 text-black' : ''
-                        }`}
-                      />
-                    </button>
-                    {isOpen && (
-                      <div className="mt-2 text-xs sm:text-sm text-gray-600 leading-relaxed pr-6 animate-in fade-in duration-150">
-                        {faq.answer}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            ) : (
-              <div className="py-12 text-center space-y-2">
-                <HelpCircle size={32} className="text-gray-400 mx-auto" />
-                <p className="text-sm font-semibold text-gray-800">No matching questions found</p>
-                <p className="text-xs text-gray-500">
-                  Try searching for another keyword or contact our support concierge directly.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ─── Still Need Help Banner ─────────────────────────────────────────── */}
-        <div className="mt-12 bg-black text-white p-8 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-1 text-center md:text-left">
-            <h3 className="text-lg font-bold">Still haven&apos;t found what you are looking for?</h3>
-            <p className="text-xs sm:text-sm text-gray-400">
-              Our customer success team is available 7 days a week from 9:30 AM to 9:30 PM IST.
-            </p>
-          </div>
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-center">
-            <a
-              href={`tel:${supportPhone}`}
-              className="px-6 py-3 bg-white hover:bg-gray-100 text-black text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer shadow-xs inline-flex items-center gap-2"
-            >
-              <Phone size={14} />
-              <span>Call Us Now</span>
-            </a>
-            <a
-              href={`mailto:${supportEmail}`}
-              className="px-6 py-3 border border-gray-600 hover:border-white text-white text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer inline-flex items-center gap-2"
-            >
-              <Mail size={14} />
-              <span>Send An Email</span>
-            </a>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
-

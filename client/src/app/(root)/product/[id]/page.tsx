@@ -39,6 +39,8 @@ import { toast } from 'sonner';
 import { ProductReviews } from '@/components/features/product/product-reviews';
 import { ProductSuggestions } from '@/components/features/product/product-suggestions';
 import { ProductImagePreviewModal } from '@/components/features/product/product-image-preview-modal';
+import { ProductShareModal } from '@/components/features/product/product-share-modal';
+import { FaShare } from 'react-icons/fa6';
 
 interface ProductSpec {
   care: { icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; title: string; subtitle: string };
@@ -240,36 +242,10 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const isFav = product ? isFavourite(product.id, selectedColor) : false;
 
   const { categories: apiCategories = [] } = useCategories();
-  const [isCopiedShare, setIsCopiedShare] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
-  const handleShare = async () => {
-    if (!product) return;
-    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
-    const shareData = {
-      title: product.name,
-      text: `Check out ${product.name} on YOX`,
-      url: shareUrl,
-    };
-
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      try {
-        await navigator.share(shareData);
-        return;
-      } catch (err: any) {
-        if (err.name === 'AbortError') return;
-      }
-    }
-
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        setIsCopiedShare(true);
-        toast.success('Link copied to clipboard!');
-        setTimeout(() => setIsCopiedShare(false), 2000);
-      } catch {
-        toast.error('Failed to copy link');
-      }
-    }
+  const handleOpenShare = () => {
+    setIsShareModalOpen(true);
   };
 
   // Initialize selected variants and SEO metadata when data loads
@@ -764,20 +740,13 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               </div>
               <button
                 type="button"
-                onClick={handleShare}
-                className="text-gray-500 hover:text-black transition-colors p-1 flex items-center gap-1.5 cursor-pointer"
+                onClick={handleOpenShare}
+                className="text-gray-600 hover:text-black transition-colors p-1 flex items-center gap-1.5 cursor-pointer group"
                 title="Share product"
                 aria-label="Share product"
               >
-                {isCopiedShare ? (
-                  <span className="text-emerald-600 text-[11px] font-semibold flex items-center gap-1">
-                    <Check size={14} strokeWidth={2.5} /> Copied
-                  </span>
-                ) : (
-                  <span className="text-gray-600 hover:text-black text-[11px] font-medium flex items-center gap-1">
-                    <Share2 size={14} strokeWidth={1.75} /> Share
-                  </span>
-                )}
+                <FaShare size={12} className="text-gray-500 group-hover:text-black transition-colors" />
+                <span className="text-[11px] font-medium tracking-tight">Share</span>
               </button>
             </div>
 
@@ -822,7 +791,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             ) : null}
             
             <div className="text-[11px] text-gray-600 mb-5 border-b border-gray-200 pb-4">
-              <span className="underline cursor-pointer hover:text-black decoration-gray-400">Shipping</span> calculated at checkout. Free shipping on orders over {config.currencySymbol}{config.freeShippingThreshold}.
+              <Link href="/help-centre#shipping" className="underline hover:text-black decoration-gray-400">100% Free Shipping</Link> on all orders across India. Fast automated dispatch.
             </div>
 
             {/* Color Selector */}
@@ -956,16 +925,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 </button>
                 <button
                   type="button"
-                  onClick={handleShare}
+                  onClick={handleOpenShare}
                   className="w-12 h-[48px] flex items-center justify-center border border-gray-300 hover:border-black hover:bg-gray-50 active:scale-[0.96] transition-all cursor-pointer shrink-0 rounded-none"
                   title="Share product"
                   aria-label="Share product"
                 >
-                  {isCopiedShare ? (
-                    <Check size={18} className="text-emerald-600" />
-                  ) : (
-                    <Share2 size={18} className="text-black" />
-                  )}
+                  <FaShare size={17} className="text-black" />
                 </button>
               </div>
 
@@ -1008,16 +973,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 </button>
                 <button
                   type="button"
-                  onClick={handleShare}
+                  onClick={handleOpenShare}
                   className="w-12 h-[48px] flex items-center justify-center border border-gray-300 hover:border-black hover:bg-gray-50 active:scale-[0.96] transition-all cursor-pointer shrink-0 rounded-none"
                   title="Share product"
                   aria-label="Share product"
                 >
-                  {isCopiedShare ? (
-                    <Check size={18} className="text-emerald-600" />
-                  ) : (
-                    <Share2 size={18} className="text-black" />
-                  )}
+                  <FaShare size={17} className="text-black" />
                 </button>
               </div>
             </div>
@@ -1064,7 +1025,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   { 
                     id: 'SHIPPING', 
                     title: 'SHIPPING & RETURNS', 
-                    content: `Free shipping on orders above ${config.currencySymbol}${config.freeShippingThreshold}. ${config.returnWindowDays}-day hassle-free return policy.` 
+                    content: `100% Free Shipping on all orders across India. ${config.returnWindowDays}-day hassle-free doorstep returns and exchanges.` 
                   }
                 ].map(tab => (
                   <div key={tab.id} className="py-3.5">
@@ -1113,6 +1074,19 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         initialIndex={previewImageIndex ?? 0}
         productName={product.name}
         onClose={() => setPreviewImageIndex(null)}
+      />
+
+      {/* Social Share Modal */}
+      <ProductShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        product={{
+          id: product.id,
+          name: product.name,
+          price: finalPrice,
+          thumbnail: product.thumbnail || images[0] || activeVariant?.images?.[0],
+          currencySymbol: config.currencySymbol,
+        }}
       />
     </main>
   );
