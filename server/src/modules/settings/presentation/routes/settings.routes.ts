@@ -11,8 +11,8 @@ router.get('/:key', cacheMiddleware(600, 'settings'), controller.getSetting.bind
 
 // Admin route to update settings (Requires auth, invalidates settings cache upon mutation)
 router.put('/:key', requireAuth, async (req, res) => {
+  await controller.updateSetting(req, res);
   await invalidateCache('settings:*');
-  return controller.updateSetting(req, res);
 });
 
 export const settingsRoutes = router;

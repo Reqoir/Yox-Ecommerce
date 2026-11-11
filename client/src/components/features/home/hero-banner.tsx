@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import {
@@ -13,38 +13,35 @@ import { optimizeCloudinaryUrl } from '@/lib/utils';
 
 const HERO_CACHE_KEY = 'yox_hero_banners_cache_v2';
 
-export function HeroBanner() {
-  const [config, setConfig] = useState<HeroBannersConfig>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem(HERO_CACHE_KEY);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed?.slides) && parsed.slides.length > 0) {
-            return parsed;
-          }
-        }
-      } catch {}
-    }
-    return DEFAULT_HERO_CONFIG;
-  });
+interface HeroBannerProps {
+  initialConfig?: HeroBannersConfig;
+}
+
+export function HeroBanner({ initialConfig }: HeroBannerProps) {
+  const [config, setConfig] = useState<HeroBannersConfig>(
+    () => (initialConfig?.slides?.length ? initialConfig : DEFAULT_HERO_CONFIG)
+  );
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(true);
   const [isHovered, setIsHovered] = useState<boolean>(false);
-  const [isInitialImageLoaded, setIsInitialImageLoaded] = useState<boolean>(false);
+  const [isTouching, setIsTouching] = useState<boolean>(false);
+  const [dragOffsetPx, setDragOffsetPx] = useState<number>(0);
   const firstImgRef = useRef<HTMLImageElement | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const lastDeltaXRef = useRef<number>(0);
+  const swipeAxisRef = useRef<'x' | 'y' | null>(null);
+  const didSwipeRef = useRef<boolean>(false);
+  const swipeResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nextRafRef = useRef<number | null>(null);
 
-  // Check if first image is already cached / completed on mount
+  // Keep localStorage fallback synced with SSR/Redis config
   useEffect(() => {
-    if (firstImgRef.current?.complete && firstImgRef.current?.naturalWidth > 0) {
-      setIsInitialImageLoaded(true);
+    if (initialConfig?.slides?.length) {
+      try {
+        localStorage.setItem(HERO_CACHE_KEY, JSON.stringify(initialConfig));
+      } catch {}
     }
-    // Safety fallback: if network is slow, don't keep skeleton indefinitely
-    const timer = setTimeout(() => {
-      setIsInitialImageLoaded(true);
-    }, 3500);
-    return () => clearTimeout(timer);
-  }, []);
+  }, [initialConfig]);
 
   useEffect(() => {
     let isMounted = true;
@@ -52,48 +49,134 @@ export function HeroBanner() {
       try {
         const data = await contentApi.getHeroBanners();
         if (isMounted && data?.slides && data.slides.length > 0) {
-          setConfig(data);
+          setConfig((prev) =>
+            JSON.stringify(prev) === JSON.stringify(data) ? prev : data
+          );
+          const nextActiveCount = data.slides.filter((s) => s.isActive).length || 1;
+          const nextDisplayLen = nextActiveCount > 1 ? nextActiveCount + 1 : 1;
+          setCurrentIndex((prevIdx) => (prevIdx >= nextDisplayLen ? 0 : prevIdx));
           try {
             localStorage.setItem(HERO_CACHE_KEY, JSON.stringify(data));
           } catch {}
         }
       } catch (err) {
         console.error('Failed to load hero banner configuration:', err);
+        if (isMounted && typeof window !== 'undefined') {
+          try {
+            const cached = localStorage.getItem(HERO_CACHE_KEY);
+            if (cached) {
+              const parsed = JSON.parse(cached);
+              if (Array.isArray(parsed?.slides) && parsed.slides.length > 0) {
+                setConfig((prev) => (prev === DEFAULT_HERO_CONFIG ? parsed : prev));
+              }
+            }
+          } catch {}
+        }
       }
     };
     loadBanners();
 
     return () => {
       isMounted = false;
+      if (nextRafRef.current !== null) {
+        cancelAnimationFrame(nextRafRef.current);
+      }
+      if (swipeResetTimerRef.current) {
+        clearTimeout(swipeResetTimerRef.current);
+      }
     };
   }, []);
 
   // Filter only active slides, or fallback to first slide if none are marked active
-  const activeSlides = config.slides.filter((s) => s.isActive);
-  const slidesToRender: HeroBannerSlide[] =
-    activeSlides.length > 0 ? activeSlides : [DEFAULT_HERO_CONFIG.slides[0]];
+  const slidesToRender: HeroBannerSlide[] = useMemo(() => {
+    const activeSlides = config.slides.filter((s) => s.isActive);
+    return activeSlides.length > 0 ? activeSlides : [DEFAULT_HERO_CONFIG.slides[0]];
+  }, [config.slides]);
 
   // Build extended slides array (append duplicate of 1st slide at end for infinite loop)
-  const displaySlides =
-    slidesToRender.length > 1
-      ? [...slidesToRender, { ...slidesToRender[0], id: `${slidesToRender[0].id}-clone` }]
-      : slidesToRender;
+  const displaySlides = useMemo(
+    () =>
+      slidesToRender.length > 1
+        ? [...slidesToRender, { ...slidesToRender[0], id: `${slidesToRender[0].id}-clone` }]
+        : slidesToRender,
+    [slidesToRender]
+  );
+
+  // Preload and decode all active slide images immediately so rapid navigation never flashes blank
+  useEffect(() => {
+    if (typeof window === 'undefined' || slidesToRender.length === 0) return;
+
+    const isMobileViewport = window.innerWidth <= 640;
+    const preloadedImages: HTMLImageElement[] = [];
+
+    slidesToRender.forEach((slide) => {
+      const targetUrl =
+        isMobileViewport && slide.mobileImageUrl
+          ? optimizeCloudinaryUrl(slide.mobileImageUrl, 900)
+          : optimizeCloudinaryUrl(slide.imageUrl || DEFAULT_HERO_CONFIG.slides[0]?.imageUrl, 1920);
+
+      if (targetUrl) {
+        const img = new window.Image();
+        img.src = targetUrl;
+        img.decode?.().catch(() => {});
+        preloadedImages.push(img);
+      }
+    });
+
+    return () => {
+      preloadedImages.length = 0;
+    };
+  }, [slidesToRender]);
+
+  // Fallback snap when sitting on the wrap clone (e.g., if transitionend was skipped by background tab)
+  useEffect(() => {
+    if (slidesToRender.length <= 1 || currentIndex < slidesToRender.length) return;
+    const fallbackTimer = setTimeout(() => {
+      setIsTransitioning(false);
+      setCurrentIndex(0);
+    }, 1050);
+    return () => clearTimeout(fallbackTimer);
+  }, [currentIndex, slidesToRender.length]);
+
+  const advanceToNextSlide = () => {
+    if (slidesToRender.length <= 1) return;
+
+    if (currentIndex >= slidesToRender.length) {
+      if (nextRafRef.current !== null) {
+        cancelAnimationFrame(nextRafRef.current);
+      }
+      setIsTransitioning(false);
+      setCurrentIndex(0);
+      nextRafRef.current = requestAnimationFrame(() => {
+        nextRafRef.current = requestAnimationFrame(() => {
+          setIsTransitioning(true);
+          setCurrentIndex(1);
+          nextRafRef.current = null;
+        });
+      });
+      return;
+    }
+
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => (prev >= slidesToRender.length ? slidesToRender.length : prev + 1));
+  };
 
   // Autoplay sliding carousel timer (always right-to-left)
   useEffect(() => {
-    if (slidesToRender.length <= 1) return;
+    if (slidesToRender.length <= 1 || isHovered || isTouching) return;
 
     const intervalSeconds = (config.autoPlayInterval || 4) * 1000;
     const timer = setInterval(() => {
-      setIsTransitioning(true);
-      setCurrentIndex((prev) => prev + 1);
+      if (typeof document !== 'undefined' && document.hidden) return;
+      advanceToNextSlide();
     }, intervalSeconds);
 
     return () => clearInterval(timer);
-  }, [config.autoPlayInterval, slidesToRender.length]);
+  });
 
   // Handle transition end for seamless instant wrap (clone -> index 0)
-  const handleTransitionEnd = () => {
+  const handleTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget) return;
     if (currentIndex >= slidesToRender.length) {
       setIsTransitioning(false);
       setCurrentIndex(0);
@@ -103,11 +186,16 @@ export function HeroBanner() {
   const handlePrev = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsTransitioning(true);
-    if (currentIndex === 0) {
+    if (slidesToRender.length <= 1) return;
+
+    if (currentIndex <= 0) {
       setIsTransitioning(false);
       setCurrentIndex(slidesToRender.length - 1);
+    } else if (currentIndex >= slidesToRender.length) {
+      setIsTransitioning(true);
+      setCurrentIndex(slidesToRender.length - 1);
     } else {
+      setIsTransitioning(true);
       setCurrentIndex((prev) => prev - 1);
     }
   };
@@ -115,12 +203,98 @@ export function HeroBanner() {
   const handleNext = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsTransitioning(true);
-    setCurrentIndex((prev) => prev + 1);
+    advanceToNextSlide();
   };
 
-  const activeIndex = currentIndex % slidesToRender.length;
-  const current = slidesToRender[activeIndex] || slidesToRender[0];
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (slidesToRender.length <= 1) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    if (swipeResetTimerRef.current) {
+      clearTimeout(swipeResetTimerRef.current);
+      swipeResetTimerRef.current = null;
+    }
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    lastDeltaXRef.current = 0;
+    swipeAxisRef.current = null;
+    didSwipeRef.current = false;
+    setIsTouching(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!touchStartRef.current || slidesToRender.length <= 1) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    const dx = touch.clientX - touchStartRef.current.x;
+    const dy = touch.clientY - touchStartRef.current.y;
+
+    if (swipeAxisRef.current === null) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      swipeAxisRef.current = Math.abs(dx) >= Math.abs(dy) ? 'x' : 'y';
+      if (swipeAxisRef.current === 'x') {
+        setIsTransitioning(false);
+        if (currentIndex >= slidesToRender.length) {
+          setCurrentIndex(0);
+        }
+      }
+    }
+
+    if (swipeAxisRef.current !== 'x') return;
+
+    lastDeltaXRef.current = dx;
+    if (Math.abs(dx) > 10) {
+      didSwipeRef.current = true;
+    }
+
+    const clampedOffset = currentIndex === 0 && dx > 0 ? Math.round(dx * 0.35) : dx;
+    setDragOffsetPx(clampedOffset);
+  };
+
+  const handleTouchEnd = () => {
+    setIsTouching(false);
+    const deltaX = lastDeltaXRef.current;
+    const wasHorizontal = swipeAxisRef.current === 'x';
+
+    touchStartRef.current = null;
+    lastDeltaXRef.current = 0;
+    swipeAxisRef.current = null;
+    setDragOffsetPx(0);
+
+    if (wasHorizontal && slidesToRender.length > 1) {
+      const swipeThreshold = 45;
+      if (deltaX < -swipeThreshold) {
+        advanceToNextSlide();
+      } else if (deltaX > swipeThreshold) {
+        if (currentIndex <= 0) {
+          setIsTransitioning(false);
+          setCurrentIndex(slidesToRender.length - 1);
+        } else {
+          setIsTransitioning(true);
+          setCurrentIndex((prev) => prev - 1);
+        }
+      } else {
+        setIsTransitioning(true);
+      }
+    }
+
+    if (didSwipeRef.current) {
+      swipeResetTimerRef.current = setTimeout(() => {
+        didSwipeRef.current = false;
+      }, 100);
+    }
+  };
+
+  const handleClickCapture = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (didSwipeRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      didSwipeRef.current = false;
+    }
+  };
+
+  const safeIndex = Math.max(0, Math.min(currentIndex, displaySlides.length - 1));
+  const activeIndex = safeIndex % slidesToRender.length;
 
   return (
     <section
@@ -129,23 +303,20 @@ export function HeroBanner() {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="w-full sm:w-[98%] max-w-[1500px] mx-auto px-0">
-        <div className="relative overflow-hidden rounded-none bg-gray-100 w-full h-[calc(100svh-114px)] min-h-[calc(100svh-114px)] sm:h-auto sm:aspect-[1440/680] sm:min-h-[400px] md:min-h-[500px]">
-          {/* Subtle Hero Skeleton & Centered Loading Spinner */}
-          <div
-            className={`absolute inset-0 z-30 flex items-center justify-center bg-gray-100 transition-opacity duration-500 ease-out pointer-events-none ${
-              isInitialImageLoaded ? 'opacity-0' : 'opacity-100'
-            }`}
-            aria-hidden={isInitialImageLoaded}
-          >
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-gray-300 border-t-gray-800 animate-spin" />
-          </div>
-
+        <div
+          className="relative overflow-hidden touch-pan-y rounded-none bg-gray-100 w-full h-[calc(100svh-114px)] min-h-[calc(100svh-114px)] sm:h-auto sm:aspect-[1440/680] sm:min-h-[400px] md:min-h-[500px]"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
+          onClickCapture={handleClickCapture}
+        >
           {/* Sliding Track Container */}
           <div
             className={`flex w-full h-full ${
               isTransitioning ? 'transition-transform duration-1000 ease-in-out' : ''
             }`}
-            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+            style={{ transform: `translate3d(calc(-${safeIndex * 100}% + ${dragOffsetPx}px), 0, 0)` }}
             onTransitionEnd={handleTransitionEnd}
           >
             {displaySlides.map((slide, idx) => {
@@ -167,21 +338,12 @@ export function HeroBanner() {
                         ref={isFirstSlide ? firstImgRef : undefined}
                         src={desktopImageUrl}
                         alt={slide.title || 'YOX Collection'}
-                        loading={isFirstSlide ? 'eager' : 'lazy'}
-                        fetchPriority={isFirstSlide ? 'high' : 'low'}
-                        decoding="async"
-                        onLoad={() => {
-                          if (isFirstSlide) {
-                            setIsInitialImageLoaded(true);
-                          }
-                        }}
-                        className={`w-full h-full object-cover object-top sm:object-center transition-opacity duration-500 ease-out ${
-                          isFirstSlide && !isInitialImageLoaded ? 'opacity-0' : 'opacity-100'
-                        }`}
+                        draggable={false}
+                        loading="eager"
+                        fetchPriority={isFirstSlide ? 'high' : 'auto'}
+                        decoding="sync"
+                        className="w-full h-full object-cover object-top sm:object-center"
                         onError={(e) => {
-                          if (isFirstSlide) {
-                            setIsInitialImageLoaded(true);
-                          }
                           if (DEFAULT_HERO_CONFIG.slides[0]?.imageUrl) {
                             (e.target as HTMLImageElement).src = optimizeCloudinaryUrl(DEFAULT_HERO_CONFIG.slides[0].imageUrl, 1920);
                           }

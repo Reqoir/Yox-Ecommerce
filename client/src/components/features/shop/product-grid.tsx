@@ -235,8 +235,11 @@ export function ProductGrid({ onOpenFilter, onOpenSort }: ProductGridProps = {})
   return (
     <div className="w-full lg:pl-8 pb-16 lg:pb-0">
 
-      {/* Mobile Sticky Filter By & Relevance/Sort Bar (Sticks right below navbar on scroll) */}
-      <div className="lg:hidden sticky top-18 z-30 bg-white/95 backdrop-blur-md py-2.5 px-1 border-b border-gray-200 shadow-xs mb-3">
+      {/* Mobile Sticky Filter By & Relevance/Sort Bar (Sticks right below sticky header on scroll) */}
+      <div
+        className="lg:hidden sticky z-30 bg-white py-2.5 px-1 border-b border-gray-200 shadow-xs mb-3"
+        style={{ top: 'var(--site-header-height, 73px)' }}
+      >
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"

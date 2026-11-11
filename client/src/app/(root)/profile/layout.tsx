@@ -62,7 +62,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   // Prevent rendering protected subcomponents or making unauthenticated API calls
   if (!mounted || !isAuthenticated) {
     return (
-      <div className="w-full min-h-[60vh] flex flex-col items-center justify-center gap-3 bg-neutral-50/60 py-20">
+      <div className="w-full min-h-[60vh] flex flex-col items-center justify-center gap-3 bg-neutral-50 py-20">
         <Loader2 className="w-7 h-7 animate-spin text-gray-800" />
         <span className="text-xs uppercase tracking-widest text-gray-500 font-semibold">
           Verifying session...
@@ -85,7 +85,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   const initial = displayName ? displayName.charAt(0).toUpperCase() : 'U';
 
   return (
-    <div className="w-full bg-neutral-50/60 min-h-screen pb-16 pt-4 lg:pt-8 selection:bg-black selection:text-white">
+    <div className="w-full bg-neutral-50 min-h-screen pb-16 pt-4 lg:pt-8 selection:bg-black selection:text-white">
       <div className="w-[98%] max-w-[1400px] mx-auto space-y-6">
         
         {/* User Profile Editorial Header Card */}
@@ -127,19 +127,30 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
             </div>
 
             {/* Quick Overview Badges */}
-            <div className="flex items-center gap-2 self-start sm:self-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-100">
+            <div className="flex items-center gap-1.5 sm:gap-2 self-start sm:self-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-100 w-full sm:w-auto">
               <Link
                 href="/profile/orders"
-                className="px-3.5 py-2 text-xs font-semibold bg-gray-50 hover:bg-black hover:text-white text-gray-800 border border-gray-200 rounded-sm transition-all uppercase tracking-wider"
+                className="flex-auto sm:flex-none inline-flex items-center justify-center px-2.5 sm:px-3.5 py-2 text-[10px] sm:text-xs font-semibold bg-gray-50 hover:bg-black hover:text-white text-gray-800 border border-gray-200 rounded-sm transition-all uppercase tracking-wide sm:tracking-wider whitespace-nowrap"
               >
                 Track Orders
               </Link>
               <Link
                 href="/profile/favourites"
-                className="px-3.5 py-2 text-xs font-semibold bg-gray-50 hover:bg-black hover:text-white text-gray-800 border border-gray-200 rounded-sm transition-all uppercase tracking-wider"
+                className="flex-auto sm:flex-none inline-flex items-center justify-center px-2.5 sm:px-3.5 py-2 text-[10px] sm:text-xs font-semibold bg-gray-50 hover:bg-black hover:text-white text-gray-800 border border-gray-200 rounded-sm transition-all uppercase tracking-wide sm:tracking-wider whitespace-nowrap"
               >
                 Wishlist
               </Link>
+              {isAuthenticated && (
+                <button
+                  type="button"
+                  suppressHydrationWarning
+                  onClick={handleLogout}
+                  className="flex-auto sm:flex-none inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-2 text-[10px] sm:text-xs font-semibold bg-rose-50/70 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-rose-600 rounded-sm transition-all uppercase tracking-wide sm:tracking-wider whitespace-nowrap cursor-pointer"
+                >
+                  <LogOut className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                  <span>Logout</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -205,52 +216,58 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
             <div className="bg-white border border-gray-200/90 rounded-sm p-4 sm:p-7 lg:p-8 shadow-xs min-h-[520px]">
               {/* Mobile Navigation Dropdown */}
               {!isOverviewPage && (
-                <div className="lg:hidden mb-4 sticky top-16 z-30 pt-1 pb-1 -mt-1 bg-white">
-                  <button 
-                    onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
-                    className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-sm p-3.5 shadow-2xs cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      {(() => {
-                        const activeLink = sidebarLinks.find(l => l.href === pathname);
-                        const Icon = activeLink?.icon || User;
-                        return (
-                          <>
-                            <Icon className="w-4 h-4 text-black" />
-                            <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">{activeLink?.name || 'Account Menu'}</span>
-                          </>
-                        );
-                      })()}
-                    </div>
-                    <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isMobileNavOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  
-                  {isMobileNavOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-sm shadow-xl flex flex-col divide-y divide-gray-100 z-40">
-                      {sidebarLinks.map(link => {
-                        const isActive = pathname === link.href;
-                        const Icon = link.icon;
-                        return (
-                          <Link 
-                            key={link.href} 
-                            href={link.href}
-                            onClick={() => setIsMobileNavOpen(false)}
-                            className={`flex items-center gap-3 p-3.5 transition-colors ${isActive ? 'bg-gray-100 font-bold' : 'hover:bg-gray-50'}`}
-                          >
-                            <Icon className={`w-4 h-4 ${isActive ? 'text-black' : 'text-gray-400'}`} />
-                            <span className={`text-xs font-semibold uppercase tracking-wider ${isActive ? 'text-black' : 'text-gray-600'}`}>{link.name}</span>
-                          </Link>
-                        );
-                      })}
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-3 p-3.5 text-left transition-colors hover:bg-rose-50 text-rose-600 font-semibold text-xs uppercase tracking-wider cursor-pointer"
-                      >
-                        <LogOut className="w-4 h-4 text-rose-500" />
-                        <span>Sign Out</span>
-                      </button>
-                    </div>
-                  )}
+                <div
+                  className="lg:hidden sticky z-30 -mx-4 sm:-mx-7 px-4 sm:px-7 py-2.5 -mt-4 sm:-mt-7 mb-4 bg-white border-b border-gray-100 rounded-t-sm"
+                  style={{ top: 'var(--site-header-height, 73px)' }}
+                >
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+                      className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-sm p-3.5 shadow-2xs cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        {(() => {
+                          const activeLink = sidebarLinks.find(l => l.href === pathname);
+                          const Icon = activeLink?.icon || User;
+                          return (
+                            <>
+                              <Icon className="w-4 h-4 text-black" />
+                              <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">{activeLink?.name || 'Account Menu'}</span>
+                            </>
+                          );
+                        })()}
+                      </div>
+                      <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isMobileNavOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {isMobileNavOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-sm shadow-xl flex flex-col divide-y divide-gray-100 z-40">
+                        {sidebarLinks.map(link => {
+                          const isActive = pathname === link.href;
+                          const Icon = link.icon;
+                          return (
+                            <Link
+                              key={link.href}
+                              href={link.href}
+                              onClick={() => setIsMobileNavOpen(false)}
+                              className={`flex items-center gap-3 p-3.5 transition-colors ${isActive ? 'bg-gray-100 font-bold' : 'hover:bg-gray-50'}`}
+                            >
+                              <Icon className={`w-4 h-4 ${isActive ? 'text-black' : 'text-gray-400'}`} />
+                              <span className={`text-xs font-semibold uppercase tracking-wider ${isActive ? 'text-black' : 'text-gray-600'}`}>{link.name}</span>
+                            </Link>
+                          );
+                        })}
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-3 p-3.5 text-left transition-colors hover:bg-rose-50 text-rose-600 font-semibold text-xs uppercase tracking-wider cursor-pointer"
+                        >
+                          <LogOut className="w-4 h-4 text-rose-500" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 

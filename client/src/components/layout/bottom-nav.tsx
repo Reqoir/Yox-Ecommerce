@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutGrid, Heart, User } from 'lucide-react';
@@ -18,9 +18,48 @@ export function BottomNav() {
   const cartCount = useCartStore((state) => state.getItemCount());
   const favouritesCount = useFavouritesStore((state) => state.items.length);
   const user = useAuthStore((state) => state.user);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const [bottomOffset, setBottomOffset] = useState(0);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const syncBottomOffset = () => {
+      const sentinel = sentinelRef.current;
+      if (!sentinel || typeof window === 'undefined' || window.innerWidth >= 1024) return;
+
+      const vv = window.visualViewport;
+      if (vv && Math.abs(vv.scale - 1) > 0.05) {
+        setBottomOffset(0);
+        return;
+      }
+
+      const sentinelBottom = sentinel.getBoundingClientRect().bottom;
+      const viewportBottom = Math.max(
+        window.innerHeight,
+        vv ? vv.offsetTop + vv.height : 0
+      );
+      const gap = Math.max(0, Math.round(viewportBottom - sentinelBottom));
+
+      setBottomOffset((prev) => (prev === gap ? prev : gap));
+    };
+
+    syncBottomOffset();
+
+    const vv = window.visualViewport;
+    window.addEventListener('scroll', syncBottomOffset, { passive: true });
+    window.addEventListener('resize', syncBottomOffset, { passive: true });
+    vv?.addEventListener('resize', syncBottomOffset);
+    vv?.addEventListener('scroll', syncBottomOffset);
+
+    return () => {
+      window.removeEventListener('scroll', syncBottomOffset);
+      window.removeEventListener('resize', syncBottomOffset);
+      vv?.removeEventListener('resize', syncBottomOffset);
+      vv?.removeEventListener('scroll', syncBottomOffset);
+    };
   }, []);
 
   useEffect(() => {
@@ -53,15 +92,22 @@ export function BottomNav() {
   const isAccountActive = pathname.startsWith('/profile') && !isWishlistActive || pathname === '/login';
 
   return (
-    <nav 
-      suppressHydrationWarning
-      className={`fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 lg:hidden shadow-[0_-2px_8px_rgba(0,0,0,0.04)] pb-[max(0px,env(safe-area-inset-bottom))] transition-all duration-300 ease-in-out ${
-        isVisible
-          ? 'translate-y-0 opacity-100 pointer-events-auto'
-          : 'translate-y-full opacity-0 pointer-events-none'
-      }`}
-      aria-label="Mobile Navigation Bar"
-    >
+    <>
+      <div
+        ref={sentinelRef}
+        className="fixed bottom-0 left-0 right-0 h-0 pointer-events-none lg:hidden"
+        aria-hidden="true"
+      />
+      <nav
+        suppressHydrationWarning
+        style={isVisible && bottomOffset > 0 ? { bottom: `-${bottomOffset}px` } : undefined}
+        className={`fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 lg:hidden shadow-[0_-2px_8px_rgba(0,0,0,0.04)] pb-[max(0px,env(safe-area-inset-bottom))] transition-[translate,opacity] duration-300 ease-in-out ${
+          isVisible
+            ? 'translate-none opacity-100 pointer-events-auto'
+            : 'translate-y-full opacity-0 pointer-events-none'
+        }`}
+        aria-label="Mobile Navigation Bar"
+      >
       <div className="grid grid-cols-4 h-14 items-center">
         {/* 1. Shop */}
         <Link
@@ -143,5 +189,6 @@ export function BottomNav() {
         )}
       </div>
     </nav>
+    </>
   );
 }

@@ -167,9 +167,9 @@ export function ProductImagePreviewModal({
       className="fixed inset-0 z-50 flex flex-col justify-between bg-black/95 backdrop-blur-md select-none transition-all duration-300"
     >
       {/* Top Header Bar */}
-      <div className="flex items-center justify-between px-4 sm:px-8 py-3.5 text-white z-10 bg-gradient-to-b from-black/80 to-transparent">
-        <div className="flex flex-col">
-          <span className="text-xs sm:text-sm font-semibold truncate max-w-[170px] sm:max-w-md text-gray-200">
+      <div className="flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-8 pt-[max(0.875rem,env(safe-area-inset-top))] pb-3.5 text-white z-10 bg-gradient-to-b from-black/80 to-transparent">
+        <div className="flex flex-col min-w-0 flex-1">
+          <span className="text-xs sm:text-sm font-semibold truncate block text-gray-200">
             {productName}
           </span>
           <span className="text-[11px] text-gray-400 font-medium">
@@ -178,8 +178,8 @@ export function ProductImagePreviewModal({
         </div>
 
         {/* Manual Zoom Level Adjustment Bar */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex items-center gap-1.5 sm:gap-2 bg-white/10 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-none border border-white/15 shadow-md">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 bg-white/10 backdrop-blur-md px-1.5 sm:px-3 py-1 rounded-none border border-white/15 shadow-md">
             <button
               onClick={() => setTargetZoom((prev) => Math.max(1.5, Math.round((prev - 0.5) * 10) / 10))}
               disabled={targetZoom <= 1.5}
@@ -197,7 +197,7 @@ export function ProductImagePreviewModal({
               step="0.25"
               value={targetZoom}
               onChange={(e) => setTargetZoom(parseFloat(e.target.value))}
-              className="w-16 sm:w-28 h-1 bg-white/30 rounded-none appearance-none cursor-pointer accent-white"
+              className="w-12 sm:w-28 m-0 h-1 bg-white/30 rounded-none appearance-none cursor-pointer accent-white"
               title="Adjust hover zoom level"
             />
 
@@ -211,7 +211,7 @@ export function ProductImagePreviewModal({
               <Plus size={14} />
             </button>
 
-            <span className="text-[11px] font-bold font-mono min-w-[32px] text-center text-white/95 select-none pl-0.5">
+            <span className="text-[11px] font-bold font-mono min-w-[30px] sm:min-w-[32px] text-center text-white/95 select-none pl-0.5">
               {targetZoom.toFixed(1)}x
             </span>
 
@@ -230,7 +230,7 @@ export function ProductImagePreviewModal({
           <button
             onClick={onClose}
             aria-label="Close preview"
-            className="p-2 rounded-none bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+            className="p-2 rounded-none bg-white/15 hover:bg-white/25 border border-white/25 text-white transition-colors cursor-pointer shrink-0"
             title="Close (Esc)"
           >
             <X size={20} />

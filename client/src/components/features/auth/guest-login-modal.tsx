@@ -120,9 +120,11 @@ export function GuestLoginModal() {
 
         {/* Brand Emblem */}
         <div className="mx-auto mb-4 flex items-center justify-center">
-          <div className="w-10 h-10 bg-black text-white flex items-center justify-center font-bold tracking-[0.25em] text-xs">
-            YOX
-          </div>
+          <img
+            src="/favicon.ico"
+            alt="YOX Fashion Store"
+            className="h-12 sm:h-14 w-auto object-contain brightness-[1.03] contrast-[1.04]"
+          />
         </div>
 
         {/* Clean Headline */}

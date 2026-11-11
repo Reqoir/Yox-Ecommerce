@@ -152,7 +152,7 @@ export function Navbar() {
   };
 
   return (
-    <nav suppressHydrationWarning className={`w-full bg-white sticky top-0 z-40 ${pathname !== '/' ? 'shadow-sm border-b border-gray-200' : 'border-b border-gray-200'}`}>
+    <nav suppressHydrationWarning className={`w-full bg-white relative ${pathname !== '/' ? 'shadow-sm border-b border-gray-200' : 'border-b border-gray-200'}`}>
       <div className="w-full px-4 lg:px-0 lg:w-[95%] mx-auto h-18 flex items-center justify-between">
 
         {/* Left Side: Hamburger Menu on Mobile, Empty Flex-1 on Desktop */}
@@ -169,12 +169,18 @@ export function Navbar() {
                 <span className="w-[19px] h-[2px] bg-black rounded-full transition-all duration-200 group-hover:w-[24px]"></span>
               </div>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[300px] sm:w-[340px] p-0 bg-white border-r border-gray-200">
+            <SheetContent side="left" showCloseButton={false} className="w-[300px] sm:w-[340px] p-0 bg-white border-r border-gray-200">
               <SheetHeader className="p-5 border-b border-gray-100 flex flex-row items-center justify-between">
                 <SheetTitle className="sr-only">Mobile Navigation Menu</SheetTitle>
                 <Link href="/" className="h-9 relative overflow-hidden block">
                   <img src="/images/logo.png" alt="YOX Men's Fashion" className="h-full w-auto object-contain" />
                 </Link>
+                <SheetClose
+                  aria-label="Close mobile navigation menu"
+                  className="flex items-center justify-center w-8 h-8 -mr-1 text-gray-600 hover:text-black hover:bg-gray-100 rounded-sm transition-colors cursor-pointer"
+                >
+                  <X size={20} strokeWidth={1.8} />
+                </SheetClose>
               </SheetHeader>
 
               <div className="flex flex-col py-3 overflow-y-auto">
@@ -214,6 +220,33 @@ export function Navbar() {
                 <div className="border-t border-gray-100 my-2 pt-3 px-5">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">My Account & Bag</p>
                   <div className="space-y-2">
+                    {mounted && user ? (
+                      <SheetClose render={<Link href="/profile/personal-info" className="flex items-center justify-between py-1.5 text-xs font-semibold text-gray-800 hover:text-black" />}>
+                        <span className="flex items-center gap-2">
+                          <User size={18} />
+                          My Profile
+                        </span>
+                      </SheetClose>
+                    ) : (
+                      <SheetClose
+                        render={
+                          <button
+                            type="button"
+                            onClick={() => useAuthModalStore.getState().openModal('login')}
+                            className="w-full flex items-center justify-between py-1.5 text-xs font-semibold text-gray-800 hover:text-black cursor-pointer text-left"
+                          />
+                        }
+                      >
+                        <span className="flex items-center gap-2">
+                          <User size={18} />
+                          My Profile
+                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                          Log In
+                        </span>
+                      </SheetClose>
+                    )}
+
                     <SheetClose render={<Link href="/cart" className="flex items-center justify-between py-1.5 text-xs font-semibold text-gray-800 hover:text-black" />}>
                       <span className="flex items-center gap-2">
                         <BsHandbag size={18} />

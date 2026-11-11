@@ -69,7 +69,7 @@ function CategoryNavContent() {
 
   return (
     <div 
-      className="hidden lg:flex w-full border-b border-gray-100 bg-white sticky top-18 z-30 shadow-[0_2px_4px_rgba(0,0,0,0.02)] relative"
+      className="hidden lg:flex w-full border-b border-gray-100 bg-white relative shadow-[0_2px_4px_rgba(0,0,0,0.02)]"
       onMouseLeave={() => setHoveredCat(null)}
     >
       <div className="w-[95%] max-w-7xl mx-auto flex items-center justify-center gap-7 lg:gap-9 text-[12px] font-medium text-gray-700 uppercase tracking-wider">

@@ -46,6 +46,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -57,7 +58,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${figtree.variable} font-sans h-full antialiased`}
+      className={`${figtree.variable} font-sans antialiased`}
     >
       <head>
         <script
@@ -99,7 +100,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body suppressHydrationWarning className="min-h-full flex flex-col bg-background text-foreground">
+      <body suppressHydrationWarning className="min-h-dvh flex flex-col bg-background text-foreground">
         <ThemeProvider>
           <QueryProvider>
             <AuthProvider>
