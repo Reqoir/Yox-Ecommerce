@@ -63,6 +63,16 @@ export function BottomNav() {
   }, []);
 
   useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const effectiveGap = isVisible && bottomOffset > 0 ? bottomOffset : 0;
+    document.documentElement.style.setProperty('--bottom-nav-gap', `${effectiveGap}px`);
+
+    return () => {
+      document.documentElement.style.removeProperty('--bottom-nav-gap');
+    };
+  }, [isVisible, bottomOffset]);
+
+  useEffect(() => {
     if (!isHomePage) {
       setIsVisible(true);
       return;

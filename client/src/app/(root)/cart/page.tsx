@@ -157,7 +157,13 @@ export default function CartPage() {
       </div>
 
       {/* Mobile Sticky Bottom Checkout Bar (Above BottomNav) */}
-      <div className="fixed bottom-14 left-0 right-0 z-30 lg:hidden bg-white/95 backdrop-blur-md border-t border-gray-200 px-4 py-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]">
+      <div
+        style={{
+          bottom:
+            'calc(3.5rem + 1px + max(0px, env(safe-area-inset-bottom, 0px)) - var(--bottom-nav-gap, 0px))',
+        }}
+        className="fixed bottom-14 left-0 right-0 z-30 lg:hidden bg-white/95 backdrop-blur-md border-t border-gray-200 px-4 py-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]"
+      >
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Total</span>
