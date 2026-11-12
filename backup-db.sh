@@ -17,7 +17,7 @@ if [ ! -f "$ENV_FILE" ]; then
   exit 1
 fi
 
-MONGODB_URI=$(grep -E '^MONGODB_URI=' "$ENV_FILE" | head -n 1 | cut -d '=' -f2- | tr -d '"\r'\'')
+MONGODB_URI=$(grep -E '^MONGODB_URI=' "$ENV_FILE" | head -n 1 | cut -d '=' -f2- | tr -d ' "\r\n' | tr -d "'")
 
 if [ -z "$MONGODB_URI" ]; then
   echo "❌ Error: MONGODB_URI not found in $ENV_FILE" >&2
