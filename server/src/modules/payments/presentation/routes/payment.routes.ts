@@ -16,6 +16,7 @@ import { AddressRepository } from '../../../addresses/infrastructure/repositorie
 import { RazorpayService } from '../../infrastructure/services/razorpay.service';
 import { ProcessRefundUseCase, GetRefundsByOrderUseCase } from '../../application/use-cases/refund.use-cases';
 import { CreateRazorpayOrderUseCase, VerifyRazorpayPaymentUseCase, RecordPaymentFailureUseCase } from '../../application/use-cases/payment.use-cases';
+import { HandleRazorpayWebhookUseCase } from '../../application/use-cases/razorpay-webhook.use-case';
 import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
 import { requirePermission } from '../../../../presentation/http/middleware/require-permission.middleware';
 import { paymentLimiter } from '../../../../presentation/http/middleware/rate-limiter.middleware';
@@ -37,7 +38,7 @@ const addressRepo = new AddressRepository();
 const razorpayService = new RazorpayService();
 
 // Use Cases
-const processRefundUseCase = new ProcessRefundUseCase(refundRepo, paymentRepo, returnRepo, orderRepo);
+const processRefundUseCase = new ProcessRefundUseCase(refundRepo, paymentRepo, returnRepo, orderRepo, razorpayService);
 const getRefundsByOrderUseCase = new GetRefundsByOrderUseCase(refundRepo);
 const createRazorpayOrderUseCase = new CreateRazorpayOrderUseCase(
   orderRepo,
@@ -46,18 +47,32 @@ const createRazorpayOrderUseCase = new CreateRazorpayOrderUseCase(
   inventoryRepo,
   stockLogRepo,
   addressRepo,
-  razorpayService
+  razorpayService,
+  paymentRepo
 );
 const verifyRazorpayPaymentUseCase = new VerifyRazorpayPaymentUseCase(
   orderRepo,
   cartRepo,
-  razorpayService
+  razorpayService,
+  paymentRepo
 );
 const recordPaymentFailureUseCase = new RecordPaymentFailureUseCase(
   orderRepo,
   variantRepo,
   inventoryRepo,
-  stockLogRepo
+  stockLogRepo,
+  paymentRepo
+);
+const handleRazorpayWebhookUseCase = new HandleRazorpayWebhookUseCase(
+  orderRepo,
+  cartRepo,
+  paymentRepo,
+  refundRepo,
+  variantRepo,
+  inventoryRepo,
+  stockLogRepo,
+  razorpayService,
+  returnRepo
 );
 
 // Controller
@@ -66,10 +81,14 @@ const paymentController = new PaymentController(
   getRefundsByOrderUseCase,
   createRazorpayOrderUseCase,
   verifyRazorpayPaymentUseCase,
-  recordPaymentFailureUseCase
+  recordPaymentFailureUseCase,
+  handleRazorpayWebhookUseCase
 );
 
-// All payment routes require customer authentication
+// Public Signed Webhook Route (verified cryptographically via X-Razorpay-Signature)
+router.post('/webhook/razorpay', paymentController.handleRazorpayWebhook);
+
+// All customer & admin payment routes require authentication
 router.use(requireAuth);
 
 // Customer Razorpay Routes (Protected with paymentLimiter)

@@ -9,6 +9,8 @@ export interface IInventoryRepository {
   save(inventory: Inventory): Promise<Inventory>;
   findById(id: string): Promise<Inventory | null>;
   findByVariantId(variantId: string): Promise<Inventory | null>;
+  atomicReserveStock?(variantId: string, quantity: number): Promise<Inventory | null>;
+  atomicReleaseStock?(variantId: string, quantity: number): Promise<Inventory | null>;
   findAll(query: any): Promise<{ data: Inventory[]; total: number }>;
   /** Returns all inventory records where availableStock <= lowStockThreshold */
   findLowStock(query: any): Promise<{ data: Inventory[]; total: number }>;

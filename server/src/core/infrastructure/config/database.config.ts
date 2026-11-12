@@ -23,5 +23,8 @@ export const databaseConfig: DatabaseConfig = {
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 45_000,
     family: 4, // Force IPv4
+    // Disable runtime autoIndex in production so schema index changes never race across PM2 workers
+    // or bypass controlled preflight checks in scripts/migrate-phase1-indexes.ts.
+    autoIndex: env.NODE_ENV !== 'production',
   },
 };

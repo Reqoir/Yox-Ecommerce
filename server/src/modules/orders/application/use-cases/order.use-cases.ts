@@ -3,19 +3,28 @@
  * @layer Application › Use Cases
  */
 
+import mongoose from 'mongoose';
 import { IUseCase } from '@core/application/use-cases/base.use-case.interface';
+import {
+  ConflictError,
+  ForbiddenError,
+} from '@core/application/errors/application.error';
+import { NotFoundError } from '@core/domain/errors/not-found.error';
+import { ValidationError } from '@core/domain/errors/validation.error';
 import { IOrderRepository } from '../../domain/repositories/order.repository.interface';
 import { ICartRepository } from '../../../cart/domain/repositories/cart.repository.interface';
 import { IProductVariantRepository } from '../../../products/domain/repositories/product-variant.repository.interface';
 import { IInventoryRepository } from '../../../inventory/domain/repositories/inventory.repository.interface';
 import { IStockLogRepository } from '../../../inventory/domain/repositories/stock-log.repository.interface';
 import { IAddressRepository } from '../../../addresses/domain/repositories/address.repository.interface';
-import { Order, OrderItemSnapshot, ShippingAddressSnapshot } from '../../domain/entities/order.entity';
+import { Order, ShippingAddressSnapshot } from '../../domain/entities/order.entity';
 import { Inventory } from '../../../inventory/domain/entities/inventory.entity';
 import { StockLog } from '../../../inventory/domain/entities/stock-log.entity';
 import { AuditLogService } from '../../../audit-logs/application/services/audit-log.service';
 import { AuditAction } from '../../../audit-logs/domain/entities/audit-log.entity';
 import { NotificationService } from '../../../notifications/application/services/notification.service';
+import { AtomicStockService } from '../../../inventory/application/services/atomic-stock.service';
+import { CheckoutPricingService } from '../services/checkout-pricing.service';
 import {
   PlaceOrderRequestDTO,
   CancelOrderRequestDTO,
@@ -26,11 +35,12 @@ import {
 import { UserModel } from '../../../users/infrastructure/models/user.model';
 import { ProductModel } from '../../../products/infrastructure/models/product.model';
 import { ProductVariantModel } from '../../../products/infrastructure/models/product-variant.model';
-import { SettingsModel } from '../../../settings/infrastructure/models/settings.model';
 import { ShiprocketService } from '../../../shipments/infrastructure/services/shiprocket.service';
 import { ShipmentRepository } from '../../../shipments/infrastructure/repositories/shipment.repository';
 import { IShipmentRepository } from '../../../shipments/domain/repositories/shipment.repository.interface';
 import { Shipment } from '../../../shipments/domain/entities/shipment.entity';
+import { IOfferRepository } from '../../../offers/domain/repositories/offer.repository.interface';
+import { OfferRepository } from '../../../offers/infrastructure/repositories/offer.repository';
 
 export function mapToOrderResponseDTO(order: Order): OrderResponseDTO {
   return {
@@ -71,60 +81,79 @@ export function mapToOrderResponseDTO(order: Order): OrderResponseDTO {
 }
 
 export class PlaceOrderUseCase implements IUseCase<{ userId: string; data: PlaceOrderRequestDTO; isAdmin?: boolean }, OrderResponseDTO> {
+  private readonly pricingService: CheckoutPricingService;
+  private readonly atomicStockService: AtomicStockService;
+
   constructor(
     private readonly orderRepo: IOrderRepository,
     private readonly cartRepo: ICartRepository,
-    private readonly variantRepo: IProductVariantRepository,
-    private readonly inventoryRepo: IInventoryRepository,
-    private readonly stockLogRepo: IStockLogRepository,
-    private readonly addressRepo: IAddressRepository
-  ) {}
+    variantRepo: IProductVariantRepository,
+    inventoryRepo: IInventoryRepository,
+    stockLogRepo: IStockLogRepository,
+    private readonly addressRepo: IAddressRepository,
+    pricingService?: CheckoutPricingService,
+    atomicStockService?: AtomicStockService
+  ) {
+    this.pricingService = pricingService ?? new CheckoutPricingService({ variantRepo });
+    this.atomicStockService =
+      atomicStockService ??
+      new AtomicStockService(variantRepo, inventoryRepo, stockLogRepo, {
+        explicitInventoryRepo: true,
+        explicitStockLogRepo: true,
+      });
+  }
 
   async execute(input: { userId: string; data: PlaceOrderRequestDTO; isAdmin?: boolean }): Promise<OrderResponseDTO> {
     const { userId, data } = input;
 
-    // 0. Maintenance Mode Check
-    try {
-      const storeSetting = await SettingsModel.findOne({ key: 'store_config' }).lean();
-      if (storeSetting?.value?.maintenanceMode) {
-        throw new Error('The store is currently undergoing scheduled maintenance. Order placement is temporarily paused. Please check back shortly.');
-      }
-    } catch (err: any) {
-      if (err.message && err.message.includes('maintenance')) {
-        throw err;
-      }
+    // 1. SEC-CRIT-001: Only COD orders are allowed on direct POST /api/v1/orders.
+    // Online orders (RAZORPAY, etc.) must be created via POST /api/v1/payments/create-order
+    // and can only transition to PAID via cryptographic signature / webhook verification.
+    const requestedMethod = String(data.paymentMethod || 'COD').trim().toUpperCase();
+    if (requestedMethod !== 'COD') {
+      throw new ValidationError(
+        requestedMethod === 'RAZORPAY'
+          ? 'Online payments must be initiated through the Razorpay payment flow and verified before completion.'
+          : `Unsupported payment method "${data.paymentMethod}" for direct order placement. Only COD is accepted here.`
+      );
     }
 
-    // 1. Resolve Items to Order: either Direct Buy Item OR User Cart
-    let itemsToProcess: { variantId: string; quantity: number; price?: number }[] = [];
+    // 2. Resolve Items to Order: either Direct Buy Item OR User Cart
+    let itemsToProcess: { variantId: string; quantity: unknown; price?: unknown }[] = [];
     let isDirectBuy = false;
     let userCart: any = null;
+    let couponToApply: string | null = data.couponId || null;
 
     if (data.directBuyItem && data.directBuyItem.variantId) {
       isDirectBuy = true;
       itemsToProcess = [{
         variantId: data.directBuyItem.variantId,
-        quantity: Math.max(1, data.directBuyItem.quantity || 1),
+        quantity: data.directBuyItem.quantity,
         price: data.directBuyItem.price,
       }];
     } else {
       userCart = await this.cartRepo.findByUserId(userId);
       if (!userCart || userCart.items.length === 0) {
-        throw new Error('Your shopping cart is empty');
+        throw new ValidationError('Your shopping cart is empty');
       }
       itemsToProcess = userCart.items.map((item: any) => ({
         variantId: item.variantId,
         quantity: item.quantity,
-        price: item.price,
       }));
+      if (!couponToApply && userCart.couponId) {
+        couponToApply = userCart.couponId;
+      }
     }
 
-    // 2. Resolve Shipping Address Snapshot
+    // 3. Resolve Shipping Address Snapshot & Enforce Ownership
     let shippingAddress: ShippingAddressSnapshot | null = null;
     if (data.addressId) {
       const address = await this.addressRepo.findById(data.addressId);
       if (!address) {
-        throw new Error('Selected delivery address not found');
+        throw new NotFoundError('Selected delivery address not found');
+      }
+      if (address.userId && address.userId !== userId && !input.isAdmin) {
+        throw new ForbiddenError('You do not have permission to use this delivery address');
       }
       shippingAddress = {
         fullName: address.fullName,
@@ -140,127 +169,75 @@ export class PlaceOrderUseCase implements IUseCase<{ userId: string; data: Place
     }
 
     if (!shippingAddress || !shippingAddress.streetAddress || !shippingAddress.postalCode) {
-      throw new Error('A complete delivery address is required to place an order');
+      throw new ValidationError('A complete delivery address is required to place an order');
     }
 
-    // 3. Process items and verify/deduct stock atomically
-    const orderItems: OrderItemSnapshot[] = [];
-    for (const item of itemsToProcess) {
-      const variant = await this.variantRepo.findById(item.variantId);
-      if (!variant) {
-        throw new Error(`Product variant ${item.variantId} no longer exists`);
-      }
-
-      if (variant.stock < item.quantity) {
-        throw new Error(`Insufficient stock for "${variant.title || 'item'}". Available: ${variant.stock}, Requested: ${item.quantity}`);
-      }
-
-      // Deduct stock on variant entity
-      variant.reduceStock(item.quantity);
-      await this.variantRepo.save(variant);
-
-      // Deduct available stock & reserve in inventory module
-      const inventory = await this.inventoryRepo.findByVariantId(item.variantId);
-      if (inventory) {
-        const prevAvail = inventory.availableStock;
-        const newAvail = Math.max(0, prevAvail - item.quantity);
-        const newReserved = inventory.reservedStock + item.quantity;
-        const updatedInv = Inventory.reconstitute({
-          ...inventory.toJSON(),
-          availableStock: newAvail,
-          reservedStock: newReserved,
-          updatedAt: new Date(),
-        });
-        const savedInv = await this.inventoryRepo.save(updatedInv);
-
-        const log = StockLog.create({
-          inventoryId: savedInv.id,
-          type: 'RESERVE',
-          amount: item.quantity,
-          previousStock: prevAvail,
-          newStock: newAvail,
-          reason: 'Stock locked for placed order',
-          reference: userId,
-        });
-        await this.stockLogRepo.save(log);
-      }
-
-      const unitPrice = typeof item.price === 'number' && item.price > 0 ? item.price : variant.price;
-
-      orderItems.push({
-        productId: variant.productId,
-        variantId: variant.id,
-        productName: `${variant.title} - ${variant.color}`,
-        sku: variant.sku,
-        size: variant.size,
-        color: variant.color,
-        quantity: item.quantity,
-        unitPrice: unitPrice,
-        discount: 0,
-        subtotal: item.quantity * unitPrice,
-        imageUrl: (variant as any).images?.[0] || (item as any).image || (item as any).imageUrl || null,
-      });
-    }
-
-    // 4. Calculate Order Financials
-    const subtotal = orderItems.reduce((sum, i) => sum + i.subtotal, 0);
-
-    // Fetch dynamic store configuration
-    let codEnabled = true;
-    let codMaxLimit = 5000;
-
-    try {
-      const storeSetting = await SettingsModel.findOne({ key: 'store_config' }).lean();
-      if (storeSetting?.value) {
-        if (typeof storeSetting.value.codEnabled === 'boolean') {
-          codEnabled = storeSetting.value.codEnabled;
-        }
-        if (typeof storeSetting.value.codMaxLimit === 'number') {
-          codMaxLimit = storeSetting.value.codMaxLimit;
-        }
-      }
-    } catch (err) {
-      // Fallback to defaults
-    }
-
-    const paymentMethodUpper = (data.paymentMethod || 'COD').toUpperCase();
-    if (paymentMethodUpper === 'COD') {
-      if (!codEnabled) {
-        throw new Error('Cash on Delivery is currently unavailable. Please select an online payment method.');
-      }
-      if (subtotal > codMaxLimit) {
-        throw new Error(`Cash on Delivery is only available for orders up to ₹${codMaxLimit}. Please pay online.`);
-      }
-    }
-
-    // 100% Free Shipping on all orders nationwide
-    const shippingCharge = 0;
-    const discount = 0;
-    const tax = 0; // Inclusive of all taxes
-    const totalAmount = Math.max(0, subtotal + shippingCharge - discount);
-
-    // 5. Generate unique Order Number
-    const orderNumber = `YOX-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
-
-    const order = Order.create({
-      orderNumber,
+    // 4. SEC-CRIT-002: Authoritative server-side pricing, coupon validation & COD policy check
+    const pricing = await this.pricingService.calculateCheckoutPricing({
       userId,
-      couponId: data.couponId,
-      paymentId: data.paymentId,
-      subtotal,
-      discount,
-      shippingCharge,
-      tax,
-      totalAmount,
-      paymentMethod: data.paymentMethod || 'COD',
-      paymentStatus: (data.paymentMethod && data.paymentMethod.toUpperCase() !== 'COD') ? 'PAID' : 'PENDING',
-      orderStatus: 'PLACED',
-      notes: data.notes,
-      shippingAddress,
-      items: orderItems,
+      items: itemsToProcess,
+      couponId: couponToApply,
     });
 
-    const savedOrder = await this.orderRepo.save(order);
+    if (!pricing.storeConfig.codEnabled) {
+      throw new ValidationError('Cash on Delivery is currently unavailable. Please select an online payment method.');
+    }
+    if (pricing.totalAmount > pricing.storeConfig.codMaxLimit) {
+      throw new ValidationError(`Cash on Delivery is only available for orders up to ₹${pricing.storeConfig.codMaxLimit}. Please pay online.`);
+    }
+
+    // 5. SEC-HIGH-009: Atomic multi-item stock reservation with rollback on failure
+    const orderNumber = `YOX-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+    const reservationItems = pricing.items.map((i) => ({
+      variantId: i.variantId,
+      quantity: i.quantity,
+      productName: i.productName,
+    }));
+
+    await this.atomicStockService.reserveOrderItems(reservationItems, {
+      reason: 'Stock locked for placed COD order',
+      reference: orderNumber,
+    });
+
+    let couponClaimed = false;
+    let savedOrder: Order;
+    try {
+      if (pricing.couponId) {
+        couponClaimed = await this.pricingService.atomicClaimCoupon(pricing.couponId);
+      }
+
+      // Never trust client paymentStatus, paymentId, subtotal, discount, or totalAmount
+      const order = Order.create({
+        orderNumber,
+        userId,
+        couponId: pricing.couponId,
+        paymentId: null,
+        subtotal: pricing.subtotal,
+        discount: pricing.discount,
+        shippingCharge: pricing.shippingCharge,
+        tax: pricing.tax,
+        totalAmount: pricing.totalAmount,
+        paymentMethod: 'COD',
+        paymentStatus: 'PENDING',
+        orderStatus: 'PLACED',
+        notes: data.notes,
+        shippingAddress,
+        items: pricing.items,
+      });
+
+      savedOrder = await this.orderRepo.save(order);
+    } catch (error) {
+      if (couponClaimed && pricing.couponId) {
+        await this.pricingService.releaseCouponClaim(pricing.couponId);
+      }
+      await this.atomicStockService
+        .releaseOrderItems(reservationItems, {
+          reason: 'Rollback after COD order persistence failure',
+          reference: orderNumber,
+        })
+        .catch(() => undefined);
+      throw error;
+    }
 
     // 6. Clear User Cart (Only for standard cart checkout, NOT for direct buy)
     if (!isDirectBuy && userCart) {
@@ -268,37 +245,43 @@ export class PlaceOrderUseCase implements IUseCase<{ userId: string; data: Place
       await this.cartRepo.save(userCart);
     }
 
-    AuditLogService.getInstance()?.record({
-      actorId: userId,
-      actorRole: 'CUSTOMER',
-      action: AuditAction.ORDER_CREATED,
-      resourceType: 'ORDER',
-      resourceId: savedOrder.id,
-      description: `Order #${savedOrder.orderNumber} placed for ₹${savedOrder.totalAmount}`,
-      after: { orderNumber: savedOrder.orderNumber, totalAmount: savedOrder.totalAmount, status: savedOrder.orderStatus },
-    });
+    try {
+      AuditLogService.getInstance()?.record({
+        actorId: userId,
+        actorRole: 'CUSTOMER',
+        action: AuditAction.ORDER_CREATED,
+        resourceType: 'ORDER',
+        resourceId: savedOrder.id,
+        description: `Order #${savedOrder.orderNumber} placed for ₹${savedOrder.totalAmount}`,
+        after: { orderNumber: savedOrder.orderNumber, totalAmount: savedOrder.totalAmount, status: savedOrder.orderStatus },
+      });
+    } catch {}
 
     // 🔔 Real-time admin notification
     const itemCount = savedOrder.items.reduce((s, i) => s + i.quantity, 0);
     let customerName = 'A customer';
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const u = await UserModel.findById(userId).select('fullName').lean();
+        if (u?.fullName) customerName = u.fullName as string;
+      } catch {}
+    }
     try {
-      const u = await UserModel.findById(userId).select('fullName').lean();
-      if (u?.fullName) customerName = u.fullName as string;
+      await NotificationService.getInstance().notify({
+        userId: null, // broadcast to all admins
+        type: 'NEW_ORDER',
+        title: '🛒 New Order Received',
+        message: `${customerName} placed order #${savedOrder.orderNumber} for ₹${savedOrder.totalAmount} (${itemCount} item${itemCount !== 1 ? 's' : ''})`,
+        metadata: {
+          orderId: savedOrder.id,
+          orderNumber: savedOrder.orderNumber,
+          totalAmount: savedOrder.totalAmount,
+          itemCount,
+          customerId: userId,
+          customerName,
+        },
+      });
     } catch {}
-    await NotificationService.getInstance().notify({
-      userId: null, // broadcast to all admins
-      type: 'NEW_ORDER',
-      title: '🛒 New Order Received',
-      message: `${customerName} placed order #${savedOrder.orderNumber} for ₹${savedOrder.totalAmount} (${itemCount} item${itemCount !== 1 ? 's' : ''})`,
-      metadata: {
-        orderId: savedOrder.id,
-        orderNumber: savedOrder.orderNumber,
-        totalAmount: savedOrder.totalAmount,
-        itemCount,
-        customerId: userId,
-        customerName,
-      },
-    });
 
     return mapToOrderResponseDTO(savedOrder);
   }
@@ -422,7 +405,7 @@ async function resolveActorDetails(actor?: { id?: string; role?: string; email?:
   let actorName: string | null = null;
   let actorEmail: string | null = actor?.email || null;
 
-  if (actorId && actorId !== 'SYSTEM' && actorId.length === 24) {
+  if (actorId && actorId !== 'SYSTEM' && actorId.length === 24 && mongoose.connection.readyState === 1) {
     try {
       const u = await UserModel.findById(actorId).select('fullName email roleId').lean();
       if (u) {
@@ -437,13 +420,18 @@ async function resolveActorDetails(actor?: { id?: string; role?: string; email?:
 }
 
 export class CancelOrderUseCase implements IUseCase<{ id: string; userId?: string; isAdmin?: boolean; data: CancelOrderRequestDTO; actor?: { id?: string; role?: string; email?: string } }, OrderResponseDTO> {
+  private readonly offerRepo?: IOfferRepository;
+
   constructor(
     private readonly orderRepo: IOrderRepository,
     private readonly variantRepo: IProductVariantRepository,
     private readonly inventoryRepo: IInventoryRepository,
     private readonly stockLogRepo: IStockLogRepository,
-    private readonly shipmentRepo: IShipmentRepository = new ShipmentRepository()
-  ) {}
+    private readonly shipmentRepo: IShipmentRepository = new ShipmentRepository(),
+    offerRepo?: IOfferRepository
+  ) {
+    this.offerRepo = offerRepo ?? (mongoose.connection.readyState === 1 ? new OfferRepository() : undefined);
+  }
 
   async execute(input: { id: string; userId?: string; isAdmin?: boolean; data: CancelOrderRequestDTO; actor?: { id?: string; role?: string; email?: string } }): Promise<OrderResponseDTO> {
     let order = await this.orderRepo.findById(input.id);
@@ -472,44 +460,49 @@ export class CancelOrderUseCase implements IUseCase<{ id: string; userId?: strin
     }
 
     const prevStatus = order.orderStatus;
+    const cancelReason = input.data?.reason || 'Cancelled by user';
     order.cancel({
-      reason: input.data?.reason || 'Cancelled by user',
+      reason: cancelReason,
       bankDetails: input.data?.bankDetails,
       isAdmin: input.isAdmin,
     });
-    const savedOrder = await this.orderRepo.save(order);
 
-    // Restore stock back to variants and inventory
-    for (const item of savedOrder.items) {
-      const variant = await this.variantRepo.findById(item.variantId);
-      if (variant) {
-        variant.increaseStock(item.quantity);
-        await this.variantRepo.save(variant);
+    let savedOrder: Order;
+    if (typeof this.orderRepo.atomicCancelOrder === 'function') {
+      const atomicCancelled = await this.orderRepo.atomicCancelOrder(order.id, {
+        reason: cancelReason,
+        bankDetails: input.data?.bankDetails || null,
+        isAdmin: input.isAdmin,
+      });
+      if (!atomicCancelled) {
+        throw new ConflictError('Order is already cancelled or can no longer be cancelled');
       }
-      const inventory = await this.inventoryRepo.findByVariantId(item.variantId);
-      if (inventory) {
-        const prevAvail = inventory.availableStock;
-        const newAvail = prevAvail + item.quantity;
-        const newReserved = Math.max(0, inventory.reservedStock - item.quantity);
-        const updatedInv = Inventory.reconstitute({
-          ...inventory.toJSON(),
-          availableStock: newAvail,
-          reservedStock: newReserved,
-          updatedAt: new Date(),
-        });
-        const savedInv = await this.inventoryRepo.save(updatedInv);
+      savedOrder = atomicCancelled;
+    } else {
+      savedOrder = await this.orderRepo.save(order);
+    }
 
-        const log = StockLog.create({
-          inventoryId: savedInv.id,
-          type: 'RELEASE',
-          amount: item.quantity,
-          previousStock: prevAvail,
-          newStock: newAvail,
-          reason: 'Stock returned from cancelled order',
-          reference: savedOrder.orderNumber,
-        });
-        await this.stockLogRepo.save(log);
+    // SEC-HIGH-009: Release stock ONLY after this caller exclusively wins cancellation transition
+    const atomicStock = new AtomicStockService(
+      this.variantRepo,
+      this.inventoryRepo,
+      this.stockLogRepo,
+      { explicitInventoryRepo: true, explicitStockLogRepo: true }
+    );
+    await atomicStock.releaseOrderItems(
+      savedOrder.items.map((i) => ({
+        variantId: i.variantId,
+        quantity: i.quantity,
+        productName: i.productName,
+      })),
+      {
+        reason: 'Stock returned from cancelled order',
+        reference: savedOrder.orderNumber,
       }
+    );
+
+    if (savedOrder.couponId && this.offerRepo?.atomicDecrementUsage) {
+      await this.offerRepo.atomicDecrementUsage(savedOrder.couponId).catch(() => undefined);
     }
 
     const actorInfo = await resolveActorDetails(input.actor || { id: input.userId, role: input.isAdmin ? 'ADMIN' : 'CUSTOMER' });
@@ -532,10 +525,12 @@ export class CancelOrderUseCase implements IUseCase<{ id: string; userId?: strin
       const isCustomer = !input.isAdmin || order.userId === input.userId;
       const cancelledBy = isCustomer ? 'Customer' : 'Admin';
       let cancellerName = isCustomer ? 'Customer' : 'Admin';
-      try {
-        const u = await UserModel.findById(input.userId).select('fullName').lean();
-        if (u?.fullName) cancellerName = u.fullName as string;
-      } catch {}
+      if (mongoose.connection.readyState === 1) {
+        try {
+          const u = await UserModel.findById(input.userId).select('fullName').lean();
+          if (u?.fullName) cancellerName = u.fullName as string;
+        } catch {}
+      }
       await NotificationService.getInstance().notify({
         userId: null,
         type: 'ORDER_CANCELLED',

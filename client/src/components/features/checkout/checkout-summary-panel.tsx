@@ -91,7 +91,6 @@ export function CheckoutSummaryPanel() {
     const directBuyPayload = isDirectCheckout && directBuyItem ? {
       variantId: directBuyItem.variantId || directBuyItem.id,
       quantity: directBuyItem.quantity,
-      price: directBuyItem.price,
     } : undefined;
 
     // ──────────────────────────────────────────────────────────────────────────

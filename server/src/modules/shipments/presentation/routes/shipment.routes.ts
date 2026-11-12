@@ -51,7 +51,8 @@ const shipmentController = new ShipmentController(
   handleShiprocketWebhookUseCase
 );
 
-// Public routes: Shiprocket Webhook (called by external Shiprocket webhook server)
+// Public routes: Courier Webhook (called by external Shiprocket webhook server; avoids prohibited URL keywords)
+router.post('/webhook/courier', shipmentController.handleShiprocketWebhook);
 router.post('/webhook/shiprocket', shipmentController.handleShiprocketWebhook);
 
 // Authenticated customer/staff routes (User must be logged in to track orders)

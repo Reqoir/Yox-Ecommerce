@@ -34,8 +34,57 @@ export class PaymentRepository implements IPaymentRepository {
     return doc ? this.toDomain(doc) : null;
   }
 
+  async findByGatewayOrderId(gatewayOrderId: string): Promise<Payment | null> {
+    if (!gatewayOrderId) return null;
+    const doc = await PaymentModel.findOne({ gatewayOrderId }).exec();
+    return doc ? this.toDomain(doc) : null;
+  }
+
   async findByTransactionId(transactionId: string): Promise<Payment | null> {
+    if (!transactionId) return null;
     const doc = await PaymentModel.findOne({ transactionId }).exec();
+    return doc ? this.toDomain(doc) : null;
+  }
+
+  async atomicMarkPaid(params: {
+    orderId: string;
+    gatewayOrderId: string;
+    transactionId: string;
+  }): Promise<Payment | null> {
+    const doc = await PaymentModel.findOneAndUpdate(
+      {
+        orderId: params.orderId,
+        gatewayOrderId: params.gatewayOrderId,
+        paymentStatus: { $in: ['PENDING', 'FAILED'] },
+      },
+      {
+        $set: {
+          paymentStatus: 'PAID',
+          transactionId: params.transactionId,
+          updatedAt: new Date(),
+        },
+      },
+      { new: true }
+    ).exec();
+    return doc ? this.toDomain(doc) : null;
+  }
+
+  async atomicMarkFailed(params: { orderId: string; transactionId?: string }): Promise<Payment | null> {
+    const updateSet: any = {
+      paymentStatus: 'FAILED',
+      updatedAt: new Date(),
+    };
+    if (params.transactionId) {
+      updateSet.transactionId = params.transactionId;
+    }
+    const doc = await PaymentModel.findOneAndUpdate(
+      {
+        orderId: params.orderId,
+        paymentStatus: 'PENDING',
+      },
+      { $set: updateSet },
+      { new: true }
+    ).exec();
     return doc ? this.toDomain(doc) : null;
   }
 
@@ -104,6 +153,12 @@ export class RefundRepository implements IRefundRepository {
 
   async findByReturnId(returnId: string): Promise<Refund | null> {
     const doc = await RefundModel.findOne({ returnId }).exec();
+    return doc ? this.toDomain(doc) : null;
+  }
+
+  async findByGatewayRefundId(gatewayRefundId: string): Promise<Refund | null> {
+    if (!gatewayRefundId) return null;
+    const doc = await RefundModel.findOne({ gatewayRefundId }).exec();
     return doc ? this.toDomain(doc) : null;
   }
 

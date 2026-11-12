@@ -13,5 +13,7 @@ export interface IOfferRepository {
   findActive(now?: Date): Promise<Offer[]>;
   findBanners(now?: Date): Promise<Offer[]>;
   findOffersForProduct(productId: string, categoryId?: string | null, brandId?: string | null, now?: Date): Promise<Offer[]>;
+  atomicIncrementUsage?(offerId: string): Promise<Offer | null>;
+  atomicDecrementUsage?(offerId: string): Promise<void>;
   delete(id: string): Promise<boolean>;
 }

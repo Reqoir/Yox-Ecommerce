@@ -22,7 +22,7 @@ export interface IPaymentDocument extends Document {
 export interface IRefundDocument extends Document {
   paymentId?: string | null;
   orderId: string;
-  returnId: string;
+  returnId?: string | null;
   amount: number;
   paymentMethod: string;
   gatewayRefundId?: string | null;
@@ -54,7 +54,7 @@ const refundSchema = new Schema<IRefundDocument>(
   {
     paymentId: { type: String, default: null },
     orderId: { type: String, required: true, index: true },
-    returnId: { type: String, required: true, unique: true, index: true },
+    returnId: { type: String, default: null },
     amount: { type: Number, required: true, min: 0 },
     paymentMethod: { type: String, required: true },
     gatewayRefundId: { type: String, default: null },
@@ -69,7 +69,35 @@ const refundSchema = new Schema<IRefundDocument>(
 );
 
 paymentSchema.index({ createdAt: -1 });
+paymentSchema.index(
+  { transactionId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { transactionId: { $type: 'string' } },
+  },
+);
+paymentSchema.index(
+  { gatewayOrderId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { gatewayOrderId: { $type: 'string' } },
+  },
+);
 refundSchema.index({ createdAt: -1 });
+refundSchema.index(
+  { returnId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { returnId: { $type: 'string' } },
+  },
+);
+refundSchema.index(
+  { gatewayRefundId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { gatewayRefundId: { $type: 'string' } },
+  },
+);
 
 export const PaymentModel = model<IPaymentDocument>('Payment', paymentSchema);
 export const RefundModel = model<IRefundDocument>('Refund', refundSchema);

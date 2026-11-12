@@ -13,7 +13,7 @@ export type RefundStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
 export interface RefundProps extends EntityProps {
   paymentId?: string | null;
   orderId: string;
-  returnId: string;
+  returnId?: string | null;
   amount: number;
   paymentMethod: PaymentMethod | string;
   gatewayRefundId?: string | null;
@@ -29,7 +29,7 @@ export class Refund extends BaseEntity<RefundProps> {
 
   get paymentId(): string | null | undefined { return this._props.paymentId; }
   get orderId(): string { return this._props.orderId; }
-  get returnId(): string { return this._props.returnId; }
+  get returnId(): string | null | undefined { return this._props.returnId; }
   get amount(): number { return this._props.amount; }
   get paymentMethod(): string { return this._props.paymentMethod; }
   get gatewayRefundId(): string | null | undefined { return this._props.gatewayRefundId; }
@@ -56,16 +56,20 @@ export class Refund extends BaseEntity<RefundProps> {
   }
 
   public markProcessing(): void {
-    if (this._props.status === 'COMPLETED') {
-      throw new Error('Cannot transition a COMPLETED refund back to PROCESSING');
+    if (this._props.status === 'COMPLETED' || this._props.status === 'PROCESSING') {
+      throw new Error(`Cannot transition a ${this._props.status} refund to PROCESSING`);
     }
     this._props.status = 'PROCESSING';
+    this._props.failureReason = null;
     this._props.updatedAt = new Date();
   }
 
   public markCompleted(gatewayRefundId?: string): void {
     if (this._props.status === 'COMPLETED') {
       throw new Error('Refund is already COMPLETED');
+    }
+    if (this._props.status === 'FAILED') {
+      throw new Error('Cannot mark a FAILED refund directly as COMPLETED');
     }
     this._props.status = 'COMPLETED';
     if (gatewayRefundId) this._props.gatewayRefundId = gatewayRefundId;
@@ -124,11 +128,17 @@ export class Payment extends BaseEntity<PaymentProps> {
   }
 
   public addRefund(refundAmount: number): void {
+    if (!Number.isFinite(refundAmount) || refundAmount <= 0) {
+      throw new Error('Refund amount must be a positive number');
+    }
+    if (this._props.paymentStatus !== 'PAID' && this._props.paymentStatus !== 'PARTIALLY_REFUNDED') {
+      throw new Error(`Cannot add refund to payment in status "${this._props.paymentStatus}"`);
+    }
     const currentRefunded = this._props.refundedAmount || 0;
     if (currentRefunded + refundAmount > this._props.amount) {
       throw new Error(`Refund amount ₹${refundAmount} exceeds remaining refundable limit ₹${this._props.amount - currentRefunded}`);
     }
-    this._props.refundedAmount = currentRefunded + refundAmount;
+    this._props.refundedAmount = Number((currentRefunded + refundAmount).toFixed(2));
     if (this._props.refundedAmount >= this._props.amount) {
       this._props.paymentStatus = 'REFUNDED';
     }

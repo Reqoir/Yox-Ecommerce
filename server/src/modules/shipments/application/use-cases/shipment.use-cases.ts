@@ -3,15 +3,27 @@
  * @layer Application › Use Cases
  */
 
+import crypto from 'crypto';
+import { z } from 'zod';
 import { IUseCase } from '@core/application/use-cases/base.use-case.interface';
-import { ApplicationError } from '@core/application/errors/application.error';
+import {
+  ApplicationError,
+  ConflictError,
+  UnauthorizedError,
+} from '@core/application/errors/application.error';
+import { ValidationError } from '@core/domain/errors/validation.error';
 import { ApiError } from '@shared/utils/api-error.util';
+import { env } from '@core/infrastructure/config/env';
 import { IShipmentRepository } from '../../domain/repositories/shipment.repository.interface';
 import { IOrderRepository } from '../../../orders/domain/repositories/order.repository.interface';
 import { Shipment } from '../../domain/entities/shipment.entity';
 import { CreateShipmentRequestDTO, UpdateShipmentStatusRequestDTO, ShipmentResponseDTO } from '../dtos/shipment.dto';
 import { ShiprocketService } from '../../infrastructure/services/shiprocket.service';
 import { NotificationService } from '../../../notifications/application/services/notification.service';
+import {
+  MongooseWebhookEventDeduplicator,
+  WebhookEventDeduplicator,
+} from '../../../payments/application/use-cases/razorpay-webhook.use-case';
 
 export function mapToShipmentResponseDTO(shipment: Shipment): ShipmentResponseDTO {
   return {
@@ -450,40 +462,173 @@ export class GenerateShipmentInvoiceUseCase implements IUseCase<string, { invoic
   }
 }
 
+const shiprocketWebhookSchema = z
+  .object({
+    awb: z.union([z.string(), z.number()]).nullish(),
+    awb_code: z.union([z.string(), z.number()]).nullish(),
+    tracking_number: z.union([z.string(), z.number()]).nullish(),
+    current_status: z.string().trim().nullish(),
+    status: z.string().trim().nullish(),
+    shipment_status: z.string().trim().nullish(),
+    current_status_id: z.union([z.string(), z.number()]).nullish(),
+    order_id: z.union([z.string(), z.number()]).nullish(),
+    orderNumber: z.string().nullish(),
+    orderId: z.string().nullish(),
+    order_number: z.string().nullish(),
+    channel_order_id: z.union([z.string(), z.number()]).nullish(),
+    sr_order_id: z.union([z.string(), z.number()]).nullish(),
+    shipment_id: z.union([z.string(), z.number()]).nullish(),
+    courier_name: z.string().nullish(),
+    current_timestamp: z.union([z.string(), z.number()]).nullish(),
+    etd: z.string().nullish(),
+    edd: z.string().nullish(),
+    is_return: z.union([z.string(), z.number(), z.boolean()]).nullish(),
+    scans: z.array(z.any()).nullish(),
+  })
+  .passthrough();
+
+function timingSafeSecretEquals(provided: string, expected: string): boolean {
+  const providedBuf = Buffer.from(provided, 'utf8');
+  const expectedBuf = Buffer.from(expected, 'utf8');
+  if (providedBuf.length === 0 || providedBuf.length !== expectedBuf.length) {
+    return false;
+  }
+  return crypto.timingSafeEqual(providedBuf, expectedBuf);
+}
+
 export class HandleShiprocketWebhookUseCase {
+  private readonly deduplicator: WebhookEventDeduplicator;
+
   constructor(
     private readonly shipmentRepo: IShipmentRepository,
-    private readonly orderRepo: IOrderRepository
-  ) {}
+    private readonly orderRepo: IOrderRepository,
+    deduplicator?: WebhookEventDeduplicator
+  ) {
+    this.deduplicator = deduplicator ?? new MongooseWebhookEventDeduplicator();
+  }
 
-  async execute(payload: any): Promise<{ success: boolean; message: string }> {
-    const awb = payload?.awb || payload?.awb_code || payload?.tracking_number;
-    const currentStatus = (payload?.current_status || payload?.status || '').toUpperCase();
-    const rawOrderNumber = payload?.order_id || payload?.orderNumber || payload?.orderId || payload?.order_number;
+  async execute(input: {
+    payload?: any;
+    apiKey?: string;
+    expectedSecret?: string;
+    eventId?: string;
+  } | any): Promise<{ success: boolean; duplicate?: boolean; message: string }> {
+    const isWrapped =
+      input &&
+      typeof input === 'object' &&
+      ('payload' in input || 'apiKey' in input || 'expectedSecret' in input);
+    const rawPayload = isWrapped ? input.payload : input;
+    const providedApiKey = isWrapped && typeof input.apiKey === 'string' ? input.apiKey.trim() : '';
+    const configuredSecret = (
+      (isWrapped && typeof input.expectedSecret === 'string' ? input.expectedSecret : undefined) ??
+      env.SHIPROCKET_WEBHOOK_SECRET ??
+      ''
+    ).trim();
 
+    // SEC-CRIT-003: Mandatory shared-secret verification using timing-safe comparison
+    if (!configuredSecret) {
+      throw new UnauthorizedError('Shiprocket webhook secret is not configured');
+    }
+    if (!providedApiKey || !timingSafeSecretEquals(providedApiKey, configuredSecret)) {
+      throw new UnauthorizedError('Invalid or missing Shiprocket webhook x-api-key');
+    }
+
+    const parsedResult = shiprocketWebhookSchema.safeParse(rawPayload);
+    if (!parsedResult.success) {
+      throw new ValidationError('Invalid Shiprocket webhook payload format');
+    }
+    const payload = parsedResult.data;
+
+    const awb = payload.awb ?? payload.awb_code ?? payload.tracking_number;
+    const rawAwb = awb !== undefined && awb !== null ? String(awb).trim() : '';
+    const awbStr = rawAwb.length > 0 ? rawAwb : undefined;
+    const currentStatus = (payload.current_status || payload.status || payload.shipment_status || '')
+      .trim()
+      .toUpperCase();
+    const rawOrderNumber =
+      payload.order_id ??
+      payload.orderNumber ??
+      payload.orderId ??
+      payload.order_number ??
+      payload.channel_order_id;
+    const rawOrderStr =
+      rawOrderNumber !== undefined && rawOrderNumber !== null ? String(rawOrderNumber).trim() : '';
+    const normalizedOrderNumber = rawOrderStr.length > 0 ? rawOrderStr : undefined;
+
+    // Shiprocket's dashboard "Test Webhook" / save verification can send an authenticated
+    // empty JSON ping (`{}`) or sample object without AWB/Order IDs and expects HTTP 200.
+    // Shared-secret auth (x-api-key) is verified above; reply cleanly without touching DB state.
+    if (!awbStr && !normalizedOrderNumber) {
+      return {
+        success: true,
+        message: 'Shiprocket webhook connectivity verified',
+      };
+    }
+
+    const eventKeySource = JSON.stringify({
+      awb: awbStr || null,
+      order: normalizedOrderNumber || null,
+      status: currentStatus,
+      timestamp: payload.current_timestamp || null,
+      scansCount: Array.isArray(payload.scans) ? payload.scans.length : 0,
+    });
+    const eventId =
+      (isWrapped && input.eventId) ||
+      crypto.createHash('sha256').update(eventKeySource).digest('hex');
+
+    const isNew = await this.deduplicator.recordIfNew({
+      provider: 'SHIPROCKET',
+      eventId,
+      eventType: currentStatus || 'SHIPROCKET_UPDATE',
+    });
+    if (!isNew) {
+      return {
+        success: true,
+        duplicate: true,
+        message: 'Duplicate Shiprocket webhook event ignored',
+      };
+    }
+
+    try {
+      const { result, orderId } = await this.applyWebhookUpdate(payload, {
+        awbStr,
+        currentStatus,
+        rawOrderNumber: normalizedOrderNumber,
+      });
+      await this.deduplicator.markProcessed?.('SHIPROCKET', eventId, orderId);
+      return result;
+    } catch (error: any) {
+      await this.deduplicator.markFailed?.('SHIPROCKET', eventId, error?.message || 'Shiprocket webhook error');
+      throw error;
+    }
+  }
+
+  private async applyWebhookUpdate(
+    payload: any,
+    ctx: { awbStr?: string; currentStatus: string; rawOrderNumber: any }
+  ): Promise<{ result: { success: boolean; duplicate?: boolean; message: string }; orderId: string | null }> {
+    const { awbStr, currentStatus, rawOrderNumber } = ctx;
     let shipment: Shipment | null = null;
     let order: any = null;
 
     // 1. Try finding by AWB code if provided
-    if (awb) {
-      shipment = await this.shipmentRepo.findByTrackingNumber(awb);
+    if (awbStr) {
+      shipment = await this.shipmentRepo.findByTrackingNumber(awbStr);
     }
 
     // 2. Try finding by Order Identifier (MongoDB ID, exact Order Number, or formatted)
-    if (rawOrderNumber) {
+    if (rawOrderNumber !== undefined && rawOrderNumber !== null) {
       const orderStr = String(rawOrderNumber).trim();
 
-      // Check if it is a 24-character hex MongoDB ID
       if (/^[0-9a-fA-F]{24}$/.test(orderStr)) {
         order = await this.orderRepo.findById(orderStr);
       }
-
-      // Check by orderNumber directly
       if (!order) {
         order = await this.orderRepo.findByOrderNumber(orderStr);
       }
-
-      // Check with/without YOX- prefix
+      if (!order && /^\d+$/.test(orderStr)) {
+        order = await this.orderRepo.findById(orderStr);
+      }
       if (!order) {
         const alt = orderStr.startsWith('YOX-')
           ? orderStr.replace('YOX-', '')
@@ -501,34 +646,72 @@ export class HandleShiprocketWebhookUseCase {
       order = await this.orderRepo.findById(shipment.orderId);
     }
 
-    // 4. If neither order nor shipment found, return helpful diagnostic message
-    if (!shipment && !order) {
+    // 4. Require matching order and valid linkage
+    if (!order && !shipment) {
       return {
-        success: false,
-        message: `Matching order #${rawOrderNumber || 'N/A'} or AWB #${awb || 'N/A'} not found in database. Ensure you use an existing Order Number (e.g. YOX-...) or Order ID.`,
+        orderId: null,
+        result: {
+          success: false,
+          message: `Matching order #${rawOrderNumber || 'N/A'} or AWB #${awbStr || 'N/A'} not found in database.`,
+        },
       };
     }
 
-    // 5. If order found but shipment entity doesn't exist yet, auto-create shipment
-    if (order && !shipment) {
+    if (shipment && order && shipment.orderId !== order.id) {
+      throw new ConflictError('Shiprocket webhook AWB/shipment does not belong to the referenced order');
+    }
+
+    if (
+      payload.sr_order_id !== undefined &&
+      payload.sr_order_id !== null &&
+      String(payload.sr_order_id).trim() !== '' &&
+      order?.shiprocketOrderId &&
+      String(order.shiprocketOrderId) !== String(payload.sr_order_id)
+    ) {
+      throw new ConflictError('Shiprocket order ID mismatch against stored order');
+    }
+
+    if (
+      payload.shipment_id !== undefined &&
+      payload.shipment_id !== null &&
+      String(payload.shipment_id).trim() !== '' &&
+      shipment?.shiprocketShipmentId &&
+      String(shipment.shiprocketShipmentId) !== String(payload.shipment_id)
+    ) {
+      throw new ConflictError('Shiprocket shipment ID mismatch against stored shipment');
+    }
+
+    // Never allow webhook to fabricate a shipment for an order that was never dispatched via Shiprocket
+    if (order && !shipment && !order.shiprocketOrderId) {
+      throw new ConflictError('Order has no active Shiprocket shipment linked');
+    }
+
+    if (order && !shipment && order.shiprocketOrderId) {
       shipment = Shipment.create({
         orderId: order.id,
-        deliveryPartnerId: payload?.courier_name || order.deliveryPartnerId || 'Shiprocket Partner',
-        trackingNumber: awb || order.trackingNumber || null,
-        awbCode: awb || order.trackingNumber || null,
+        deliveryPartnerId: payload.courier_name || order.deliveryPartnerId || 'Shiprocket Partner',
+        trackingNumber: awbStr || order.trackingNumber || null,
+        awbCode: awbStr || order.trackingNumber || null,
+        shiprocketOrderId: order.shiprocketOrderId,
+        shiprocketShipmentId: order.shiprocketShipmentId || (payload.shipment_id ? String(payload.shipment_id) : null),
         status: 'READY_TO_SHIP',
         estimatedDeliveryDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
-        notes: 'Shipment auto-registered via webhook update',
+        notes: 'Shipment registered via verified Shiprocket webhook',
       });
     }
 
+    // Never ship or deliver unpaid online orders via logistics webhook
+    if (order && order.paymentMethod === 'RAZORPAY' && order.paymentStatus !== 'PAID') {
+      throw new ConflictError('Cannot advance fulfillment status for an unpaid online order via courier webhook');
+    }
+
     // Ensure AWB is attached if provided in webhook
-    if (awb && shipment && !shipment.trackingNumber) {
-      shipment.setTracking(awb, payload?.courier_name);
+    if (awbStr && shipment && !shipment.trackingNumber) {
+      shipment.setTracking(awbStr, payload.courier_name);
     }
 
     // Process scans if provided
-    if (shipment && Array.isArray(payload?.scans) && payload.scans.length > 0) {
+    if (shipment && Array.isArray(payload.scans) && payload.scans.length > 0) {
       const formatted = payload.scans.map((s: any) => ({
         date: s.date || new Date().toISOString(),
         status: s.status || 'UPDATE',
@@ -538,24 +721,48 @@ export class HandleShiprocketWebhookUseCase {
       shipment.updateTrackingActivities(formatted);
     }
 
-    // Status mapping
-    if (currentStatus.includes('DELIVERED')) {
-      if (shipment) shipment.updateStatus('DELIVERED', 'Delivered via Shiprocket webhook');
-      if (order && order.orderStatus !== 'DELIVERED') order.deliver();
-    } else if (currentStatus.includes('OUT FOR DELIVERY')) {
-      if (shipment) shipment.updateStatus('OUT_FOR_DELIVERY', 'Out for delivery via Shiprocket');
-      if (order && order.orderStatus !== 'OUT_FOR_DELIVERY') order.outForDelivery();
-    } else if (currentStatus.includes('IN TRANSIT') || currentStatus.includes('PICKED UP') || currentStatus.includes('SHIPPED')) {
-      if (shipment) shipment.updateStatus('SHIPPED', 'In transit via Shiprocket');
-      if (order && (order.orderStatus === 'CONFIRMED' || order.orderStatus === 'PACKED' || order.orderStatus === 'PLACED')) {
-        order.ship(awb || order.trackingNumber, payload?.courier_name || shipment?.courierName || undefined);
+    // SEC-CRIT-003: Strict fulfillment transitions ONLY — webhooks NEVER modify paymentStatus (not even COD)
+    try {
+      if (currentStatus.includes('DELIVERED')) {
+        if (order && order.orderStatus !== 'DELIVERED') {
+          order.deliver({ syncCodPayment: false });
+        }
+        if (shipment) shipment.updateStatus('DELIVERED', 'Delivered via Shiprocket webhook');
+      } else if (currentStatus.includes('OUT FOR DELIVERY')) {
+        if (order && order.orderStatus !== 'OUT_FOR_DELIVERY') {
+          order.outForDelivery();
+        }
+        if (shipment) shipment.updateStatus('OUT_FOR_DELIVERY', 'Out for delivery via Shiprocket');
+      } else if (
+        currentStatus.includes('IN TRANSIT') ||
+        currentStatus.includes('PICKED UP') ||
+        currentStatus.includes('SHIPPED')
+      ) {
+        if (order && !['SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.orderStatus)) {
+          order.ship(awbStr || order.trackingNumber, payload.courier_name || shipment?.courierName || undefined);
+        }
+        if (shipment) shipment.updateStatus('SHIPPED', 'In transit via Shiprocket');
+      } else if (currentStatus.includes('RTO') || currentStatus.includes('RETURNED')) {
+        if (order && !['SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'RETURNED'].includes(order.orderStatus)) {
+          throw new ConflictError(`Cannot mark RTO/RETURNED from order status ${order.orderStatus}`);
+        }
+        if (shipment) shipment.updateStatus('RETURNED_TO_SELLER', 'Returned to origin via Shiprocket');
+        if (order && order.orderStatus !== 'RETURNED') {
+          order.updateStatus('RETURNED', 'Return to origin initiated');
+        }
+      } else if (currentStatus.includes('CANCEL')) {
+        if (order && ['DELIVERED', 'RETURNED'].includes(order.orderStatus)) {
+          throw new ConflictError(`Cannot cancel order in terminal status ${order.orderStatus}`);
+        }
+        if (shipment) shipment.updateStatus('RETURNED_TO_SELLER', 'Cancelled via courier');
+        if (order && order.orderStatus !== 'CANCELLED') {
+          // Do not overwrite paymentStatus on webhook; transition only orderStatus safely via updateStatus
+          order.updateStatus('CANCELLED', 'Cancelled via courier webhook');
+        }
       }
-    } else if (currentStatus.includes('RTO') || currentStatus.includes('RETURNED')) {
-      if (shipment) shipment.updateStatus('RETURNED_TO_SELLER', 'Returned to origin via Shiprocket');
-      if (order) order.updateStatus('RETURNED', 'Return to origin initiated');
-    } else if (currentStatus.includes('CANCEL')) {
-      if (shipment) shipment.updateStatus('RETURNED_TO_SELLER', 'Cancelled via courier');
-      if (order && order.orderStatus !== 'CANCELLED') order.cancel({ reason: 'Cancelled via courier update', isAdmin: true });
+    } catch (transitionErr: any) {
+      if (transitionErr instanceof ConflictError) throw transitionErr;
+      throw new ConflictError(transitionErr?.message || 'Invalid order state transition from webhook');
     }
 
     if (shipment) await this.shipmentRepo.save(shipment);
@@ -572,15 +779,18 @@ export class HandleShiprocketWebhookUseCase {
             orderId: order.id,
             orderNumber: order.orderNumber,
             status: currentStatus,
-            awb,
+            awb: awbStr,
           },
         });
       } catch {}
     }
 
     return {
-      success: true,
-      message: `Order #${order?.orderNumber || order?.id} status successfully updated to ${currentStatus}`,
+      orderId: order?.id || null,
+      result: {
+        success: true,
+        message: `Order #${order?.orderNumber || order?.id} status successfully updated to ${currentStatus}`,
+      },
     };
   }
 }

@@ -12,7 +12,7 @@ export interface RefundResponseDTO {
   id: string;
   paymentId?: string | null;
   orderId: string;
-  returnId: string;
+  returnId?: string | null;
   amount: number;
   paymentMethod: string;
   gatewayRefundId?: string | null;

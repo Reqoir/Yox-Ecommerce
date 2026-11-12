@@ -110,6 +110,32 @@ export class RazorpayService {
   }
 
   /**
+   * Verify Razorpay Webhook HMAC SHA-256 signature against raw request body using timing-safe comparison.
+   */
+  verifyWebhookSignature(rawBody: Buffer | string, signature: string, secret?: string): boolean {
+    const webhookSecret = (secret ?? env.RAZORPAY_WEBHOOK_SECRET ?? '').trim();
+    if (!webhookSecret || !signature || !rawBody) {
+      return false;
+    }
+
+    const expectedSignature = crypto
+      .createHmac('sha256', webhookSecret)
+      .update(rawBody)
+      .digest('hex');
+
+    try {
+      const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
+      const actualBuffer = Buffer.from(String(signature).trim(), 'utf8');
+      if (expectedBuffer.length !== actualBuffer.length) {
+        return false;
+      }
+      return crypto.timingSafeEqual(expectedBuffer, actualBuffer);
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Fetch payment details directly from Razorpay API for secondary validation
    */
   async fetchPayment(paymentId: string): Promise<any> {

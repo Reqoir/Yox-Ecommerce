@@ -241,38 +241,47 @@ export class ReserveStockUseCase
     id: string;
     data: ReserveStockRequestDTO;
   }): Promise<{ inventory: InventoryResponseDTO; log: StockLogResponseDTO }> {
-    const inventory = await this.inventoryRepo.findById(input.id);
-    if (!inventory) throw new Error('Inventory not found');
-
-    if (input.data.quantity <= 0) {
-      throw new Error('Quantity must be a positive number');
+    const qty = Number(input.data.quantity);
+    if (!Number.isInteger(qty) || qty <= 0) {
+      throw new Error('Quantity must be a positive integer');
     }
 
-    if (inventory.availableStock < input.data.quantity) {
-      throw new Error(
-        `Insufficient stock. Requested: ${input.data.quantity}, Available: ${inventory.availableStock}`
-      );
+    const existing = await this.inventoryRepo.findById(input.id);
+    if (!existing) throw new Error('Inventory not found');
+
+    let savedInventory: Inventory;
+    const previousAvailable = existing.availableStock;
+
+    if (typeof this.inventoryRepo.atomicReserveStock === 'function' && existing.variantId) {
+      const atomicUpdated = await this.inventoryRepo.atomicReserveStock(existing.variantId, qty);
+      if (!atomicUpdated) {
+        const latest = await this.inventoryRepo.findById(input.id);
+        throw new Error(
+          `Insufficient stock. Requested: ${qty}, Available: ${latest?.availableStock ?? 0}`
+        );
+      }
+      savedInventory = atomicUpdated;
+    } else {
+      if (existing.availableStock < qty) {
+        throw new Error(
+          `Insufficient stock. Requested: ${qty}, Available: ${existing.availableStock}`
+        );
+      }
+      const updatedInventory = Inventory.reconstitute({
+        ...existing.toJSON(),
+        availableStock: existing.availableStock - qty,
+        reservedStock: existing.reservedStock + qty,
+        updatedAt: new Date(),
+      });
+      savedInventory = await this.inventoryRepo.save(updatedInventory);
     }
-
-    const previousAvailable = inventory.availableStock;
-    const newAvailable = previousAvailable - input.data.quantity;
-    const newReserved = inventory.reservedStock + input.data.quantity;
-
-    const updatedProps = {
-      ...inventory.toJSON(),
-      availableStock: newAvailable,
-      reservedStock: newReserved,
-      updatedAt: new Date(),
-    };
-    const updatedInventory = Inventory.reconstitute(updatedProps);
-    const savedInventory = await this.inventoryRepo.save(updatedInventory);
 
     const log = StockLog.create({
       inventoryId: savedInventory.id,
       type: 'RESERVE',
-      amount: input.data.quantity,
+      amount: qty,
       previousStock: previousAvailable,
-      newStock: newAvailable,
+      newStock: savedInventory.availableStock,
       reason: 'Stock reserved for pending order',
       reference: input.data.reference,
     });
@@ -313,37 +322,50 @@ export class ReleaseStockUseCase
     id: string;
     data: ReleaseStockRequestDTO;
   }): Promise<{ inventory: InventoryResponseDTO; log: StockLogResponseDTO }> {
+    const qty = Number(input.data.quantity);
+    if (!Number.isInteger(qty) || qty <= 0) {
+      throw new Error('Quantity must be a positive integer');
+    }
+
     const inventory = await this.inventoryRepo.findById(input.id);
     if (!inventory) throw new Error('Inventory not found');
 
-    if (input.data.quantity <= 0) {
-      throw new Error('Quantity must be a positive number');
-    }
-
-    if (inventory.reservedStock < input.data.quantity) {
+    if (inventory.reservedStock < qty) {
       throw new Error(
-        `Cannot release ${input.data.quantity} units. Only ${inventory.reservedStock} are reserved.`
+        `Cannot release ${qty} units. Only ${inventory.reservedStock} are reserved.`
       );
     }
 
     const previousAvailable = inventory.availableStock;
-    let newAvailable = previousAvailable;
-    const newReserved = inventory.reservedStock - input.data.quantity;
+    let savedInventory: Inventory;
 
-    if (input.data.action === 'CANCEL') {
-      // Order cancelled — return reserved stock to available pool
-      newAvailable = previousAvailable + input.data.quantity;
+    if (
+      input.data.action === 'CANCEL' &&
+      typeof this.inventoryRepo.atomicReleaseStock === 'function' &&
+      inventory.variantId
+    ) {
+      const atomicUpdated = await this.inventoryRepo.atomicReleaseStock(inventory.variantId, qty);
+      savedInventory =
+        atomicUpdated ||
+        (await this.inventoryRepo.save(
+          Inventory.reconstitute({
+            ...inventory.toJSON(),
+            availableStock: previousAvailable + qty,
+            reservedStock: Math.max(0, inventory.reservedStock - qty),
+            updatedAt: new Date(),
+          })
+        ));
+    } else {
+      const newAvailable = input.data.action === 'CANCEL' ? previousAvailable + qty : previousAvailable;
+      const newReserved = inventory.reservedStock - qty;
+      const updatedInventory = Inventory.reconstitute({
+        ...inventory.toJSON(),
+        availableStock: newAvailable,
+        reservedStock: newReserved,
+        updatedAt: new Date(),
+      });
+      savedInventory = await this.inventoryRepo.save(updatedInventory);
     }
-    // FULFILL: reserved stock is consumed (sold), so only reservedStock decreases
-
-    const updatedProps = {
-      ...inventory.toJSON(),
-      availableStock: newAvailable,
-      reservedStock: newReserved,
-      updatedAt: new Date(),
-    };
-    const updatedInventory = Inventory.reconstitute(updatedProps);
-    const savedInventory = await this.inventoryRepo.save(updatedInventory);
 
     const reason =
       input.data.action === 'CANCEL'
@@ -353,9 +375,9 @@ export class ReleaseStockUseCase
     const log = StockLog.create({
       inventoryId: savedInventory.id,
       type: 'RELEASE',
-      amount: input.data.quantity,
+      amount: qty,
       previousStock: previousAvailable,
-      newStock: newAvailable,
+      newStock: savedInventory.availableStock,
       reason,
       reference: input.data.reference,
     });

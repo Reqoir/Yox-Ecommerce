@@ -16,6 +16,7 @@
     "test:coverage": "jest --coverage",
     "type-check": "tsc --noEmit",
     "reset-admin": "tsx scripts/reset-admin-password.ts",
+    "migrate:phase1-indexes": "tsx scripts/migrate-phase1-indexes.ts",
     "clean": "rm -rf dist"
   },
   "keywords": [

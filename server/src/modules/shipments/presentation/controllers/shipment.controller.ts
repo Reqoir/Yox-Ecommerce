@@ -129,7 +129,11 @@ export class ShipmentController {
         res.status(200).json({ success: true });
         return;
       }
-      const result = await this.handleShiprocketWebhookUseCase.execute(req.body);
+      const apiKey = req.headers['x-api-key'] as string | undefined;
+      const result = await this.handleShiprocketWebhookUseCase.execute({
+        payload: req.body,
+        apiKey,
+      });
       res.status(200).json(result);
     } catch (error) {
       next(error);

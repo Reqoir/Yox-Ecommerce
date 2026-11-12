@@ -149,8 +149,22 @@ export class Order extends BaseEntity<OrderProps> {
     if (!props.items || props.items.length === 0) {
       throw new Error('An order must contain at least one item');
     }
-    if (props.totalAmount < 0) {
-      throw new Error('Order total amount cannot be negative');
+    for (const item of props.items) {
+      if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+        throw new Error('Order item quantity must be a positive integer');
+      }
+      if (!Number.isFinite(item.unitPrice) || item.unitPrice < 0 || !Number.isFinite(item.subtotal) || item.subtotal < 0) {
+        throw new Error('Order item pricing must be non-negative');
+      }
+    }
+    if (
+      !Number.isFinite(props.subtotal) || props.subtotal < 0 ||
+      !Number.isFinite(props.discount) || props.discount < 0 ||
+      !Number.isFinite(props.shippingCharge) || props.shippingCharge < 0 ||
+      !Number.isFinite(props.tax) || props.tax < 0 ||
+      !Number.isFinite(props.totalAmount) || props.totalAmount < 0
+    ) {
+      throw new Error('Order financial amounts must be valid non-negative numbers');
     }
     const now = new Date();
     return new Order({
@@ -159,7 +173,8 @@ export class Order extends BaseEntity<OrderProps> {
       updatedAt: now,
       placedAt: props.placedAt || now,
       orderStatus: props.orderStatus || 'PLACED',
-      paymentStatus: props.paymentStatus || (props.paymentMethod === 'COD' ? 'PENDING' : 'PAID'),
+      // SEC-CRIT-001: Never default online/non-COD orders to PAID at creation time
+      paymentStatus: props.paymentStatus || 'PENDING',
       ...props
     });
   }
@@ -172,6 +187,9 @@ export class Order extends BaseEntity<OrderProps> {
   public confirm(): void {
     if (['CONFIRMED', 'PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(this._props.orderStatus)) {
       return;
+    }
+    if (this._props.orderStatus === 'CANCELLED' || this._props.orderStatus === 'RETURNED') {
+      throw new Error(`Cannot confirm order from status: ${this._props.orderStatus}`);
     }
     this._props.orderStatus = 'CONFIRMED';
     if (!this._props.confirmedAt) this._props.confirmedAt = new Date();
@@ -191,7 +209,10 @@ export class Order extends BaseEntity<OrderProps> {
   }
 
   public ship(trackingNumber?: string, deliveryPartnerId?: string): void {
-    if (this._props.orderStatus === 'CANCELLED' || this._props.orderStatus === 'RETURNED' || this._props.orderStatus === 'DELIVERED') {
+    if (['SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(this._props.orderStatus)) {
+      return;
+    }
+    if (this._props.orderStatus === 'CANCELLED' || this._props.orderStatus === 'RETURNED') {
       throw new Error(`Cannot ship order from status: ${this._props.orderStatus}`);
     }
     this._props.orderStatus = 'SHIPPED';
@@ -202,7 +223,10 @@ export class Order extends BaseEntity<OrderProps> {
   }
 
   public outForDelivery(): void {
-    if (this._props.orderStatus === 'CANCELLED' || this._props.orderStatus === 'RETURNED' || this._props.orderStatus === 'DELIVERED') {
+    if (this._props.orderStatus === 'OUT_FOR_DELIVERY') {
+      return;
+    }
+    if (this._props.orderStatus !== 'SHIPPED') {
       throw new Error(`Cannot mark order out for delivery from status: ${this._props.orderStatus}`);
     }
     this._props.orderStatus = 'OUT_FOR_DELIVERY';
@@ -210,13 +234,14 @@ export class Order extends BaseEntity<OrderProps> {
     this._props.updatedAt = new Date();
   }
 
-  public deliver(): void {
-    if (this._props.orderStatus === 'CANCELLED' || this._props.orderStatus === 'RETURNED') {
+  public deliver(options: { syncCodPayment?: boolean } = {}): void {
+    if (!['SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(this._props.orderStatus)) {
       throw new Error(`Cannot deliver order from status: ${this._props.orderStatus}`);
     }
+    const syncCodPayment = options.syncCodPayment !== false;
     this._props.orderStatus = 'DELIVERED';
     if (!this._props.deliveredAt) this._props.deliveredAt = new Date();
-    if (this._props.paymentMethod === 'COD' && this._props.paymentStatus === 'PENDING') {
+    if (syncCodPayment && this._props.paymentMethod === 'COD' && this._props.paymentStatus === 'PENDING') {
       this._props.paymentStatus = 'PAID';
     }
     this._props.updatedAt = new Date();
@@ -276,7 +301,21 @@ export class Order extends BaseEntity<OrderProps> {
   }
 
   public updatePaymentStatus(newStatus: PaymentStatus | string, paymentId?: string): void {
-    this._props.paymentStatus = newStatus;
+    const current = String(this._props.paymentStatus || 'PENDING').toUpperCase();
+    const next = String(newStatus || '').toUpperCase();
+    const allowedTransitions: Record<string, string[]> = {
+      PENDING: ['PENDING', 'PAID', 'FAILED'],
+      FAILED: ['FAILED', 'PENDING'],
+      PAID: ['PAID', 'REFUND_PROCESSING', 'PARTIALLY_REFUNDED', 'REFUNDED'],
+      REFUND_PROCESSING: ['REFUND_PROCESSING', 'PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'],
+      PARTIALLY_REFUNDED: ['PARTIALLY_REFUNDED', 'REFUND_PROCESSING', 'REFUNDED'],
+      REFUNDED: ['REFUNDED'],
+    };
+    const allowed = allowedTransitions[current];
+    if (!allowed || !allowed.includes(next)) {
+      throw new Error(`Invalid payment status transition: ${current} -> ${next}`);
+    }
+    this._props.paymentStatus = next as PaymentStatus;
     if (paymentId) this._props.paymentId = paymentId;
     this._props.updatedAt = new Date();
   }

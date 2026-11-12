@@ -14,6 +14,8 @@ export interface IProductVariantRepository {
   findByProductIds(productIds: string[]): Promise<ProductVariant[]>;
   findById(id: string): Promise<ProductVariant | null>;
   findByBarcode(barcode: string): Promise<ProductVariant | null>;
+  atomicReserveStock?(variantId: string, quantity: number): Promise<ProductVariant | null>;
+  atomicReleaseStock?(variantId: string, quantity: number): Promise<ProductVariant | null>;
   findAll(query?: any): Promise<{ data: ProductVariant[]; total: number }>;
   delete(id: string): Promise<boolean>;
   deleteByProductId(productId: string): Promise<boolean>;

@@ -3,7 +3,13 @@
  * @layer Application › Use Cases
  */
 
+import mongoose from 'mongoose';
 import { IUseCase } from '@core/application/use-cases/base.use-case.interface';
+import {
+  ApplicationError,
+  ConflictError,
+} from '@core/application/errors/application.error';
+import { ValidationError } from '@core/domain/errors/validation.error';
 import { IReturnRepository } from '../../domain/repositories/return.repository.interface';
 import { IOrderRepository } from '../../../orders/domain/repositories/order.repository.interface';
 import { IInventoryRepository } from '../../../inventory/domain/repositories/inventory.repository.interface';
@@ -91,21 +97,23 @@ export class CreateReturnUseCase implements IUseCase<{ userId: string; data: Cre
     let returnWindowDays = 7;
     let minEvidencePhotos = 3;
 
-    try {
-      const storeSetting = await SettingsModel.findOne({ key: 'store_config' }).lean();
-      if (storeSetting?.value) {
-        if (typeof storeSetting.value.returnsEnabled === 'boolean') {
-          returnsEnabled = storeSetting.value.returnsEnabled;
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const storeSetting = await SettingsModel.findOne({ key: 'store_config' }).lean();
+        if (storeSetting?.value) {
+          if (typeof storeSetting.value.returnsEnabled === 'boolean') {
+            returnsEnabled = storeSetting.value.returnsEnabled;
+          }
+          if (typeof storeSetting.value.returnWindowDays === 'number') {
+            returnWindowDays = storeSetting.value.returnWindowDays;
+          }
+          if (typeof storeSetting.value.minEvidencePhotos === 'number') {
+            minEvidencePhotos = storeSetting.value.minEvidencePhotos;
+          }
         }
-        if (typeof storeSetting.value.returnWindowDays === 'number') {
-          returnWindowDays = storeSetting.value.returnWindowDays;
-        }
-        if (typeof storeSetting.value.minEvidencePhotos === 'number') {
-          minEvidencePhotos = storeSetting.value.minEvidencePhotos;
-        }
+      } catch (err) {
+        // Fallback to defaults
       }
-    } catch (err) {
-      // Fallback to defaults
     }
 
     if (!returnsEnabled) {
@@ -136,21 +144,26 @@ export class CreateReturnUseCase implements IUseCase<{ userId: string; data: Cre
       );
     }
 
-    // Match order item by variantId or id or sku
+    // Match order item by variantId or id or sku and aggregate existing returns across all item keys
     const item = order.items.find(i => i.variantId === data.orderItemId || i.id === data.orderItemId || i.productId === data.orderItemId);
     if (!item) {
       throw new Error('Selected item was not found in this order');
     }
 
-    // Calculate existing returns for this item
-    const existingReturns = await this.returnRepo.findByOrderItemId(order.id, data.orderItemId);
+    const itemKeys = new Set([item.variantId, item.id, item.productId].filter(Boolean));
+    let existingReturns = typeof this.returnRepo.findByOrderId === 'function'
+      ? await this.returnRepo.findByOrderId(order.id)
+      : [];
+    if (existingReturns.length === 0) {
+      existingReturns = await this.returnRepo.findByOrderItemId(order.id, data.orderItemId);
+    }
     const previouslyReturnedQty = existingReturns
-      .filter(r => r.status !== 'REJECTED')
+      .filter(r => r.status !== 'REJECTED' && (itemKeys.has(r.orderItemId) || r.orderItemId === data.orderItemId))
       .reduce((sum, r) => sum + r.quantity, 0);
 
     const availableForReturn = item.quantity - previouslyReturnedQty;
 
-    if (data.quantity <= 0) {
+    if (!Number.isInteger(data.quantity) || data.quantity <= 0) {
       throw new Error('Return quantity must be greater than zero');
     }
 
@@ -160,7 +173,7 @@ export class CreateReturnUseCase implements IUseCase<{ userId: string; data: Cre
 
     const returnEntity = Return.create({
       orderId: order.id,
-      orderItemId: data.orderItemId,
+      orderItemId: item.variantId || item.id || data.orderItemId,
       userId,
       quantity: data.quantity,
       reason: data.reason,
@@ -185,10 +198,12 @@ export class CreateReturnUseCase implements IUseCase<{ userId: string; data: Cre
     // 🔔 Real-time admin notification for return request
     try {
       let customerName = 'A customer';
-      try {
-        const u = await UserModel.findById(userId).select('fullName email').lean();
-        if (u?.fullName) customerName = u.fullName as string;
-      } catch {}
+      if (mongoose.connection.readyState === 1) {
+        try {
+          const u = await UserModel.findById(userId).select('fullName email').lean();
+          if (u?.fullName) customerName = u.fullName as string;
+        } catch {}
+      }
 
       await NotificationService.getInstance().notify({
         userId: null,
@@ -606,147 +621,234 @@ export class InspectReturnUseCase implements IUseCase<{ id: string; data: Inspec
 }
 
 export class ProcessRefundDirectUseCase implements IUseCase<{ id: string; data?: ProcessRefundRequestDTO; actor?: { id?: string; role?: string; email?: string } }, ReturnResponseDTO> {
+  private readonly razorpayService: RazorpayService;
+
   constructor(
     private readonly returnRepo: IReturnRepository,
     private readonly orderRepo?: IOrderRepository,
     private readonly paymentRepo?: IPaymentRepository,
-    private readonly refundRepo?: IRefundRepository
-  ) {}
+    private readonly refundRepo?: IRefundRepository,
+    razorpayService?: RazorpayService
+  ) {
+    this.razorpayService = razorpayService ?? new RazorpayService();
+  }
 
   async execute(input: { id: string; data?: ProcessRefundRequestDTO; actor?: { id?: string; role?: string; email?: string } }): Promise<ReturnResponseDTO> {
     const { id, data, actor } = input;
     const returnEntity = await this.returnRepo.findById(id);
     if (!returnEntity) throw new Error('Return record not found');
 
+    if (returnEntity.status === 'REFUNDED') {
+      return mapToReturnResponseDTO(returnEntity);
+    }
+
     const validStatuses = ['REFUND_PENDING', 'INSPECTED', 'RECEIVED', 'APPROVED', 'RETURN_SHIPPED', 'PICKUP_SCHEDULED'];
     if (!validStatuses.includes(returnEntity.status)) {
-      throw new Error(`Cannot issue refund for return in status: ${returnEntity.status}`);
+      throw new ConflictError(`Cannot issue refund for return in status: ${returnEntity.status}`);
     }
 
-    // 1. Order Lookup
-    let order: any = null;
-    if (this.orderRepo) {
-      order = await this.orderRepo.findById(returnEntity.orderId);
-      if (!order) order = await this.orderRepo.findByOrderNumber(returnEntity.orderId);
+    // 0. Check idempotency / in-progress lock on Return's refund record
+    const existingReturnRefund = this.refundRepo ? await this.refundRepo.findByReturnId(returnEntity.id) : null;
+    if (existingReturnRefund?.status === 'PROCESSING') {
+      throw new ConflictError('A refund for this return is already being processed');
+    }
+    if (existingReturnRefund?.status === 'COMPLETED') {
+      returnEntity.markRefunded({
+        refundId: existingReturnRefund.id,
+        refundAmount: existingReturnRefund.amount,
+        refundMethod: existingReturnRefund.paymentMethod,
+        refundTransactionId: existingReturnRefund.gatewayRefundId || undefined,
+      });
+      const synced = await this.returnRepo.save(returnEntity);
+      return mapToReturnResponseDTO(synced);
     }
 
-    // 2. Refund Amount Calculation
+    // 1. Order Lookup & Payment Eligibility Enforcement (SEC-HIGH-011)
+    if (!this.orderRepo) {
+      throw new ApplicationError(
+        'Order repository is required to validate refund eligibility',
+        'CONFIGURATION_ERROR'
+      );
+    }
+    let order = await this.orderRepo.findById(returnEntity.orderId);
+    if (!order) order = await this.orderRepo.findByOrderNumber(returnEntity.orderId);
+    if (!order) {
+      throw new Error('Associated order not found');
+    }
+
+    if (!['PAID', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus)) {
+      throw new ConflictError(`Cannot refund an order with payment status "${order.paymentStatus}"`);
+    }
+
+    // 2. Remaining Refundable Balance Check (COMPLETED + PROCESSING)
+    let remainingRefundable = order.totalAmount;
+    if (this.refundRepo) {
+      const orderRefunds = await this.refundRepo.findByOrderId(order.id);
+      const committed = orderRefunds
+        .filter((r) => r.status === 'COMPLETED' || r.status === 'PROCESSING')
+        .reduce((sum, r) => sum + r.amount, 0);
+      remainingRefundable = Number(Math.max(0, order.totalAmount - committed).toFixed(2));
+    }
+    if (remainingRefundable <= 0) {
+      throw new ConflictError('No refundable balance remaining for this order');
+    }
+
+    // 3. Refund Amount Calculation & Balance Cap Enforcement
     let refundAmount = data?.refundAmount;
-    if (typeof refundAmount !== 'number' || refundAmount <= 0) {
-      if (order) {
-        const item = order.items.find(
-          (i: any) => i.variantId === returnEntity.orderItemId || i.id === returnEntity.orderItemId || i.productId === returnEntity.orderItemId
-        ) || order.items[0];
-        const unitPrice = item?.unitPrice || 0;
-        const discount = item?.discount ? item.discount / item.quantity : 0;
-        refundAmount = Math.max(0, (unitPrice - discount) * returnEntity.quantity);
-      } else {
-        refundAmount = returnEntity.refundAmount || 0;
+    if (typeof refundAmount !== 'number' || !Number.isFinite(refundAmount)) {
+      const item = order.items.find(
+        (i: any) => i.variantId === returnEntity.orderItemId || i.id === returnEntity.orderItemId || i.productId === returnEntity.orderItemId
+      );
+      if (!item) {
+        throw new ValidationError('Returned item does not match any item in the order');
       }
+      const unitPrice = item.unitPrice || 0;
+      const discountPerUnit = item.discount ? item.discount / item.quantity : 0;
+      refundAmount = Number(Math.max(0, (unitPrice - discountPerUnit) * returnEntity.quantity).toFixed(2));
+    } else {
+      refundAmount = Number(refundAmount.toFixed(2));
     }
 
     if (refundAmount <= 0) {
-      throw new Error('Refund amount must be greater than zero');
+      throw new ValidationError('Refund amount must be greater than zero');
+    }
+    if (refundAmount > remainingRefundable) {
+      throw new ConflictError(
+        `Requested refund ₹${refundAmount} exceeds remaining refundable balance ₹${remainingRefundable}`
+      );
     }
 
-    // 3. Payment & Gateway Execution
-    let payment: any = null;
-    if (this.paymentRepo && order) {
-      payment = await this.paymentRepo.findByOrderId(order.id);
-    }
+    // 4. Payment Lookup
+    const payment = this.paymentRepo ? await this.paymentRepo.findByOrderId(order.id) : null;
+    const isOnlineOrder = ['RAZORPAY', 'CARD', 'UPI', 'NET_BANKING', 'WALLET'].includes(
+      String(order.paymentMethod || '').toUpperCase()
+    );
+    let refundMethod = data?.refundMethod || (isOnlineOrder ? 'Razorpay / Original Payment Method' : 'Bank Transfer (NEFT/IMPS)');
 
-    let refundMethod = data?.refundMethod || (order?.paymentMethod === 'RAZORPAY' ? 'Razorpay / Original Payment Method' : 'Bank Transfer (NEFT/IMPS)');
-    let gatewayRefundId = data?.refundTransactionId?.trim() || '';
-
-    // If online payment via Razorpay, attempt gateway refund
-    if (order && (order.paymentMethod === 'RAZORPAY' || order.paymentMethod === 'CARD' || order.paymentMethod === 'UPI')) {
-      const razorpayPaymentId = (order as any).paymentDetails?.razorpayPaymentId || payment?.transactionId;
-      if (razorpayPaymentId && razorpayPaymentId.startsWith('pay_')) {
-        try {
-          const rzService = new RazorpayService();
-          const rzRefund = await rzService.createRefund(razorpayPaymentId, refundAmount * 100, {
-            returnId: returnEntity.id,
-            orderNumber: order.orderNumber,
-          });
-          gatewayRefundId = rzRefund.id;
-          refundMethod = 'Razorpay / Original Payment Method';
-        } catch (rzErr: any) {
-          console.warn('[Razorpay Refund Notice]:', rzErr.message);
-          if (!gatewayRefundId) {
-            gatewayRefundId = `rfnd_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
-          }
-        }
-      }
-    }
-
-    if (!gatewayRefundId) {
-      gatewayRefundId = `REF-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
-    }
-
-    // 4. Create and Save Refund Record
-    let savedRefund: any = null;
-    if (this.refundRepo && order) {
-      try {
-        const refundEntity = Refund.create({
+    // 5. Persist PROCESSING lock BEFORE calling external Razorpay API
+    let lockRefund: Refund | null = null;
+    if (this.refundRepo) {
+      if (existingReturnRefund) {
+        existingReturnRefund.markProcessing();
+        lockRefund = await this.refundRepo.save(existingReturnRefund);
+      } else {
+        const created = Refund.create({
           paymentId: payment ? payment.id : null,
           orderId: order.id,
           returnId: returnEntity.id,
           amount: refundAmount,
           paymentMethod: refundMethod,
-          gatewayRefundId,
-          status: 'PENDING',
+          gatewayRefundId: null,
+          status: 'PROCESSING',
         });
-        refundEntity.markCompleted(gatewayRefundId);
-        savedRefund = await this.refundRepo.save(refundEntity);
-      } catch (refErr: any) {
-        console.warn('Error saving refund document:', refErr.message);
+        lockRefund = await this.refundRepo.save(created);
       }
     }
 
-    // 5. Update Payment Record
+    // 6. Execute REAL Razorpay Gateway Refund (NEVER fake rfnd_ on failure!)
+    let gatewayRefundId = data?.refundTransactionId?.trim() || '';
+    let gatewayStatus = 'processed';
+
+    if (isOnlineOrder) {
+      const razorpayPaymentId = (order as any).paymentDetails?.razorpayPaymentId || payment?.transactionId || order.paymentId;
+      if (!razorpayPaymentId || !razorpayPaymentId.startsWith('pay_')) {
+        if (lockRefund && this.refundRepo) {
+          lockRefund.markFailed('Missing valid captured Razorpay payment transaction ID');
+          await this.refundRepo.save(lockRefund);
+        }
+        throw new ValidationError('Cannot execute Razorpay refund without a valid captured payment ID');
+      }
+
+      try {
+        const rzRefund = await this.razorpayService.createRefund(
+          razorpayPaymentId,
+          Math.round(refundAmount * 100),
+          {
+            returnId: returnEntity.id,
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+          }
+        );
+        gatewayRefundId = rzRefund?.id || '';
+        gatewayStatus = String(rzRefund?.status || 'processed').toLowerCase();
+        refundMethod = 'Razorpay / Original Payment Method';
+      } catch (rzErr: any) {
+        if (lockRefund && this.refundRepo) {
+          lockRefund.markFailed(rzErr?.message || 'Razorpay refund API error');
+          await this.refundRepo.save(lockRefund);
+        }
+        throw new ApplicationError(
+          `Razorpay refund failed: ${rzErr?.message || 'Gateway rejected refund request'}`,
+          'RAZORPAY_REFUND_FAILED'
+        );
+      }
+
+      if (!gatewayRefundId || gatewayStatus === 'failed') {
+        if (lockRefund && this.refundRepo) {
+          lockRefund.markFailed('Razorpay gateway returned failed refund status');
+          await this.refundRepo.save(lockRefund);
+        }
+        throw new ApplicationError(
+          'Razorpay gateway failed to process refund',
+          'RAZORPAY_REFUND_FAILED'
+        );
+      }
+    } else if (!gatewayRefundId) {
+      gatewayRefundId = `cod_rfnd_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
+      gatewayStatus = 'processed';
+    }
+
+    // Pending async refund from gateway: store gatewayRefundId while keeping PROCESSING (and Return non-REFUNDED)
+    if (gatewayStatus === 'pending' || gatewayStatus === 'processing') {
+      if (lockRefund && this.refundRepo) {
+        const pendingRefund = Refund.reconstitute({
+          ...lockRefund.toJSON(),
+          gatewayRefundId,
+          status: 'PROCESSING',
+          updatedAt: new Date(),
+        });
+        await this.refundRepo.save(pendingRefund);
+      }
+      return mapToReturnResponseDTO(returnEntity);
+    }
+
+    // 7. Mark Refund COMPLETED and update Payment, Order & Return
+    let savedRefund: Refund | null = lockRefund;
+    if (lockRefund && this.refundRepo) {
+      lockRefund.markCompleted(gatewayRefundId);
+      savedRefund = await this.refundRepo.save(lockRefund);
+    }
+
     if (payment && this.paymentRepo) {
-      try {
-        payment.addRefund(refundAmount);
-        await this.paymentRepo.save(payment);
-      } catch (payErr: any) {
-        console.warn('Error updating payment entity:', payErr.message);
-      }
+      payment.addRefund(refundAmount);
+      await this.paymentRepo.save(payment);
     }
 
-    // 6. Update Order Status & Payment Status
-    if (order && this.orderRepo) {
-      try {
-        let totalRefunded = refundAmount;
-        if (this.refundRepo) {
-          const orderRefunds = await this.refundRepo.findByOrderId(order.id);
-          totalRefunded = orderRefunds
-            .filter((r) => r.status === 'COMPLETED')
-            .reduce((sum, r) => sum + r.amount, 0);
-        }
-
-        if (totalRefunded >= order.totalAmount) {
-          order.updatePaymentStatus('REFUNDED');
-        } else {
-          order.updatePaymentStatus('PARTIALLY_REFUNDED');
-        }
-
-        const allOrderReturns = await this.returnRepo.findByOrderId(order.id);
-        const totalReturnedQty = allOrderReturns
-          .filter((r) => r.status === 'REFUNDED' || r.id === returnEntity.id)
-          .reduce((sum, r) => sum + r.quantity, 0);
-        const totalOrderedQty = order.items.reduce((sum: number, i: any) => sum + i.quantity, 0);
-
-        if (totalReturnedQty >= totalOrderedQty) {
-          order.updateStatus('RETURNED', 'All items returned and refunded');
-        }
-
-        await this.orderRepo.save(order);
-      } catch (ordErr: any) {
-        console.warn('Error updating order on refund:', ordErr.message);
-      }
+    let totalRefunded = refundAmount;
+    if (this.refundRepo) {
+      const orderRefunds = await this.refundRepo.findByOrderId(order.id);
+      totalRefunded = orderRefunds
+        .filter((r) => r.status === 'COMPLETED')
+        .reduce((sum, r) => sum + r.amount, 0);
     }
 
-    // 7. Update Return Entity
+    const targetPaymentStatus = totalRefunded >= order.totalAmount ? 'REFUNDED' : 'PARTIALLY_REFUNDED';
+    if (order.paymentStatus !== targetPaymentStatus && order.paymentStatus !== 'REFUNDED') {
+      order.updatePaymentStatus(targetPaymentStatus);
+    }
+
+    const allOrderReturns = await this.returnRepo.findByOrderId(order.id);
+    const totalReturnedQty = allOrderReturns
+      .filter((r) => r.status === 'REFUNDED' || r.id === returnEntity.id)
+      .reduce((sum, r) => sum + r.quantity, 0);
+    const totalOrderedQty = order.items.reduce((sum: number, i: any) => sum + i.quantity, 0);
+
+    if (totalReturnedQty >= totalOrderedQty) {
+      order.updateStatus('RETURNED', 'All items returned and refunded');
+    }
+
+    await this.orderRepo.save(order);
+
     returnEntity.markRefunded({
       refundId: savedRefund ? savedRefund.id : `RFD-${returnEntity.id.substring(0, 8)}`,
       refundAmount,
@@ -763,7 +865,7 @@ export class ProcessRefundDirectUseCase implements IUseCase<{ id: string; data?:
       let actorName: string | null = null;
       let actorEmail: string | null = actor?.email || null;
 
-      if (actorId && actorId !== 'SYSTEM' && actorId.length === 24) {
+      if (actorId && actorId !== 'SYSTEM' && actorId.length === 24 && mongoose.connection.readyState === 1) {
         try {
           const u = await UserModel.findById(actorId).select('fullName email roleId').lean();
           if (u) {
@@ -790,11 +892,11 @@ export class ProcessRefundDirectUseCase implements IUseCase<{ id: string; data?:
         userId: saved.userId,
         type: 'RETURN_REQUEST',
         title: '🎉 Refund Successfully Processed',
-        message: `Your refund of ₹${refundAmount} for Order #${order?.orderNumber || saved.orderId} has been processed via ${refundMethod}. Ref: ${gatewayRefundId}.`,
+        message: `Your refund of ₹${refundAmount} for Order #${order.orderNumber || saved.orderId} has been processed via ${refundMethod}. Ref: ${gatewayRefundId}.`,
         metadata: {
           returnId: saved.id,
           orderId: saved.orderId,
-          orderNumber: order?.orderNumber || null,
+          orderNumber: order.orderNumber || null,
           refundAmount,
           refundMethod,
           refundTransactionId: gatewayRefundId,

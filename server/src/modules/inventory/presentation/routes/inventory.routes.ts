@@ -69,9 +69,9 @@ router.get('/low-stock', requireAuth, requirePermission('manage_inventory'), inv
 // ── Public single-item route ───────────────────────────────────────────────────
 router.get('/:id', inventoryController.getById);
 
-// ── Auth-required Routes (any logged-in user — for checkout flow) ──────────────
-router.post('/:id/reserve', requireAuth, inventoryController.reserve);
-router.post('/:id/release', requireAuth, inventoryController.release);
+// ── Staff/Admin-only Reserve & Release Routes ─────────────────────────────────
+router.post('/:id/reserve', requireAuth, requirePermission('manage_inventory'), inventoryController.reserve);
+router.post('/:id/release', requireAuth, requirePermission('manage_inventory'), inventoryController.release);
 
 // ── Admin-only Routes ──────────────────────────────────────────────────────────
 router.patch('/:id', requireAuth, requirePermission('manage_inventory'), inventoryController.update);

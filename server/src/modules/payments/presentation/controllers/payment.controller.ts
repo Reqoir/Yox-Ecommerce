@@ -8,6 +8,13 @@ import { HttpStatus } from '../../../../shared/constants/http-status.constants';
 import { ApiResponse } from '../../../../shared/utils/api-response.util';
 import { ProcessRefundUseCase, GetRefundsByOrderUseCase } from '../../application/use-cases/refund.use-cases';
 import { CreateRazorpayOrderUseCase, VerifyRazorpayPaymentUseCase, RecordPaymentFailureUseCase } from '../../application/use-cases/payment.use-cases';
+import { HandleRazorpayWebhookUseCase } from '../../application/use-cases/razorpay-webhook.use-case';
+import {
+  createRazorpayOrderSchema,
+  failPaymentOrderSchema,
+  processRefundSchema,
+  verifyRazorpayPaymentSchema,
+} from '../../application/validators/payment.validator';
 
 export class PaymentController {
   constructor(
@@ -15,8 +22,29 @@ export class PaymentController {
     private readonly getRefundsByOrderUseCase: GetRefundsByOrderUseCase,
     private readonly createRazorpayOrderUseCase?: CreateRazorpayOrderUseCase,
     private readonly verifyRazorpayPaymentUseCase?: VerifyRazorpayPaymentUseCase,
-    private readonly recordPaymentFailureUseCase?: RecordPaymentFailureUseCase
+    private readonly recordPaymentFailureUseCase?: RecordPaymentFailureUseCase,
+    private readonly handleRazorpayWebhookUseCase?: HandleRazorpayWebhookUseCase
   ) {}
+
+  handleRazorpayWebhook = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!this.handleRazorpayWebhookUseCase) {
+        throw new Error('HandleRazorpayWebhookUseCase not injected');
+      }
+      const signature = req.headers['x-razorpay-signature'] as string | undefined;
+      const eventIdHeader = req.headers['x-razorpay-event-id'] as string | undefined;
+      const rawBody = (req as any).rawBody;
+      const result = await this.handleRazorpayWebhookUseCase.execute({
+        rawBody,
+        signature,
+        eventIdHeader,
+        payload: req.body,
+      });
+      ApiResponse.success(res, result, 'Razorpay webhook processed');
+    } catch (error) {
+      next(error);
+    }
+  };
 
   recordPaymentFailure = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -30,15 +58,15 @@ export class PaymentController {
         throw new Error('RecordPaymentFailureUseCase not injected');
       }
 
-      const { orderId, razorpayPaymentId, reason } = req.body;
+      const parsed = failPaymentOrderSchema.parse(req.body);
       const result = await this.recordPaymentFailureUseCase.execute({
         userId,
-        orderId,
-        razorpayPaymentId,
-        reason,
+        orderId: parsed.orderId,
+        razorpayPaymentId: parsed.razorpayPaymentId,
+        reason: parsed.reason,
       });
 
-      ApiResponse.success(res, result, 'Payment failure recorded and stock restored');
+      ApiResponse.success(res, result, result.message || 'Payment failure recorded and stock restored');
     } catch (error) {
       next(error);
     }
@@ -56,9 +84,14 @@ export class PaymentController {
         throw new Error('CreateRazorpayOrderUseCase not injected');
       }
 
+      const parsed = createRazorpayOrderSchema.parse(req.body);
       const orderData = await this.createRazorpayOrderUseCase.execute({
         userId,
-        ...req.body,
+        addressId: parsed.addressId,
+        shippingAddress: parsed.shippingAddress,
+        couponId: parsed.couponId ?? undefined,
+        notes: parsed.notes ?? undefined,
+        directBuyItem: parsed.directBuyItem,
       });
 
       ApiResponse.success(res, orderData, 'Razorpay order created successfully', HttpStatus.CREATED);
@@ -79,22 +112,13 @@ export class PaymentController {
         throw new Error('VerifyRazorpayPaymentUseCase not injected');
       }
 
-      const { orderId, razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
-
-      if (!orderId || !razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
-        res.status(HttpStatus.BAD_REQUEST).json({
-          success: false,
-          message: 'Missing required payment verification parameters',
-        });
-        return;
-      }
-
+      const parsed = verifyRazorpayPaymentSchema.parse(req.body);
       const verifiedOrder = await this.verifyRazorpayPaymentUseCase.execute({
         userId,
-        orderId,
-        razorpayOrderId,
-        razorpayPaymentId,
-        razorpaySignature,
+        orderId: parsed.orderId,
+        razorpayOrderId: parsed.razorpayOrderId,
+        razorpayPaymentId: parsed.razorpayPaymentId,
+        razorpaySignature: parsed.razorpaySignature,
       });
 
       ApiResponse.success(res, verifiedOrder, 'Payment verified and order confirmed successfully', HttpStatus.OK);
@@ -105,7 +129,8 @@ export class PaymentController {
 
   processRefund = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const refund = await this.processRefundUseCase.execute(req.body);
+      const parsed = processRefundSchema.parse(req.body);
+      const refund = await this.processRefundUseCase.execute(parsed);
       ApiResponse.success(res, refund, 'Refund processed successfully', HttpStatus.CREATED);
     } catch (error) {
       next(error);

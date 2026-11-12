@@ -38,6 +38,9 @@ export interface IOfferDocument extends Document {
   badgeColor?: string | null;
   priority: number;
   isActive: boolean;
+  usageLimit?: number | null;
+  usedCount?: number;
+  perUserLimit?: number | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -90,6 +93,9 @@ const offerSchema = new Schema<IOfferDocument>(
     badgeColor: { type: String, default: null },
     priority: { type: Number, default: 0, index: true },
     isActive: { type: Boolean, default: true, index: true },
+    usageLimit: { type: Number, default: null, min: 0 },
+    usedCount: { type: Number, default: 0, min: 0 },
+    perUserLimit: { type: Number, default: null, min: 0 },
   },
   {
     ...(baseSchemaOptions as any),

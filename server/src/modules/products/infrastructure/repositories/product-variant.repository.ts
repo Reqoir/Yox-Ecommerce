@@ -98,6 +98,40 @@ export class ProductVariantRepository implements IProductVariantRepository {
     return doc ? this.mapToDomain(doc) : null;
   }
 
+  async atomicReserveStock(variantId: string, quantity: number): Promise<ProductVariant | null> {
+    if (!Types.ObjectId.isValid(variantId) || !Number.isInteger(quantity) || quantity <= 0) {
+      return null;
+    }
+    const doc = await ProductVariantModel.findOneAndUpdate(
+      {
+        _id: variantId,
+        isActive: true,
+        stock: { $gte: quantity },
+      },
+      {
+        $inc: { stock: -quantity },
+        $set: { updatedAt: new Date() },
+      },
+      { new: true }
+    ).exec();
+    return doc ? this.mapToDomain(doc) : null;
+  }
+
+  async atomicReleaseStock(variantId: string, quantity: number): Promise<ProductVariant | null> {
+    if (!Types.ObjectId.isValid(variantId) || !Number.isInteger(quantity) || quantity <= 0) {
+      return null;
+    }
+    const doc = await ProductVariantModel.findOneAndUpdate(
+      { _id: variantId },
+      {
+        $inc: { stock: quantity },
+        $set: { updatedAt: new Date() },
+      },
+      { new: true }
+    ).exec();
+    return doc ? this.mapToDomain(doc) : null;
+  }
+
   async findAll(query: any = {}): Promise<{ data: ProductVariant[]; total: number }> {
     const filter: any = {};
     if (query.productId) filter.productId = query.productId;

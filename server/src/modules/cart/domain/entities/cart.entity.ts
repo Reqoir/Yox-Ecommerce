@@ -98,6 +98,8 @@ export class Cart extends BaseEntity<CartProps> {
 
   public clear(): void {
     this._props.items = [];
+    this._props.couponId = null;
+    this._props.discountAmount = 0;
     this.calculateTotals();
   }
 

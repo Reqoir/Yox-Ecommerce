@@ -723,7 +723,7 @@ export default function AdminSettingsPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          const url = `${typeof window !== 'undefined' ? window.location.origin.replace(':3000', ':5001') : 'http://localhost:5001'}/api/v1/shipments/webhook/shiprocket`;
+                          const url = `${typeof window !== 'undefined' ? window.location.origin.replace(':3000', ':5001') : 'http://localhost:5001'}/api/v1/shipments/webhook/courier`;
                           navigator.clipboard.writeText(url);
                           toast.success('Webhook URL copied to clipboard');
                         }}
@@ -734,7 +734,7 @@ export default function AdminSettingsPage() {
                       </button>
                     </div>
                     <code className="block p-2 rounded-lg bg-muted text-[11px] font-mono text-muted-foreground break-all select-all">
-                      {typeof window !== 'undefined' ? window.location.origin.replace(':3000', ':5001') : 'http://localhost:5001'}/api/v1/shipments/webhook/shiprocket
+                      {typeof window !== 'undefined' ? window.location.origin.replace(':3000', ':5001') : 'http://localhost:5001'}/api/v1/shipments/webhook/courier
                     </code>
                     <p className="text-[10px] text-muted-foreground leading-relaxed">
                       Shiprocket automatically notifies this endpoint when a package status updates (e.g. IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, RTO).

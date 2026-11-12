@@ -132,6 +132,46 @@ export class InventoryRepository implements IInventoryRepository {
     return populated[0] || null;
   }
 
+  async atomicReserveStock(variantId: string, quantity: number): Promise<Inventory | null> {
+    if (!variantId || !Number.isInteger(quantity) || quantity <= 0) return null;
+    const doc = await InventoryModel.findOneAndUpdate(
+      {
+        variantId,
+        availableStock: { $gte: quantity },
+      },
+      {
+        $inc: { availableStock: -quantity, reservedStock: quantity },
+        $set: { updatedAt: new Date() },
+      },
+      { new: true }
+    ).exec();
+    if (!doc) return null;
+    const populated = await this.populateProductDetails([doc]);
+    return populated[0] || null;
+  }
+
+  async atomicReleaseStock(variantId: string, quantity: number): Promise<Inventory | null> {
+    if (!variantId || !Number.isInteger(quantity) || quantity <= 0) return null;
+    const doc = await InventoryModel.findOneAndUpdate(
+      { variantId },
+      [
+        {
+          $set: {
+            availableStock: { $add: ['$availableStock', quantity] },
+            reservedStock: {
+              $max: [0, { $subtract: ['$reservedStock', quantity] }],
+            },
+            updatedAt: new Date(),
+          },
+        },
+      ],
+      { new: true }
+    ).exec();
+    if (!doc) return null;
+    const populated = await this.populateProductDetails([doc]);
+    return populated[0] || null;
+  }
+
   async findAll(query: any): Promise<{ data: Inventory[]; total: number }> {
     await this.ensureInventoryForAllVariants();
 

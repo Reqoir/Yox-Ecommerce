@@ -84,7 +84,7 @@ describe('Order Domain Entity - State Machine & Invariants', () => {
     order.ship('TRK-999');
 
     expect(() => order.cancel('User changed mind', false)).toThrow(
-      'Cannot cancel order from current status: SHIPPED'
+      'Cannot cancel order from current stage (SHIPPED). Cancellation is only available before packaging and shipment.'
     );
   });
 

@@ -34,6 +34,9 @@ export class OfferRepository implements IOfferRepository {
       badgeColor: data.badgeColor,
       priority: data.priority,
       isActive: data.isActive,
+      usageLimit: data.usageLimit ?? null,
+      usedCount: data.usedCount ?? 0,
+      perUserLimit: data.perUserLimit ?? null,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
     });
@@ -163,6 +166,39 @@ export class OfferRepository implements IOfferRepository {
 
     const docs = await OfferModel.find(filter).sort({ priority: -1, discountValue: -1 }).exec();
     return docs.map((d) => this.mapToDomain(d));
+  }
+
+  async atomicIncrementUsage(offerId: string): Promise<Offer | null> {
+    if (!Types.ObjectId.isValid(offerId)) return null;
+    const now = new Date();
+    const doc = await OfferModel.findOneAndUpdate(
+      {
+        _id: offerId,
+        isActive: true,
+        $and: [
+          { $or: [{ startDate: null }, { startDate: { $lte: now } }] },
+          { $or: [{ endDate: null }, { endDate: { $gte: now } }] },
+          {
+            $or: [
+              { usageLimit: null },
+              { usageLimit: { $exists: false } },
+              { $expr: { $lt: [{ $ifNull: ['$usedCount', 0] }, '$usageLimit'] } },
+            ],
+          },
+        ],
+      },
+      { $inc: { usedCount: 1 }, $set: { updatedAt: now } },
+      { new: true }
+    ).exec();
+    return doc ? this.mapToDomain(doc) : null;
+  }
+
+  async atomicDecrementUsage(offerId: string): Promise<void> {
+    if (!Types.ObjectId.isValid(offerId)) return;
+    await OfferModel.findOneAndUpdate(
+      { _id: offerId, usedCount: { $gt: 0 } },
+      { $inc: { usedCount: -1 }, $set: { updatedAt: new Date() } }
+    ).exec();
   }
 
   async delete(id: string): Promise<boolean> {

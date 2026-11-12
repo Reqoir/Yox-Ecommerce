@@ -7,6 +7,7 @@ import { Request, Response, NextFunction } from 'express';
 import { HttpStatus } from '../../../../shared/constants/http-status.constants';
 import { ApiResponse } from '../../../../shared/utils/api-response.util';
 import { RoleRepository } from '../../../roles/infrastructure/repositories/role.repository';
+import { placeOrderSchema } from '../../application/validators/order.validator';
 import {
   PlaceOrderUseCase,
   GetAllOrdersUseCase,
@@ -64,7 +65,16 @@ export class OrderController {
     try {
       const userId = req.user!.id;
       const isAdmin = await this.checkIsAdmin(req);
-      const order = await this.placeOrderUseCase.execute({ userId, data: req.body, isAdmin });
+      const parsedBody = placeOrderSchema.parse(req.body);
+      const order = await this.placeOrderUseCase.execute({
+        userId,
+        data: {
+          ...parsedBody,
+          couponId: parsedBody.couponId ?? undefined,
+          notes: parsedBody.notes ?? undefined,
+        },
+        isAdmin,
+      });
       ApiResponse.success(res, order, 'Order placed successfully', HttpStatus.CREATED);
     } catch (error) {
       next(error);

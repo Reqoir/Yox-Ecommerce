@@ -28,14 +28,34 @@ describe('User Domain Entity Unit Tests', () => {
       expect(user.phone).toBe('1234567890');
       expect(user.roleId).toBe('CUSTOMER_ROLE_ID');
       
-      // Verify default values are set
+      // Verify default values are set (since commit 307d039, explicit real emails default isEmailVerified=true)
       expect(user.status).toBe(UserStatus.ACTIVE);
-      expect(user.isEmailVerified).toBe(false);
+      expect(user.isEmailVerified).toBe(true);
       expect(user.isPhoneVerified).toBe(false);
-      
+
       // Verify password got hashed (is not equal to original text)
       expect(user.password).not.toBe('Password123!');
       expect(user.password.length).toBeGreaterThan(10);
+    });
+
+    it('should default isEmailVerified to false for phone-only synthetic internal emails or explicit false override', async () => {
+      const phoneOnlyUser = await User.create({
+        fullName: 'Phone User',
+        password: 'Password123!',
+        phone: '9876543210',
+        roleId: 'CUSTOMER_ROLE_ID',
+      });
+      expect(phoneOnlyUser.email).toBe('9876543210@user.yox.internal');
+      expect(phoneOnlyUser.isEmailVerified).toBe(false);
+
+      const unverifiedEmailUser = await User.create({
+        fullName: 'Explicit Unverified',
+        email: 'unverified@example.com',
+        password: 'Password123!',
+        roleId: 'CUSTOMER_ROLE_ID',
+        isEmailVerified: false,
+      });
+      expect(unverifiedEmailUser.isEmailVerified).toBe(false);
     });
   });
 

@@ -157,4 +157,85 @@ export class OrderRepository implements IOrderRepository {
     const result = await OrderModel.findByIdAndDelete(id).exec();
     return !!result;
   }
+
+  async atomicMarkPaid(orderId: string, paymentId: string, confirmedAt: Date = new Date()): Promise<Order | null> {
+    if (!Types.ObjectId.isValid(orderId)) return null;
+    const doc = await OrderModel.findOneAndUpdate(
+      {
+        _id: orderId,
+        paymentMethod: { $ne: 'COD' },
+        paymentStatus: { $in: ['PENDING', 'FAILED'] },
+        orderStatus: { $ne: 'CANCELLED' },
+      },
+      {
+        $set: {
+          paymentId,
+          paymentStatus: 'PAID',
+          confirmedAt,
+          updatedAt: new Date(),
+        },
+      },
+      { new: true }
+    ).exec();
+    return doc ? this.toDomain(doc) : null;
+  }
+
+  async atomicMarkPaymentFailed(orderId: string, reason: string, userId?: string): Promise<Order | null> {
+    if (!Types.ObjectId.isValid(orderId)) return null;
+    const filter: any = {
+      _id: orderId,
+      paymentMethod: { $ne: 'COD' },
+      paymentStatus: 'PENDING',
+      orderStatus: 'PLACED',
+    };
+    if (userId) filter.userId = userId;
+
+    const doc = await OrderModel.findOneAndUpdate(
+      filter,
+      {
+        $set: {
+          paymentStatus: 'FAILED',
+          orderStatus: 'CANCELLED',
+          cancelledReason: reason,
+          cancelledAt: new Date(),
+          updatedAt: new Date(),
+        },
+      },
+      { new: true }
+    ).exec();
+    return doc ? this.toDomain(doc) : null;
+  }
+
+  async atomicCancelOrder(
+    orderId: string,
+    params: { reason: string; bankDetails?: any; isAdmin?: boolean }
+  ): Promise<Order | null> {
+    if (!Types.ObjectId.isValid(orderId)) return null;
+    const disallowed = params.isAdmin
+      ? ['CANCELLED']
+      : ['PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'RETURNED'];
+
+    const existing = await OrderModel.findById(orderId).select('paymentStatus').lean().exec();
+    if (!existing) return null;
+
+    const updateSet: any = {
+      orderStatus: 'CANCELLED',
+      cancelledReason: params.reason || 'No reason provided',
+      cancelledAt: new Date(),
+      updatedAt: new Date(),
+    };
+    if (params.bankDetails) {
+      updateSet.cancellationBankDetails = { ...params.bankDetails };
+    }
+    if (existing.paymentStatus === 'PAID') {
+      updateSet.paymentStatus = 'REFUND_PROCESSING';
+    }
+
+    const doc = await OrderModel.findOneAndUpdate(
+      { _id: orderId, orderStatus: { $nin: disallowed } },
+      { $set: updateSet },
+      { new: true }
+    ).exec();
+    return doc ? this.toDomain(doc) : null;
+  }
 }

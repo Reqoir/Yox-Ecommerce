@@ -48,7 +48,14 @@ export const createApp = (): Application => {
       },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+      allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'X-Request-ID',
+        'X-Razorpay-Signature',
+        'X-Razorpay-Event-Id',
+        'x-api-key',
+      ],
     }),
   );
 
@@ -56,7 +63,16 @@ export const createApp = (): Application => {
   app.use(globalLimiter);
 
   // ── Body Parsing & Cookies ────────────────────────────────────────────────
-  app.use(express.json({ limit: '10mb' }));
+  app.use(
+    express.json({
+      limit: '10mb',
+      verify: (req: any, _res, buf) => {
+        if (req.originalUrl && req.originalUrl.includes('/webhook/razorpay')) {
+          req.rawBody = buf;
+        }
+      },
+    }),
+  );
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
   app.use(cookieParser());
 

@@ -79,6 +79,7 @@ const envSchema = z.object({
   // ── Shiprocket ─────────────────────────────────────────────────────────────
   SHIPROCKET_EMAIL: z.string().default(''),
   SHIPROCKET_PASSWORD: z.string().default(''),
+  SHIPROCKET_WEBHOOK_SECRET: z.string().default(''),
   SHIPROCKET_PICKUP_LOCATION_NAME: z.string().default('warehouse'),
   SHIPROCKET_PICKUP_POSTCODE: z.string().default('400051'),
 });

@@ -41,6 +41,9 @@ export interface OfferProps {
   badgeColor?: string | null;
   priority: number;
   isActive: boolean;
+  usageLimit?: number | null;
+  usedCount?: number;
+  perUserLimit?: number | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -85,6 +88,9 @@ export class Offer {
   get badgeColor(): string | null | undefined { return this.props.badgeColor; }
   get priority(): number { return this.props.priority; }
   get isActive(): boolean { return this.props.isActive; }
+  get usageLimit(): number | null | undefined { return this.props.usageLimit; }
+  get usedCount(): number { return this.props.usedCount ?? 0; }
+  get perUserLimit(): number | null | undefined { return this.props.perUserLimit; }
   get createdAt(): Date { return this.props.createdAt || new Date(); }
   get updatedAt(): Date { return this.props.updatedAt || new Date(); }
 
