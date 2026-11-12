@@ -27,8 +27,8 @@ declare global {
 }
 
 const MSG91_SCRIPT_URL = 'https://verify.msg91.com/otp-provider.js';
-const WIDGET_ID = process.env.NEXT_PUBLIC_MSG91_WIDGET_ID || '3669726b756e373832333938';
-const TOKEN_AUTH = process.env.NEXT_PUBLIC_MSG91_TOKEN_AUTH || '572383Ttjt0vYaGk36aad1f58P1';
+const WIDGET_ID = process.env.NEXT_PUBLIC_MSG91_WIDGET_ID || '';
+const TOKEN_AUTH = process.env.NEXT_PUBLIC_MSG91_TOKEN_AUTH || '';
 
 export function useMsg91Otp() {
   const [isReady, setIsReady] = useState(false);

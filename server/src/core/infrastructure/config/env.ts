@@ -29,13 +29,13 @@ const envSchema = z.object({
   // ── Redis ──────────────────────────────────────────────────────────────────
   REDIS_HOST: z.string().default('localhost'),
   REDIS_PORT: z.coerce.number().int().positive().default(6379),
-  REDIS_PASSWORD: z.string().optional(),
+  REDIS_PASSWORD: z.string().optional().transform((val) => (val && val.trim().length > 0 ? val : undefined)),
   REDIS_DB: z.coerce.number().int().nonnegative().default(0),
 
   // ── JWT ────────────────────────────────────────────────────────────────────
   JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 characters'),
   JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 characters'),
-  JWT_RESET_SECRET: z.string().min(32).default('super_secret_jwt_reset_password_key_12345'),
+  JWT_RESET_SECRET: z.string().min(32, 'JWT_RESET_SECRET must be at least 32 characters'),
   JWT_ACCESS_EXPIRES_IN: z.string().default('7d'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('30d'),
   JWT_RESET_EXPIRES_IN: z.string().default('15m'),
@@ -73,8 +73,8 @@ const envSchema = z.object({
   RAZORPAY_WEBHOOK_SECRET: z.string().default(''),
 
   // ── MSG91 OTP Widget ───────────────────────────────────────────────────────
-  MSG91_AUTH_KEY: z.string().default('572383AKCG0ea2DR9x6aad22f1P1'),
-  MSG91_WIDGET_ID: z.string().default('3669726b756e373832333938'),
+  MSG91_AUTH_KEY: z.string().default(''),
+  MSG91_WIDGET_ID: z.string().default(''),
 
   // ── Shiprocket ─────────────────────────────────────────────────────────────
   SHIPROCKET_EMAIL: z.string().default(''),

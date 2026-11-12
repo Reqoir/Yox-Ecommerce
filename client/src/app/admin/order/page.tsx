@@ -753,42 +753,6 @@ function AdminOrdersContent() {
     }
   };
 
-  // Direct 1-Click Courier Webhook Simulation for Dev Testing
-  const handleSimulateWebhook = async (status: 'IN TRANSIT' | 'OUT FOR DELIVERY' | 'DELIVERED' | 'RTO') => {
-    if (!selectedOrder) return;
-    if (selectedOrder.orderStatus === 'PLACED') {
-      toast.warning("Please click 'Accept & Book Shiprocket' first before simulating courier status updates.");
-      return;
-    }
-    try {
-      setIsUpdating(true);
-      const res = await apiClient.post<{ success: boolean; message: string }>('/shipments/webhook/shiprocket', {
-        order_id: selectedOrder.id,
-        current_status: status,
-        awb: selectedOrder.trackingNumber || `AWB-SR-${selectedOrder.shiprocketShipmentId || selectedOrder.orderNumber.replace(/[^0-9]/g, '')}`,
-        courier_name: selectedOrder.deliveryPartnerId || 'Delhivery Express',
-        scans: [
-          {
-            date: new Date().toISOString(),
-            status: status,
-            activity: `Simulated courier checkpoint: ${status}`,
-            location: status === 'DELIVERED' ? `${selectedOrder.shippingAddress?.city || 'Destination Hub'}` : 'Kannur Central Hub',
-          },
-        ],
-      });
-      toast.success(res.data?.message || `Simulated courier status update: ${status}`);
-      const fresh = await ordersApi.getOrderById(selectedOrder.id);
-      if (fresh) {
-        setOrders((prev) => prev.map((o) => (o.id === fresh.id ? fresh : o)));
-        setSelectedOrder(fresh);
-      }
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message || 'Failed to simulate courier update');
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
   const handlePrintLabel = async (orderId: string, directUrl?: string | null) => {
     const targetOrder = orders.find((o) => o.id === orderId) || (selectedOrder?.id === orderId ? selectedOrder : null);
     if (!targetOrder) {
@@ -2912,51 +2876,6 @@ function AdminOrdersContent() {
                                 <RefreshCw size={11} className={isUpdating ? "animate-spin" : ""} /> Sync
                               </button>
                             )}
-                          </div>
-                        </div>
-
-                        {/* Interactive Dev Simulation Buttons */}
-                        <div className="col-span-1 sm:col-span-2 pt-2.5 border-t border-border/60 mt-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
-                            🧪 Test Shiprocket Webhook (Development Simulation):
-                          </span>
-                          <div className="flex flex-wrap gap-1.5">
-                            <button
-                              type="button"
-                              disabled={isUpdating}
-                              onClick={() => handleSimulateWebhook('IN TRANSIT')}
-                              className="text-[10px] font-bold px-2 py-1 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800 cursor-pointer disabled:opacity-50"
-                              title="Simulate courier pickup & in-transit scan"
-                            >
-                              🚚 In Transit
-                            </button>
-                            <button
-                              type="button"
-                              disabled={isUpdating}
-                              onClick={() => handleSimulateWebhook('OUT FOR DELIVERY')}
-                              className="text-[10px] font-bold px-2 py-1 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 cursor-pointer disabled:opacity-50"
-                              title="Simulate out for delivery scan"
-                            >
-                              📦 Out for Delivery
-                            </button>
-                            <button
-                              type="button"
-                              disabled={isUpdating}
-                              onClick={() => handleSimulateWebhook('DELIVERED')}
-                              className="text-[10px] font-bold px-2 py-1 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 cursor-pointer disabled:opacity-50"
-                              title="Simulate successful delivery"
-                            >
-                              ✅ Delivered
-                            </button>
-                            <button
-                              type="button"
-                              disabled={isUpdating}
-                              onClick={() => handleSimulateWebhook('RTO')}
-                              className="text-[10px] font-bold px-2 py-1 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800 cursor-pointer disabled:opacity-50"
-                              title="Simulate return to seller"
-                            >
-                              ↩️ RTO (Return)
-                            </button>
                           </div>
                         </div>
                       </div>
