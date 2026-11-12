@@ -67,9 +67,15 @@ async function seed() {
       console.log('Updated existing Admin role with all permissions');
     }
 
+    const initialPassword = process.env.ADMIN_INITIAL_PASSWORD || process.argv[2];
+    if (!initialPassword || initialPassword.length < 8) {
+      console.error('❌ Error: Initial admin password must be provided via ADMIN_INITIAL_PASSWORD env var or CLI argument (min 8 chars).');
+      process.exit(1);
+    }
+
     let adminUser = await User.findOne({ email: 'admin@yox.com' });
     if (!adminUser) {
-      const hashedPassword = await bcrypt.hash('Admin@123', 12);
+      const hashedPassword = await bcrypt.hash(initialPassword, 12);
       adminUser = await User.create({
         fullName: 'System Admin',
         email: 'admin@yox.com',
@@ -79,12 +85,11 @@ async function seed() {
       console.log('Created Admin user', adminUser.email);
     } else {
       console.log('Admin user already exists');
-      // If it exists, let's update password just in case
-      const hashedPassword = await bcrypt.hash('Admin@123', 12);
+      const hashedPassword = await bcrypt.hash(initialPassword, 12);
       adminUser.password = hashedPassword;
       adminUser.roleId = adminRole._id.toString();
       await adminUser.save();
-      console.log('Updated existing Admin user with default password Admin@123');
+      console.log('Updated existing Admin user with provided initial password');
     }
 
     console.log('Seed completed successfully!');

@@ -23,8 +23,8 @@ const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 async function resetPassword() {
   const args = process.argv.slice(2);
-  let targetEmail = 'admin@yox.com';
-  let newPassword = 'Admin@123';
+  let targetEmail = process.env.ADMIN_EMAIL || 'admin@yox.com';
+  let newPassword = process.env.NEW_ADMIN_PASSWORD || '';
 
   if (args.length === 1) {
     // If only 1 arg given, treat as new password for admin@yox.com
@@ -35,8 +35,9 @@ async function resetPassword() {
     newPassword = args[1];
   }
 
-  if (newPassword.length < 6) {
-    console.error('❌ Error: Password must be at least 6 characters long.');
+  if (!newPassword || newPassword.length < 8) {
+    console.error('❌ Error: Password must be at least 8 characters long.');
+    console.error('Usage: npm run reset-admin -- [email] <new_password>');
     process.exit(1);
   }
 
@@ -59,7 +60,7 @@ async function resetPassword() {
     console.log(`\n========================================`);
     console.log(`✅ PASSWORD RESET SUCCESSFUL!`);
     console.log(`Account:  ${user.fullName || 'Admin'} (${user.email})`);
-    console.log(`New Pass: ${newPassword}`);
+    console.log(`Status:   Password updated successfully (redacted)`);
     console.log(`Login at: /admin-login`);
     console.log(`========================================\n`);
 

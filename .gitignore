@@ -15,6 +15,9 @@ pids/
 *.pid
 *.seed
 *.pid.lock
+*.gz
+*.dump
+backups/
 
 # ─── Coverage ─────────────────────────────────────────────────────────────────
 coverage/
