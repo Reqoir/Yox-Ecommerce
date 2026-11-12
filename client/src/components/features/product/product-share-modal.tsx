@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { X, Check, Copy, Share2 } from 'lucide-react';
-import { SocialIcon } from 'react-social-icons';
 import { toast } from 'sonner';
 
 interface ProductShareModalProps {
@@ -78,7 +78,7 @@ export function ProductShareModal({
   const channels = [
     {
       name: 'WhatsApp',
-      network: 'whatsapp',
+      logo: '/images/social/WhatsApp_Logo_green.svg.webp',
       onClick: () => {
         const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(
           `${shareText}\n${shareUrl}`
@@ -88,12 +88,12 @@ export function ProductShareModal({
     },
     {
       name: 'Instagram',
-      network: 'instagram',
+      logo: '/images/social/Instagram_logo_2022.svg.webp',
       onClick: handleInstagramShare,
     },
     {
       name: 'Facebook',
-      network: 'facebook',
+      logo: '/images/social/2023_Facebook_icon.svg.webp',
       onClick: () => {
         const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
           shareUrl
@@ -103,7 +103,7 @@ export function ProductShareModal({
     },
     {
       name: 'Telegram',
-      network: 'telegram',
+      logo: '/images/social/Telegram_2019_Logo.svg.webp',
       onClick: () => {
         const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(
           shareUrl
@@ -189,11 +189,13 @@ export function ProductShareModal({
                 onClick={channel.onClick}
                 className="flex flex-col items-center gap-1.5 p-2 rounded-none hover:bg-gray-50 transition-all cursor-pointer group"
               >
-                <div className="transition-transform group-hover:scale-110 shadow-2xs rounded-full overflow-hidden">
-                  <SocialIcon
-                    network={channel.network}
-                    as="div"
-                    style={{ width: 44, height: 44 }}
+                <div className="w-11 h-11 flex items-center justify-center transition-transform group-hover:scale-110 drop-shadow-2xs">
+                  <Image
+                    src={channel.logo}
+                    alt={channel.name}
+                    width={44}
+                    height={44}
+                    className="w-11 h-11 object-contain"
                   />
                 </div>
                 <span className="text-[11px] font-semibold text-gray-800 group-hover:text-black">

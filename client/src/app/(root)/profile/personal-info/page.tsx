@@ -13,7 +13,6 @@ import {
   Edit2,
   X,
   Loader2,
-  ShieldCheck,
   AlertCircle,
 } from 'lucide-react';
 
@@ -240,17 +239,12 @@ export default function PersonalInfoPage() {
               </span>
             </div>
 
-            <p className="text-sm font-semibold text-gray-900 font-mono tracking-wide mt-1">
+            <p className="text-base font-semibold text-gray-900 font-mono tracking-wide mt-2">
               {displayPhone}
             </p>
-
-            <div className="text-xs text-gray-600 leading-relaxed mt-2 space-y-0.5">
-              <p>Primary sign-in credential with instant 1-tap OTP verification.</p>
-              <p>Used for shipping notifications, delivery coordination & returns.</p>
-            </div>
           </div>
 
-          <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-100 text-xs">
+          <div className="flex items-center justify-between pt-4 mt-6 border-t border-gray-100 text-xs">
             <button
               type="button"
               onClick={() => {
@@ -284,7 +278,7 @@ export default function PersonalInfoPage() {
               </span>
             </div>
 
-            <div className="text-xs text-gray-600 leading-relaxed space-y-2 mt-1">
+            <div className="text-xs text-gray-600 leading-relaxed space-y-3 mt-2">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">
                   Full Name
@@ -298,18 +292,18 @@ export default function PersonalInfoPage() {
 
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">
-                  Email Address (Optional)
+                  Email Address
                 </span>
                 <p className="text-sm font-semibold text-gray-900 mt-0.5 truncate">
                   {displayEmail || (
-                    <span className="text-gray-400 font-normal italic">Not added (used for invoices)</span>
+                    <span className="text-gray-400 font-normal italic">Not added</span>
                   )}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-100 text-xs">
+          <div className="flex items-center justify-between pt-4 mt-6 border-t border-gray-100 text-xs">
             <button
               type="button"
               onClick={() => {
@@ -326,19 +320,7 @@ export default function PersonalInfoPage() {
               <Edit2 size={13} />
               <span>Edit Details</span>
             </button>
-
-            <span className="text-[11px] text-gray-400">
-              Invoices & Delivery Slips
-            </span>
           </div>
-        </div>
-      </div>
-
-      {/* ─── Security Notice Box (Matches Address Empty/Info Box Style) ──────── */}
-      <div className="p-4 rounded-sm border border-gray-200 bg-gray-50/50 flex items-start gap-3">
-        <ShieldCheck size={18} className="text-[#1A2E4C] shrink-0 mt-0.5" />
-        <div className="text-xs text-gray-600 leading-relaxed">
-          <span className="font-semibold text-gray-900">Phone-First Account Security:</span> Your mobile number is your primary credential for fast, passwordless 1-tap OTP sign-in and real-time delivery notifications across all devices.
         </div>
       </div>
 

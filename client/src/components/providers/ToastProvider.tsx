@@ -2,29 +2,19 @@
 
 /**
  * @file ToastProvider.tsx
- * @description Sonner toast provider for in-app notifications.
+ * @description Shadcn Sonner toast provider for in-app notifications.
  * Use the `toast` helper from 'sonner' directly in any component or hook.
  */
 
-import { Toaster } from 'sonner';
-import { useTheme } from 'next-themes';
+import { Toaster } from '@/components/ui/sonner';
 
 export function ToastProvider() {
-  const { resolvedTheme } = useTheme();
-
   return (
     <Toaster
-      position="top-right"
-      richColors
+      position="top-center"
       closeButton
-      theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
-      toastOptions={{
-        duration: 4000,
-        classNames: {
-          error: 'bg-destructive text-destructive-foreground',
-          success: 'bg-green-500 text-white',
-        },
-      }}
+      duration={3500}
+      offset="16px"
     />
   );
 }

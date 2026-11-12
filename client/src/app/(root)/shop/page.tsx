@@ -6,6 +6,7 @@ import { FilterSidebar } from '@/components/features/shop/filter-sidebar';
 import { ProductGrid } from '@/components/features/shop/product-grid';
 import { MobileFilterModal } from '@/components/features/shop/mobile-filter-modal';
 import { MobileSortModal } from '@/components/features/shop/mobile-sort-modal';
+import { MobileBottomBar } from '@/components/features/shop/mobile-bottom-bar';
 import { useProductFilters } from '@/hooks/useProductFilters';
 import { ShopSkeleton } from '@/components/features/shop/shop-skeleton';
 
@@ -17,7 +18,7 @@ function ShopContent() {
   const categories = ['Shirts', 'Pants', 'T-Shirts', 'Hoodies', 'Jackets', 'Shorts', 'Accessories'];
 
   return (
-    <main className="w-full bg-white min-h-screen pb-16 lg:pb-16 relative">
+    <main className="w-full bg-white min-h-screen pb-20 lg:pb-16 relative">
 
       <div className="w-[98%] max-w-[1500px] mx-auto flex items-start pt-0 lg:pt-8">
         {/* Product Grid Area - Now Full Width on Desktop */}
@@ -29,7 +30,13 @@ function ShopContent() {
         </div>
       </div>
 
-      {/* Mobile Modals (Triggered from inline Filter & Sort buttons) */}
+      {/* Mobile Sticky Bottom Bar (Sort & Filter Only) */}
+      <MobileBottomBar 
+        onSortClick={() => setIsSortOpen(true)}
+        onFilterClick={() => setIsFilterOpen(true)}
+      />
+
+      {/* Mobile Modals (Triggered from bottom Sort & Filter buttons) */}
       <MobileFilterModal 
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}

@@ -9,9 +9,28 @@ export type ProductCategory =
 
 export type ProductFit = 'Slim Fit' | 'Regular Fit' | 'Oversized' | 'Relaxed Fit';
 
-export type LetterSize = 'S' | 'M' | 'L' | 'XL' | 'XXL' | '3XL';
-export type WaistSize = '28' | '30' | '32' | '34' | '36' | '38' | '40';
-export type ProductSize = LetterSize | WaistSize;
+export type LetterSize =
+  | 'XS'
+  | 'S'
+  | 'M'
+  | 'L'
+  | 'XL'
+  | 'XXL'
+  | '3XL'
+  | '4XL'
+  | '5XL'
+  | '6XL'
+  | '7XL';
+export type WaistSize =
+  | '28'
+  | '30'
+  | '31'
+  | '32'
+  | '34'
+  | '36'
+  | '38'
+  | '40';
+export type ProductSize = LetterSize | WaistSize | (string & {});
 
 export type ProductTag = 'NEW' | 'ON OFFER' | 'BESTSELLER' | 'LIMITED';
 

@@ -16,7 +16,8 @@ import {
   HelpCircle,
   X,
   Navigation,
-  ExternalLink
+  ExternalLink,
+  ChevronDown
 } from 'lucide-react';
 import { useStoreSettingsStore } from '@/store/useStoreSettingsStore';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -39,6 +40,18 @@ export function Footer() {
   const [email, setEmail] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isStoreLocatorOpen, setIsStoreLocatorOpen] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    shop: false,
+    about: false,
+    help: false,
+  });
+
+  const toggleSection = (section: string) => {
+    setOpenSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,13 +201,13 @@ export function Footer() {
 
             {/* Social Icons */}
             <div className="flex items-center gap-2.5 mt-2">
-              <a href="https://facebook.com" target="_blank" rel="noreferrer" aria-label="Facebook" className="w-8 h-8 rounded-none border border-[#EAE6DF] bg-white/70 flex items-center justify-center text-gray-500 hover:border-gray-800 hover:bg-gray-800 hover:text-white transition-all shadow-2xs">
+              <a href="https://www.facebook.com/yoxgentsshoppe/" target="_blank" rel="noreferrer" aria-label="Facebook" className="w-8 h-8 rounded-none border border-[#EAE6DF] bg-white/70 flex items-center justify-center text-gray-500 hover:border-gray-800 hover:bg-gray-800 hover:text-white transition-all shadow-2xs">
                 <FaFacebookF size={12} />
               </a>
               <a href="https://twitter.com" target="_blank" rel="noreferrer" aria-label="X (Twitter)" className="w-8 h-8 rounded-none border border-[#EAE6DF] bg-white/70 flex items-center justify-center text-gray-500 hover:border-gray-800 hover:bg-gray-800 hover:text-white transition-all shadow-2xs">
                 <FaXTwitter size={12} />
               </a>
-              <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label="Instagram" className="w-8 h-8 rounded-none border border-[#EAE6DF] bg-white/70 flex items-center justify-center text-gray-500 hover:border-gray-800 hover:bg-gray-800 hover:text-white transition-all shadow-2xs">
+              <a href="https://www.instagram.com/yox.menstore/" target="_blank" rel="noreferrer" aria-label="Instagram" className="w-8 h-8 rounded-none border border-[#EAE6DF] bg-white/70 flex items-center justify-center text-gray-500 hover:border-gray-800 hover:bg-gray-800 hover:text-white transition-all shadow-2xs">
                 <FaInstagram size={13} />
               </a>
               <a href="https://youtube.com" target="_blank" rel="noreferrer" aria-label="YouTube" className="w-8 h-8 rounded-none border border-[#EAE6DF] bg-white/70 flex items-center justify-center text-gray-500 hover:border-gray-800 hover:bg-gray-800 hover:text-white transition-all shadow-2xs">
@@ -428,7 +441,7 @@ export function Footer() {
           {/* Social Media Icons */}
           <div className="flex items-center gap-6 text-xl text-gray-500 self-start md:self-auto pt-2 md:pt-0">
             <a
-              href="https://facebook.com"
+              href="https://www.facebook.com/yoxgentsshoppe/"
               target="_blank"
               rel="noreferrer"
               aria-label="Facebook"
@@ -446,7 +459,7 @@ export function Footer() {
               <FaXTwitter size={18} />
             </a>
             <a
-              href="https://instagram.com"
+              href="https://www.instagram.com/yox.menstore/"
               target="_blank"
               rel="noreferrer"
               aria-label="Instagram"

@@ -96,6 +96,14 @@ export function BottomNav() {
     };
   }, [isHomePage]);
 
+  // Hide 4-tab BottomNav on products listing page (/shop) and product detail page (/product/*)
+  const isProductsPage = pathname === '/shop' || pathname.startsWith('/shop') || pathname === '/product';
+  const isProductDetailPage = pathname.startsWith('/product');
+
+  if (isProductsPage || isProductDetailPage) {
+    return null;
+  }
+
   const isShopActive = pathname.startsWith('/shop');
   const isWishlistActive = pathname.startsWith('/profile/favourites') || pathname === '/wishlist' || pathname === '/favourites';
   const isCartActive = pathname === '/cart';
@@ -118,87 +126,87 @@ export function BottomNav() {
         }`}
         aria-label="Mobile Navigation Bar"
       >
-      <div className="grid grid-cols-4 h-14 items-center">
-        {/* 1. Shop */}
-        <Link
-          href="/shop"
-          className={`flex flex-col items-center justify-center py-1 transition-colors ${
-            isShopActive ? 'text-black font-semibold' : 'text-gray-600 hover:text-black'
-          }`}
-        >
-          <LayoutGrid size={19} strokeWidth={isShopActive ? 2.3 : 1.8} />
-          <span className="text-[10px] tracking-tight mt-1">Shop</span>
-        </Link>
+        <div className="grid grid-cols-4 h-14 items-center">
+          {/* 1. Shop */}
+          <Link
+            href="/shop"
+            className={`flex flex-col items-center justify-center py-1 transition-colors ${
+              isShopActive ? 'text-black font-semibold' : 'text-gray-600 hover:text-black'
+            }`}
+          >
+            <LayoutGrid size={19} strokeWidth={isShopActive ? 2.3 : 1.8} />
+            <span className="text-[10px] tracking-tight mt-1">Shop</span>
+          </Link>
 
-        {/* 2. Wishlist */}
-        <Link
-          href="/profile/favourites"
-          className={`flex flex-col items-center justify-center py-1 transition-colors ${
-            isWishlistActive ? 'text-black font-semibold' : 'text-gray-600 hover:text-black'
-          }`}
-        >
-          <div className="relative flex items-center justify-center">
-            <Heart 
-              size={19} 
-              className={isWishlistActive ? 'fill-black text-black' : 'text-gray-600'} 
-              strokeWidth={isWishlistActive ? 2.2 : 1.8} 
-            />
-            {mounted && favouritesCount > 0 && (
+          {/* 2. Wishlist */}
+          <Link
+            href="/profile/favourites"
+            className={`flex flex-col items-center justify-center py-1 transition-colors ${
+              isWishlistActive ? 'text-black font-semibold' : 'text-gray-600 hover:text-black'
+            }`}
+          >
+            <div className="relative flex items-center justify-center">
+              <Heart 
+                size={19} 
+                className={isWishlistActive ? 'fill-black text-black' : 'text-gray-600'} 
+                strokeWidth={isWishlistActive ? 2.2 : 1.8} 
+              />
+              {mounted && favouritesCount > 0 && (
+                <span 
+                  suppressHydrationWarning
+                  className="absolute -top-1.5 -right-2.5 bg-red-500 text-white text-[9px] font-bold min-w-[15px] h-[15px] px-1 rounded-full flex items-center justify-center"
+                >
+                  {favouritesCount}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] tracking-tight mt-1">Wishlist</span>
+          </Link>
+
+          {/* 3. Cart */}
+          <Link
+            href="/cart"
+            className={`flex flex-col items-center justify-center py-1 transition-colors ${
+              isCartActive ? 'text-black font-semibold' : 'text-gray-600 hover:text-black'
+            }`}
+          >
+            <div className="relative flex items-center justify-center">
+              <BsHandbag size={18} strokeWidth={isCartActive ? 0.8 : 0.2} />
               <span 
                 suppressHydrationWarning
-                className="absolute -top-1.5 -right-2.5 bg-red-500 text-white text-[9px] font-bold min-w-[15px] h-[15px] px-1 rounded-full flex items-center justify-center"
+                className="absolute -top-1.5 -right-2.5 bg-black text-white text-[9px] font-bold min-w-[15px] h-[15px] px-1 rounded-full flex items-center justify-center"
               >
-                {favouritesCount}
+                {mounted ? cartCount : 0}
               </span>
-            )}
-          </div>
-          <span className="text-[10px] tracking-tight mt-1">Wishlist</span>
-        </Link>
-
-        {/* 3. Cart */}
-        <Link
-          href="/cart"
-          className={`flex flex-col items-center justify-center py-1 transition-colors ${
-            isCartActive ? 'text-black font-semibold' : 'text-gray-600 hover:text-black'
-          }`}
-        >
-          <div className="relative flex items-center justify-center">
-            <BsHandbag size={18} strokeWidth={isCartActive ? 0.8 : 0.2} />
-            <span 
-              suppressHydrationWarning
-              className="absolute -top-1.5 -right-2.5 bg-black text-white text-[9px] font-bold min-w-[15px] h-[15px] px-1 rounded-full flex items-center justify-center"
-            >
-              {mounted ? cartCount : 0}
-            </span>
-          </div>
-          <span className="text-[10px] tracking-tight mt-1">Cart</span>
-        </Link>
-
-        {/* 4. Account */}
-        {mounted && user ? (
-          <Link
-            href="/profile/personal-info"
-            className={`flex flex-col items-center justify-center py-1 transition-colors ${
-              isAccountActive ? 'text-black font-semibold' : 'text-gray-600 hover:text-black'
-            }`}
-          >
-            <User size={19} strokeWidth={isAccountActive ? 2.3 : 1.8} />
-            <span className="text-[10px] tracking-tight mt-1">Account</span>
+            </div>
+            <span className="text-[10px] tracking-tight mt-1">Cart</span>
           </Link>
-        ) : (
-          <button
-            type="button"
-            onClick={() => useAuthModalStore.getState().openModal('login')}
-            className={`flex flex-col items-center justify-center py-1 transition-colors cursor-pointer ${
-              isAccountActive ? 'text-black font-semibold' : 'text-gray-600 hover:text-black'
-            }`}
-          >
-            <User size={19} strokeWidth={isAccountActive ? 2.3 : 1.8} />
-            <span className="text-[10px] tracking-tight mt-1">Account</span>
-          </button>
-        )}
-      </div>
-    </nav>
+
+          {/* 4. Account */}
+          {mounted && user ? (
+            <Link
+              href="/profile/personal-info"
+              className={`flex flex-col items-center justify-center py-1 transition-colors ${
+                isAccountActive ? 'text-black font-semibold' : 'text-gray-600 hover:text-black'
+              }`}
+            >
+              <User size={19} strokeWidth={isAccountActive ? 2.3 : 1.8} />
+              <span className="text-[10px] tracking-tight mt-1">Account</span>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => useAuthModalStore.getState().openModal('login')}
+              className={`flex flex-col items-center justify-center py-1 transition-colors cursor-pointer ${
+                isAccountActive ? 'text-black font-semibold' : 'text-gray-600 hover:text-black'
+              }`}
+            >
+              <User size={19} strokeWidth={isAccountActive ? 2.3 : 1.8} />
+              <span className="text-[10px] tracking-tight mt-1">Account</span>
+            </button>
+          )}
+        </div>
+      </nav>
     </>
   );
 }

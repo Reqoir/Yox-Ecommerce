@@ -662,7 +662,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   };
 
   return (
-    <main className="w-full bg-white min-h-screen pb-20 relative">
+    <main className="w-full bg-white min-h-screen pb-28 sm:pb-20 relative">
       <div className="flex flex-col lg:flex-row w-full items-start">
         
         {/* Left Column: 65% Image Grid */}
@@ -1088,6 +1088,37 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           currencySymbol: config.currencySymbol,
         }}
       />
+
+      {/* ─── Mobile Sticky Bottom Action Bar (Replaces 4-tab BottomNav on PDP) ─── */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-3 py-2.5 sm:hidden shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[max(10px,env(safe-area-inset-bottom))] flex items-center gap-2">
+        <button
+          type="button"
+          onClick={handleToggleWishlist}
+          className="w-11 h-[44px] flex items-center justify-center border border-gray-300 hover:border-black active:scale-95 transition-all cursor-pointer shrink-0 rounded-none bg-white"
+          title={isFav ? "Remove from Wishlist" : "Add to Wishlist"}
+          aria-label={isFav ? "Remove from Wishlist" : "Add to Wishlist"}
+        >
+          <Heart size={18} className={isFav ? "fill-red-500 text-red-500" : "text-black"} />
+        </button>
+
+        <button 
+          type="button"
+          onClick={handleAddToBasket}
+          disabled={isOutOfStock}
+          className="flex-1 flex items-center justify-center h-[44px] bg-black text-white text-[12px] font-bold hover:bg-neutral-800 active:scale-[0.99] transition-all tracking-wider uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer rounded-none"
+        >
+          {isOutOfStock ? 'Out Of Stock' : 'Add To Bag'}
+        </button>
+
+        <button 
+          type="button"
+          onClick={handleBuyNow}
+          disabled={isOutOfStock}
+          className="flex-1 flex items-center justify-center h-[44px] bg-[#E5DCC5] hover:bg-[#d8cbb0] text-[12px] font-bold text-gray-900 active:scale-[0.99] transition-all tracking-wider uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer rounded-none"
+        >
+          {isOutOfStock ? 'Sold Out' : config.maintenanceMode ? 'Paused' : 'Buy Now'}
+        </button>
+      </div>
     </main>
   );
 }

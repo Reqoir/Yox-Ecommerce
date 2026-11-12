@@ -162,32 +162,6 @@ function CheckoutContent() {
     <main className="w-full bg-white min-h-screen pb-16 pt-4 lg:pt-8">
       <div className="w-[98%] max-w-[1500px] mx-auto">
 
-        {/* Buy Now Informational Banner */}
-        {isDirectCheckout && directBuyItem && (
-          <div className="mb-6 p-3 bg-amber-50/90 border border-amber-200 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs">
-            <div className="flex items-center gap-2">
-              <p className="text-xs font-medium text-amber-900">
-                <strong className="font-bold">Buy It Now Mode:</strong> Checking out{' '}
-                <span className="underline decoration-amber-300 font-semibold">{directBuyItem.name}</span> only.
-                {items.length > 0 && (
-                  <span className="text-amber-800 font-normal ml-1">
-                    (Your other {items.length} cart item{items.length !== 1 ? 's' : ''} remain safe in your cart).
-                  </span>
-                )}
-              </p>
-            </div>
-            {items.length > 0 && (
-              <Link
-                href="/checkout"
-                onClick={() => setDirectBuyItem(null)}
-                className="text-[11px] font-bold text-amber-900 hover:text-black hover:underline shrink-0 whitespace-nowrap"
-              >
-                Switch to Cart Checkout →
-              </Link>
-            )}
-          </div>
-        )}
-
         {/* Header Breadcrumb */}
         <div className="border-b border-gray-200 pb-4 mb-6 lg:mb-8">
           <h1 className="text-xl lg:text-2xl font-bold text-gray-900 tracking-tight">
