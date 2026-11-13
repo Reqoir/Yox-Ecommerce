@@ -302,9 +302,6 @@ export function AuthModal() {
               <h2 className="text-2xl sm:text-[28px] font-normal tracking-tight text-gray-900 leading-tight">
                 Login / Sign Up
               </h2>
-              <p className="text-xs sm:text-[13px] text-gray-500 font-normal pt-0.5">
-                Enter your mobile number to get started with YOX. No password needed!
-              </p>
             </>
           )}
         </div>

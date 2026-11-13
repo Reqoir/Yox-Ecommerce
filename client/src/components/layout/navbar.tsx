@@ -186,13 +186,13 @@ export function Navbar() {
               <div className="flex flex-col py-3 overflow-y-auto">
                 <div className="px-5 py-2">
                   <div className="space-y-1">
-                    <SheetClose render={<Link href="/" className="block py-2 text-sm font-semibold text-gray-800 hover:text-black" />}>
+                    <SheetClose nativeButton={false} render={<Link href="/" className="block py-2 text-sm font-semibold text-gray-800 hover:text-black" />}>
                       Home
                     </SheetClose>
-                    <SheetClose render={<Link href="/shop" className="block py-2 text-sm font-semibold text-gray-800 hover:text-black" />}>
+                    <SheetClose nativeButton={false} render={<Link href="/shop" className="block py-2 text-sm font-semibold text-gray-800 hover:text-black" />}>
                       Shop All
                     </SheetClose>
-                    <SheetClose render={<Link href="/offers" className="block py-2 text-sm font-semibold text-gray-800 hover:text-black" />}>
+                    <SheetClose nativeButton={false} render={<Link href="/offers" className="block py-2 text-sm font-semibold text-gray-800 hover:text-black" />}>
                       Exclusive Offers & Drops
                     </SheetClose>
                   </div>
@@ -204,6 +204,7 @@ export function Navbar() {
                     {['T-SHIRT', 'JACKET', 'ACCESSORIES', 'PANTS', 'SHIRTS'].map((cat) => (
                       <SheetClose
                         key={cat}
+                        nativeButton={false}
                         render={
                           <Link
                             href={`/shop?category=${cat.toLowerCase()}`}
@@ -221,7 +222,7 @@ export function Navbar() {
                   <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">My Account & Bag</p>
                   <div className="space-y-2">
                     {mounted && user ? (
-                      <SheetClose render={<Link href="/profile/personal-info" className="flex items-center justify-between py-1.5 text-xs font-semibold text-gray-800 hover:text-black" />}>
+                      <SheetClose nativeButton={false} render={<Link href="/profile/personal-info" className="flex items-center justify-between py-1.5 text-xs font-semibold text-gray-800 hover:text-black" />}>
                         <span className="flex items-center gap-2">
                           <User size={18} />
                           My Profile
@@ -247,7 +248,7 @@ export function Navbar() {
                       </SheetClose>
                     )}
 
-                    <SheetClose render={<Link href="/cart" className="flex items-center justify-between py-1.5 text-xs font-semibold text-gray-800 hover:text-black" />}>
+                    <SheetClose nativeButton={false} render={<Link href="/cart" className="flex items-center justify-between py-1.5 text-xs font-semibold text-gray-800 hover:text-black" />}>
                       <span className="flex items-center gap-2">
                         <BsHandbag size={18} />
                         My Shopping Bag
@@ -259,7 +260,7 @@ export function Navbar() {
                       )}
                     </SheetClose>
 
-                    <SheetClose render={<Link href="/profile/favourites" className="flex items-center justify-between py-1.5 text-xs font-semibold text-gray-800 hover:text-black" />}>
+                    <SheetClose nativeButton={false} render={<Link href="/profile/favourites" className="flex items-center justify-between py-1.5 text-xs font-semibold text-gray-800 hover:text-black" />}>
                       <span className="flex items-center gap-2">
                         <Heart size={18} />
                         My Wishlist

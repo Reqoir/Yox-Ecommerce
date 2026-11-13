@@ -902,47 +902,27 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               </div>
             </div>
 
-            {/* Action Buttons (Mobile & Desktop Responsive Layout) */}
-            <div className="flex flex-col gap-2.5 sm:gap-3 mb-8">
-              {/* Row 1: Add to Bag + Wishlist + Share (Aligned on mobile & responsive) */}
-              <div className="flex items-center gap-2 sm:hidden">
-                <button 
-                  type="button"
-                  onClick={handleAddToBasket}
-                  disabled={isOutOfStock}
-                  className="flex-1 flex items-center justify-center h-[48px] bg-black text-white text-[12px] font-bold hover:bg-gray-800 active:scale-[0.99] transition-all tracking-widest uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-xs rounded-none"
-                >
-                  {isOutOfStock ? 'Out Of Stock' : 'Add To Bag'}
-                </button>
+            {/* Action Buttons (Mobile: Wishlist & Share only; Desktop: Full Row) */}
+            <div className="mb-8">
+              {/* Mobile Actions: Wishlist and Share only (since Add To Bag and Buy Now are sticky at the bottom) */}
+              <div className="flex sm:hidden items-center gap-3">
                 <button
                   type="button"
                   onClick={handleToggleWishlist}
-                  className="w-12 h-[48px] flex items-center justify-center border border-gray-300 hover:border-black hover:bg-gray-50 active:scale-[0.96] transition-all cursor-pointer shrink-0 rounded-none"
-                  title={isFav ? "Remove from Wishlist" : "Add to Wishlist"}
-                  aria-label={isFav ? "Remove from Wishlist" : "Add to Wishlist"}
+                  className="flex-1 h-[46px] flex items-center justify-center gap-2 border border-gray-300 hover:border-black hover:bg-gray-50 active:scale-[0.98] transition-all cursor-pointer rounded-none text-xs font-bold uppercase tracking-wider text-gray-800"
                 >
-                  <Heart size={20} className={isFav ? "fill-red-500 text-red-500" : "text-black"} />
+                  <Heart size={18} className={isFav ? "fill-red-500 text-red-500" : "text-black"} />
+                  <span>{isFav ? "Wishlisted" : "Wishlist"}</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleOpenShare}
-                  className="w-12 h-[48px] flex items-center justify-center border border-gray-300 hover:border-black hover:bg-gray-50 active:scale-[0.96] transition-all cursor-pointer shrink-0 rounded-none"
-                  title="Share product"
-                  aria-label="Share product"
+                  className="flex-1 h-[46px] flex items-center justify-center gap-2 border border-gray-300 hover:border-black hover:bg-gray-50 active:scale-[0.98] transition-all cursor-pointer rounded-none text-xs font-bold uppercase tracking-wider text-gray-800"
                 >
-                  <FaShare size={17} className="text-black" />
+                  <FaShare size={15} className="text-black" />
+                  <span>Share</span>
                 </button>
               </div>
-
-              {/* Mobile Buy Now (Full width) */}
-              <button 
-                type="button"
-                onClick={handleBuyNow}
-                disabled={isOutOfStock}
-                className="sm:hidden w-full flex items-center justify-center h-[48px] bg-[#E5DCC5] text-[12px] font-bold text-gray-900 hover:bg-[#d8cbb0] active:scale-[0.99] transition-all tracking-widest uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-xs rounded-none"
-              >
-                {isOutOfStock ? 'Sold Out' : config.maintenanceMode ? 'Paused (Maintenance)' : 'Buy It Now'}
-              </button>
 
               {/* Desktop Action Buttons Row (>= sm screens) */}
               <div className="hidden sm:flex items-center gap-2.5">
@@ -1090,22 +1070,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       />
 
       {/* ─── Mobile Sticky Bottom Action Bar (Replaces 4-tab BottomNav on PDP) ─── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-3 py-2.5 sm:hidden shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[max(10px,env(safe-area-inset-bottom))] flex items-center gap-2">
-        <button
-          type="button"
-          onClick={handleToggleWishlist}
-          className="w-11 h-[44px] flex items-center justify-center border border-gray-300 hover:border-black active:scale-95 transition-all cursor-pointer shrink-0 rounded-none bg-white"
-          title={isFav ? "Remove from Wishlist" : "Add to Wishlist"}
-          aria-label={isFav ? "Remove from Wishlist" : "Add to Wishlist"}
-        >
-          <Heart size={18} className={isFav ? "fill-red-500 text-red-500" : "text-black"} />
-        </button>
-
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-3 py-2.5 sm:hidden shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[max(10px,env(safe-area-inset-bottom))] flex items-center gap-2.5">
         <button 
           type="button"
           onClick={handleAddToBasket}
           disabled={isOutOfStock}
-          className="flex-1 flex items-center justify-center h-[44px] bg-black text-white text-[12px] font-bold hover:bg-neutral-800 active:scale-[0.99] transition-all tracking-wider uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer rounded-none"
+          className="flex-1 flex items-center justify-center h-[46px] bg-black text-white text-[12px] font-bold hover:bg-neutral-800 active:scale-[0.99] transition-all tracking-wider uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer rounded-none shadow-xs"
         >
           {isOutOfStock ? 'Out Of Stock' : 'Add To Bag'}
         </button>
@@ -1114,7 +1084,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           type="button"
           onClick={handleBuyNow}
           disabled={isOutOfStock}
-          className="flex-1 flex items-center justify-center h-[44px] bg-[#E5DCC5] hover:bg-[#d8cbb0] text-[12px] font-bold text-gray-900 active:scale-[0.99] transition-all tracking-wider uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer rounded-none"
+          className="flex-1 flex items-center justify-center h-[46px] bg-[#E5DCC5] hover:bg-[#d8cbb0] text-[12px] font-bold text-gray-900 active:scale-[0.99] transition-all tracking-wider uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer rounded-none shadow-xs"
         >
           {isOutOfStock ? 'Sold Out' : config.maintenanceMode ? 'Paused' : 'Buy Now'}
         </button>

@@ -279,6 +279,7 @@ function OrderSuccessContent() {
                         src={item.imageUrl}
                         alt={item.productName}
                         fill
+                        sizes="56px"
                         className="object-cover"
                       />
                     ) : (

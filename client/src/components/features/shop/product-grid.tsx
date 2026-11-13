@@ -78,30 +78,6 @@ export function ProductGrid({ onOpenFilter, onOpenSort }: ProductGridProps = {})
     return filteredProducts.slice(0, visibleCount);
   }, [filteredProducts, visibleCount]);
 
-  const [isSortDropdownOpen, setIsSortDropdownOpen] = React.useState(false);
-  const sortDropdownRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
-        setIsSortDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const sortDisplayLabel = React.useMemo(() => {
-    switch (sortBy) {
-      case 'Newest Arrivals': return 'Date, new to old';
-      case 'Price: Low to High': return 'Price, low to high';
-      case 'Price: High to Low': return 'Price, high to low';
-      case 'Discount': return '% Sale off';
-      case 'Relevance': return 'Relevance';
-      default: return (sortBy as string) || 'Relevance';
-    }
-  }, [sortBy]);
-
   // Show ONLY parent categories (no subcategories) in tabs
   const parentCategories = React.useMemo(() => {
     return (apiCategories || [])
@@ -234,64 +210,6 @@ export function ProductGrid({ onOpenFilter, onOpenSort }: ProductGridProps = {})
 
   return (
     <div className="w-full lg:pl-8 pb-16 lg:pb-0">
-
-      {/* Mobile Sticky Filter By & Relevance/Sort Bar (Sticks right below sticky header on scroll) */}
-      <div
-        className="lg:hidden sticky z-30 bg-white py-2.5 px-1 border-b border-gray-200 shadow-xs mb-3"
-        style={{ top: 'var(--site-header-height, 73px)' }}
-      >
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={onOpenFilter}
-            className="flex items-center justify-center gap-2 border border-gray-300 bg-white py-2 px-3 text-xs font-semibold text-gray-800 active:bg-gray-100 transition-colors shadow-2xs cursor-pointer rounded-none"
-          >
-            <SlidersHorizontal size={14} className="text-gray-700" />
-            <span>Filter By</span>
-          </button>
-
-          {/* Relevance / Sort Dropdown Menu (Anchored below button matching reference screenshot) */}
-          <div className="relative" ref={sortDropdownRef}>
-            <button
-              type="button"
-              onClick={() => setIsSortDropdownOpen((prev) => !prev)}
-              className="w-full flex items-center justify-between border border-gray-300 bg-white py-2 px-3 text-xs font-semibold text-gray-800 active:bg-gray-100 transition-colors shadow-2xs cursor-pointer rounded-none"
-            >
-              <span className="truncate">{sortDisplayLabel}</span>
-              <ChevronDown size={14} className={`shrink-0 text-gray-500 transition-transform duration-200 ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {isSortDropdownOpen && (
-              <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-200 shadow-xl z-50 py-1.5 animate-in fade-in-50 zoom-in-95 duration-100 rounded-none">
-                {SORT_OPTIONS_LIST.map((option) => {
-                  const isSelected = sortBy === option || 
-                    (option === 'Date, new to old' && sortBy === 'Newest Arrivals') || 
-                    (option === 'Price, low to high' && sortBy === 'Price: Low to High') || 
-                    (option === 'Price, high to low' && sortBy === 'Price: High to Low') || 
-                    (option === '% Sale off' && sortBy === 'Discount');
-
-                  return (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => {
-                        setSortBy(option as SortOption);
-                        setIsSortDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-2.5 text-xs transition-colors cursor-pointer block ${
-                        isSelected ? 'font-bold text-black bg-gray-50' : 'text-gray-700 hover:text-black hover:bg-gray-50 font-normal'
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* Top Meta Area (Desktop Only) */}
       <div className="hidden lg:block mb-6 lg:mb-8">
 
