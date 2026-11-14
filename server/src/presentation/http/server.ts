@@ -14,6 +14,10 @@
  */
 
 import 'dotenv/config'; // Must be the FIRST import
+import dns from 'node:dns';
+
+// Ensure outbound HTTP requests (fetch/undici/axios) prioritize IPv4 for third-party API IP whitelists (e.g. MSG91)
+dns.setDefaultResultOrder('ipv4first');
 
 import { env } from '../../core/infrastructure/config/env';
 import { initCloudinary } from '../../core/infrastructure/config/cloudinary.config';
