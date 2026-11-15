@@ -105,6 +105,7 @@ export class UserRepository
       isEmailVerified: doc.isEmailVerified ?? false,
       isPhoneVerified: doc.isPhoneVerified ?? false,
       status: (doc.status as any) || UserStatus.ACTIVE,
+      tokenVersion: (doc as any).tokenVersion ?? 0,
       lastLogin: doc.lastLogin,
       deletedAt: doc.deletedAt,
       createdAt: doc.createdAt,
@@ -124,6 +125,7 @@ export class UserRepository
       isEmailVerified: entity.isEmailVerified ?? false,
       isPhoneVerified: entity.isPhoneVerified ?? false,
       status: (entity.status as any) || UserStatus.ACTIVE,
+      tokenVersion: entity.tokenVersion ?? 0,
       lastLogin: entity.lastLogin || null,
       deletedAt: entity.deletedAt || null,
     };

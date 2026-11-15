@@ -12,26 +12,58 @@ import { ApiError } from '@shared/utils/api-error.util';
 import { ACCESS_TOKEN_COOKIE } from '@shared/utils/cookie.helper';
 import { logger } from '@shared/logger/logger';
 import { UserModel } from '../../../modules/users/infrastructure/models/user.model';
+import { getRedisClient } from '../../../core/infrastructure/database/redis/client';
 
 export const requireAuth = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
   try {
     let token: string | undefined;
 
     // 1. Authorization Header (Bearer Token) takes top priority:
-    // This allows isolated Admin sessions in the same browser to authenticate cleanly
-    // without colliding with Customer session cookies.
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
       token = req.headers.authorization.split(' ')[1];
     }
-    // 2. Fallback to cookies
+    // 2. Secure HttpOnly Cookie (Primary authentication for web app and SSE withCredentials)
     else if (req.cookies && (req.cookies[ACCESS_TOKEN_COOKIE] || req.cookies['accessToken'])) {
       token = req.cookies[ACCESS_TOKEN_COOKIE] || req.cookies['accessToken'];
     }
-    // 3. Fallback to query parameter (for SSE streams and websockets)
-    else if (req.query && typeof req.query.token === 'string') {
-      token = req.query.token;
+    // 3. Short-lived Single-Use SSE Ticket (For EventSource connections without exposing JWT in URLs)
+    else if (req.query && typeof req.query.ticket === 'string' && req.query.ticket.trim().length > 0) {
+      const ticket = req.query.ticket.trim();
+      try {
+        const redis = getRedisClient();
+        const ticketKey = `sse_ticket:${ticket}`;
+        let ticketUserId: string | null = null;
+        if (typeof (redis as any).getdel === 'function') {
+          ticketUserId = await (redis as any).getdel(ticketKey);
+        } else {
+          const lua = "local val = redis.call('GET', KEYS[1]) if val then redis.call('DEL', KEYS[1]) end return val";
+          ticketUserId = (await redis.eval(lua, 1, ticketKey)) as string | null;
+        }
+
+        if (ticketUserId) {
+          const userDoc = await UserModel.findById(ticketUserId)
+            .select('status deletedAt roleId email tokenVersion')
+            .lean();
+          if (
+            userDoc &&
+            !userDoc.deletedAt &&
+            userDoc.status !== 'SUSPENDED' &&
+            userDoc.status !== 'INACTIVE'
+          ) {
+            req.user = {
+              id: ticketUserId,
+              email: userDoc.email || '',
+              role: userDoc.roleId || '',
+            };
+            return next();
+          }
+        }
+      } catch (err: any) {
+        logger.warn({ err: err.message }, 'Failed to validate SSE ticket');
+      }
     }
 
+    // SEC-HIGH-003: Raw JWT in URL query parameters is strictly forbidden
     if (!token) {
       throw ApiError.unauthorized('Authentication required. Please log in.');
     }
@@ -47,7 +79,7 @@ export const requireAuth = async (req: Request, _res: Response, next: NextFuncti
 
     // 4. Real-time active account check in database
     // Ensures suspended or removed staff members are locked out immediately on their very next request!
-    const userDoc = await UserModel.findById(decoded.sub).select('status deletedAt roleId email').lean();
+    const userDoc = await UserModel.findById(decoded.sub).select('status deletedAt roleId email tokenVersion').lean();
 
     if (!userDoc || userDoc.deletedAt) {
       throw ApiError.unauthorized('Account has been removed. Access revoked.');
@@ -57,7 +89,14 @@ export const requireAuth = async (req: Request, _res: Response, next: NextFuncti
       throw ApiError.unauthorized('Your staff account has been suspended by the administrator. Access revoked.');
     }
 
-    // 5. Attach user payload to request
+    // 5. Token Version Check: exact equality check prevents replay of revoked sessions
+    const currentDocVersion = (userDoc as any).tokenVersion ?? 0;
+    const tokenVersion = (decoded as any).tokenVersion ?? 0;
+    if (tokenVersion !== currentDocVersion) {
+      throw ApiError.unauthorized('Session has been revoked due to a password change or security update. Please log in again.');
+    }
+
+    // 6. Attach user payload to request
     req.user = {
       id: decoded.sub,
       email: userDoc.email || decoded.email,
@@ -78,8 +117,6 @@ export const optionalAuth = (req: Request, _res: Response, next: NextFunction): 
       token = req.headers.authorization.split(' ')[1];
     } else if (req.cookies && (req.cookies[ACCESS_TOKEN_COOKIE] || req.cookies['accessToken'])) {
       token = req.cookies[ACCESS_TOKEN_COOKIE] || req.cookies['accessToken'];
-    } else if (req.query && typeof req.query.token === 'string') {
-      token = req.query.token;
     }
 
     if (!token) {

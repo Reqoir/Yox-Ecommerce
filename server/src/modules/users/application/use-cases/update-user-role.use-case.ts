@@ -1,7 +1,6 @@
 import { IUserRepository } from '../../domain/repositories/user.repository.interface';
 import { IRoleRepository } from '../../../roles/domain/repositories/role.repository.interface';
 import { NotFoundError, ConflictError, ValidationError } from '@core/application/errors/application.error';
-import { hashPassword } from '@shared/utils/password.helper';
 import { ApiError } from '@shared/utils/api-error.util';
 
 export interface UpdateUserRoleDTO {
@@ -57,22 +56,13 @@ export class UpdateUserRoleUseCase {
       user.updateProfile({ isEmailVerified: true });
     }
 
-    // If password provided, hash and update
-    if (dto.password && dto.password.trim()) {
-      if (dto.password.trim().length < 6) {
-        throw new ValidationError('Password must be at least 6 characters.');
-      }
-      const hashedPassword = await hashPassword(dto.password.trim());
-      user.updatePassword(hashedPassword);
+    // Do not permit modifying soft-deleted / archived accounts through role endpoint
+    if (user.deletedAt) {
+      throw ApiError.badRequest('Cannot change role of an archived/deleted account. The account must be explicitly restored by an authorized administrator first.');
     }
 
     // Update the roleId
     user.updateRole(dto.roleId);
-
-    // If the user was soft-deleted, restore and reactivate them
-    if (user.deletedAt) {
-      user.restore();
-    }
 
     const updatedUser = await this.userRepository.update(user.id, user);
     if (!updatedUser) {

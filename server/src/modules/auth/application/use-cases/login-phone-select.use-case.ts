@@ -50,11 +50,32 @@ export class LoginPhoneSelectUseCase {
       throw ApiError.unauthorized('This account has been deactivated or suspended. Please contact support.');
     }
 
+    // SEC-HIGH-006: Phone OTP Authentication of Privileged Accounts.
+    // Storefront mobile OTP selection strictly rejects administrative or staff accounts.
+    if (user.roleId) {
+      try {
+        const userRole = await this.roleRepository.findById(user.roleId);
+        if (
+          userRole &&
+          (userRole.name.toUpperCase() !== 'CUSTOMER' ||
+            userRole.level > 0 ||
+            userRole.permissions.includes('*'))
+        ) {
+          throw ApiError.forbidden(
+            'Administrative and staff accounts cannot authenticate via storefront mobile OTP. Please sign in via the Admin Portal using your work email and password.'
+          );
+        }
+      } catch (err) {
+        if (err instanceof ApiError) throw err;
+      }
+    }
+
     // 4. Generate real authentication tokens
     const tokenPayload = {
       sub: user.id,
       email: user.email || '',
       role: user.roleId,
+      tokenVersion: user.tokenVersion ?? 0,
     };
 
     const accessToken = signAccessToken(tokenPayload);

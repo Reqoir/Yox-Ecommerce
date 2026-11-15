@@ -93,6 +93,7 @@ export class RegisterUserUseCase implements IUseCase<RegisterUserRequestDTO, Reg
       sub: savedUser.id,
       email: savedUser.email || '',
       role: savedUser.roleId,
+      tokenVersion: savedUser.tokenVersion ?? 0,
     };
 
     const accessToken = signAccessToken(tokenPayload);

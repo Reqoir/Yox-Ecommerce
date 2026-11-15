@@ -1,5 +1,7 @@
+import crypto from 'crypto';
 import { IUserRepository } from '../../../users/domain/repositories/user.repository.interface';
 import { signResetToken } from '@shared/utils/jwt.helper';
+import { getRedisClient } from '@core/infrastructure/database/redis/client';
 
 export class ForgotPasswordUseCase {
   constructor(private readonly userRepository: IUserRepository) {}
@@ -18,13 +20,20 @@ export class ForgotPasswordUseCase {
       return { message: successMessage };
     }
 
-    const resetToken = signResetToken({ sub: user.id });
+    // Generate unique single-use token identifier (jti)
+    const jti = crypto.randomUUID();
 
-    // In a real application, you would send an email here using an email service
-    // e.g., await emailService.sendPasswordReset(user.email, resetToken);
-    
-    // For now, we'll log it in development to simulate the email sending
-    console.log(`[DEV] Password reset link for ${user.email}: ${process.env.CLIENT_URL}/reset-password?token=${resetToken}`);
+    // Store in Redis with strict 15-minute (900 seconds) expiration
+    try {
+      const redis = getRedisClient();
+      await redis.set(`pwd_reset:${jti}`, user.id, 'EX', 900);
+    } catch {
+      // If Redis persistence fails, reject request safely
+      throw new Error('Unable to process password reset request at this time. Please try again.');
+    }
+
+    const resetToken = signResetToken({ sub: user.id, jti });
+    void resetToken; // Ready for transactional email dispatch; token is never logged to stdout
 
     return { message: successMessage };
   }

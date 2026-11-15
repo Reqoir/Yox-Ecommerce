@@ -13,6 +13,7 @@ import { User } from '../../../users/domain/entities/user.entity';
 import { LoginPhoneRequestDTO, LoginPhoneResponseDTO } from '../dtos/login-phone.dto';
 import { signAccessToken, signRefreshToken } from '@shared/utils/jwt.helper';
 import { msg91OtpService } from '../../infrastructure/services/msg91-otp.service';
+import { ApiError } from '@shared/utils/api-error.util';
 
 export function maskEmail(email: string | null | undefined): string {
   if (!email || !email.includes('@')) return '';
@@ -42,9 +43,46 @@ export class LoginPhoneUseCase {
     const users = await this.userRepository.findAllByPhone(rawPhone);
     const activeUsers = users.filter((u) => u.canLogin());
 
+    // SEC-HIGH-006: Phone OTP Authentication of Privileged Accounts.
+    // Storefront mobile OTP is strictly for CUSTOMER accounts.
+    // Administrative and staff accounts must log in via the Admin Portal using work email and password.
+    const customerAccounts: User[] = [];
+    let hasPrivilegedAccount = false;
+
+    for (const u of activeUsers) {
+      let isPrivileged = false;
+      if (u.roleId) {
+        try {
+          const userRole = await this.roleRepository.findById(u.roleId);
+          if (
+            userRole &&
+            (userRole.name.toUpperCase() !== 'CUSTOMER' ||
+              userRole.level > 0 ||
+              userRole.permissions.includes('*'))
+          ) {
+            isPrivileged = true;
+          }
+        } catch {
+          // fallback
+        }
+      }
+
+      if (isPrivileged) {
+        hasPrivilegedAccount = true;
+      } else {
+        customerAccounts.push(u);
+      }
+    }
+
+    if (activeUsers.length > 0 && customerAccounts.length === 0 && hasPrivilegedAccount) {
+      throw ApiError.forbidden(
+        'Administrative and staff accounts cannot authenticate via storefront mobile OTP. Please sign in via the Admin Portal using your work email and password.'
+      );
+    }
+
     let user: User;
 
-    if (activeUsers.length === 0) {
+    if (customerAccounts.length === 0) {
       // Modern D2C Auto-Registration on first phone OTP verification:
       // If customer doesn't exist yet, automatically create their account
       const customerRole = await this.roleRepository.findByName('CUSTOMER');
@@ -60,18 +98,18 @@ export class LoginPhoneUseCase {
       });
 
       user = await this.userRepository.create(newUser);
-    } else if (activeUsers.length > 1) {
-      // If multiple accounts found, prompt user to select which account to access
+    } else if (customerAccounts.length > 1) {
+      // If multiple customer accounts found, prompt user to select which account to access
       const selectionToken = signAccessToken({
         phone: rawPhone,
         purpose: 'phone_account_selection',
-        candidateIds: activeUsers.map((u) => u.id),
+        candidateIds: customerAccounts.map((u) => u.id),
       });
 
       return {
         multipleAccounts: true,
         selectionToken,
-        accounts: activeUsers.map((u) => ({
+        accounts: customerAccounts.map((u) => ({
           id: u.id,
           fullName: u.fullName,
           email: u.email && !u.email.endsWith('@user.yox.internal') ? u.email : null,
@@ -80,7 +118,7 @@ export class LoginPhoneUseCase {
         })),
       };
     } else {
-      user = activeUsers[0];
+      user = customerAccounts[0];
     }
 
     // Generate tokens
@@ -88,6 +126,7 @@ export class LoginPhoneUseCase {
       sub: user.id,
       email: user.email || '',
       role: user.roleId,
+      tokenVersion: user.tokenVersion ?? 0,
     };
 
     const accessToken = signAccessToken(tokenPayload);

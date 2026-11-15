@@ -13,7 +13,14 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   token: z.string().min(1, 'Reset token is required'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(128, 'Password cannot exceed 128 characters')
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).*$/,
+      'Password must contain an uppercase letter, a lowercase letter, a number, and a special character'
+    ),
 });
 
 export const resetPasswordPhoneVerifySchema = z.object({

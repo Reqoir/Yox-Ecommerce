@@ -92,7 +92,8 @@ export class UpdateStaffUseCase {
         throw ApiError.notFound('Selected role not found');
       }
       // Non-super-admins cannot assign wildcard or super admin role
-      if (!isActorSuperAdmin && (newRole.permissions.includes('*') || newRole.name.toUpperCase().includes('ADMIN'))) {
+      const newRoleName = newRole.name.toUpperCase();
+      if (!isActorSuperAdmin && (newRole.permissions.includes('*') || newRoleName === 'ADMIN' || newRoleName === 'SUPER_ADMIN')) {
         throw ApiError.forbidden('Only the Store Owner can assign administrative roles.');
       }
       targetUser.updateRole(dto.roleId);

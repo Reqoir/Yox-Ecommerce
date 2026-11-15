@@ -19,6 +19,7 @@ export interface IUserDocument extends Document {
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   status: UserStatus;
+  tokenVersion: number;
   lastLogin?: Date | null;
   deletedAt?: Date | null;
   createdAt: Date;
@@ -71,6 +72,10 @@ const userSchema = new Schema<IUserDocument>(
       type: String,
       enum: Object.values(UserStatus),
       default: UserStatus.ACTIVE,
+    },
+    tokenVersion: {
+      type: Number,
+      default: 0,
     },
     lastLogin: {
       type: Date,

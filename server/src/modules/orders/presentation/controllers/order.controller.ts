@@ -42,14 +42,15 @@ export class OrderController {
   private async checkIsAdmin(req: Request): Promise<boolean> {
     if (!req.user || !req.user.role) return false;
     const userRoleStr = String(req.user.role || '').toLowerCase();
-    if (userRoleStr === 'admin' || userRoleStr === 'super_admin' || userRoleStr.includes('admin')) {
+    if (userRoleStr === 'admin' || userRoleStr === 'super_admin') {
       return true;
     }
     try {
       const role = await roleRepository.findById(req.user.role);
       if (
         role &&
-        (role.name.toLowerCase().includes('admin') ||
+        (role.name.toUpperCase() === 'ADMIN' ||
+          role.name.toUpperCase() === 'SUPER_ADMIN' ||
           role.hasPermission('manage_orders') ||
           role.hasPermission('*'))
       ) {

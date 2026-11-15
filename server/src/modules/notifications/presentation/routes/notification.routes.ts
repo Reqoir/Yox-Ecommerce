@@ -7,6 +7,7 @@
  */
 
 import { Router } from 'express';
+import crypto from 'crypto';
 import { NotificationController } from '../controllers/notification.controller';
 import { NotificationRepository } from '../../infrastructure/repositories/notification.repository';
 import {
@@ -19,6 +20,10 @@ import {
   DeleteAllNotificationsUseCase,
 } from '../../application/use-cases/notification.use-cases';
 import { requireAuth } from '../../../../presentation/http/middleware/require-auth.middleware';
+import { getRedisClient } from '../../../../core/infrastructure/database/redis/client';
+import { ApiError } from '../../../../shared/utils/api-error.util';
+import { ApiResponse } from '../../../../shared/utils/api-response.util';
+import { HttpStatus } from '../../../../shared/constants/http-status.constants';
 
 const router = Router();
 
@@ -47,6 +52,21 @@ const controller = new NotificationController(
   deleteManyUseCase,
   deleteAllUseCase
 );
+
+// Short-lived single-use ticket for SSE connection (expires in 30 seconds)
+router.post('/ticket', async (req, res, next) => {
+  try {
+    if (!req.user?.id) {
+      throw ApiError.unauthorized('Authentication required to generate an SSE ticket');
+    }
+    const ticket = crypto.randomUUID();
+    const redis = getRedisClient();
+    await redis.set(`sse_ticket:${ticket}`, req.user.id, 'EX', 30);
+    ApiResponse.success(res, { ticket }, 'SSE ticket generated successfully', HttpStatus.OK);
+  } catch (error) {
+    next(error);
+  }
+});
 
 // SSE stream endpoint — must be before /:id routes to avoid conflict
 router.get('/stream', controller.streamNotifications);

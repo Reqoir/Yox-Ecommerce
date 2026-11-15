@@ -21,10 +21,10 @@ export const useAdminAuthStore = create<AdminAuthState>()(
       user: null,
       token: null,
       isAuthenticated: false,
-      loginUser: (user, token) =>
+      loginUser: (user) =>
         set({
           user,
-          token: token || (user as any)?.accessToken || null,
+          token: null, // Tokens are stored exclusively in secure HttpOnly cookies, not in browser storage
           isAuthenticated: true,
         }),
       logoutUser: () => set({ user: null, token: null, isAuthenticated: false }),
@@ -37,6 +37,12 @@ export const useAdminAuthStore = create<AdminAuthState>()(
     }),
     {
       name: 'admin-auth-storage',
+      // SEC-HIGH-003: Persist only non-sensitive user metadata for UI rendering.
+      // JWT access tokens are NEVER stored in localStorage to prevent XSS exfiltration.
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
     }
   )
 );

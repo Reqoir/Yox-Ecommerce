@@ -6,6 +6,10 @@ import { ApiError } from '@shared/utils/api-error.util';
 export interface UpdateUserStatusDTO {
   userId: string;
   status: UserStatus;
+  actor?: {
+    isSuperAdmin?: boolean;
+    permissions?: string[];
+  };
 }
 
 export class UpdateUserStatusUseCase {
@@ -21,8 +25,18 @@ export class UpdateUserStatusUseCase {
       throw ApiError.forbidden('The primary Store Owner account cannot be suspended or deactivated.');
     }
 
-    if (dto.status === UserStatus.ACTIVE && user.deletedAt) {
-      user.restore();
+    if (user.deletedAt) {
+      if (dto.status === UserStatus.ACTIVE) {
+        // Enforce explicit authorization for restoring archived accounts
+        const isAuthorizedToRestore =
+          dto.actor?.isSuperAdmin || (dto.actor?.permissions || []).includes('manage_users');
+        if (!isAuthorizedToRestore) {
+          throw ApiError.forbidden('Only authorized administrators can restore archived user accounts.');
+        }
+        user.restore();
+      } else {
+        throw ApiError.badRequest('Cannot change status of an archived account without restoring it first.');
+      }
     } else {
       user.updateStatus(dto.status);
     }

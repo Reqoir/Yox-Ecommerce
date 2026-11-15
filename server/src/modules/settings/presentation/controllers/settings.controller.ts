@@ -1,6 +1,35 @@
 import { Request, Response } from 'express';
 import { SettingsModel } from '../../infrastructure/models/settings.model';
 import { ProductModel } from '../../../products/infrastructure/models/product.model';
+import { RoleRepository } from '../../../roles/infrastructure/repositories/role.repository';
+import { updateSettingBodySchema, storeConfigSchema } from '../validators/settings.validator';
+
+const roleRepository = new RoleRepository();
+
+const PUBLIC_SETTINGS_KEYS = new Set([
+  'store_config',
+  'storefront.exclusive_offers',
+  'storefront.hero_banners',
+]);
+
+const checkHasManageSettings = async (user: any): Promise<boolean> => {
+  if (!user || !user.role) return false;
+  const userRoleStr = String(user.role).toLowerCase();
+  if (userRoleStr === 'admin' || userRoleStr === 'super_admin') return true;
+  try {
+    const role = await roleRepository.findById(user.role);
+    if (
+      role &&
+      (role.name.toUpperCase() === 'ADMIN' ||
+        role.name.toUpperCase() === 'SUPER_ADMIN' ||
+        role.hasPermission('*') ||
+        role.hasPermission('manage_settings'))
+    ) {
+      return true;
+    }
+  } catch {}
+  return false;
+};
 
 export const DEFAULT_STORE_CONFIG = {
   storeName: "YOX Men's Fashion",
@@ -45,6 +74,19 @@ export class SettingsController {
   public async getSetting(req: Request, res: Response): Promise<void> {
     try {
       const { key } = req.params;
+
+      // Access control: Non-public setting keys strictly require manage_settings permission
+      if (!PUBLIC_SETTINGS_KEYS.has(key)) {
+        const isAuthorized = await checkHasManageSettings(req.user);
+        if (!isAuthorized) {
+          res.status(403).json({
+            success: false,
+            message: 'Access denied. You do not have permission to view internal configuration settings.',
+          });
+          return;
+        }
+      }
+
       const setting = await SettingsModel.findOne({ key });
       
       if (!setting) {
@@ -95,15 +137,38 @@ export class SettingsController {
   public async updateSetting(req: Request, res: Response): Promise<void> {
     try {
       const { key } = req.params;
-      const { value } = req.body;
+
+      const bodyParse = updateSettingBodySchema.safeParse(req.body);
+      if (!bodyParse.success) {
+        res.status(400).json({
+          success: false,
+          message: bodyParse.error.errors[0]?.message || 'Invalid request body format',
+        });
+        return;
+      }
+
+      const { value } = bodyParse.data;
       
       let finalValue = value;
       if (key === 'store_config') {
+        const configParse = storeConfigSchema.safeParse(value);
+        if (!configParse.success) {
+          res.status(400).json({
+            success: false,
+            message: 'Invalid store configuration parameters',
+            errors: configParse.error.errors.map((e) => ({
+              field: e.path.join('.'),
+              message: e.message,
+            })),
+          });
+          return;
+        }
+
         const existing = await SettingsModel.findOne({ key });
         finalValue = {
           ...DEFAULT_STORE_CONFIG,
           ...(existing?.value || {}),
-          ...value,
+          ...configParse.data,
         };
       }
 

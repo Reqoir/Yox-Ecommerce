@@ -21,8 +21,8 @@ export const requirePermission = (requiredPermission: string | string[]) => {
 
       const userRoleStr = String(req.user.role || '').toLowerCase();
 
-      // Check if user is directly an admin/super_admin role
-      if (userRoleStr === 'admin' || userRoleStr === 'super_admin' || userRoleStr.includes('admin')) {
+      // Check if user has direct canonical admin role
+      if (userRoleStr === 'admin' || userRoleStr === 'super_admin') {
         return next();
       }
 
@@ -35,8 +35,8 @@ export const requirePermission = (requiredPermission: string | string[]) => {
       }
 
       if (role) {
-        const roleNameLower = role.name.toLowerCase();
-        if (roleNameLower === 'admin' || roleNameLower === 'super_admin' || roleNameLower.includes('admin')) {
+        const roleNameUpper = role.name.toUpperCase();
+        if (roleNameUpper === 'ADMIN' || roleNameUpper === 'SUPER_ADMIN') {
           return next();
         }
 
@@ -49,27 +49,13 @@ export const requirePermission = (requiredPermission: string | string[]) => {
         const checkSinglePermission = (perm: string): boolean => {
           if (role.hasPermission(perm)) return true;
 
-          // Support logical permission aliases
+          // Support legitimate read-only dashboard analytics alias
           if (perm === 'dashboard:read' && role.hasPermission('view_analytics')) {
             return true;
           }
 
-          if (perm === 'manage_users' && (role.hasPermission('manage_staff') || role.hasPermission('manage_roles'))) {
-            return true;
-          }
-
-          if (perm === 'view_staff' && (role.hasPermission('view_staff') || role.hasPermission('manage_staff') || role.hasPermission('manage_roles') || role.hasPermission('manage_users'))) {
-            return true;
-          }
-
-          if (perm === 'manage_staff' && role.hasPermission('manage_roles')) {
-            return true;
-          }
-
-          if (
-            perm === 'manage_orders' &&
-            (role.hasPermission('manage_shipments') || role.hasPermission('manage_returns'))
-          ) {
+          // Staff viewers can view staff list if they have view_staff or manage_staff
+          if (perm === 'view_staff' && (role.hasPermission('view_staff') || role.hasPermission('manage_staff'))) {
             return true;
           }
 

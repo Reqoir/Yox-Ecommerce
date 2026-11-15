@@ -96,23 +96,28 @@ export class Msg91OtpService {
         data?.data?.mobile || 
         data?.data?.identifier;
 
-      if (verifiedIdentifier) {
-        const normExpected = this.normalizePhone(expectedPhone);
-        const normVerified = this.normalizePhone(String(verifiedIdentifier));
+      // FAIL-CLOSED: The provider must explicitly return the verified phone identifier
+      if (!verifiedIdentifier || String(verifiedIdentifier).trim() === '') {
+        logger.warn({ data }, 'MSG91 verification rejected: response missing verified phone identifier');
+        throw new ValidationError('Mobile OTP verification could not be validated with the provider.');
+      }
 
-        // Ensure match: compare last 10 digits or entire normalized number
-        const last10Expected = normExpected.slice(-10);
-        const last10Verified = normVerified.slice(-10);
+      const normExpected = this.normalizePhone(expectedPhone);
+      const normVerified = this.normalizePhone(String(verifiedIdentifier));
 
-        if (last10Expected !== last10Verified) {
-          logger.warn(
-            { expected: expectedPhone, verified: verifiedIdentifier },
-            'MSG91 verified number does not match registered phone number'
-          );
-          throw new ValidationError(
-            'The verified mobile number does not match the registered mobile number.'
-          );
-        }
+      // Canonicalize: prefix 10-digit Indian numbers with standard '91' country code
+      const canonicalExpected = normExpected.length === 10 ? `91${normExpected}` : normExpected;
+      const canonicalVerified = normVerified.length === 10 ? `91${normVerified}` : normVerified;
+
+      // Strict full-digit comparison prevents cross-country collision (e.g. +1 vs +91)
+      if (canonicalExpected !== canonicalVerified) {
+        logger.warn(
+          { expected: expectedPhone, verified: verifiedIdentifier, canonicalExpected, canonicalVerified },
+          'MSG91 verified number does not match registered phone number'
+        );
+        throw new ValidationError(
+          'The verified mobile number does not match the registered mobile number.'
+        );
       }
 
       logger.info({ phone: expectedPhone }, 'Mobile OTP verification succeeded with MSG91');

@@ -24,6 +24,7 @@ export interface UserProps extends EntityProps {
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   status: UserStatus;
+  tokenVersion?: number;
   lastLogin?: Date | null;
   deletedAt?: Date | null;
 }
@@ -40,6 +41,7 @@ export class User extends BaseEntity<UserProps> {
   get roleId(): string { return this._props.roleId; }
   get status(): UserStatus { return this._props.status; }
   get isEmailVerified(): boolean { return this._props.isEmailVerified; }
+  get tokenVersion(): number { return this._props.tokenVersion ?? 0; }
   
   get phone(): string | null | undefined { return this._props.phone; }
   get profileImage(): string | null | undefined { return this._props.profileImage; }
@@ -71,6 +73,7 @@ export class User extends BaseEntity<UserProps> {
       isEmailVerified: props.isEmailVerified ?? (resolvedEmail && !resolvedEmail.endsWith('@user.yox.internal') ? true : false),
       isPhoneVerified: props.isPhoneVerified ?? false,
       status: UserStatus.ACTIVE,
+      tokenVersion: 0,
       lastLogin: null,
       deletedAt: null,
     });
@@ -137,9 +140,19 @@ export class User extends BaseEntity<UserProps> {
   /**
    * Updates the user's password.
    * Note: The password MUST be pre-hashed before calling this.
+   * Automatically increments tokenVersion to revoke previous sessions.
    */
   public updatePassword(hashedPassword: string): void {
     this._props.password = hashedPassword;
+    this._props.tokenVersion = (this._props.tokenVersion ?? 0) + 1;
+    this._props.updatedAt = new Date();
+  }
+
+  /**
+   * Explicitly increments the user's token version to invalidate all active JWT sessions.
+   */
+  public incrementTokenVersion(): void {
+    this._props.tokenVersion = (this._props.tokenVersion ?? 0) + 1;
     this._props.updatedAt = new Date();
   }
 

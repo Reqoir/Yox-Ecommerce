@@ -48,7 +48,7 @@ export class NotificationController {
     const userRoleStr = String(req.user?.role || '').toLowerCase();
 
     // Check if user has direct admin role string
-    if (userRoleStr === 'admin' || userRoleStr === 'super_admin' || userRoleStr.includes('admin')) {
+    if (userRoleStr === 'admin' || userRoleStr === 'super_admin') {
       const allTypes: NotificationType[] = [
         'LOW_STOCK',
         'ORDER_STATUS',
@@ -77,8 +77,10 @@ export class NotificationController {
         const role = await this.roleRepo.findById(roleId);
         if (role) {
           permissions = role.permissions || [];
+          const roleNameUpper = role.name.toUpperCase();
           if (
-            role.name.toLowerCase().includes('admin') ||
+            roleNameUpper === 'ADMIN' ||
+            roleNameUpper === 'SUPER_ADMIN' ||
             permissions.includes('*') ||
             permissions.includes('manage_notifications')
           ) {

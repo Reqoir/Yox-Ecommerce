@@ -41,35 +41,8 @@ export const apiClient = axios.create({
 // ── Request Interceptor ────────────────────────────────────────────────────────
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // If the request originates from or targets the admin dashboard,
-    // attach the Admin Bearer token so admin actions are completely isolated
-    // from any customer cookies present in the same browser.
-    if (typeof window !== 'undefined') {
-      const pathname = window.location.pathname;
-      const isAdminContext =
-        pathname.startsWith('/admin') ||
-        pathname.startsWith('/admin-login') ||
-        (typeof config.url === 'string' && (
-          config.url.startsWith('/admin') ||
-          config.url.startsWith('/staff') ||
-          config.url.startsWith('/roles') ||
-          config.url.startsWith('/reports') ||
-          config.url.startsWith('/audit-logs')
-        ));
-
-      if (isAdminContext) {
-        try {
-          const raw = localStorage.getItem('admin-auth-storage');
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            const token = parsed?.state?.token;
-            if (token) {
-              config.headers.Authorization = `Bearer ${token}`;
-            }
-          }
-        } catch {}
-      }
-    }
+    // All authentication is managed via secure, HttpOnly, SameSite=lax cookies
+    // withCredentials: true sends them automatically on all requests.
     return config;
   },
   (error: AxiosError) => {

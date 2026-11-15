@@ -29,17 +29,19 @@ export class RoleController {
     level: number;
     roleId?: string;
     roleName?: string;
+    permissions: string[];
   }> => {
-    if (!user) return { isSuperAdmin: false, level: 0 };
+    if (!user) return { isSuperAdmin: false, level: 0, permissions: [] };
     const emailLower = (user.email || '').toLowerCase();
 
     // Primary Store Owner is Level 100 with universal authority
     if (emailLower === 'admin@yox.com') {
-      return { isSuperAdmin: true, level: 100, roleName: 'ADMIN' };
+      return { isSuperAdmin: true, level: 100, roleName: 'ADMIN', permissions: ['*'] };
     }
 
     let actorLevel = 50;
     let roleName = '';
+    let permissions: string[] = (user as any)?.permissions || [];
     const roleId = user.roleId || user.role;
 
     if (this.roleRepository && roleId) {
@@ -47,12 +49,14 @@ export class RoleController {
         const role = await this.roleRepository.findById(roleId);
         if (role) {
           roleName = (role.name || '').toUpperCase();
-          if (roleName === 'ADMIN' || roleName === 'SUPER_ADMIN' || role.permissions.includes('*')) {
+          permissions = role.permissions || [];
+          if (roleName === 'ADMIN' || roleName === 'SUPER_ADMIN' || permissions.includes('*')) {
             return {
               isSuperAdmin: true,
               level: 100,
               roleId: role.id,
               roleName,
+              permissions: ['*'],
             };
           }
           actorLevel = role.level ?? (roleName === 'MANAGER' ? 75 : 50);
@@ -61,6 +65,7 @@ export class RoleController {
             level: actorLevel,
             roleId: role.id,
             roleName,
+            permissions,
           };
         }
       } catch (err) {
@@ -70,13 +75,14 @@ export class RoleController {
 
     const fallbackRoleName = (user.role || '').toUpperCase();
     if (fallbackRoleName === 'ADMIN' || fallbackRoleName === 'SUPER_ADMIN') {
-      return { isSuperAdmin: true, level: 100, roleName: fallbackRoleName };
+      return { isSuperAdmin: true, level: 100, roleName: fallbackRoleName, permissions: ['*'] };
     }
 
     return {
       isSuperAdmin: false,
       level: actorLevel,
       roleName: fallbackRoleName,
+      permissions,
     };
   };
 
@@ -101,9 +107,25 @@ export class RoleController {
         );
       }
 
+      // Rule: Non-super-admins cannot create roles containing 'ADMIN' or 'SUPER' in their name
+      const normalizedRoleName = validBody.name.trim().toUpperCase();
+      if (!actor.isSuperAdmin && (normalizedRoleName.includes('ADMIN') || normalizedRoleName.includes('SUPER'))) {
+        throw ApiError.forbidden('Only the Store Owner can create administrative roles containing "ADMIN" or "SUPER" in their name.');
+      }
+
       // Rule: Non-super-admins cannot grant wildcard '*' permission
       if (!actor.isSuperAdmin && validBody.permissions?.includes('*')) {
         throw ApiError.forbidden('Only the Store Owner can grant full administrative wildcard (*) permissions.');
+      }
+
+      // Rule: Non-super-admins cannot grant permissions they do not possess
+      if (!actor.isSuperAdmin && validBody.permissions && validBody.permissions.length > 0) {
+        const unauthorizedPerms = validBody.permissions.filter((p: string) => !actor.permissions.includes(p));
+        if (unauthorizedPerms.length > 0) {
+          throw ApiError.forbidden(
+            `Permission Escalation Violation: You cannot grant permissions you do not possess: ${unauthorizedPerms.join(', ')}`
+          );
+        }
       }
 
       const role = await this.createRoleUseCase.execute(validBody as any);
@@ -126,6 +148,10 @@ export class RoleController {
       const targetRole = await this.roleRepository.findById(id);
       if (!targetRole) {
         throw ApiError.notFound('Role not found');
+      }
+
+      if (targetRole.isSystem) {
+        throw ApiError.forbidden(`Security Restriction: System role "${targetRole.name}" is protected and cannot be modified.`);
       }
 
       const targetRoleName = (targetRole.name || '').toUpperCase();
@@ -164,9 +190,27 @@ export class RoleController {
           );
         }
 
-        // 5. Wildcard permission check
+        // 5. Name check: Non-super-admins cannot rename role to contain 'ADMIN' or 'SUPER'
+        if (validBody.name) {
+          const normalizedNewName = validBody.name.trim().toUpperCase();
+          if (normalizedNewName.includes('ADMIN') || normalizedNewName.includes('SUPER')) {
+            throw ApiError.forbidden('Only the Store Owner can rename roles to contain "ADMIN" or "SUPER".');
+          }
+        }
+
+        // 6. Wildcard permission check
         if (validBody.permissions?.includes('*')) {
           throw ApiError.forbidden('Only the Store Owner can grant full administrative wildcard (*) permissions.');
+        }
+
+        // 7. Rule: Non-super-admins cannot grant permissions they do not possess
+        if (validBody.permissions && validBody.permissions.length > 0) {
+          const unauthorizedPerms = validBody.permissions.filter((p: string) => !actor.permissions.includes(p));
+          if (unauthorizedPerms.length > 0) {
+            throw ApiError.forbidden(
+              `Permission Escalation Violation: You cannot grant permissions you do not possess: ${unauthorizedPerms.join(', ')}`
+            );
+          }
         }
       }
 

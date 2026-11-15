@@ -77,10 +77,18 @@ export class UpdateProfileUseCase {
       const cleanNewPhone = data.phone.trim();
       const currentPhone = user.phone ? user.phone.trim() : '';
 
-      const last10New = cleanNewPhone.replace(/\D/g, '').slice(-10);
-      const last10Current = currentPhone.replace(/\D/g, '').slice(-10);
+      const normNew = cleanNewPhone.replace(/\D/g, '');
+      const normCurrent = currentPhone.replace(/\D/g, '');
+      const canonicalNew = normNew.length === 10 ? `91${normNew}` : normNew;
+      const canonicalCurrent = normCurrent.length === 10 ? `91${normCurrent}` : normCurrent;
 
-      if (cleanNewPhone && last10New !== last10Current) {
+      if (cleanNewPhone && canonicalNew !== canonicalCurrent) {
+        // Enforce phone number uniqueness across all accounts
+        const existingUserWithPhone = await this.userRepository.findByPhone(cleanNewPhone);
+        if (existingUserWithPhone && existingUserWithPhone.id !== userId) {
+          throw ApiError.conflict('This mobile phone number is already registered to another account.');
+        }
+
         // Phone number changed: OTP verification token is mandatory
         if (!data.verificationToken || !data.verificationToken.trim()) {
           throw ApiError.badRequest('Mobile verification code is required to change your phone number');

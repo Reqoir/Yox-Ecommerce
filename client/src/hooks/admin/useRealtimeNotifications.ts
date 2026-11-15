@@ -130,7 +130,7 @@ function isAdminUser(permissions: string[], role?: string): boolean {
 }
 
 export function useRealtimeNotifications() {
-  const { isAuthenticated, user, token } = useAdminAuthStore();
+  const { isAuthenticated, user } = useAdminAuthStore();
   const queryClient = useQueryClient();
   const router = useRouter();
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -165,9 +165,7 @@ export function useRealtimeNotifications() {
       console.debug('[SSE] Connecting to notification stream...');
 
       const apiBase = getApiBaseUrl();
-      const sseUrl = token
-        ? `${apiBase}/notifications/stream?token=${encodeURIComponent(token)}`
-        : `${apiBase}/notifications/stream`;
+      const sseUrl = `${apiBase}/notifications/stream`;
       const es = new EventSource(sseUrl, {
         withCredentials: true,
       });

@@ -230,7 +230,6 @@ export class UserController {
         userId: id,
         roleId: validBody.roleId,
         email: validBody.email,
-        password: validBody.password,
       });
 
       ApiResponse.success(res, result, 'User role updated successfully', HttpStatus.OK);
@@ -317,7 +316,7 @@ export class UserController {
 
   public updateStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { canManageStaff, level: actorLevel } = await this.getActorContext(req.user);
+      const { canManageStaff, level: actorLevel, isSuperAdmin } = await this.getActorContext(req.user);
       if (!canManageStaff) {
         throw ApiError.forbidden('You do not have permission to change staff account status.');
       }
@@ -348,6 +347,10 @@ export class UserController {
       const result = await this.updateUserStatusUseCase.execute({
         userId: id,
         status: validBody.status as any,
+        actor: {
+          isSuperAdmin,
+          permissions: (req.user as any)?.permissions || [],
+        },
       });
 
       ApiResponse.success(res, result, 'User status updated successfully', HttpStatus.OK);

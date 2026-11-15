@@ -29,11 +29,19 @@ export class RefreshTokenUseCase {
         throw ApiError.unauthorized('Your staff account has been deactivated or suspended by the administrator.');
       }
 
+      // Check exact equality of tokenVersion to prevent replaying old revoked refresh tokens
+      const userTokenVersion = user.tokenVersion ?? 0;
+      const payloadTokenVersion = payload.tokenVersion ?? 0;
+      if (payloadTokenVersion !== userTokenVersion) {
+        throw ApiError.unauthorized('Session has been revoked due to a password change or security update. Please log in again.');
+      }
+
       // 3. Generate new tokens
       const tokenPayload = {
         sub: user.id,
         email: user.email,
         role: user.roleId,
+        tokenVersion: userTokenVersion,
       };
 
       const accessToken = signAccessToken(tokenPayload);

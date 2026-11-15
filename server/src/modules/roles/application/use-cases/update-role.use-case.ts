@@ -18,10 +18,7 @@ export class UpdateRoleUseCase implements IUseCase<{ id: string; data: UpdateRol
     }
 
     if (role.isSystem) {
-      // Allow adding/removing permissions for system roles, but not changing name/description
-      if (input.data.name && input.data.name.trim().toUpperCase() !== role.name.trim().toUpperCase()) {
-        throw new ValidationError('Cannot change the name of a system role');
-      }
+      throw new ValidationError(`System role "${role.name}" is protected and its configuration or permissions cannot be modified.`);
     }
 
     // Role Entity doesn't expose a raw update method since properties are private.

@@ -60,6 +60,7 @@ export class LoginUseCase {
       sub: user.id,
       email: user.email || '',
       role: user.roleId,
+      tokenVersion: user.tokenVersion ?? 0,
     };
 
     const accessToken = signAccessToken(tokenPayload);

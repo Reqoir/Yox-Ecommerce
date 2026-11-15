@@ -7,6 +7,7 @@ import { Request, Response, NextFunction } from 'express';
 import { HttpStatus } from '../../../../shared/constants/http-status.constants';
 import { ApiResponse } from '../../../../shared/utils/api-response.util';
 import { ApiError } from '../../../../shared/utils/api-error.util';
+import { RoleRepository } from '../../../roles/infrastructure/repositories/role.repository';
 import {
   CreateShipmentUseCase,
   GetShipmentByIdUseCase,
@@ -19,6 +20,8 @@ import {
   GenerateShipmentInvoiceUseCase,
   HandleShiprocketWebhookUseCase,
 } from '../../application/use-cases/shipment.use-cases';
+
+const roleRepository = new RoleRepository();
 
 export class ShipmentController {
   constructor(
@@ -72,8 +75,27 @@ export class ShipmentController {
         throw ApiError.unauthorized('Authentication required to track orders. Please log in.');
       }
 
-      const userRole = (req.user?.role || '').toUpperCase();
-      const isAdmin = userRole.includes('ADMIN') || userRole.includes('SUPER') || ((req.user as any)?.permissions || []).includes('*');
+      let isAdmin = false;
+      const userRoleStr = String(req.user?.role || '').toUpperCase();
+      if (userRoleStr === 'ADMIN' || userRoleStr === 'SUPER_ADMIN' || ((req.user as any)?.permissions || []).includes('*')) {
+        isAdmin = true;
+      } else if (req.user?.role) {
+        try {
+          const role = await roleRepository.findById(req.user.role);
+          if (
+            role &&
+            (role.name.toUpperCase() === 'ADMIN' ||
+              role.name.toUpperCase() === 'SUPER_ADMIN' ||
+              role.hasPermission('*') ||
+              role.hasPermission('manage_shipments') ||
+              role.hasPermission('manage_orders'))
+          ) {
+            isAdmin = true;
+          }
+        } catch {
+          // fallback false
+        }
+      }
 
       const shipment = await this.trackShipmentUseCase.execute({
         trackingNumber: req.params.trackingNumber as string,
