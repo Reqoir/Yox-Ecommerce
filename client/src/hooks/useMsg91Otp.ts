@@ -11,7 +11,7 @@ declare global {
       failure?: (error: any) => void
     ) => void;
     retryOtp?: (
-      channel: string | null,
+      channel: string | number | null,
       success?: (data: any) => void,
       failure?: (error: any) => void,
       reqId?: string
@@ -186,8 +186,9 @@ export function useMsg91Otp() {
 
   /**
    * Trigger MSG91 retryOtp
+   * Defaults channel to 11 (SMS). Other valid MSG91 channels: 4 (Voice), 12 (WhatsApp), 13 (Email).
    */
-  const retryOtp = useCallback(async (): Promise<any> => {
+  const retryOtp = useCallback(async (channel: string | number = 11, reqId?: string): Promise<any> => {
     setIsLoading(true);
     return new Promise((resolve, reject) => {
       if (typeof window === 'undefined' || typeof window.retryOtp !== 'function') {
@@ -196,8 +197,9 @@ export function useMsg91Otp() {
         return;
       }
 
+      const selectedChannel = channel || 11;
       window.retryOtp!(
-        null, // Default channel (or '11' for SMS)
+        selectedChannel,
         (data) => {
           setIsLoading(false);
           resolve(data);
@@ -209,7 +211,8 @@ export function useMsg91Otp() {
               ? error
               : error?.message || error?.description || 'Failed to resend OTP. Please wait before retrying.';
           reject(new Error(errMsg));
-        }
+        },
+        reqId
       );
     });
   }, []);
