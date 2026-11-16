@@ -20,6 +20,10 @@ import {
   X,
   Check,
   Lock,
+  Key,
+  AlertTriangle,
+  Info,
+  ShieldAlert,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -27,14 +31,14 @@ export function AdminCredentialsCard() {
   const { user, updateUser } = useAdminAuthStore();
   const { sendOtp, retryOtp, verifyOtp, isLoading: isOtpLoading } = useMsg91Otp();
 
-  // Only the main Store Owner / Super Admin can change email and phone number
+  // Only the primary System Administrator (admin@yox.com) can change email and phone number
   const isSuperAdmin = useMemo(() => {
     if (!user) return false;
     const r = (user.role || '').toUpperCase();
     return (
+      user.email === 'admin@yox.com' ||
       r === 'ADMIN' ||
       r === 'SUPER_ADMIN' ||
-      user.email === 'admin@yox.com' ||
       (user.permissions && user.permissions.includes('*'))
     );
   }, [user]);
@@ -48,11 +52,19 @@ export function AdminCredentialsCard() {
   const [emailOtpDigits, setEmailOtpDigits] = useState<string[]>(['', '', '', '']);
   const [emailCountdown, setEmailCountdown] = useState(0);
 
-  // Phone change state: 'input' -> 'otp'
+  // Phone change multi-stage state: 'password' -> 'current_otp' -> 'new_phone' -> 'new_otp'
+  const [phoneChangeStep, setPhoneChangeStep] = useState<
+    'password' | 'current_otp' | 'new_phone' | 'new_otp'
+  >('password');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [phoneChangeSessionId, setPhoneChangeSessionId] = useState('');
+  const [maskedCurrentPhone, setMaskedCurrentPhone] = useState('');
+  const [currentOtpDigits, setCurrentOtpDigits] = useState<string[]>(['', '', '', '']);
   const [newPhone, setNewPhone] = useState('');
-  const [phoneOtpStep, setPhoneOtpStep] = useState<'input' | 'otp'>('input');
-  const [phoneOtpDigits, setPhoneOtpDigits] = useState<string[]>(['', '', '', '']);
+  const [maskedNewPhone, setMaskedNewPhone] = useState('');
+  const [newOtpDigits, setNewOtpDigits] = useState<string[]>(['', '', '', '']);
   const [phoneCountdown, setPhoneCountdown] = useState(0);
+  const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -75,15 +87,28 @@ export function AdminCredentialsCard() {
   }, [phoneCountdown]);
 
   // Cancel edit mode
-  const cancelEdit = () => {
+  const cancelEdit = async () => {
+    if (phoneChangeSessionId) {
+      profileApi.cancelAdminPhoneChange(phoneChangeSessionId).catch(() => {});
+    }
+
     setActiveEdit(null);
     setNewEmail('');
     setEmailOtpStep('input');
     setEmailOtpDigits(['', '', '', '']);
+
+    setPhoneChangeStep('password');
+    setAdminPassword('');
+    setPhoneChangeSessionId('');
+    setMaskedCurrentPhone('');
+    setCurrentOtpDigits(['', '', '', '']);
     setNewPhone('');
-    setPhoneOtpStep('input');
-    setPhoneOtpDigits(['', '', '', '']);
+    setMaskedNewPhone('');
+    setNewOtpDigits(['', '', '', '']);
+    setShowRecoveryDialog(false);
   };
+
+  const currentDisplayPhone = user?.phone || '8089399521';
 
   // -------------------------------------------------------------
   // CHANGE EMAIL FLOW (Protected by OTP sent to current phone)
@@ -100,11 +125,11 @@ export function AdminCredentialsCard() {
       return;
     }
 
-    const currentPhone = (user?.phone || '8089399521').replace(/\D/g, '');
+    const currentPhoneClean = currentDisplayPhone.replace(/\D/g, '');
     setIsSubmitting(true);
     try {
-      await sendOtp(currentPhone);
-      toast.success(`Verification OTP sent to your registered phone +91 ${currentPhone}`);
+      await sendOtp(currentPhoneClean);
+      toast.success(`Verification OTP sent to your registered phone +91 ${currentPhoneClean}`);
       setEmailOtpStep('otp');
       setEmailCountdown(30);
       setEmailOtpDigits(['', '', '', '']);
@@ -128,10 +153,8 @@ export function AdminCredentialsCard() {
 
     setIsSubmitting(true);
     try {
-      // Verify OTP with MSG91
       await verifyOtp(fullOtp);
 
-      // Update profile with new email
       const updatedUser = await profileApi.updateProfile({
         email: newEmail.trim().toLowerCase(),
       });
@@ -147,67 +170,141 @@ export function AdminCredentialsCard() {
   };
 
   // -------------------------------------------------------------
-  // CHANGE PHONE FLOW (Protected by OTP sent to new phone)
+  // SECURE MULTI-STAGE ADMIN PHONE CHANGE FLOW
   // -------------------------------------------------------------
-  const handleStartPhoneChange = async (e: React.FormEvent) => {
+
+  // STAGE 1: Verify Password & Initiate Session
+  const handleStartPhoneChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminPassword.trim()) {
+      toast.error('Please enter your administrator password to proceed');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await profileApi.initiateAdminPhoneChange(adminPassword);
+      setPhoneChangeSessionId(res.sessionId);
+      setMaskedCurrentPhone(res.maskedCurrentPhone);
+
+      // Trigger MSG91 OTP to current registered phone
+      const currentRaw = currentDisplayPhone.replace(/\D/g, '');
+      await sendOtp(currentRaw);
+
+      toast.success(
+        `Password confirmed! 4-digit verification code sent to your registered mobile +91 ${res.maskedCurrentPhone}`
+      );
+      setPhoneChangeStep('current_otp');
+      setPhoneCountdown(res.cooldownSeconds || 30);
+      setCurrentOtpDigits(['', '', '', '']);
+      setTimeout(() => {
+        otpInputRefs.current[0]?.focus();
+      }, 150);
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || err?.message || 'Password confirmation failed'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // STAGE 2: Verify Current Registered Phone OTP
+  const handleVerifyCurrentPhoneOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const fullOtp = currentOtpDigits.join('');
+    if (fullOtp.length !== 4) {
+      toast.error('Please enter the 4-digit code');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Verify with MSG91 widget to get verification token
+      const token = await verifyOtp(fullOtp);
+
+      // Submit verification token to backend
+      const res = await profileApi.verifyCurrentAdminPhone(phoneChangeSessionId, token);
+
+      toast.success(res.message || 'Current mobile verified! You can now specify your new mobile number.');
+      setPhoneChangeStep('new_phone');
+      setPhoneCountdown(0);
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || err?.message || 'Current mobile OTP verification failed'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // STAGE 3: Submit New Phone Number & Trigger New OTP
+  const handleSubmitNewPhone = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanNew = newPhone.replace(/\D/g, '');
     if (cleanNew.length < 10) {
       toast.error('Please enter a valid 10-digit mobile number');
       return;
     }
-    if (cleanNew === user?.phone?.replace(/\D/g, '')) {
-      toast.error('New phone number must be different from current phone number');
+
+    const currentClean = currentDisplayPhone.replace(/\D/g, '');
+    if (cleanNew === currentClean) {
+      toast.error('New mobile number must be different from your current registered phone number');
       return;
     }
 
     setIsSubmitting(true);
     try {
+      const res = await profileApi.requestNewAdminPhone(phoneChangeSessionId, cleanNew);
+      setMaskedNewPhone(res.maskedNewPhone);
+
+      // Trigger MSG91 OTP to new phone number
       await sendOtp(cleanNew);
+
       toast.success(`Verification OTP sent to new mobile +91 ${cleanNew}`);
-      setPhoneOtpStep('otp');
-      setPhoneCountdown(30);
-      setPhoneOtpDigits(['', '', '', '']);
+      setPhoneChangeStep('new_otp');
+      setPhoneCountdown(res.cooldownSeconds || 30);
+      setNewOtpDigits(['', '', '', '']);
       setTimeout(() => {
         otpInputRefs.current[0]?.focus();
       }, 150);
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to send OTP code to new phone number');
+      toast.error(
+        err?.response?.data?.message || err?.message || 'Failed to submit new mobile number'
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleVerifyPhoneChange = async (e: React.FormEvent) => {
+  // STAGE 4: Verify New Phone OTP & Atomically Commit Update
+  const handleVerifyNewPhoneOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    const fullOtp = phoneOtpDigits.join('');
+    const fullOtp = newOtpDigits.join('');
     if (fullOtp.length !== 4) {
       toast.error('Please enter the 4-digit code');
       return;
     }
 
-    const cleanNew = newPhone.replace(/\D/g, '');
     setIsSubmitting(true);
     try {
+      // Verify with MSG91 widget to get verification token
       const token = await verifyOtp(fullOtp);
 
-      // Update profile with new phone and verification token
-      const updatedUser = await profileApi.updateProfile({
-        phone: cleanNew,
-        verificationToken: token,
-      });
+      // Submit token to backend to finalize update
+      const res = await profileApi.verifyNewAdminPhone(phoneChangeSessionId, token);
 
-      updateUser({ phone: updatedUser.phone });
-      toast.success(`Admin recovery phone number successfully updated to +91 ${cleanNew}!`);
+      updateUser({ phone: res.phone });
+      toast.success(`Administrator registered mobile successfully updated to +91 ${res.phone}!`);
       cancelEdit();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || 'Failed to update phone number');
+      toast.error(
+        err?.response?.data?.message || err?.message || 'New mobile OTP verification failed'
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const currentDisplayPhone = user?.phone || '8089399521';
 
   return (
     <div className="space-y-4">
@@ -225,7 +322,10 @@ export function AdminCredentialsCard() {
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Official Work Email
                 </span>
-                <Badge variant="outline" className="text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                >
                   Login Identifier
                 </Badge>
               </div>
@@ -422,7 +522,7 @@ export function AdminCredentialsCard() {
       </div>
 
       {/* ========================================================= */}
-      {/* 2. Recovery Mobile Number Section                         */}
+      {/* 2. Multi-Factor Admin Recovery Phone Section             */}
       {/* ========================================================= */}
       <div className="p-4 sm:p-5 rounded-2xl border bg-card transition-all">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -435,8 +535,11 @@ export function AdminCredentialsCard() {
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Admin Recovery Phone Number
                 </span>
-                <Badge variant="outline" className="text-[10px] font-semibold bg-primary/10 text-primary border-primary/20">
-                  OTP Verified
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-semibold bg-primary/10 text-primary border-primary/20"
+                >
+                  Dual-OTP Protected
                 </Badge>
               </div>
               <p className="text-sm font-bold text-foreground mt-0.5 tracking-wide">
@@ -454,7 +557,7 @@ export function AdminCredentialsCard() {
                 onClick={() => {
                   cancelEdit();
                   setActiveEdit('phone');
-                  setNewPhone('');
+                  setPhoneChangeStep('password');
                 }}
                 className="h-8.5 px-3.5 text-xs font-medium gap-1.5 cursor-pointer shrink-0"
               >
@@ -470,14 +573,64 @@ export function AdminCredentialsCard() {
           )}
         </div>
 
-        {/* Inline Phone Update Form */}
+        {/* Multi-Stage Phone Update Wizard */}
         {activeEdit === 'phone' && (
-          <div className="mt-4 pt-4 border-t border-border/60 bg-muted/20 p-4 rounded-xl space-y-3">
+          <div className="mt-4 pt-4 border-t border-border/60 bg-muted/20 p-4 rounded-xl space-y-4">
+            {/* Header & Step Badges */}
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-                Change Admin Recovery Phone
-              </span>
+              <div className="space-y-0.5">
+                <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  Multi-Factor Admin Phone Change
+                </span>
+                <div className="flex items-center gap-1.5 pt-1">
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] font-semibold ${
+                      phoneChangeStep === 'password'
+                        ? 'bg-primary text-white border-primary'
+                        : 'bg-background text-muted-foreground'
+                    }`}
+                  >
+                    1. Password
+                  </Badge>
+                  <ArrowRight className="h-2.5 w-2.5 text-muted-foreground" />
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] font-semibold ${
+                      phoneChangeStep === 'current_otp'
+                        ? 'bg-primary text-white border-primary'
+                        : phoneChangeStep === 'new_phone' || phoneChangeStep === 'new_otp'
+                        ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                        : 'bg-background text-muted-foreground'
+                    }`}
+                  >
+                    2. Current Phone OTP
+                  </Badge>
+                  <ArrowRight className="h-2.5 w-2.5 text-muted-foreground" />
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] font-semibold ${
+                      phoneChangeStep === 'new_phone'
+                        ? 'bg-primary text-white border-primary'
+                        : 'bg-background text-muted-foreground'
+                    }`}
+                  >
+                    3. New Phone
+                  </Badge>
+                  <ArrowRight className="h-2.5 w-2.5 text-muted-foreground" />
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] font-semibold ${
+                      phoneChangeStep === 'new_otp'
+                        ? 'bg-primary text-white border-primary'
+                        : 'bg-background text-muted-foreground'
+                    }`}
+                  >
+                    4. New Phone OTP
+                  </Badge>
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={cancelEdit}
@@ -487,8 +640,185 @@ export function AdminCredentialsCard() {
               </button>
             </div>
 
-            {phoneOtpStep === 'input' ? (
-              <form onSubmit={handleStartPhoneChange} className="space-y-3">
+            {/* ------------------------------------------------------------- */}
+            {/* STEP 1: PASSWORD CONFIRMATION                                  */}
+            {/* ------------------------------------------------------------- */}
+            {phoneChangeStep === 'password' && (
+              <form onSubmit={handleStartPhoneChangePassword} className="space-y-3.5">
+                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-700 dark:text-amber-300 flex items-start gap-2">
+                  <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Security Verification Required:</strong> You must confirm your administrative password before an OTP can be dispatched to your currently registered phone (+91 {currentDisplayPhone}).
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="admin-phone-pwd" className="text-xs font-medium text-foreground">
+                    Current Admin Password <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Key className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="admin-phone-pwd"
+                      type="password"
+                      placeholder="Enter your administrator password"
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                      required
+                      disabled={isSubmitting}
+                      className="h-9 pl-9 text-xs bg-background"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowRecoveryDialog(true)}
+                    className="text-[11px] text-muted-foreground hover:text-primary underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Info className="h-3 w-3" />
+                    Lost access to your registered phone?
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={cancelEdit}
+                      className="h-8 text-xs cursor-pointer"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={isSubmitting || !adminPassword.trim()}
+                      className="h-8 px-4 text-xs font-medium gap-1.5 bg-[#1A2E4C] hover:bg-[#132238] text-white cursor-pointer"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <span>Verifying Password...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Verify & Send Current OTP</span>
+                          <ArrowRight className="h-3 w-3" />
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            )}
+
+            {/* ------------------------------------------------------------- */}
+            {/* STEP 2: VERIFY CURRENT REGISTERED PHONE OTP                    */}
+            {/* ------------------------------------------------------------- */}
+            {phoneChangeStep === 'current_otp' && (
+              <form onSubmit={handleVerifyCurrentPhoneOtp} className="space-y-3">
+                <div className="text-xs text-muted-foreground text-center">
+                  Enter the 4-digit code sent to your registered phone <strong className="text-foreground">+91 {maskedCurrentPhone || currentDisplayPhone}</strong>
+                </div>
+
+                <div className="flex items-center justify-center gap-2.5 my-2">
+                  {currentOtpDigits.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      ref={(el) => {
+                        otpInputRefs.current[idx] = el;
+                      }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => {
+                        const char = e.target.value.replace(/\D/g, '').slice(-1);
+                        const next = [...currentOtpDigits];
+                        next[idx] = char;
+                        setCurrentOtpDigits(next);
+                        if (char && idx < 3) otpInputRefs.current[idx + 1]?.focus();
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Backspace' && !currentOtpDigits[idx] && idx > 0) {
+                          otpInputRefs.current[idx - 1]?.focus();
+                        }
+                      }}
+                      className="w-10 h-10 text-center text-lg font-bold rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-xs"
+                    />
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between text-xs px-1">
+                  <button
+                    type="button"
+                    onClick={() => setPhoneChangeStep('password')}
+                    className="text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (phoneCountdown > 0) return;
+                      await retryOtp();
+                      setPhoneCountdown(30);
+                      toast.success('New OTP code sent to registered phone');
+                    }}
+                    disabled={phoneCountdown > 0}
+                    className="text-primary font-medium hover:underline disabled:opacity-50 cursor-pointer flex items-center gap-1"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    {phoneCountdown > 0 ? `Resend in ${phoneCountdown}s` : 'Resend Code'}
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={cancelEdit}
+                    className="h-8 text-xs cursor-pointer"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={isSubmitting || isOtpLoading || currentOtpDigits.join('').length !== 4}
+                    className="h-8 px-4 text-xs font-medium gap-1.5 bg-[#1A2E4C] hover:bg-[#132238] text-white cursor-pointer"
+                  >
+                    {isSubmitting || isOtpLoading ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span>Verifying Current Phone...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-3 w-3" />
+                        <span>Verify Current Phone</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {/* ------------------------------------------------------------- */}
+            {/* STEP 3: ENTER NEW MOBILE NUMBER                                */}
+            {/* ------------------------------------------------------------- */}
+            {phoneChangeStep === 'new_phone' && (
+              <form onSubmit={handleSubmitNewPhone} className="space-y-3">
+                <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                  <span>
+                    Existing phone verified! Please enter your new 10-digit mobile number.
+                  </span>
+                </div>
+
                 <div className="space-y-1">
                   <Label htmlFor="new-admin-phone" className="text-xs font-medium text-foreground">
                     New Mobile Number <span className="text-destructive">*</span>
@@ -501,7 +831,7 @@ export function AdminCredentialsCard() {
                       id="new-admin-phone"
                       type="tel"
                       maxLength={10}
-                      placeholder="8089399521"
+                      placeholder="e.g. 7594830618"
                       value={newPhone}
                       onChange={(e) => setNewPhone(e.target.value.replace(/\D/g, ''))}
                       required
@@ -510,7 +840,7 @@ export function AdminCredentialsCard() {
                     />
                   </div>
                   <p className="text-[11px] text-muted-foreground">
-                    A verification OTP will be sent to this new phone number to confirm ownership.
+                    A separate verification code will be sent to this new mobile number.
                   </p>
                 </div>
 
@@ -544,14 +874,19 @@ export function AdminCredentialsCard() {
                   </Button>
                 </div>
               </form>
-            ) : (
-              <form onSubmit={handleVerifyPhoneChange} className="space-y-3">
+            )}
+
+            {/* ------------------------------------------------------------- */}
+            {/* STEP 4: VERIFY NEW PHONE OTP & FINALIZE                        */}
+            {/* ------------------------------------------------------------- */}
+            {phoneChangeStep === 'new_otp' && (
+              <form onSubmit={handleVerifyNewPhoneOtp} className="space-y-3">
                 <div className="text-xs text-muted-foreground text-center">
                   Enter the 4-digit code sent to your new phone <strong className="text-foreground">+91 {newPhone}</strong>
                 </div>
 
                 <div className="flex items-center justify-center gap-2.5 my-2">
-                  {phoneOtpDigits.map((digit, idx) => (
+                  {newOtpDigits.map((digit, idx) => (
                     <input
                       key={idx}
                       ref={(el) => {
@@ -563,13 +898,13 @@ export function AdminCredentialsCard() {
                       value={digit}
                       onChange={(e) => {
                         const char = e.target.value.replace(/\D/g, '').slice(-1);
-                        const next = [...phoneOtpDigits];
+                        const next = [...newOtpDigits];
                         next[idx] = char;
-                        setPhoneOtpDigits(next);
+                        setNewOtpDigits(next);
                         if (char && idx < 3) otpInputRefs.current[idx + 1]?.focus();
                       }}
                       onKeyDown={(e) => {
-                        if (e.key === 'Backspace' && !phoneOtpDigits[idx] && idx > 0) {
+                        if (e.key === 'Backspace' && !newOtpDigits[idx] && idx > 0) {
                           otpInputRefs.current[idx - 1]?.focus();
                         }
                       }}
@@ -581,10 +916,10 @@ export function AdminCredentialsCard() {
                 <div className="flex items-center justify-between text-xs px-1">
                   <button
                     type="button"
-                    onClick={() => setPhoneOtpStep('input')}
+                    onClick={() => setPhoneChangeStep('new_phone')}
                     className="text-muted-foreground hover:text-foreground cursor-pointer"
                   >
-                    Change number
+                    Change new number
                   </button>
                   <button
                     type="button"
@@ -615,13 +950,13 @@ export function AdminCredentialsCard() {
                   <Button
                     type="submit"
                     size="sm"
-                    disabled={isSubmitting || phoneOtpDigits.join('').length !== 4}
+                    disabled={isSubmitting || isOtpLoading || newOtpDigits.join('').length !== 4}
                     className="h-8 px-4 text-xs font-medium gap-1.5 bg-[#1A2E4C] hover:bg-[#132238] text-white cursor-pointer"
                   >
-                    {isSubmitting ? (
+                    {isSubmitting || isOtpLoading ? (
                       <>
                         <Loader2 className="h-3 w-3 animate-spin" />
-                        <span>Verifying...</span>
+                        <span>Finalizing Update...</span>
                       </>
                     ) : (
                       <>
@@ -632,6 +967,31 @@ export function AdminCredentialsCard() {
                   </Button>
                 </div>
               </form>
+            )}
+
+            {/* Recovery Protocol Dialog / Alert */}
+            {showRecoveryDialog && (
+              <div className="p-3.5 rounded-xl border border-destructive/30 bg-destructive/5 text-xs space-y-2 mt-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-destructive flex items-center gap-1.5">
+                    <AlertTriangle className="h-4 w-4" />
+                    Offline Account Recovery Protocol
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowRecoveryDialog(false)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <p className="text-muted-foreground text-[11px] leading-relaxed">
+                  To protect the store against unauthorized account takeover, <strong>online bypass of existing-number verification is strictly prohibited</strong>.
+                </p>
+                <p className="text-muted-foreground text-[11px] leading-relaxed">
+                  If your registered phone number is lost, deactivated, or permanently inaccessible, an authorized system operator must perform offline recovery directly on the production server console using authenticated root SSH credentials.
+                </p>
+              </div>
             )}
           </div>
         )}
@@ -648,4 +1008,3 @@ export function AdminCredentialsCard() {
     </div>
   );
 }
-

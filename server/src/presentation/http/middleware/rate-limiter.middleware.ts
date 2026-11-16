@@ -142,3 +142,17 @@ export const reportsLimiter = createRateLimiter({
   byUser: true,
   message: 'Too many analytics or report queries generated. Please wait a minute before requesting more reports.',
 });
+
+/**
+ * 6. Admin Phone Change Limiter
+ * Applied to administrator mobile number change workflow (initiate, verify-current, request-new, verify-new).
+ * Prevents password brute force, OTP flooding, and session exhaustion.
+ */
+export const adminPhoneChangeLimiter = createRateLimiter({
+  name: 'AdminPhoneChange',
+  windowMs: 15 * 60 * 1000, // 15 minutes window
+  limit: 15,                // Max 15 attempts per 15 minutes
+  byUser: true,
+  message: 'Too many administrator phone change attempts. Please wait 15 minutes before trying again.',
+});
+

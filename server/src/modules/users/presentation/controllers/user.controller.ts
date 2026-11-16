@@ -17,11 +17,13 @@ import { validateRequest } from '@shared/utils/validation.helper';
 import { updateUserRoleSchema, createUserSchema, updateUserStatusSchema, resetStaffPasswordSchema, updateStaffSchema } from '../validators/user.validator';
 import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
 import { UpdateStaffUseCase } from '../../application/use-cases/update-staff.use-case';
+import { AdminPhoneChangeUseCase } from '../../application/use-cases/admin-phone-change.use-case';
 import { IUserRepository } from '../../domain/repositories/user.repository.interface';
 import { IRoleRepository } from '../../../roles/domain/repositories/role.repository.interface';
 import { hashPassword } from '@shared/utils/password.helper';
 import { NotFoundError } from '@core/application/errors/application.error';
 import { ApiError } from '@shared/utils/api-error.util';
+import { setAuthCookies } from '@shared/utils/cookie.helper';
 
 export class UserController {
   constructor(
@@ -35,7 +37,8 @@ export class UserController {
     private readonly getUserByIdUseCase: GetUserByIdUseCase,
     private readonly userRepository?: IUserRepository,
     private readonly updateStaffUseCase?: UpdateStaffUseCase,
-    private readonly roleRepository?: IRoleRepository
+    private readonly roleRepository?: IRoleRepository,
+    private readonly adminPhoneChangeUseCase?: AdminPhoneChangeUseCase
   ) {}
 
   private getActorContext = async (user: any): Promise<{
@@ -445,6 +448,116 @@ export class UserController {
       });
 
       ApiResponse.success(res, result, 'Staff member credentials updated successfully', HttpStatus.OK);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // =========================================================================
+  // ADMINISTRATOR MOBILE NUMBER CHANGE MULTI-STAGE WORKFLOW
+  // =========================================================================
+
+  public initiateAdminPhoneChange = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!this.adminPhoneChangeUseCase) {
+        throw new Error('AdminPhoneChangeUseCase not configured');
+      }
+      const result = await this.adminPhoneChangeUseCase.initiate({
+        actor: { id: req.user!.id, email: req.user!.email },
+        password: req.body?.password,
+        ip: req.ip || req.socket?.remoteAddress,
+        userAgent: req.headers['user-agent'],
+      });
+      ApiResponse.success(res, result, 'Phone change initiated. Current phone OTP pending verification.', HttpStatus.OK);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public verifyCurrentAdminPhone = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!this.adminPhoneChangeUseCase) {
+        throw new Error('AdminPhoneChangeUseCase not configured');
+      }
+      const result = await this.adminPhoneChangeUseCase.verifyCurrentPhone({
+        actor: { id: req.user!.id, email: req.user!.email },
+        sessionId: req.body?.sessionId,
+        verificationToken: req.body?.verificationToken,
+        ip: req.ip || req.socket?.remoteAddress,
+        userAgent: req.headers['user-agent'],
+      });
+      ApiResponse.success(res, result, result.message, HttpStatus.OK);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public requestNewAdminPhone = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!this.adminPhoneChangeUseCase) {
+        throw new Error('AdminPhoneChangeUseCase not configured');
+      }
+      const result = await this.adminPhoneChangeUseCase.requestNewPhone({
+        actor: { id: req.user!.id, email: req.user!.email },
+        sessionId: req.body?.sessionId,
+        newPhone: req.body?.newPhone,
+        ip: req.ip || req.socket?.remoteAddress,
+        userAgent: req.headers['user-agent'],
+      });
+      ApiResponse.success(res, result, 'New mobile number submitted. OTP pending verification.', HttpStatus.OK);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public verifyNewAdminPhone = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!this.adminPhoneChangeUseCase) {
+        throw new Error('AdminPhoneChangeUseCase not configured');
+      }
+      const result = await this.adminPhoneChangeUseCase.verifyNewPhone({
+        actor: { id: req.user!.id, email: req.user!.email },
+        sessionId: req.body?.sessionId,
+        verificationToken: req.body?.verificationToken,
+        ip: req.ip || req.socket?.remoteAddress,
+        userAgent: req.headers['user-agent'],
+      });
+
+      // Refresh authentication cookies for the current session with new tokenVersion
+      if (result.accessToken && result.refreshToken) {
+        setAuthCookies(res, result.accessToken, result.refreshToken);
+      }
+
+      ApiResponse.success(res, result, result.message, HttpStatus.OK);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public cancelAdminPhoneChange = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!this.adminPhoneChangeUseCase) {
+        throw new Error('AdminPhoneChangeUseCase not configured');
+      }
+      const result = await this.adminPhoneChangeUseCase.cancel({
+        actor: { id: req.user!.id, email: req.user!.email },
+        sessionId: req.body?.sessionId,
+        ip: req.ip || req.socket?.remoteAddress,
+        userAgent: req.headers['user-agent'],
+      });
+      ApiResponse.success(res, result, result.message, HttpStatus.OK);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getAdminPhoneRecoveryInfo = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!this.adminPhoneChangeUseCase) {
+        throw new Error('AdminPhoneChangeUseCase not configured');
+      }
+      const result = this.adminPhoneChangeUseCase.getRecoveryInfo();
+      ApiResponse.success(res, result, 'Administrator Account Recovery Protocol', HttpStatus.OK);
     } catch (error) {
       next(error);
     }

@@ -17,6 +17,8 @@ import { UpdateUserStatusUseCase } from '../../application/use-cases/update-user
 import { DeleteUserUseCase } from '../../application/use-cases/delete-user.use-case';
 import { GetUserByIdUseCase } from '../../application/use-cases/get-user-by-id.use-case';
 import { UpdateStaffUseCase } from '../../application/use-cases/update-staff.use-case';
+import { AdminPhoneChangeUseCase } from '../../application/use-cases/admin-phone-change.use-case';
+import { adminPhoneChangeLimiter } from '../../../../presentation/http/middleware/rate-limiter.middleware';
 
 import { RoleRepository } from '../../../roles/infrastructure/repositories/role.repository';
 
@@ -25,7 +27,7 @@ const router = Router();
 const userRepository = new UserRepository();
 const roleRepository = new RoleRepository();
 const getProfileUseCase = new GetProfileUseCase(userRepository, roleRepository);
-const updateProfileUseCase = new UpdateProfileUseCase(userRepository);
+const updateProfileUseCase = new UpdateProfileUseCase(userRepository, roleRepository);
 const getAllUsersUseCase = new GetAllUsersUseCase(userRepository);
 const updateUserRoleUseCase = new UpdateUserRoleUseCase(userRepository, roleRepository);
 const createUserUseCase = new CreateUserUseCase(userRepository, roleRepository);
@@ -33,6 +35,7 @@ const updateUserStatusUseCase = new UpdateUserStatusUseCase(userRepository);
 const deleteUserUseCase = new DeleteUserUseCase(userRepository);
 const getUserByIdUseCase = new GetUserByIdUseCase(userRepository, roleRepository);
 const updateStaffUseCase = new UpdateStaffUseCase(userRepository, roleRepository);
+const adminPhoneChangeUseCase = new AdminPhoneChangeUseCase(userRepository, undefined, roleRepository);
 
 const userController = new UserController(
   getProfileUseCase, 
@@ -45,7 +48,8 @@ const userController = new UserController(
   getUserByIdUseCase,
   userRepository,
   updateStaffUseCase,
-  roleRepository
+  roleRepository,
+  adminPhoneChangeUseCase
 );
 
 // Apply auth middleware to all user routes
@@ -53,6 +57,14 @@ router.use(requireAuth);
 
 router.get('/me', userController.getProfile);
 router.patch('/me', userController.updateProfile);
+
+// Administrator Mobile Number Change Workflow (Multi-Factor Dual-OTP)
+router.post('/admin-phone-change/initiate', adminPhoneChangeLimiter, userController.initiateAdminPhoneChange);
+router.post('/admin-phone-change/verify-current-phone', adminPhoneChangeLimiter, userController.verifyCurrentAdminPhone);
+router.post('/admin-phone-change/request-new-phone', adminPhoneChangeLimiter, userController.requestNewAdminPhone);
+router.post('/admin-phone-change/verify-new-phone', adminPhoneChangeLimiter, userController.verifyNewAdminPhone);
+router.post('/admin-phone-change/cancel', adminPhoneChangeLimiter, userController.cancelAdminPhoneChange);
+router.get('/admin-phone-change/recovery-info', userController.getAdminPhoneRecoveryInfo);
 
 // Admin / Staff routes
 router.get('/', requirePermission(['manage_users', 'view_staff', 'manage_staff']), userController.getAll);

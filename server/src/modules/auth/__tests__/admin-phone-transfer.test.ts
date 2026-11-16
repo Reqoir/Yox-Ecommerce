@@ -48,8 +48,8 @@ describe('Admin Phone Transfer, OTP Registration & User Cleanup Test Suite', () 
     jest.clearAllMocks();
   });
 
-  describe('1. Admin Phone Number Replacement Flow', () => {
-    it('should preserve existing administrator ID, email, role, and password when phone is replaced', async () => {
+  describe('1. Admin Phone Number Replacement Flow & Profile Protection', () => {
+    it('should block direct administrator phone update via generic updateProfile and require secure workflow', async () => {
       const adminUser = User.reconstitute({
         id: ADMIN_ID,
         fullName: 'System Admin',
@@ -65,74 +65,66 @@ describe('Admin Phone Transfer, OTP Registration & User Cleanup Test Suite', () 
       });
 
       mockUserRepo.findById.mockResolvedValue(adminUser);
-      mockUserRepo.findByPhone.mockResolvedValue(null); // New phone is not owned by anyone else
-      mockUserRepo.update.mockImplementation(async (_id, user) => user as User);
-
-      // Mock successful MSG91 verification
-      jest.spyOn(msg91OtpService, 'verifyToken').mockResolvedValue({ verified: true, identifier: NEW_PHONE });
-
-      const updateProfileUseCase = new UpdateProfileUseCase(mockUserRepo);
-      const updated = await updateProfileUseCase.execute(ADMIN_ID, {
-        phone: NEW_PHONE,
-        verificationToken: 'valid_msg91_token_new_phone',
-      });
-
-      // Verify administrator preserves ID, email, role
-      expect(updated.id).toBe(ADMIN_ID);
-      expect(updated.email).toBe('admin@yox.com');
-      expect(updated.roleId).toBe(ADMIN_ROLE_ID);
-      expect(updated.phone).toBe(NEW_PHONE);
-      expect(updated.isPhoneVerified).toBe(true);
-
-      expect(msg91OtpService.verifyToken).toHaveBeenCalledWith('valid_msg91_token_new_phone', NEW_PHONE);
-      expect(mockUserRepo.update).toHaveBeenCalledWith(ADMIN_ID, expect.any(User));
-    });
-
-    it('should reject phone update if MSG91 OTP verification fails, leaving old phone intact', async () => {
-      const adminUser = User.reconstitute({
-        id: ADMIN_ID,
-        fullName: 'System Admin',
-        email: 'admin@yox.com',
-        phone: OLD_PHONE,
-        password: '$2a$12$hashedPasswordVal',
-        roleId: ADMIN_ROLE_ID,
-        isEmailVerified: true,
-        isPhoneVerified: true,
-        status: UserStatus.ACTIVE,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      mockUserRepo.findById.mockResolvedValue(adminUser);
-      mockUserRepo.findByPhone.mockResolvedValue(null);
-
-      // Mock MSG91 failure
-      jest.spyOn(msg91OtpService, 'verifyToken').mockRejectedValue(
-        ApiError.unauthorized('Mobile OTP verification token is invalid or expired.')
-      );
-
       const updateProfileUseCase = new UpdateProfileUseCase(mockUserRepo);
 
       await expect(
         updateProfileUseCase.execute(ADMIN_ID, {
           phone: NEW_PHONE,
-          verificationToken: 'invalid_token',
+          verificationToken: 'valid_token',
         })
-      ).rejects.toThrow(ApiError);
+      ).rejects.toThrow('The primary System Administrator registered phone number cannot be modified via standard profile update');
 
-      // Verify update was never called
       expect(mockUserRepo.update).not.toHaveBeenCalled();
-      expect(adminUser.phone).toBe(OLD_PHONE);
     });
 
-    it('should reject phone update if new phone is already registered to another account (uniqueness check)', async () => {
-      const adminUser = User.reconstitute({
-        id: ADMIN_ID,
-        fullName: 'System Admin',
-        email: 'admin@yox.com',
+    it('should allow customer phone update with MSG91 verification and preserve customer properties', async () => {
+      const customerUser = User.reconstitute({
+        id: 'cust_123',
+        fullName: 'Customer Name',
+        email: 'customer@example.com',
         phone: OLD_PHONE,
         password: '$2a$12$hashedPasswordVal',
-        roleId: ADMIN_ROLE_ID,
+        roleId: CUSTOMER_ROLE_ID,
+        isEmailVerified: true,
+        isPhoneVerified: true,
+        status: UserStatus.ACTIVE,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      mockUserRepo.findById.mockResolvedValue(customerUser);
+      mockUserRepo.findByPhone.mockResolvedValue(null);
+      mockUserRepo.update.mockImplementation(async (_id, user) => user as User);
+      mockRoleRepo.findById.mockResolvedValue({
+        id: CUSTOMER_ROLE_ID,
+        name: 'CUSTOMER',
+        level: 0,
+        isSystem: true,
+        permissions: [],
+      } as any);
+      jest.spyOn(msg91OtpService, 'verifyToken').mockResolvedValue({ verified: true, identifier: NEW_PHONE });
+
+      const updateProfileUseCase = new UpdateProfileUseCase(mockUserRepo, mockRoleRepo);
+      const updated = await updateProfileUseCase.execute('cust_123', {
+        phone: NEW_PHONE,
+        verificationToken: 'valid_msg91_token_new_phone',
+      });
+
+      expect(updated.id).toBe('cust_123');
+      expect(updated.phone).toBe(NEW_PHONE);
+      expect(updated.isPhoneVerified).toBe(true);
+      expect(msg91OtpService.verifyToken).toHaveBeenCalledWith('valid_msg91_token_new_phone', NEW_PHONE);
+      expect(mockUserRepo.update).toHaveBeenCalledWith('cust_123', expect.any(User));
+    });
+
+    it('should reject customer phone update if new phone is already registered to another account (uniqueness check)', async () => {
+      const customerUser = User.reconstitute({
+        id: 'cust_123',
+        fullName: 'Customer Name',
+        email: 'customer@example.com',
+        phone: OLD_PHONE,
+        password: '$2a$12$hashedPasswordVal',
+        roleId: CUSTOMER_ROLE_ID,
         isEmailVerified: true,
         isPhoneVerified: true,
         status: UserStatus.ACTIVE,
@@ -154,13 +146,20 @@ describe('Admin Phone Transfer, OTP Registration & User Cleanup Test Suite', () 
         updatedAt: new Date(),
       });
 
-      mockUserRepo.findById.mockResolvedValue(adminUser);
+      mockUserRepo.findById.mockResolvedValue(customerUser);
       mockUserRepo.findByPhone.mockResolvedValue(conflictingUser);
+      mockRoleRepo.findById.mockResolvedValue({
+        id: CUSTOMER_ROLE_ID,
+        name: 'CUSTOMER',
+        level: 0,
+        isSystem: true,
+        permissions: [],
+      } as any);
 
-      const updateProfileUseCase = new UpdateProfileUseCase(mockUserRepo);
+      const updateProfileUseCase = new UpdateProfileUseCase(mockUserRepo, mockRoleRepo);
 
       await expect(
-        updateProfileUseCase.execute(ADMIN_ID, {
+        updateProfileUseCase.execute('cust_123', {
           phone: NEW_PHONE,
           verificationToken: 'valid_token',
         })

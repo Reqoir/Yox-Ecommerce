@@ -8,6 +8,7 @@
 
 import { ApiError } from '@shared/utils/api-error.util';
 import { IUserRepository } from '../../domain/repositories/user.repository.interface';
+import { IRoleRepository } from '../../../roles/domain/repositories/role.repository.interface';
 import { UpdateProfileRequestDTO } from '../dtos/update-profile.dto';
 import { User } from '../../domain/entities/user.entity';
 import { msg91OtpService } from '../../../auth/infrastructure/services/msg91-otp.service';
@@ -15,7 +16,10 @@ import { RoleModel } from '../../../roles/infrastructure/models/role.model';
 import { AuditLogService } from '../../../audit-logs/application/services/audit-log.service';
 
 export class UpdateProfileUseCase {
-  constructor(private readonly userRepository: IUserRepository) {}
+  constructor(
+    private readonly userRepository: IUserRepository,
+    private readonly roleRepository?: IRoleRepository
+  ) {}
 
   public async execute(userId: string, data: UpdateProfileRequestDTO): Promise<User> {
     const user = await this.userRepository.findById(userId);
@@ -24,16 +28,33 @@ export class UpdateProfileUseCase {
       throw ApiError.notFound('User profile not found');
     }
 
-    // Security Rule: Internal staff members cannot change their assigned work email or phone number.
-    // Only the Store Owner (admin@yox.com / Super Admin) or Customers may change these.
+    // Security Rule 1: The primary System Administrator registered phone number CANNOT be changed via
+    // generic profile update. Multi-factor dual-OTP verification (password confirmation + current phone OTP +
+    // new phone OTP) is strictly required via the dedicated Admin Phone Change workflow.
     const isOwner = user.email === 'admin@yox.com';
+    if (isOwner && data.phone !== undefined) {
+      throw ApiError.forbidden(
+        'The primary System Administrator registered phone number cannot be modified via standard profile update. Please use the secure Administrator Phone Change workflow requiring password re-authentication and dual-OTP verification.'
+      );
+    }
+
+    // Security Rule 2: Internal staff members, managers, and editors cannot change their assigned contact phone or work email.
+    // Only standard storefront Customers may update their personal contact phone via this endpoint.
     if (!isOwner && user.roleId && (data.email !== undefined || data.phone !== undefined)) {
-      const role = await RoleModel.findById(user.roleId).select('name').lean();
+      let roleName = '';
+      if (this.roleRepository) {
+        const roleEntity = await this.roleRepository.findById(user.roleId);
+        roleName = roleEntity?.name || '';
+      } else {
+        try {
+          const roleDoc = await RoleModel.findById(user.roleId).select('name').lean();
+          roleName = roleDoc?.name || '';
+        } catch {}
+      }
+
       if (
-        role &&
-        role.name.toUpperCase() !== 'CUSTOMER' &&
-        role.name.toUpperCase() !== 'ADMIN' &&
-        role.name.toUpperCase() !== 'SUPER_ADMIN'
+        roleName &&
+        roleName.toUpperCase() !== 'CUSTOMER'
       ) {
         throw ApiError.forbidden(
           'Staff members cannot change their assigned work email or contact phone number. Please contact your store administrator.'
