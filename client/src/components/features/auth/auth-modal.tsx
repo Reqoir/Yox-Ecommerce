@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
@@ -243,24 +244,27 @@ export function AuthModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200 selection:bg-black selection:text-white">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 selection:bg-black selection:text-white">
       {/* Backdrop */}
       <div className="absolute inset-0" onClick={closeModal} />
 
-      {/* Modal Card */}
+      {/* Modal Card (Full width bottom sheet on mobile, centered modal on desktop) */}
       <div
-        className="relative z-10 bg-white rounded-md max-w-[500px] w-full p-6 sm:p-10 shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200 mx-3 sm:mx-auto max-h-[92vh] overflow-y-auto"
+        className="relative z-10 bg-white w-full max-w-full sm:max-w-[480px] rounded-t-2xl sm:rounded-md rounded-b-none sm:rounded-b-md px-5 pt-5 pb-[max(24px,env(safe-area-inset-bottom))] sm:p-8 shadow-2xl border-t border-x sm:border border-gray-200 sm:border-gray-100 border-b-0 sm:border-b animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 max-h-[90vh] sm:max-h-[92vh] overflow-y-auto"
         role="dialog"
         aria-modal="true"
       >
+        {/* Mobile Pull Handle Indicator */}
+        <div className="sm:hidden w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4 -mt-1 shrink-0" />
+
         {/* Close Button */}
         <button
           type="button"
           onClick={closeModal}
-          className="absolute top-6 right-6 p-1 text-gray-500 hover:text-black transition-colors cursor-pointer"
+          className="absolute top-4 right-4 sm:top-6 sm:right-6 p-1 text-gray-500 hover:text-black transition-colors cursor-pointer"
           aria-label="Close modal"
         >
-          <X size={24} strokeWidth={1.5} />
+          <X size={22} strokeWidth={1.5} />
         </button>
 
         {/* Modal Header */}
@@ -338,13 +342,23 @@ export function AuthModal() {
 
             <p className="text-[11px] text-gray-500 leading-relaxed pt-1">
               By continuing, you agree to our{' '}
-              <span className="text-[#C09B7A] font-medium underline cursor-pointer hover:opacity-80">
-                Terms of Service
-              </span>{' '}
+              <Link
+                href="/terms-and-conditions"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#C09B7A] font-medium underline underline-offset-2 hover:text-black transition-colors"
+              >
+                Terms and Conditions
+              </Link>{' '}
               and{' '}
-              <span className="text-[#C09B7A] font-medium underline cursor-pointer hover:opacity-80">
+              <Link
+                href="/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#C09B7A] font-medium underline underline-offset-2 hover:text-black transition-colors"
+              >
                 Privacy Policy
-              </span>.
+              </Link>.
             </p>
 
             <div className="pt-2">

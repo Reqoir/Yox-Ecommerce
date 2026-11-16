@@ -321,6 +321,16 @@ export function Footer() {
                   Track Your Order
                 </Link>
               </li>
+              <li>
+                <Link href="/terms-and-conditions" className="hover:text-gray-800 transition-colors">
+                  Terms & Conditions
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy-policy" className="hover:text-gray-800 transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -474,11 +484,19 @@ export function Footer() {
 
       {/* 4. Bottom Bar: Copyright, Reqoir Technologies Credit, and Payment Badges */}
       <div className="border-t border-[#EAE6DF] bg-[#F1EFEA]">
-        <div className="w-[95%] max-w-7xl mx-auto py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-gray-500">
+        <div className="w-[95%] max-w-7xl mx-auto py-6 pb-24 lg:pb-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-gray-500">
 
           {/* Copyright & Developed by Reqoir Technologies */}
-          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-center sm:text-left">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-center sm:text-left flex-wrap">
             <span suppressHydrationWarning>© {new Date().getFullYear()} YOX Men&apos;s Fashion. All rights reserved.</span>
+            <span className="hidden sm:inline text-gray-300">|</span>
+            <Link href="/terms-and-conditions" className="hover:text-black hover:underline transition-colors">
+              Terms & Conditions
+            </Link>
+            <span className="hidden sm:inline text-gray-300">|</span>
+            <Link href="/privacy-policy" className="hover:text-black hover:underline transition-colors">
+              Privacy Policy
+            </Link>
             <span className="hidden sm:inline text-gray-300">|</span>
             <span className="flex items-center gap-1">
               <span>Developed by</span>
