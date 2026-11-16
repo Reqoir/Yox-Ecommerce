@@ -147,7 +147,16 @@ export default function RoleManagementPage() {
 
   // Evaluates editing/deletion eligibility for a given role against current actor
   const checkRolePermissions = (role: Role) => {
-    if (isStoreOwner) return { canEdit: true, canDelete: !role.isSystem, reason: '' };
+    // 1. System roles are permanently locked from modifications or deletion
+    if (role.isSystem) {
+      return {
+        canEdit: false,
+        canDelete: false,
+        reason: 'Protected System Role: Core system role definitions and hierarchy ranks are permanent and cannot be modified or deleted.',
+      };
+    }
+
+    if (isStoreOwner) return { canEdit: true, canDelete: true, reason: '' };
 
     const roleName = (role.name || '').toUpperCase();
     let rLevel = role.level;
@@ -159,7 +168,7 @@ export default function RoleManagementPage() {
     }
     if (rLevel === undefined) rLevel = 50;
 
-    // 1. Admin role is permanently protected from non-Store-Owners
+    // 2. Admin role is permanently protected from non-Store-Owners
     if (roleName === 'ADMIN' || rLevel >= 100) {
       return {
         canEdit: false,
@@ -168,7 +177,7 @@ export default function RoleManagementPage() {
       };
     }
 
-    // 2. Self-Privilege Escalation Prevention: User cannot edit their own assigned role!
+    // 3. Self-Privilege Escalation Prevention: User cannot edit their own assigned role!
     const isOwnRole = Boolean(
       (currentUser?.roleId && role.id === currentUser.roleId) ||
       (currentUser?.role && roleName === currentUser.role.toUpperCase())
@@ -181,7 +190,7 @@ export default function RoleManagementPage() {
       };
     }
 
-    // 3. Hierarchy restriction: User cannot edit a role with equal or higher rank
+    // 4. Hierarchy restriction: User cannot edit a role with equal or higher rank
     if (currentActorLevel <= rLevel) {
       return {
         canEdit: false,
@@ -429,13 +438,33 @@ export default function RoleManagementPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {role.permissions.length > 0 ? (
-                        <span className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-900/20 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
-                          {role.permissions.length} permissions
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">None</span>
-                      )}
+                      {(() => {
+                        const isWildcard = role.permissions.includes('*');
+                        const rName = (role.name || '').toUpperCase();
+                        const isFullAdmin = isWildcard || ((rName === 'ADMIN' || rName === 'SUPER_ADMIN') && role.permissions.length >= 10);
+                        const count = isWildcard ? PERMISSIONS_LIST.length : role.permissions.length;
+
+                        return count > 0 ? (
+                          <span
+                            className={cn(
+                              "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                              count >= 18 || isWildcard
+                                ? "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
+                                : count >= 14
+                                ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"
+                                : count >= 6
+                                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                                : "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                            )}
+                          >
+                            {count} / {PERMISSIONS_LIST.length} permissions
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-zinc-100 dark:bg-zinc-800 px-2.5 py-0.5 text-xs text-muted-foreground border border-zinc-200 dark:border-zinc-700">
+                            0 / {PERMISSIONS_LIST.length} (None)
+                          </span>
+                        );
+                      })()}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -471,9 +500,9 @@ export default function RoleManagementPage() {
                   </TableCell>
                   <TableCell>
                     {role.isSystem ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 dark:bg-zinc-800 px-2.5 py-0.5 text-xs font-medium">
-                        <ShieldAlert className="h-3 w-3" />
-                        System
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 px-2.5 py-0.5 text-xs font-semibold" title="Protected System Role">
+                        <Lock className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                        Protected
                       </span>
                     ) : (
                       <span className="inline-flex items-center rounded-full bg-green-50 dark:bg-green-900/20 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-300">

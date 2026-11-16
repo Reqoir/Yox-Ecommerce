@@ -12,6 +12,7 @@ import { UpdateProfileRequestDTO } from '../dtos/update-profile.dto';
 import { User } from '../../domain/entities/user.entity';
 import { msg91OtpService } from '../../../auth/infrastructure/services/msg91-otp.service';
 import { RoleModel } from '../../../roles/infrastructure/models/role.model';
+import { AuditLogService } from '../../../audit-logs/application/services/audit-log.service';
 
 export class UpdateProfileUseCase {
   constructor(private readonly userRepository: IUserRepository) {}
@@ -110,6 +111,8 @@ export class UpdateProfileUseCase {
         ? (data.fullName.trim() || user.fullName || 'Customer')
         : user.fullName;
 
+    const oldPhone = user.phone;
+
     // 3. Update User Entity
     user.updateProfile({
       fullName: resolvedFullName,
@@ -123,6 +126,28 @@ export class UpdateProfileUseCase {
     
     if (!updatedUser) {
       throw ApiError.internal('Failed to update user profile');
+    }
+
+    // Record security audit log on phone number replacement (without logging full raw phone numbers)
+    if (data.phone !== undefined && resolvedPhone !== oldPhone) {
+      const auditService = AuditLogService.getInstance();
+      if (auditService) {
+        const mask = (p: string | null | undefined) => {
+          if (!p) return 'None';
+          const s = String(p);
+          return s.length > 4 ? `${s.slice(0, 2)}****${s.slice(-2)}` : '****';
+        };
+        auditService.record({
+          actorId: userId,
+          actorEmail: user.email,
+          action: 'USER_PHONE_CHANGED',
+          resourceType: 'User',
+          resourceId: userId,
+          description: `User phone changed from ${mask(oldPhone)} to ${mask(resolvedPhone)}`,
+          before: { phone: mask(oldPhone) },
+          after: { phone: mask(resolvedPhone) },
+        }).catch(() => {});
+      }
     }
 
     return updatedUser;

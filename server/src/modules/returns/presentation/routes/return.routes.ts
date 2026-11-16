@@ -69,6 +69,7 @@ router.use(requireAuth);
 
 // Admin / Staff endpoints (Must be declared BEFORE wildcard /:id routes)
 const adminPermission = requirePermission('manage_orders');
+const refundPermission = requirePermission(['manage_settings', 'view_reports']);
 
 router.get('/admin/all', adminPermission, returnController.getAllReturns);
 router.patch('/admin/:id/approve', adminPermission, returnController.approveReturn);
@@ -76,7 +77,8 @@ router.patch('/admin/:id/reject', adminPermission, returnController.rejectReturn
 router.patch('/admin/:id/pickup', adminPermission, returnController.schedulePickup);
 router.patch('/admin/:id/receive', adminPermission, returnController.receiveReturn);
 router.patch('/admin/:id/inspect', adminPermission, returnController.inspectReturn);
-router.patch('/admin/:id/refund', adminPermission, returnController.processRefund);
+// Razorpay refund processing is strictly restricted to financial roles (Manager & System Admin)
+router.patch('/admin/:id/refund', refundPermission, returnController.processRefund);
 
 // Legacy admin routes (for backward compatibility)
 router.patch('/:id/approve', adminPermission, returnController.approveReturn);
@@ -84,7 +86,7 @@ router.patch('/:id/reject', adminPermission, returnController.rejectReturn);
 router.patch('/:id/pickup', adminPermission, returnController.schedulePickup);
 router.patch('/:id/receive', adminPermission, returnController.receiveReturn);
 router.patch('/:id/inspect', adminPermission, returnController.inspectReturn);
-router.patch('/:id/refund', adminPermission, returnController.processRefund);
+router.patch('/:id/refund', refundPermission, returnController.processRefund);
 
 // Customer endpoints
 router.post('/', returnController.createReturn);

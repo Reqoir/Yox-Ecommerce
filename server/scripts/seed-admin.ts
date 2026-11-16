@@ -11,7 +11,9 @@ const MONGODB_URI = process.env.MONGODB_URI as string;
 // Define simple schema for role
 const roleSchema = new mongoose.Schema({
   name: String,
+  description: String,
   permissions: [String],
+  level: Number,
   isSystem: Boolean,
 });
 const Role = mongoose.model('Role', roleSchema);
@@ -25,6 +27,27 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
+const ALL_SYSTEM_PERMISSIONS = [
+  'dashboard:read',
+  'manage_products',
+  'manage_inventory',
+  'manage_brands',
+  'manage_categories',
+  'manage_orders',
+  'manage_users',
+  'view_staff',
+  'manage_staff',
+  'manage_roles',
+  'manage_settings',
+  'view_analytics',
+  'view_reports',
+  'view_audit_logs',
+  'manage_reviews',
+  'manage_offers',
+  'manage_content',
+  'manage_notifications',
+];
+
 async function seed() {
   try {
     await mongoose.connect(MONGODB_URI);
@@ -34,37 +57,20 @@ async function seed() {
     if (!adminRole) {
       adminRole = await Role.create({
         name: 'Admin',
-        permissions: [
-          'manage_brands',
-          'manage_inventory',
-          'manage_products',
-          'manage_users',
-          'manage_roles',
-          'manage_categories',
-          'manage_orders',
-          'manage_settings',
-          'view_analytics',
-          'view_reports'
-        ],
+        description: 'System Administrator with complete store authority',
+        permissions: ALL_SYSTEM_PERMISSIONS,
+        level: 100,
         isSystem: true,
       });
       console.log('Created Admin role', adminRole._id);
     } else {
       console.log('Admin role already exists', adminRole._id);
-      adminRole.permissions = [
-        'manage_brands',
-        'manage_inventory',
-        'manage_products',
-        'manage_users',
-        'manage_roles',
-        'manage_categories',
-        'manage_orders',
-        'manage_settings',
-        'view_analytics',
-        'view_reports'
-      ];
+      adminRole.permissions = ALL_SYSTEM_PERMISSIONS;
+      (adminRole as any).description = 'System Administrator with complete store authority';
+      (adminRole as any).level = 100;
+      (adminRole as any).isSystem = true;
       await adminRole.save();
-      console.log('Updated existing Admin role with all permissions');
+      console.log('Updated existing Admin role with all 18 permissions and rank 100');
     }
 
     const initialPassword = process.env.ADMIN_INITIAL_PASSWORD || process.argv[2];

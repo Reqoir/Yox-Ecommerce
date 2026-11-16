@@ -75,14 +75,16 @@ router.get('/:id', orderController.getOrderById);
 router.patch('/:id/cancel', orderController.cancelOrder);
 
 // ── Admin-Only State Machine Routes ──────────────────────────────────────────
-const adminPermission = requirePermission('manage_orders');
+const orderManagePermission = requirePermission('manage_orders');
+const financialPermission = requirePermission(['manage_settings', 'view_reports']);
 
-router.patch('/:id/confirm', adminPermission, orderController.confirmOrder);
-router.patch('/:id/pack', adminPermission, orderController.packOrder);
-router.patch('/:id/ship', adminPermission, orderController.shipOrder);
-router.patch('/:id/out-for-delivery', adminPermission, orderController.outForDelivery);
-router.patch('/:id/deliver', adminPermission, orderController.deliverOrder);
-router.patch('/:id/status', adminPermission, orderController.updateStatus);
-router.patch('/:id/payment-status', adminPermission, orderController.updatePaymentStatus);
+router.patch('/:id/confirm', orderManagePermission, orderController.confirmOrder);
+router.patch('/:id/pack', orderManagePermission, orderController.packOrder);
+router.patch('/:id/ship', orderManagePermission, orderController.shipOrder);
+router.patch('/:id/out-for-delivery', orderManagePermission, orderController.outForDelivery);
+router.patch('/:id/deliver', orderManagePermission, orderController.deliverOrder);
+router.patch('/:id/status', orderManagePermission, orderController.updateStatus);
+// Payment status modification is strictly restricted to financial roles (Manager & System Admin)
+router.patch('/:id/payment-status', financialPermission, orderController.updatePaymentStatus);
 
 export { router as ordersRouter };

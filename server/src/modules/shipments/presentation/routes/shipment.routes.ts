@@ -66,8 +66,10 @@ router.get('/:id', shipmentController.getShipmentById);
 
 // Admin-only management routes
 const adminPermission = requirePermission('manage_orders');
+const shipmentBookingPermission = requirePermission(['manage_settings', 'view_reports']);
 router.get('/', adminPermission, shipmentController.getAllShipments);
-router.post('/', adminPermission, shipmentController.createShipment);
+// Courier shipment booking and charge dispatch is restricted to operational managers & admins
+router.post('/', shipmentBookingPermission, shipmentController.createShipment);
 router.patch('/:id/status', adminPermission, shipmentController.updateStatus);
 router.post('/:orderId/sync-courier', adminPermission, shipmentController.syncCourierStatus);
 router.post('/:orderId/label', adminPermission, shipmentController.generateLabel);
