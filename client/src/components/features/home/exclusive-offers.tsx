@@ -368,6 +368,7 @@ export function ExclusiveOffers() {
                       src={optimizeCloudinaryUrl(currentOffer.banner.imageUrl, 2000)}
                       alt={currentOffer.banner.title || currentOffer.title}
                       fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1500px"
                       quality={95}
                       priority
                       className="object-cover object-center group-hover:scale-[1.015] transition-transform duration-700"
