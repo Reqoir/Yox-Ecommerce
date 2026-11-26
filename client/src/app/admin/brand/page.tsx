@@ -51,6 +51,7 @@ import { Pagination } from '@/components/ui/pagination';
 import { useBrands } from '@/hooks/admin/useBrands';
 import { Brand } from '@/api/admin/brands';
 import { uploadApi } from '@/api/admin/upload';
+import { sanitizeHttpUrl } from '@/lib/html-escape';
 import { ImageCropperModal } from '@/components/ui/image-cropper-modal';
 import { toast } from 'sonner';
 
@@ -419,7 +420,7 @@ export default function AdminBrandPage() {
                   <TableCell>
                     {brand.website ? (
                       <a
-                        href={brand.website.startsWith('http') ? brand.website : `https://${brand.website}`}
+                        href={sanitizeHttpUrl(brand.website.startsWith('http') ? brand.website : `https://${brand.website}`) || '#'}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline max-w-[180px] truncate"
@@ -936,7 +937,7 @@ export default function AdminBrandPage() {
                   </div>
                   {viewBrand.website && (
                     <a
-                      href={viewBrand.website.startsWith('http') ? viewBrand.website : `https://${viewBrand.website}`}
+                      href={sanitizeHttpUrl(viewBrand.website.startsWith('http') ? viewBrand.website : `https://${viewBrand.website}`) || '#'}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline pt-0.5"

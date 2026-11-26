@@ -13,6 +13,7 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
+import { escapeHtml } from '@/lib/html-escape';
 import Swal from 'sweetalert2';
 import { useAdminAuthStore } from '@/store/useAdminAuthStore';
 import { Notification, notificationApi } from '@/api/admin/notifications';
@@ -317,31 +318,32 @@ export function useRealtimeNotifications() {
 
       let extraHtml = '';
       if (orderNumber) {
-        extraHtml += `<div style="display:inline-block;padding:2px 10px;background:${config.borderColor}33;border-radius:6px;font-weight:700;font-size:13px;margin-bottom:8px;">Order #${orderNumber}</div>`;
+        extraHtml += `<div style="display:inline-block;padding:2px 10px;background:${config.borderColor}33;border-radius:6px;font-weight:700;font-size:13px;margin-bottom:8px;">Order #${escapeHtml(orderNumber)}</div>`;
       }
       if (totalAmount !== undefined) {
-        extraHtml += `<div style="font-size:14px;font-weight:600;color:${config.color};margin-bottom:4px;">₹${Number(totalAmount).toLocaleString('en-IN')}</div>`;
+        extraHtml += `<div style="font-size:14px;font-weight:600;color:${config.color};margin-bottom:4px;">₹${escapeHtml(Number(totalAmount).toLocaleString('en-IN'))}</div>`;
       }
       if (quantity !== undefined && notification.type === 'RETURN_REQUEST') {
-        extraHtml += `<div style="font-size:13px;color:#6b7280;margin-bottom:4px;">Qty: ${quantity} unit${Number(quantity) !== 1 ? 's' : ''}</div>`;
+        extraHtml += `<div style="font-size:13px;color:#6b7280;margin-bottom:4px;">Qty: ${escapeHtml(quantity)} unit${Number(quantity) !== 1 ? 's' : ''}</div>`;
       }
       if (customerNote) {
-        extraHtml += `<div style="margin-top:8px;padding:8px 12px;background:#f8fafc;border-left:3px solid ${config.color};border-radius:4px;text-align:left;font-size:13px;color:#374151;font-style:italic;">"${customerNote}"</div>`;
+        extraHtml += `<div style="margin-top:8px;padding:8px 12px;background:#f8fafc;border-left:3px solid ${config.color};border-radius:4px;text-align:left;font-size:13px;color:#374151;font-style:italic;">"${escapeHtml(customerNote)}"</div>`;
       }
       if (notification.type === 'NEW_REVIEW') {
         const rating = notification.metadata?.rating as number | undefined;
         const productName = notification.metadata?.productName as string | undefined;
         if (rating) {
-          extraHtml += `<div style="font-size:15px;font-weight:700;color:#8b5cf6;margin-bottom:4px;">${'★'.repeat(rating)}${'☆'.repeat(Math.max(0, 5 - rating))} (${rating}/5)</div>`;
+          const safeRating = Math.min(5, Math.max(0, Math.round(Number(rating) || 0)));
+          extraHtml += `<div style="font-size:15px;font-weight:700;color:#8b5cf6;margin-bottom:4px;">${'★'.repeat(safeRating)}${'☆'.repeat(Math.max(0, 5 - safeRating))} (${escapeHtml(safeRating)}/5)</div>`;
         }
         if (productName) {
-          extraHtml += `<div style="display:inline-block;padding:2px 10px;background:#8b5cf622;border-radius:6px;font-weight:600;font-size:12px;margin-bottom:8px;color:#6d28d9;">${productName}</div>`;
+          extraHtml += `<div style="display:inline-block;padding:2px 10px;background:#8b5cf622;border-radius:6px;font-weight:600;font-size:12px;margin-bottom:8px;color:#6d28d9;">${escapeHtml(productName)}</div>`;
         }
       }
       if (notification.type === 'NEW_USER') {
         const email = notification.metadata?.email as string | undefined;
         if (email) {
-          extraHtml += `<div style="display:inline-block;padding:2px 10px;background:#06b6d422;border-radius:6px;font-weight:600;font-size:12px;margin-bottom:8px;color:#0891b2;">${email}</div>`;
+          extraHtml += `<div style="display:inline-block;padding:2px 10px;background:#06b6d422;border-radius:6px;font-weight:600;font-size:12px;margin-bottom:8px;color:#0891b2;">${escapeHtml(email)}</div>`;
         }
       }
 
@@ -356,7 +358,7 @@ export function useRealtimeNotifications() {
         if (orderNumber) queryParts.push(`orderId=${encodeURIComponent(orderNumber)}`);
         else if (orderId) queryParts.push(`orderId=${encodeURIComponent(orderId)}`);
         targetHref = `/admin/order?${queryParts.join('&')}`;
-        confirmText = orderNumber ? `View Return #${orderNumber}` : 'View Return';
+        confirmText = orderNumber ? `View Return #${String(orderNumber)}` : 'View Return';
       } else if (
         notification.type === 'NEW_ORDER' ||
         notification.type === 'ORDER_CANCELLED' ||
@@ -365,16 +367,16 @@ export function useRealtimeNotifications() {
         const orderKey = orderNumber || orderId;
         if (orderKey) {
           targetHref = `/admin/order?orderId=${encodeURIComponent(orderKey)}`;
-          confirmText = `View Order #${orderKey}`;
+          confirmText = `View Order #${String(orderKey)}`;
         }
       }
 
       void Swal.fire({
-        title: `<span style="font-size:18px;font-weight:700;">${notification.title}</span>`,
+        titleText: notification.title || '',
         html: `
           <div style="text-align:center;">
             ${extraHtml}
-            <p style="color:#4b5563;font-size:14px;margin:8px 0 0;">${notification.message}</p>
+            <p style="color:#4b5563;font-size:14px;margin:8px 0 0;">${escapeHtml(notification.message)}</p>
           </div>
         `,
         icon: undefined,

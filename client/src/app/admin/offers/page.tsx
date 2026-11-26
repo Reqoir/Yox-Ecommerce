@@ -39,6 +39,7 @@ import { useProducts } from '@/hooks/admin/useProducts';
 import { useCategories } from '@/hooks/admin/useCategories';
 import { useBrands } from '@/hooks/admin/useBrands';
 import { uploadApi } from '@/api/admin/upload';
+import { sanitizeHttpUrl } from '@/lib/html-escape';
 import { Pagination } from '@/components/ui/pagination';
 
 const OFFER_TYPES: { type: OfferType; label: string; desc: string; icon: any; color: string }[] = [
@@ -1178,23 +1179,26 @@ export default function AdminOffersPage() {
                   </div>
 
                   {/* Banner Live Preview */}
-                  {bannerImageUrl && (
-                    <div className="relative aspect-[11/4] w-full rounded-md overflow-hidden bg-gray-900 border">
-                      <img src={bannerImageUrl} alt="Banner Preview" className="w-full h-full object-cover opacity-80" />
-                      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent flex flex-col justify-center p-4 sm:p-6 text-white">
-                        <span className="text-[10px] uppercase font-bold tracking-widest text-amber-400 mb-1">
-                          {badgeText || `${discountValue}% OFF`}
-                        </span>
-                        <h4 className="text-lg sm:text-2xl font-black">{bannerTitle || title}</h4>
-                        <p className="text-xs sm:text-sm text-gray-200 line-clamp-1 max-w-sm mt-0.5">{bannerSubtitle || description}</p>
-                        <div className="mt-3">
-                          <span className="inline-flex items-center gap-1 bg-background text-foreground text-xs font-bold px-3 py-1 rounded border border-border">
-                            {bannerCtaText || 'Explore Offer'} <ArrowRight size={12} />
+                  {(() => {
+                    const safeBannerUrl = sanitizeHttpUrl(bannerImageUrl, { allowRelative: true });
+                    return safeBannerUrl ? (
+                      <div className="relative aspect-[11/4] w-full rounded-md overflow-hidden bg-gray-900 border">
+                        <img src={safeBannerUrl} alt="Banner Preview" className="w-full h-full object-cover opacity-80" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent flex flex-col justify-center p-4 sm:p-6 text-white">
+                          <span className="text-[10px] uppercase font-bold tracking-widest text-amber-400 mb-1">
+                            {badgeText || `${discountValue}% OFF`}
                           </span>
+                          <h4 className="text-lg sm:text-2xl font-black">{bannerTitle || title}</h4>
+                          <p className="text-xs sm:text-sm text-gray-200 line-clamp-1 max-w-sm mt-0.5">{bannerSubtitle || description}</p>
+                          <div className="mt-3">
+                            <span className="inline-flex items-center gap-1 bg-background text-foreground text-xs font-bold px-3 py-1 rounded border border-border">
+                              {bannerCtaText || 'Explore Offer'} <ArrowRight size={12} />
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    ) : null;
+                  })()}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>

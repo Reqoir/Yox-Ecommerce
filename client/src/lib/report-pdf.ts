@@ -3,6 +3,8 @@
  * Opens an isolated print window with tailored styles for "Save as PDF".
  */
 
+import { escapeHtml } from './html-escape';
+
 interface PDFExportOptions {
   title: string;
   subtitle?: string;
@@ -34,7 +36,7 @@ export function exportReportToPDF(options: PDFExportOptions) {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>${title} - YOX Store Report</title>
+  <title>${escapeHtml(title)} - YOX Store Report</title>
   <style>
     @page {
       size: A4;
@@ -195,14 +197,14 @@ export function exportReportToPDF(options: PDFExportOptions) {
       <div class="brand-tag">Administration & Financial Analytics</div>
     </div>
     <div class="meta-box">
-      <div>Generated on: <strong>${generatedDate}</strong></div>
-      ${dateRange ? `<div>Reporting Period: <strong>${dateRange}</strong></div>` : ''}
+      <div>Generated on: <strong>${escapeHtml(generatedDate)}</strong></div>
+      ${dateRange ? `<div>Reporting Period: <strong>${escapeHtml(dateRange)}</strong></div>` : ''}
     </div>
   </div>
 
   <div class="report-title-bar">
-    <div class="report-title">${title}</div>
-    ${subtitle ? `<div class="report-period">${subtitle}</div>` : ''}
+    <div class="report-title">${escapeHtml(title)}</div>
+    ${subtitle ? `<div class="report-period">${escapeHtml(subtitle)}</div>` : ''}
   </div>
 
   ${
@@ -212,9 +214,9 @@ export function exportReportToPDF(options: PDFExportOptions) {
         .map(
           (k) => `
         <div class="kpi-card">
-          <div class="kpi-label">${k.label}</div>
-          <div class="kpi-value">${k.value}</div>
-          ${k.helper ? `<div class="kpi-helper">${k.helper}</div>` : ''}
+          <div class="kpi-label">${escapeHtml(k.label)}</div>
+          <div class="kpi-value">${escapeHtml(k.value)}</div>
+          ${k.helper ? `<div class="kpi-helper">${escapeHtml(k.helper)}</div>` : ''}
         </div>
       `
         )
@@ -227,12 +229,12 @@ export function exportReportToPDF(options: PDFExportOptions) {
     .map(
       (sec) => `
     <div class="section">
-      <div class="section-title">${sec.heading}</div>
+      <div class="section-title">${escapeHtml(sec.heading)}</div>
       <table>
         <thead>
           <tr>
             ${sec.headers
-              .map((h, idx) => {
+              .map((h) => {
                 const isNum =
                   h.toLowerCase().includes('amount') ||
                   h.toLowerCase().includes('revenue') ||
@@ -241,7 +243,7 @@ export function exportReportToPDF(options: PDFExportOptions) {
                   h.toLowerCase().includes('count') ||
                   h.toLowerCase().includes('units') ||
                   h.toLowerCase().includes('rate');
-                return `<th class="${isNum ? 'text-right' : ''}">${h}</th>`;
+                return `<th class="${isNum ? 'text-right' : ''}">${escapeHtml(h)}</th>`;
               })
               .join('')}
           </tr>
@@ -265,7 +267,7 @@ export function exportReportToPDF(options: PDFExportOptions) {
                       h.toLowerCase().includes('count') ||
                       h.toLowerCase().includes('units') ||
                       h.toLowerCase().includes('rate');
-                    return `<td class="${isNum ? 'text-right' : ''}">${cell}</td>`;
+                    return `<td class="${isNum ? 'text-right' : ''}">${escapeHtml(cell)}</td>`;
                   })
                   .join('')}
               </tr>

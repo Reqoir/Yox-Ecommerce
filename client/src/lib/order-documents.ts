@@ -1,5 +1,6 @@
 import { BackendOrder } from './api/orders';
 import { BackendShipment } from './api/shipments';
+import { escapeHtml, openSafeExternalUrl } from './html-escape';
 
 /**
  * Formats a currency amount into Indian Rupee style.
@@ -17,10 +18,9 @@ function formatCurrency(amount: number): string {
  * Works seamlessly across both Admin and Customer sides.
  */
 export function printTaxInvoice(order: BackendOrder, shipment?: BackendShipment | null) {
-  // If Shiprocket official invoice URL already exists, open it directly
+  // If Shiprocket official invoice URL already exists, open it safely
   const officialInvoice = shipment?.invoiceUrl || order.invoiceUrl;
-  if (officialInvoice && officialInvoice.startsWith('http')) {
-    window.open(officialInvoice, '_blank');
+  if (officialInvoice && openSafeExternalUrl(officialInvoice)) {
     return;
   }
 
@@ -50,7 +50,7 @@ export function printTaxInvoice(order: BackendOrder, shipment?: BackendShipment 
 
   const itemsHtml = (order.items || [])
     .map((item, idx) => {
-      const variantDetails = [item.size ? `Size: ${item.size}` : '', item.color ? `Color: ${item.color}` : '']
+      const variantDetails = [item.size ? `Size: ${escapeHtml(item.size)}` : '', item.color ? `Color: ${escapeHtml(item.color)}` : '']
         .filter(Boolean)
         .join(' • ');
 
@@ -58,11 +58,11 @@ export function printTaxInvoice(order: BackendOrder, shipment?: BackendShipment 
         <tr>
           <td style="text-align: center; color: #64748b;">${idx + 1}</td>
           <td>
-            <div style="font-weight: 700; color: #0f172a;">${item.productName}</div>
-            ${item.sku ? `<div style="font-size: 11px; color: #64748b; font-family: monospace;">SKU: ${item.sku}</div>` : ''}
+            <div style="font-weight: 700; color: #0f172a;">${escapeHtml(item.productName)}</div>
+            ${item.sku ? `<div style="font-size: 11px; color: #64748b; font-family: monospace;">SKU: ${escapeHtml(item.sku)}</div>` : ''}
             ${variantDetails ? `<div style="font-size: 11px; color: #475569;">${variantDetails}</div>` : ''}
           </td>
-          <td style="text-align: center; font-weight: 600;">${item.quantity}</td>
+          <td style="text-align: center; font-weight: 600;">${escapeHtml(item.quantity)}</td>
           <td style="text-align: right; font-weight: 600;">${formatCurrency(item.unitPrice)}</td>
           <td style="text-align: right; color: #059669;">${item.discount ? `-${formatCurrency(item.discount)}` : '—'}</td>
           <td style="text-align: right; font-weight: 700; color: #0f172a;">${formatCurrency(item.subtotal || item.unitPrice * item.quantity)}</td>
@@ -76,7 +76,7 @@ export function printTaxInvoice(order: BackendOrder, shipment?: BackendShipment 
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Tax Invoice - ${order.orderNumber} - YOX</title>
+  <title>Tax Invoice - ${escapeHtml(order.orderNumber)} - YOX</title>
   <style>
     @page {
       size: A4;
@@ -333,19 +333,19 @@ export function printTaxInvoice(order: BackendOrder, shipment?: BackendShipment 
         <table class="meta-table">
           <tr>
             <td class="meta-label">Invoice No:</td>
-            <td class="meta-val">${invoiceNumber}</td>
+            <td class="meta-val">${escapeHtml(invoiceNumber)}</td>
           </tr>
           <tr>
             <td class="meta-label">Invoice Date:</td>
-            <td class="meta-val">${invoiceDate}</td>
+            <td class="meta-val">${escapeHtml(invoiceDate)}</td>
           </tr>
           <tr>
             <td class="meta-label">Order ID:</td>
-            <td class="meta-val">#${order.orderNumber}</td>
+            <td class="meta-val">#${escapeHtml(order.orderNumber)}</td>
           </tr>
           <tr>
             <td class="meta-label">Order Date:</td>
-            <td class="meta-val">${orderDate}</td>
+            <td class="meta-val">${escapeHtml(orderDate)}</td>
           </tr>
         </table>
       </div>
@@ -355,15 +355,15 @@ export function printTaxInvoice(order: BackendOrder, shipment?: BackendShipment 
     <div class="logistics-bar">
       <div class="logistics-item">
         <span class="logistics-label">Payment:</span>
-        <span class="logistics-val">${order.paymentMethod ? order.paymentMethod.toUpperCase() : 'PREPAID'} (${order.paymentStatus})</span>
+        <span class="logistics-val">${escapeHtml(order.paymentMethod ? order.paymentMethod.toUpperCase() : 'PREPAID')} (${escapeHtml(order.paymentStatus)})</span>
       </div>
       <div class="logistics-item">
         <span class="logistics-label">Courier Partner:</span>
-        <span class="logistics-val">${courierName}</span>
+        <span class="logistics-val">${escapeHtml(courierName)}</span>
       </div>
       <div class="logistics-item">
         <span class="logistics-label">AWB Tracking:</span>
-        <span class="logistics-val" style="font-family: monospace;">${awbCode}</span>
+        <span class="logistics-val" style="font-family: monospace;">${escapeHtml(awbCode)}</span>
       </div>
     </div>
 
@@ -371,22 +371,22 @@ export function printTaxInvoice(order: BackendOrder, shipment?: BackendShipment 
     <div class="address-grid">
       <div class="address-box">
         <h4>Sold / Billed To</h4>
-        <div class="address-name">${customerName}</div>
-        <div class="address-line">Phone: ${customerPhone}</div>
-        <div class="address-line">Email: ${customerEmail}</div>
-        <div class="address-line">Customer ID: #${order.userId?.slice(-8) || 'GUEST'}</div>
+        <div class="address-name">${escapeHtml(customerName)}</div>
+        <div class="address-line">Phone: ${escapeHtml(customerPhone)}</div>
+        <div class="address-line">Email: ${escapeHtml(customerEmail)}</div>
+        <div class="address-line">Customer ID: #${escapeHtml(order.userId?.slice(-8) || 'GUEST')}</div>
       </div>
 
       <div class="address-box">
         <h4>Shipping Destination</h4>
-        <div class="address-name">${order.shippingAddress?.fullName || customerName}</div>
-        <div class="address-line">${order.shippingAddress?.streetAddress || ''}</div>
-        ${order.shippingAddress?.landmark ? `<div class="address-line">Landmark: ${order.shippingAddress.landmark}</div>` : ''}
+        <div class="address-name">${escapeHtml(order.shippingAddress?.fullName || customerName)}</div>
+        <div class="address-line">${escapeHtml(order.shippingAddress?.streetAddress || '')}</div>
+        ${order.shippingAddress?.landmark ? `<div class="address-line">Landmark: ${escapeHtml(order.shippingAddress.landmark)}</div>` : ''}
         <div class="address-line font-bold">
-          ${[order.shippingAddress?.city, order.shippingAddress?.state].filter(Boolean).join(', ')} - ${order.shippingAddress?.postalCode || ''}
+          ${escapeHtml([order.shippingAddress?.city, order.shippingAddress?.state].filter(Boolean).join(', '))} - ${escapeHtml(order.shippingAddress?.postalCode || '')}
         </div>
-        <div class="address-line">${order.shippingAddress?.country || 'India'}</div>
-        <div class="address-line">Contact: ${order.shippingAddress?.phone || customerPhone}</div>
+        <div class="address-line">${escapeHtml(order.shippingAddress?.country || 'India')}</div>
+        <div class="address-line">Contact: ${escapeHtml(order.shippingAddress?.phone || customerPhone)}</div>
       </div>
     </div>
 
@@ -492,10 +492,9 @@ export function printShippingLabel(order: BackendOrder, shipment?: BackendShipme
     return;
   }
 
-  // If official Shiprocket PDF label is already generated, open it directly
+  // If official Shiprocket PDF label is already generated, open it safely
   const officialLabel = shipment?.labelUrl || order.labelUrl;
-  if (officialLabel && officialLabel.startsWith('http')) {
-    window.open(officialLabel, '_blank');
+  if (officialLabel && openSafeExternalUrl(officialLabel)) {
     return;
   }
 
@@ -512,7 +511,7 @@ export function printShippingLabel(order: BackendOrder, shipment?: BackendShipme
   const destinationPincode = order.shippingAddress?.postalCode || '000000';
 
   const itemsList = (order.items || [])
-    .map((item) => `<div>• ${item.productName} (Qty: ${item.quantity}${item.size ? `, ${item.size}` : ''})</div>`)
+    .map((item) => `<div>• ${escapeHtml(item.productName)} (Qty: ${escapeHtml(item.quantity)}${item.size ? `, ${escapeHtml(item.size)}` : ''})</div>`)
     .join('');
 
   const html = `
@@ -520,7 +519,7 @@ export function printShippingLabel(order: BackendOrder, shipment?: BackendShipme
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Shipping Label - ${order.orderNumber} - ${awbCode}</title>
+  <title>Shipping Label - ${escapeHtml(order.orderNumber)} - ${escapeHtml(awbCode)}</title>
   <style>
     @page {
       size: 4in 6in;
@@ -681,35 +680,35 @@ export function printShippingLabel(order: BackendOrder, shipment?: BackendShipme
     <!-- Header -->
     <div class="label-header">
       <div>
-        <div class="courier-title">${courierName}</div>
+        <div class="courier-title">${escapeHtml(courierName)}</div>
         <div style="font-size: 10px; font-weight: bold;">STANDARD SURFACE / AIR CARGO</div>
       </div>
-      <div class="routing-code">${destinationCity} ${destinationPincode}</div>
+      <div class="routing-code">${escapeHtml(destinationCity)} ${escapeHtml(destinationPincode)}</div>
     </div>
 
     <!-- Barcode & AWB -->
     <div class="barcode-section">
       <div class="simulated-barcode"></div>
-      <div class="awb-text">AWB: ${awbCode}</div>
-      <div style="font-size: 10px; font-weight: bold;">ORDER REF: #${order.orderNumber}</div>
+      <div class="awb-text">AWB: ${escapeHtml(awbCode)}</div>
+      <div style="font-size: 10px; font-weight: bold;">ORDER REF: #${escapeHtml(order.orderNumber)}</div>
     </div>
 
     <!-- Payment Badge -->
     <div class="payment-strip">
-      ${isCOD ? `COLLECT CASH ON DELIVERY: ${formatCurrency(totalAmount)}` : 'PREPAID — DO NOT COLLECT CASH'}
+      ${isCOD ? `COLLECT CASH ON DELIVERY: ${escapeHtml(formatCurrency(totalAmount))}` : 'PREPAID — DO NOT COLLECT CASH'}
     </div>
 
     <!-- Deliver To -->
     <div class="deliver-to-box">
       <div class="to-tag">DELIVER TO:</div>
-      <div class="customer-name">${order.shippingAddress?.fullName || 'RECIPIENT'}</div>
+      <div class="customer-name">${escapeHtml(order.shippingAddress?.fullName || 'RECIPIENT')}</div>
       <div class="customer-address">
-        ${order.shippingAddress?.streetAddress || ''}
-        ${order.shippingAddress?.landmark ? `<br>Landmark: ${order.shippingAddress.landmark}` : ''}
-        <br>${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''}
+        ${escapeHtml(order.shippingAddress?.streetAddress || '')}
+        ${order.shippingAddress?.landmark ? `<br>Landmark: ${escapeHtml(order.shippingAddress.landmark)}` : ''}
+        <br>${escapeHtml(order.shippingAddress?.city || '')}, ${escapeHtml(order.shippingAddress?.state || '')}
       </div>
-      <div class="customer-pin">PINCODE: ${destinationPincode}</div>
-      <div class="customer-phone">📞 TEL: ${order.shippingAddress?.phone || 'N/A'}</div>
+      <div class="customer-pin">PINCODE: ${escapeHtml(destinationPincode)}</div>
+      <div class="customer-phone">📞 TEL: ${escapeHtml(order.shippingAddress?.phone || 'N/A')}</div>
     </div>
 
     <!-- Return / Dispatch Address -->

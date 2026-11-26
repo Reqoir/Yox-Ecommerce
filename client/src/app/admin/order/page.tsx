@@ -6,6 +6,7 @@ import { ordersApi, BackendOrder, OrderStatus, PaymentStatus } from '@/lib/api/o
 import { returnsApi, BackendReturn, InspectionResult } from '@/lib/api/returns';
 import { shipmentsApi } from '@/lib/api/shipments';
 import { printTaxInvoice, printShippingLabel } from '@/lib/order-documents';
+import { openSafeExternalUrl } from '@/lib/html-escape';
 import apiClient from '@/lib/axios';
 import {
   ShoppingBag,
@@ -767,14 +768,12 @@ function AdminOrdersContent() {
       toast.error('Cannot print shipping label for a cancelled order.');
       return;
     }
-    if (directUrl && directUrl.startsWith('http')) {
-      window.open(directUrl, '_blank');
+    if (directUrl && openSafeExternalUrl(directUrl)) {
       return;
     }
     try {
       const res = await shipmentsApi.getLabelUrl(orderId).catch(() => null);
-      if (res?.labelUrl && res.labelUrl.startsWith('http')) {
-        window.open(res.labelUrl, '_blank');
+      if (res?.labelUrl && openSafeExternalUrl(res.labelUrl)) {
         return;
       }
     } catch {}
@@ -787,14 +786,12 @@ function AdminOrdersContent() {
 
   const handlePrintInvoice = async (orderId: string, directUrl?: string | null) => {
     const targetOrder = orders.find((o) => o.id === orderId) || (selectedOrder?.id === orderId ? selectedOrder : null);
-    if (directUrl && directUrl.startsWith('http')) {
-      window.open(directUrl, '_blank');
+    if (directUrl && openSafeExternalUrl(directUrl)) {
       return;
     }
     try {
       const res = await shipmentsApi.getInvoiceUrl(orderId).catch(() => null);
-      if (res?.invoiceUrl && res.invoiceUrl.startsWith('http')) {
-        window.open(res.invoiceUrl, '_blank');
+      if (res?.invoiceUrl && openSafeExternalUrl(res.invoiceUrl)) {
         return;
       }
     } catch {}
