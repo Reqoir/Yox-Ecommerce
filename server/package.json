@@ -29,7 +29,7 @@
   "license": "UNLICENSED",
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "cloudinary": "^1.41.3",
+    "cloudinary": "^2.11.0",
     "compression": "^1.8.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -46,7 +46,7 @@
     "pino-http": "^10.2.0",
     "pino-pretty": "^11.2.2",
     "razorpay": "^2.9.8",
-    "zod": "^3.23.8"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.4.0",

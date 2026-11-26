@@ -140,9 +140,10 @@ export class SettingsController {
 
       const bodyParse = updateSettingBodySchema.safeParse(req.body);
       if (!bodyParse.success) {
+        const issues = bodyParse.error.issues || (bodyParse.error as any).errors || [];
         res.status(400).json({
           success: false,
-          message: bodyParse.error.errors[0]?.message || 'Invalid request body format',
+          message: issues[0]?.message || 'Invalid request body format',
         });
         return;
       }
@@ -153,10 +154,11 @@ export class SettingsController {
       if (key === 'store_config') {
         const configParse = storeConfigSchema.safeParse(value);
         if (!configParse.success) {
+          const configIssues = configParse.error.issues || (configParse.error as any).errors || [];
           res.status(400).json({
             success: false,
             message: 'Invalid store configuration parameters',
-            errors: configParse.error.errors.map((e) => ({
+            errors: configIssues.map((e: any) => ({
               field: e.path.join('.'),
               message: e.message,
             })),

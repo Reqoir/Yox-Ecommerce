@@ -45,7 +45,7 @@ export const storeConfigSchema = z.object({
 }).strict();
 
 export const updateSettingBodySchema = z.object({
-  value: z.union([z.record(z.any()), z.string(), z.number(), z.boolean(), z.array(z.any())], {
-    required_error: 'Setting value is required',
+  value: z.union([z.record(z.string(), z.any()), z.string(), z.number(), z.boolean(), z.array(z.any())], {
+    error: 'Setting value is required',
   }),
 });

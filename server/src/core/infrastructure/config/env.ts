@@ -19,8 +19,8 @@ const envSchema = z.object({
   CLIENT_URL: z.string().url().default('http://localhost:3000'),
   ALLOWED_ORIGINS: z
     .string()
-    .transform((val) => val.split(',').map((s) => s.trim()))
-    .default('http://localhost:3000'),
+    .default('http://localhost:3000')
+    .transform((val) => val.split(',').map((s) => s.trim())),
 
   // ── MongoDB ────────────────────────────────────────────────────────────────
   MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),

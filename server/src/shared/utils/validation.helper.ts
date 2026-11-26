@@ -52,7 +52,8 @@ export const validateRequest = <T>(
  * Format Zod validation errors into a flat array of ApiErrorDetail objects.
  */
 export const formatZodErrors = (error: ZodError): ApiErrorDetail[] => {
-  return error.errors.map((issue) => ({
+  const issues = error.issues || (error as any).errors || [];
+  return issues.map((issue: any) => ({
     field: issue.path.join('.') || 'root',
     message: issue.message,
     code: issue.code,

@@ -284,7 +284,8 @@ describe('Phase 2 Security Remediation Test Suite', () => {
       const result = storeConfigSchema.safeParse(invalidPayload);
       expect(result.success).toBe(false);
       if (!result.success) {
-        const errorFields = result.error.errors.map((e) => e.path[0]);
+        const issues = result.error.issues || (result.error as any).errors || [];
+        const errorFields = issues.map((e: any) => e.path[0]);
         expect(errorFields).toContain('storeName');
         expect(errorFields).toContain('freeShippingThreshold');
         expect(errorFields).toContain('supportEmail');

@@ -20,8 +20,7 @@ const ContentSecurityPolicy = [
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'self'",
-  // Note: 'upgrade-insecure-requests' is omitted in Report-Only mode (browsers log an error if present
-  // in Report-Only) and must be re-included when switching to enforcing Content-Security-Policy.
+  "upgrade-insecure-requests",
 ].join('; ');
 
 const nextConfig: NextConfig = {
@@ -53,9 +52,8 @@ const nextConfig: NextConfig = {
         source: '/(.*)',
         headers: [
           {
-            // Initial deployment uses Report-Only until live-browser compatibility across
-            // Next.js hydration, Razorpay, MSG91, Cloudinary, and SSE is confirmed.
-            key: 'Content-Security-Policy-Report-Only',
+            // Enforced Content Security Policy (migrated from Report-Only after 100% verified compatibility)
+            key: 'Content-Security-Policy',
             value: ContentSecurityPolicy,
           },
           {
