@@ -5,18 +5,23 @@ const ContentSecurityPolicy = [
   "default-src 'self'",
   // 'unsafe-inline' is required by Next.js App Router hydration scripts and layout.tsx fdprocessedid observer;
   // strict nonce-based CSP would disable static prerendering across all 25 static routes.
-  "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://verify.msg91.com",
+  // https://pass.hostnsoft.com is required by the MSG91 OTP widget (otp-provider.js).
+  "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://verify.msg91.com https://pass.hostnsoft.com",
   // 'unsafe-inline' is required by Tailwind CSS runtime styles, SweetAlert2, and Recharts.
-  "style-src 'self' 'unsafe-inline'",
+  // https://fonts.googleapis.com is injected by the MSG91 OTP widget Shadow DOM.
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://placehold.co",
-  "font-src 'self' data:",
-  "connect-src 'self' https://yoxfashion.com https://admin.yoxfashion.com https://api.yoxfashion.com wss://yoxfashion.com wss://api.yoxfashion.com https://api.razorpay.com https://lumberjack.razorpay.com https://verify.msg91.com https://control.msg91.com https://res.cloudinary.com",
+  // https://fonts.gstatic.com serves font files referenced by MSG91's Google Fonts stylesheet.
+  "font-src 'self' data: https://fonts.gstatic.com",
+  // https://passbknd.hostnsoft.com is used by the MSG91 OTP widget backend API.
+  "connect-src 'self' https://yoxfashion.com https://admin.yoxfashion.com https://api.yoxfashion.com wss://yoxfashion.com wss://api.yoxfashion.com https://api.razorpay.com https://lumberjack.razorpay.com https://verify.msg91.com https://control.msg91.com https://passbknd.hostnsoft.com https://res.cloudinary.com",
   "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://verify.msg91.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'self'",
-  "upgrade-insecure-requests",
+  // Note: 'upgrade-insecure-requests' is omitted in Report-Only mode (browsers log an error if present
+  // in Report-Only) and must be re-included when switching to enforcing Content-Security-Policy.
 ].join('; ');
 
 const nextConfig: NextConfig = {
