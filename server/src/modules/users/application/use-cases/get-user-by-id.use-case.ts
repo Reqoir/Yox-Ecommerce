@@ -19,6 +19,7 @@ export class GetUserByIdUseCase {
 
     const userJson = user.toJSON();
     delete (userJson as any).password;
+    delete (userJson as any).tokenVersion;
 
     return {
       ...userJson,

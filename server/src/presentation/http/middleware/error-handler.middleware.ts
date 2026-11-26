@@ -97,6 +97,12 @@ export const errorHandler = (err: Error, req: Request, res: Response, _next: Nex
     return;
   }
 
+  // ── Mongoose invalid ObjectId / CastError ─────────────────────────────────
+  if (err.name === 'CastError') {
+    ApiResponse.error(res, 'Invalid resource identifier format.', HttpStatus.BAD_REQUEST);
+    return;
+  }
+
   // ── Mongoose duplicate key error (11000) ──────────────────────────────────
   if ('code' in err && err['code'] === 11000) {
     ApiResponse.error(res, 'A resource with this value already exists.', HttpStatus.CONFLICT);

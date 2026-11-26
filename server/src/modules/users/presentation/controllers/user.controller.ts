@@ -14,7 +14,7 @@ import { UpdateUserStatusUseCase } from '../../application/use-cases/update-user
 import { DeleteUserUseCase } from '../../application/use-cases/delete-user.use-case';
 import { GetUserByIdUseCase } from '../../application/use-cases/get-user-by-id.use-case';
 import { validateRequest } from '@shared/utils/validation.helper';
-import { updateUserRoleSchema, createUserSchema, updateUserStatusSchema, resetStaffPasswordSchema, updateStaffSchema } from '../validators/user.validator';
+import { updateUserRoleSchema, createUserSchema, updateUserStatusSchema, resetStaffPasswordSchema, updateStaffSchema, updateProfileSchema } from '../validators/user.validator';
 import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
 import { UpdateStaffUseCase } from '../../application/use-cases/update-staff.use-case';
 import { AdminPhoneChangeUseCase } from '../../application/use-cases/admin-phone-change.use-case';
@@ -44,19 +44,21 @@ export class UserController {
   private getActorContext = async (user: any): Promise<{
     isSuperAdmin: boolean;
     canManageStaff: boolean;
+    canManageUsers: boolean;
     level: number;
   }> => {
-    if (!user) return { isSuperAdmin: false, canManageStaff: false, level: 0 };
+    if (!user) return { isSuperAdmin: false, canManageStaff: false, canManageUsers: false, level: 0 };
     const emailLower = (user.email || '').toLowerCase();
     const roleId = user.role;
     
     // Store Owner is Level 100
     if (emailLower === 'admin@yox.com') {
-      return { isSuperAdmin: true, canManageStaff: true, level: 100 };
+      return { isSuperAdmin: true, canManageStaff: true, canManageUsers: true, level: 100 };
     }
 
     let isSuperAdmin = false;
     let canManageStaff = false;
+    let canManageUsers = false;
     let level = 20;
 
     if (this.roleRepository && roleId) {
@@ -70,13 +72,19 @@ export class UserController {
           if (roleName === 'ADMIN' || roleName === 'SUPER_ADMIN' || perms.includes('*')) {
             isSuperAdmin = true;
             canManageStaff = true;
+            canManageUsers = true;
             level = Math.max(level, 90);
-          } else if (
-            perms.includes('manage_staff') ||
-            perms.includes('manage_users') ||
-            perms.includes('manage_roles')
-          ) {
-            canManageStaff = true;
+          } else {
+            if (
+              perms.includes('manage_staff') ||
+              perms.includes('manage_users') ||
+              perms.includes('manage_roles')
+            ) {
+              canManageStaff = true;
+            }
+            if (perms.includes('manage_users')) {
+              canManageUsers = true;
+            }
           }
         }
       } catch (err) {
@@ -84,7 +92,7 @@ export class UserController {
       }
     }
 
-    return { isSuperAdmin, canManageStaff, level };
+    return { isSuperAdmin, canManageStaff, canManageUsers, level };
   };
 
   private getUserLevel = async (targetUser: any): Promise<number> => {
@@ -139,11 +147,11 @@ export class UserController {
       
       const { user, permissions } = await this.getProfileUseCase.execute(userId);
 
-      // Return user without password
+      // Return user without password and hide synthetic internal email handles
       const result = {
         id: user.id,
         fullName: user.fullName,
-        email: user.email,
+        email: user.email && !user.email.endsWith('@user.yox.internal') ? user.email : null,
         phone: user.phone,
         profileImage: user.profileImage,
         roleId: user.roleId,
@@ -163,9 +171,8 @@ export class UserController {
   public updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user!.id;
-      
-      // In a real scenario, validate req.body with Zod here
-      const updatedUser = await this.updateProfileUseCase.execute(userId, req.body);
+      const validBody = validateRequest(req, updateProfileSchema, 'body');
+      const updatedUser = await this.updateProfileUseCase.execute(userId, validBody as any);
 
       const result = {
         id: updatedUser.id,
@@ -173,6 +180,8 @@ export class UserController {
         email: updatedUser.email && !updatedUser.email.endsWith('@user.yox.internal') ? updatedUser.email : null,
         phone: updatedUser.phone,
         profileImage: updatedUser.profileImage,
+        isEmailVerified: updatedUser.isEmailVerified,
+        isPhoneVerified: updatedUser.isPhoneVerified,
       };
 
       ApiResponse.success(res, result, 'Profile updated successfully', HttpStatus.OK);
@@ -183,7 +192,13 @@ export class UserController {
 
   public getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const result = await this.getAllUsersUseCase.execute(req.query);
+      const { canManageUsers } = await this.getActorContext(req.user);
+      const query = { ...req.query };
+      if (!canManageUsers) {
+        // Staff with only view_staff or manage_staff cannot list customer PII
+        query.userType = 'staff';
+      }
+      const result = await this.getAllUsersUseCase.execute(query);
       ApiResponse.success(res, result.users, 'Users retrieved successfully', HttpStatus.OK, result.meta as unknown as Record<string, unknown>);
     } catch (error) {
       next(error);
@@ -310,7 +325,16 @@ export class UserController {
   public getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
+      const { canManageUsers } = await this.getActorContext(req.user);
       const result = await this.getUserByIdUseCase.execute(id);
+      if (
+        !canManageUsers &&
+        (!result.roleName ||
+          result.roleName.toUpperCase() === 'CUSTOMER' ||
+          result.roleName.toUpperCase() === 'UNKNOWN')
+      ) {
+        throw ApiError.forbidden('You do not have permission to view customer profile details.');
+      }
       ApiResponse.success(res, result, 'User retrieved successfully', HttpStatus.OK);
     } catch (error) {
       next(error);

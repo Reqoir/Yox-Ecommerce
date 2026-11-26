@@ -39,7 +39,7 @@ const razorpayService = new RazorpayService();
 
 // Use Cases
 const processRefundUseCase = new ProcessRefundUseCase(refundRepo, paymentRepo, returnRepo, orderRepo, razorpayService);
-const getRefundsByOrderUseCase = new GetRefundsByOrderUseCase(refundRepo);
+const getRefundsByOrderUseCase = new GetRefundsByOrderUseCase(refundRepo, orderRepo);
 const createRazorpayOrderUseCase = new CreateRazorpayOrderUseCase(
   orderRepo,
   cartRepo,

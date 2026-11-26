@@ -43,3 +43,27 @@ export const updateStaffSchema = z.object({
   roleId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid Role ID format').optional(),
 });
 
+export const updateProfileSchema = z
+  .object({
+    fullName: z.string().trim().min(2, 'Full name must be at least 2 characters').max(120).optional(),
+    email: z
+      .union([z.string().trim().email('Please provide a valid email address').max(255), z.literal(''), z.null()])
+      .optional(),
+    phone: z.union([z.string().trim().max(20), z.null()]).optional(),
+    verificationToken: z.string().trim().max(2048).optional(),
+    profileImage: z
+      .union([
+        z
+          .string()
+          .trim()
+          .max(1000)
+          .refine(
+            (val) => val === '' || val.startsWith('https://') || val.startsWith('http://') || val.startsWith('/'),
+            'Profile image must be a valid HTTP(S) URL or relative path'
+          ),
+        z.null(),
+      ])
+      .optional(),
+  })
+  .strict();
+

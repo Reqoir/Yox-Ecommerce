@@ -119,11 +119,12 @@ export class NotificationRepository implements INotificationRepository {
     await NotificationModel.updateMany(filter, { isRead: true, updatedAt: new Date() }).exec();
   }
 
-  async markManyRead(ids: string[]): Promise<void> {
+  async markManyRead(ids: string[], userId: string | null, allowedTypes?: NotificationType[]): Promise<void> {
     const validIds = ids.filter((id) => Types.ObjectId.isValid(id));
     if (validIds.length > 0) {
+      const scopeFilter = this.buildUserFilter(userId, allowedTypes);
       await NotificationModel.updateMany(
-        { _id: { $in: validIds } },
+        { $and: [{ _id: { $in: validIds } }, scopeFilter] },
         { isRead: true, updatedAt: new Date() }
       ).exec();
     }
@@ -134,10 +135,11 @@ export class NotificationRepository implements INotificationRepository {
     await NotificationModel.findByIdAndDelete(id).exec();
   }
 
-  async deleteMany(ids: string[]): Promise<void> {
+  async deleteMany(ids: string[], userId: string | null, allowedTypes?: NotificationType[]): Promise<void> {
     const validIds = ids.filter((id) => Types.ObjectId.isValid(id));
     if (validIds.length > 0) {
-      await NotificationModel.deleteMany({ _id: { $in: validIds } }).exec();
+      const scopeFilter = this.buildUserFilter(userId, allowedTypes);
+      await NotificationModel.deleteMany({ $and: [{ _id: { $in: validIds } }, scopeFilter] }).exec();
     }
   }
 

@@ -352,10 +352,10 @@ export class GetOrderByIdUseCase implements IUseCase<{ id: string; userId?: stri
       order = await this.orderRepo.findByOrderNumber(input.id);
     }
     if (!order) {
-      throw new Error('Order not found');
+      throw new NotFoundError('Order not found');
     }
     if (!input.isAdmin && input.userId && order.userId !== input.userId) {
-      throw new Error('Forbidden: You do not have permission to view this order');
+      throw new ForbiddenError('You do not have permission to view this order');
     }
     const dto = mapToOrderResponseDTO(order);
 
@@ -439,10 +439,10 @@ export class CancelOrderUseCase implements IUseCase<{ id: string; userId?: strin
       order = await this.orderRepo.findByOrderNumber(input.id);
     }
     if (!order) {
-      throw new Error('Order not found');
+      throw new NotFoundError('Order not found');
     }
     if (!input.isAdmin && input.userId && order.userId !== input.userId) {
-      throw new Error('Forbidden: You do not have permission to cancel this order');
+      throw new ForbiddenError('You do not have permission to cancel this order');
     }
 
     // If order was pushed to Shiprocket, cancel the shipment with courier agency

@@ -8,7 +8,9 @@ import { IUseCase } from '@core/application/use-cases/base.use-case.interface';
 import {
   ApplicationError,
   ConflictError,
+  ForbiddenError,
 } from '@core/application/errors/application.error';
+import { NotFoundError } from '@core/domain/errors/not-found.error';
 import { ValidationError } from '@core/domain/errors/validation.error';
 import { IReturnRepository } from '../../domain/repositories/return.repository.interface';
 import { IOrderRepository } from '../../../orders/domain/repositories/order.repository.interface';
@@ -241,10 +243,10 @@ export class GetReturnByIdUseCase implements IUseCase<{ id: string; userId?: str
 
   async execute(input: { id: string; userId?: string; isAdmin?: boolean }): Promise<ReturnResponseDTO> {
     const returnEntity = await this.returnRepo.findById(input.id);
-    if (!returnEntity) throw new Error('Return record not found');
+    if (!returnEntity) throw new NotFoundError('Return record not found');
 
-    if (!input.isAdmin && input.userId && returnEntity.userId !== input.userId) {
-      throw new Error('Forbidden: Access denied to this return record');
+    if (!input.isAdmin && (!input.userId || returnEntity.userId !== input.userId)) {
+      throw new ForbiddenError('Access denied to this return record');
     }
 
     return mapToReturnResponseDTO(returnEntity);

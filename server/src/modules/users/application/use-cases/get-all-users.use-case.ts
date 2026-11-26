@@ -27,6 +27,7 @@ export class GetAllUsersUseCase {
     const safeUsers = result.data.map((user) => {
       const userJson = user.toJSON();
       delete (userJson as any).password;
+      delete (userJson as any).tokenVersion;
       (userJson as any).roleName =
         roleMap.get(user.roleId) ||
         (user.roleId === 'CUSTOMER_ROLE_ID' || !user.roleId ? 'CUSTOMER' : 'Customer');

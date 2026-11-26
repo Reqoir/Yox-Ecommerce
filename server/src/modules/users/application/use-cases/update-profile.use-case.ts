@@ -63,6 +63,7 @@ export class UpdateProfileUseCase {
     }
 
     let resolvedEmail: string | null | undefined = user.email;
+    let isEmailVerified = user.isEmailVerified;
 
     // 1. If email is being changed, check uniqueness or clear it
     if (data.email !== undefined) {
@@ -84,10 +85,12 @@ export class UpdateProfileUseCase {
           }
 
           resolvedEmail = normalizedNewEmail;
+          isEmailVerified = false;
         }
       } else {
         // User is clearing their email address
         resolvedEmail = null;
+        isEmailVerified = false;
       }
     }
 
@@ -141,6 +144,7 @@ export class UpdateProfileUseCase {
       phone: resolvedPhone !== undefined ? (resolvedPhone || null) : undefined,
       profileImage: data.profileImage,
       isPhoneVerified,
+      isEmailVerified,
     });
 
     const updatedUser = await this.userRepository.update(userId, user);

@@ -6,6 +6,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { HttpStatus } from '../../../../shared/constants/http-status.constants';
 import { ApiResponse } from '../../../../shared/utils/api-response.util';
+import { RoleRepository } from '../../../roles/infrastructure/repositories/role.repository';
 import {
   CreateReturnUseCase,
   SubmitReturnShipmentUseCase,
@@ -72,7 +73,27 @@ export class ReturnController {
   getReturnById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user!.id;
-      const isAdmin = req.user!.role === 'admin' || req.user!.role === 'super_admin';
+      let isAdmin = false;
+      const roleStr = String(req.user?.role || '').toUpperCase();
+      if (roleStr === 'ADMIN' || roleStr === 'SUPER_ADMIN' || ((req.user as any)?.permissions || []).includes('*')) {
+        isAdmin = true;
+      } else if (req.user?.role) {
+        try {
+          const role = await new RoleRepository().findById(req.user.role);
+          if (
+            role &&
+            (role.name.toUpperCase() === 'ADMIN' ||
+              role.name.toUpperCase() === 'SUPER_ADMIN' ||
+              role.hasPermission('*') ||
+              role.hasPermission('manage_orders') ||
+              role.hasPermission('manage_returns'))
+          ) {
+            isAdmin = true;
+          }
+        } catch {
+          // fallback false
+        }
+      }
       const result = await this.getReturnByIdUseCase.execute({ id: req.params.id as string, userId, isAdmin });
       ApiResponse.success(res, result, 'Return details retrieved');
     } catch (error) {

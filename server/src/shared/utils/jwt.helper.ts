@@ -56,19 +56,19 @@ export const verifyRefreshToken = (token: string): TokenPayload => {
 /**
  * Sign a reset password token.
  */
-export const signResetToken = (payload: { sub: string; jti: string }): string => {
+export const signResetToken = (payload: { sub: string; jti: string; [key: string]: unknown }): string => {
   return jwt.sign(payload, jwtConfig.reset.secret, jwtConfig.reset.signOptions);
 };
 
 /**
  * Verify a reset password token.
  */
-export const verifyResetToken = (token: string): { sub: string; jti: string } => {
+export const verifyResetToken = (token: string): { sub: string; jti: string; [key: string]: unknown } => {
   const decoded = jwt.verify(token, jwtConfig.reset.secret, {
     issuer: jwtConfig.reset.signOptions.issuer as string | undefined,
     audience: jwtConfig.reset.signOptions.audience as string | undefined,
   });
-  return decoded as { sub: string; jti: string };
+  return decoded as { sub: string; jti: string; [key: string]: unknown };
 };
 
 /**

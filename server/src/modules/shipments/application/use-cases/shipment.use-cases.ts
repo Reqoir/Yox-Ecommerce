@@ -9,8 +9,10 @@ import { IUseCase } from '@core/application/use-cases/base.use-case.interface';
 import {
   ApplicationError,
   ConflictError,
+  ForbiddenError,
   UnauthorizedError,
 } from '@core/application/errors/application.error';
+import { NotFoundError } from '@core/domain/errors/not-found.error';
 import { ValidationError } from '@core/domain/errors/validation.error';
 import { ApiError } from '@shared/utils/api-error.util';
 import { env } from '@core/infrastructure/config/env';
@@ -87,25 +89,64 @@ export class CreateShipmentUseCase implements IUseCase<CreateShipmentRequestDTO,
   }
 }
 
-export class GetShipmentByIdUseCase implements IUseCase<string, ShipmentResponseDTO> {
-  constructor(private readonly shipmentRepo: IShipmentRepository) {}
-
-  async execute(id: string): Promise<ShipmentResponseDTO> {
-    const shipment = await this.shipmentRepo.findById(id);
-    if (!shipment) throw new Error('Shipment not found');
-    return mapToShipmentResponseDTO(shipment);
-  }
-}
-
-export class GetShipmentByOrderUseCase implements IUseCase<string, ShipmentResponseDTO | null> {
+export class GetShipmentByIdUseCase
+  implements IUseCase<string | { id: string; userId?: string; isAdmin?: boolean }, ShipmentResponseDTO>
+{
   constructor(
     private readonly shipmentRepo: IShipmentRepository,
     private readonly orderRepo?: IOrderRepository
   ) {}
 
-  async execute(orderId: string): Promise<ShipmentResponseDTO | null> {
-    let shipment = await this.shipmentRepo.findByOrderId(orderId);
-    const order = this.orderRepo ? await this.orderRepo.findById(orderId) : null;
+  async execute(input: string | { id: string; userId?: string; isAdmin?: boolean }): Promise<ShipmentResponseDTO> {
+    const id = typeof input === 'string' ? input : input.id;
+    const userId = typeof input === 'string' ? undefined : input.userId;
+    const isAdmin = typeof input === 'string' ? true : Boolean(input.isAdmin);
+
+    const shipment = await this.shipmentRepo.findById(id);
+    if (!shipment) throw new NotFoundError('Shipment not found');
+
+    if (!isAdmin) {
+      const order = this.orderRepo ? await this.orderRepo.findById(shipment.orderId) : null;
+      if (!order || !userId || order.userId !== userId) {
+        throw new ForbiddenError('You do not have permission to view this shipment');
+      }
+    }
+
+    return mapToShipmentResponseDTO(shipment);
+  }
+}
+
+export class GetShipmentByOrderUseCase
+  implements IUseCase<string | { orderId: string; userId?: string; isAdmin?: boolean }, ShipmentResponseDTO | null>
+{
+  constructor(
+    private readonly shipmentRepo: IShipmentRepository,
+    private readonly orderRepo?: IOrderRepository
+  ) {}
+
+  async execute(
+    input: string | { orderId: string; userId?: string; isAdmin?: boolean }
+  ): Promise<ShipmentResponseDTO | null> {
+    const orderId = typeof input === 'string' ? input : input.orderId;
+    const userId = typeof input === 'string' ? undefined : input.userId;
+    const isAdmin = typeof input === 'string' ? true : Boolean(input.isAdmin);
+
+    let order = this.orderRepo ? await this.orderRepo.findById(orderId) : null;
+    if (!order && this.orderRepo && typeof (this.orderRepo as any).findByOrderNumber === 'function') {
+      order = await (this.orderRepo as any).findByOrderNumber(orderId);
+    }
+
+    if (!isAdmin) {
+      if (!order) {
+        throw new NotFoundError('Order not found');
+      }
+      if (!userId || order.userId !== userId) {
+        throw new ForbiddenError('You do not have permission to view this shipment');
+      }
+    }
+
+    const resolvedOrderId = order ? order.id : orderId;
+    let shipment = await this.shipmentRepo.findByOrderId(resolvedOrderId);
 
     // 1. If shipment exists with an AWB / tracking number, query Shiprocket live tracking
     if (shipment?.trackingNumber) {
@@ -443,19 +484,31 @@ export class GenerateShipmentLabelUseCase implements IUseCase<string, { labelUrl
   }
 }
 
-export class GenerateShipmentInvoiceUseCase implements IUseCase<string, { invoiceUrl: string | null }> {
+export class GenerateShipmentInvoiceUseCase
+  implements IUseCase<string | { orderId: string; userId?: string; isAdmin?: boolean }, { invoiceUrl: string | null }>
+{
   constructor(
     private readonly shipmentRepo: IShipmentRepository,
     private readonly orderRepo: IOrderRepository
   ) {}
 
-  async execute(orderId: string): Promise<{ invoiceUrl: string | null }> {
+  async execute(
+    input: string | { orderId: string; userId?: string; isAdmin?: boolean }
+  ): Promise<{ invoiceUrl: string | null }> {
+    const orderId = typeof input === 'string' ? input : input.orderId;
+    const userId = typeof input === 'string' ? undefined : input.userId;
+    const isAdmin = typeof input === 'string' ? true : Boolean(input.isAdmin);
+
     let order = await this.orderRepo.findById(orderId);
     if (!order) order = await this.orderRepo.findByOrderNumber(orderId);
-    if (!order) throw new Error('Order not found');
+    if (!order) throw new NotFoundError('Order not found');
+
+    if (!isAdmin && (!userId || order.userId !== userId)) {
+      throw new ForbiddenError('You do not have permission to access this invoice');
+    }
 
     const srOrderId = order.shiprocketOrderId || (await this.shipmentRepo.findByOrderId(order.id))?.shiprocketOrderId;
-    if (!srOrderId) throw new Error('Order has not been registered in Shiprocket yet');
+    if (!srOrderId) throw new ValidationError('Order has not been registered in Shiprocket yet');
 
     const invoiceUrl = await ShiprocketService.getInstance().printInvoice(srOrderId);
     return { invoiceUrl };

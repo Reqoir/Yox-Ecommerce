@@ -178,7 +178,8 @@ export class NotificationController {
     try {
       const { id } = req.params;
       const userId = req.user!.id;
-      const result = await this.markReadUseCase.execute({ id, userId });
+      const { isAdmin } = await this.resolveUserPermissions(req);
+      const result = await this.markReadUseCase.execute({ id, userId, isAdmin });
       ApiResponse.success(res, result, 'Notification marked as read', HttpStatus.OK);
     } catch (error) {
       next(error);
@@ -201,8 +202,10 @@ export class NotificationController {
   public markManyRead = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { ids } = req.body;
+      const userId = req.user!.id;
+      const { allowedTypes } = await this.resolveUserPermissions(req);
       if (Array.isArray(ids) && ids.length > 0) {
-        await this.markManyReadUseCase.execute({ ids });
+        await this.markManyReadUseCase.execute({ ids, userId, allowedTypes });
       }
       ApiResponse.success(res, null, 'Selected notifications marked as read', HttpStatus.OK);
     } catch (error) {
@@ -214,8 +217,10 @@ export class NotificationController {
   public bulkDelete = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { ids } = req.body;
+      const userId = req.user!.id;
+      const { allowedTypes } = await this.resolveUserPermissions(req);
       if (Array.isArray(ids) && ids.length > 0) {
-        await this.deleteManyUseCase.execute({ ids });
+        await this.deleteManyUseCase.execute({ ids, userId, allowedTypes });
       }
       ApiResponse.success(res, null, 'Selected notifications deleted', HttpStatus.OK);
     } catch (error) {

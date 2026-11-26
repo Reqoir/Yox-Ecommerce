@@ -41,8 +41,8 @@ const refreshTokenUseCase = new RefreshTokenUseCase(userRepository);
 const getMeUseCase = new GetMeUseCase(userRepository, roleRepository);
 const forgotPasswordUseCase = new ForgotPasswordUseCase(userRepository);
 const resetPasswordUseCase = new ResetPasswordUseCase(userRepository);
-const resetPasswordPhoneVerifyUseCase = new ResetPasswordPhoneVerifyUseCase(userRepository);
-const resetPasswordPhoneConfirmUseCase = new ResetPasswordPhoneConfirmUseCase(userRepository);
+const resetPasswordPhoneVerifyUseCase = new ResetPasswordPhoneVerifyUseCase(userRepository, roleRepository);
+const resetPasswordPhoneConfirmUseCase = new ResetPasswordPhoneConfirmUseCase(userRepository, roleRepository);
 const changePasswordUseCase = new ChangePasswordUseCase(userRepository);
 
 // 3. Controllers (Presentation)

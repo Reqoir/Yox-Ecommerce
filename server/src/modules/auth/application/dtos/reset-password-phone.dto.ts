@@ -14,7 +14,6 @@ export interface ResetPasswordPhoneVerifyRequestDTO {
 export interface CandidateAccountInfo {
   id: string;
   fullName: string;
-  email: string | null;
   maskedEmail: string;
   createdAt?: Date;
 }

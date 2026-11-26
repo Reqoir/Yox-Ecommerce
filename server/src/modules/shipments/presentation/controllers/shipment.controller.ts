@@ -37,6 +37,35 @@ export class ShipmentController {
     private readonly handleShiprocketWebhookUseCase?: HandleShiprocketWebhookUseCase
   ) {}
 
+  private async isShipmentAdmin(req: Request): Promise<boolean> {
+    const userRoleStr = String(req.user?.role || '').toUpperCase();
+    if (
+      userRoleStr === 'ADMIN' ||
+      userRoleStr === 'SUPER_ADMIN' ||
+      ((req.user as any)?.permissions || []).includes('*')
+    ) {
+      return true;
+    }
+    if (req.user?.role) {
+      try {
+        const role = await roleRepository.findById(req.user.role);
+        if (
+          role &&
+          (role.name.toUpperCase() === 'ADMIN' ||
+            role.name.toUpperCase() === 'SUPER_ADMIN' ||
+            role.hasPermission('*') ||
+            role.hasPermission('manage_shipments') ||
+            role.hasPermission('manage_orders'))
+        ) {
+          return true;
+        }
+      } catch {
+        // fallback false
+      }
+    }
+    return false;
+  }
+
   createShipment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const shipment = await this.createShipmentUseCase.execute(req.body);
@@ -48,7 +77,16 @@ export class ShipmentController {
 
   getShipmentById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const shipment = await this.getShipmentByIdUseCase.execute(req.params.id as string);
+      const userId = req.user?.id;
+      if (!userId) {
+        throw ApiError.unauthorized('Authentication required.');
+      }
+      const isAdmin = await this.isShipmentAdmin(req);
+      const shipment = await this.getShipmentByIdUseCase.execute({
+        id: req.params.id as string,
+        userId,
+        isAdmin,
+      });
       ApiResponse.success(res, shipment, 'Shipment details retrieved');
     } catch (error) {
       next(error);
@@ -57,7 +95,16 @@ export class ShipmentController {
 
   getShipmentByOrder = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const shipment = await this.getShipmentByOrderUseCase.execute(req.params.orderId as string);
+      const userId = req.user?.id;
+      if (!userId) {
+        throw ApiError.unauthorized('Authentication required.');
+      }
+      const isAdmin = await this.isShipmentAdmin(req);
+      const shipment = await this.getShipmentByOrderUseCase.execute({
+        orderId: req.params.orderId as string,
+        userId,
+        isAdmin,
+      });
       ApiResponse.success(
         res,
         shipment,
@@ -75,27 +122,7 @@ export class ShipmentController {
         throw ApiError.unauthorized('Authentication required to track orders. Please log in.');
       }
 
-      let isAdmin = false;
-      const userRoleStr = String(req.user?.role || '').toUpperCase();
-      if (userRoleStr === 'ADMIN' || userRoleStr === 'SUPER_ADMIN' || ((req.user as any)?.permissions || []).includes('*')) {
-        isAdmin = true;
-      } else if (req.user?.role) {
-        try {
-          const role = await roleRepository.findById(req.user.role);
-          if (
-            role &&
-            (role.name.toUpperCase() === 'ADMIN' ||
-              role.name.toUpperCase() === 'SUPER_ADMIN' ||
-              role.hasPermission('*') ||
-              role.hasPermission('manage_shipments') ||
-              role.hasPermission('manage_orders'))
-          ) {
-            isAdmin = true;
-          }
-        } catch {
-          // fallback false
-        }
-      }
+      const isAdmin = await this.isShipmentAdmin(req);
 
       const shipment = await this.trackShipmentUseCase.execute({
         trackingNumber: req.params.trackingNumber as string,
@@ -138,7 +165,16 @@ export class ShipmentController {
       if (!this.generateShipmentInvoiceUseCase) {
         throw new Error('Generate shipment invoice service not configured');
       }
-      const result = await this.generateShipmentInvoiceUseCase.execute(req.params.orderId as string);
+      const userId = req.user?.id;
+      if (!userId) {
+        throw ApiError.unauthorized('Authentication required.');
+      }
+      const isAdmin = await this.isShipmentAdmin(req);
+      const result = await this.generateShipmentInvoiceUseCase.execute({
+        orderId: req.params.orderId as string,
+        userId,
+        isAdmin,
+      });
       ApiResponse.success(res, result, 'Shipping invoice generated successfully');
     } catch (error) {
       next(error);

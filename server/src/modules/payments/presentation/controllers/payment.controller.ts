@@ -7,6 +7,7 @@ import { Request, Response, NextFunction } from 'express';
 import { HttpStatus } from '../../../../shared/constants/http-status.constants';
 import { ApiResponse } from '../../../../shared/utils/api-response.util';
 import { ProcessRefundUseCase, GetRefundsByOrderUseCase } from '../../application/use-cases/refund.use-cases';
+import { RoleRepository } from '../../../roles/infrastructure/repositories/role.repository';
 import { CreateRazorpayOrderUseCase, VerifyRazorpayPaymentUseCase, RecordPaymentFailureUseCase } from '../../application/use-cases/payment.use-cases';
 import { HandleRazorpayWebhookUseCase } from '../../application/use-cases/razorpay-webhook.use-case';
 import {
@@ -139,7 +140,44 @@ export class PaymentController {
 
   getRefundsByOrder = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const refunds = await this.getRefundsByOrderUseCase.execute(req.params.orderId as string);
+      const userId = (req as any).user?.id || (req as any).user?.userId;
+      if (!userId) {
+        res.status(HttpStatus.UNAUTHORIZED).json({ success: false, message: 'Authentication required' });
+        return;
+      }
+
+      let isAdmin = false;
+      const userRoleStr = String((req as any).user?.role || '').toUpperCase();
+      if (
+        userRoleStr === 'ADMIN' ||
+        userRoleStr === 'SUPER_ADMIN' ||
+        ((req as any).user?.permissions || []).includes('*')
+      ) {
+        isAdmin = true;
+      } else if ((req as any).user?.role) {
+        try {
+          const roleRepo = new RoleRepository();
+          const role = await roleRepo.findById((req as any).user.role);
+          if (
+            role &&
+            (role.name.toUpperCase() === 'ADMIN' ||
+              role.name.toUpperCase() === 'SUPER_ADMIN' ||
+              role.hasPermission('*') ||
+              role.hasPermission('manage_orders') ||
+              role.hasPermission('view_reports'))
+          ) {
+            isAdmin = true;
+          }
+        } catch {
+          // fallback false
+        }
+      }
+
+      const refunds = await this.getRefundsByOrderUseCase.execute({
+        orderId: req.params.orderId as string,
+        userId,
+        isAdmin,
+      });
       ApiResponse.success(res, refunds, 'Order refunds retrieved');
     } catch (error) {
       next(error);

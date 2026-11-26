@@ -4,6 +4,8 @@
  */
 
 import { IUseCase } from '@core/application/use-cases/base.use-case.interface';
+import { ForbiddenError } from '@core/application/errors/application.error';
+import { NotFoundError } from '@core/domain/errors/not-found.error';
 import { INotificationRepository } from '../../domain/repositories/notification.repository.interface';
 import { Notification, NotificationType } from '../../domain/entities/notification.entity';
 import {
@@ -70,24 +72,32 @@ export class GetNotificationsUseCase
 }
 
 export class MarkNotificationReadUseCase
-  implements IUseCase<{ id: string; userId: string | null }, NotificationResponseDTO>
+  implements
+    IUseCase<
+      { id: string; userId: string | null; isAdmin?: boolean },
+      NotificationResponseDTO
+    >
 {
   constructor(private readonly notificationRepo: INotificationRepository) {}
 
   async execute(input: {
     id: string;
     userId: string | null;
+    isAdmin?: boolean;
   }): Promise<NotificationResponseDTO> {
     const notification = await this.notificationRepo.findById(input.id);
-    if (!notification) throw new Error('Notification not found');
+    if (!notification) throw new NotFoundError('Notification not found');
 
-    // Security: a regular user can only mark their own or broadcast notifications as read
-    if (
-      notification.userId !== null &&
-      input.userId !== null &&
-      notification.userId !== input.userId
-    ) {
-      throw new Error('Not authorised to mark this notification as read');
+    // Security: regular users can only mark their own notifications as read;
+    // broadcast notifications (userId === null) require admin/staff context
+    if (notification.userId === null) {
+      if (!input.isAdmin) {
+        throw new ForbiddenError('Not authorised to mark this notification as read');
+      }
+    } else if (!input.userId || notification.userId !== input.userId) {
+      if (!input.isAdmin) {
+        throw new ForbiddenError('Not authorised to mark this notification as read');
+      }
     }
 
     notification.markAsRead();
@@ -107,12 +117,16 @@ export class MarkAllNotificationsReadUseCase
 }
 
 export class MarkManyNotificationsReadUseCase
-  implements IUseCase<{ ids: string[] }, void>
+  implements IUseCase<{ ids: string[]; userId: string | null; allowedTypes?: NotificationType[] }, void>
 {
   constructor(private readonly notificationRepo: INotificationRepository) {}
 
-  async execute(input: { ids: string[] }): Promise<void> {
-    await this.notificationRepo.markManyRead(input.ids);
+  async execute(input: {
+    ids: string[];
+    userId: string | null;
+    allowedTypes?: NotificationType[];
+  }): Promise<void> {
+    await this.notificationRepo.markManyRead(input.ids, input.userId, input.allowedTypes);
   }
 }
 
@@ -127,15 +141,15 @@ export class DeleteNotificationUseCase
     isAdmin: boolean;
   }): Promise<void> {
     const notification = await this.notificationRepo.findById(input.id);
-    if (!notification) throw new Error('Notification not found');
+    if (!notification) throw new NotFoundError('Notification not found');
 
-    // Only the owner or an admin can delete
-    if (
-      !input.isAdmin &&
-      notification.userId !== null &&
-      notification.userId !== input.userId
-    ) {
-      throw new Error('Not authorised to delete this notification');
+    // Only the owner can delete user-specific notifications; only admins can delete broadcast (null) notifications
+    if (notification.userId === null) {
+      if (!input.isAdmin) {
+        throw new ForbiddenError('Not authorised to delete this notification');
+      }
+    } else if (!input.isAdmin && (!input.userId || notification.userId !== input.userId)) {
+      throw new ForbiddenError('Not authorised to delete this notification');
     }
 
     await this.notificationRepo.delete(input.id);
@@ -143,12 +157,16 @@ export class DeleteNotificationUseCase
 }
 
 export class DeleteManyNotificationsUseCase
-  implements IUseCase<{ ids: string[] }, void>
+  implements IUseCase<{ ids: string[]; userId: string | null; allowedTypes?: NotificationType[] }, void>
 {
   constructor(private readonly notificationRepo: INotificationRepository) {}
 
-  async execute(input: { ids: string[] }): Promise<void> {
-    await this.notificationRepo.deleteMany(input.ids);
+  async execute(input: {
+    ids: string[];
+    userId: string | null;
+    allowedTypes?: NotificationType[];
+  }): Promise<void> {
+    await this.notificationRepo.deleteMany(input.ids, input.userId, input.allowedTypes);
   }
 }
 

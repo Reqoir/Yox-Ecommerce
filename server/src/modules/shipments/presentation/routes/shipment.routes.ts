@@ -28,7 +28,7 @@ const shipmentRepo = new ShipmentRepository();
 const orderRepo = new OrderRepository();
 
 const createShipmentUseCase = new CreateShipmentUseCase(shipmentRepo, orderRepo);
-const getShipmentByIdUseCase = new GetShipmentByIdUseCase(shipmentRepo);
+const getShipmentByIdUseCase = new GetShipmentByIdUseCase(shipmentRepo, orderRepo);
 const getShipmentByOrderUseCase = new GetShipmentByOrderUseCase(shipmentRepo, orderRepo);
 const trackShipmentUseCase = new TrackShipmentUseCase(shipmentRepo, orderRepo);
 const updateShipmentStatusUseCase = new UpdateShipmentStatusUseCase(shipmentRepo, orderRepo);
@@ -55,18 +55,20 @@ const shipmentController = new ShipmentController(
 router.post('/webhook/courier', shipmentController.handleShiprocketWebhook);
 router.post('/webhook/shiprocket', shipmentController.handleShiprocketWebhook);
 
-// Authenticated customer/staff routes (User must be logged in to track orders)
+// Admin-only management permission
+const adminPermission = requirePermission('manage_orders');
+const shipmentBookingPermission = requirePermission(['manage_settings', 'view_reports']);
+
+// Authenticated customer/staff routes (ownership verified in controller/use cases)
 router.use(requireAuth);
 router.get('/track/:trackingNumber', shipmentController.trackShipment);
 router.get('/order/:orderId', shipmentController.getShipmentByOrder);
-router.get('/order/:orderId/sync', shipmentController.syncCourierStatus);
+router.get('/order/:orderId/sync', adminPermission, shipmentController.syncCourierStatus);
 router.get('/order/:orderId/invoice', shipmentController.generateInvoice);
 router.post('/:orderId/invoice', shipmentController.generateInvoice);
 router.get('/:id', shipmentController.getShipmentById);
 
 // Admin-only management routes
-const adminPermission = requirePermission('manage_orders');
-const shipmentBookingPermission = requirePermission(['manage_settings', 'view_reports']);
 router.get('/', adminPermission, shipmentController.getAllShipments);
 // Courier shipment booking and charge dispatch is restricted to operational managers & admins
 router.post('/', shipmentBookingPermission, shipmentController.createShipment);

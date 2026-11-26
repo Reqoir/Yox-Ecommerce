@@ -7,6 +7,7 @@ import { IUseCase } from '@core/application/use-cases/base.use-case.interface';
 import {
   ApplicationError,
   ConflictError,
+  ForbiddenError,
 } from '@core/application/errors/application.error';
 import { NotFoundError } from '@core/domain/errors/not-found.error';
 import { ValidationError } from '@core/domain/errors/validation.error';
@@ -331,10 +332,31 @@ export class ProcessRefundUseCase implements IUseCase<ProcessRefundRequestDTO | 
   }
 }
 
-export class GetRefundsByOrderUseCase implements IUseCase<string, RefundResponseDTO[]> {
-  constructor(private readonly refundRepo: IRefundRepository) {}
+export class GetRefundsByOrderUseCase
+  implements IUseCase<string | { orderId: string; userId?: string; isAdmin?: boolean }, RefundResponseDTO[]>
+{
+  constructor(
+    private readonly refundRepo: IRefundRepository,
+    private readonly orderRepo?: IOrderRepository
+  ) {}
 
-  async execute(orderId: string): Promise<RefundResponseDTO[]> {
+  async execute(
+    input: string | { orderId: string; userId?: string; isAdmin?: boolean }
+  ): Promise<RefundResponseDTO[]> {
+    const orderId = typeof input === 'string' ? input : input.orderId;
+    const userId = typeof input === 'string' ? undefined : input.userId;
+    const isAdmin = typeof input === 'string' ? true : Boolean(input.isAdmin);
+
+    if (!isAdmin) {
+      const order = this.orderRepo ? await this.orderRepo.findById(orderId) : null;
+      if (!order) {
+        throw new NotFoundError('Order not found');
+      }
+      if (!userId || order.userId !== userId) {
+        throw new ForbiddenError('You do not have permission to view refunds for this order');
+      }
+    }
+
     const refunds = await this.refundRepo.findByOrderId(orderId);
     return refunds.map(r => mapToRefundResponseDTO(r));
   }

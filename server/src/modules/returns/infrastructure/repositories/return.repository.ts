@@ -44,13 +44,9 @@ export class ReturnRepository implements IReturnRepository {
   }
 
   async findById(id: string): Promise<Return | null> {
-    if (!id || typeof id !== 'string') return null;
-    if (Types.ObjectId.isValid(id)) {
-      const doc = await ReturnModel.findById(id).exec();
-      if (doc) return this.toDomain(doc);
-    }
-    const fallbackDoc = await ReturnModel.findOne({ $or: [{ orderId: id }, { orderItemId: id }] }).exec();
-    return fallbackDoc ? this.toDomain(fallbackDoc) : null;
+    if (!id || typeof id !== 'string' || !Types.ObjectId.isValid(id)) return null;
+    const doc = await ReturnModel.findById(id).exec();
+    return doc ? this.toDomain(doc) : null;
   }
 
   async findByOrderId(orderId: string): Promise<Return[]> {
